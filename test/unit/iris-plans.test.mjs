@@ -13,14 +13,18 @@ import {
   addIrisPlanTask,
   clearIrisPlans,
   createIrisPlan,
+  createIrisPlanConflict,
   createIrisPlanReview,
   generateIrisPlanReview,
   linkIrisPlanTaskToDispatch,
+  listIrisPlanConflicts,
   listIrisPlanEvidence,
   listIrisPlanReviews,
   listIrisPlans,
   loadIrisPlan,
+  loadIrisPlanConflict,
   loadIrisPlanReview,
+  resolveIrisPlanConflict,
   updateIrisPlanStatus,
   updateIrisPlanTaskStatus,
 } from "../../lib/iris/plans.mjs";
@@ -691,5 +695,143 @@ describe("Iris plan task dispatch linking", () => {
 
     const loaded = loadIrisPlan("plan-link-legacy");
     assert.equal(loaded.tasks[0].dispatchTaskId, null);
+  });
+});
+
+describe("Iris plan conflicts", () => {
+  test("creates a conflict with generated id and default open status", () => {
+    createIrisPlan({ id: "plan-conflict-basic", userRequest: "Track a conflict" });
+
+    const conflict = createIrisPlanConflict("plan-conflict-basic", {
+      type: "test_vs_claim",
+      description: "Task claims done, but the test suite failed.",
+    }, { now: Date.parse("2026-09-14T18:00:00.000Z") });
+
+    assert.match(conflict.id, /^conflict_/);
+    assert.equal(conflict.status, "open");
+    assert.equal(conflict.resolution, null);
+    assert.equal(conflict.createdAt, "2026-09-14T18:00:00.000Z");
+
+    const loaded = loadIrisPlanConflict("plan-conflict-basic", conflict.id);
+    assert.deepEqual(loaded, conflict);
+  });
+
+  test("rejects an invalid conflict type or status", () => {
+    createIrisPlan({ id: "plan-conflict-invalid", userRequest: "Check validation" });
+    assert.throws(
+      () =>
+        createIrisPlanConflict("plan-conflict-invalid", {
+          type: "vibes_are_off",
+          description: "x",
+        }),
+      /Invalid Iris conflict type/,
+    );
+    assert.throws(
+      () =>
+        createIrisPlanConflict("plan-conflict-invalid", {
+          type: "other",
+          description: "x",
+          status: "escalated",
+        }),
+      /Invalid Iris conflict status/,
+    );
+  });
+
+  test("requires a non-empty description", () => {
+    createIrisPlan({ id: "plan-conflict-no-desc", userRequest: "Check description" });
+    assert.throws(
+      () => createIrisPlanConflict("plan-conflict-no-desc", { type: "other", description: "" }),
+      /requires a description/,
+    );
+  });
+
+  test("validates referenced taskIds and evidenceIds", () => {
+    createIrisPlan({ id: "plan-conflict-refs", userRequest: "Check refs" });
+    const task = addIrisPlanTask("plan-conflict-refs", { id: "task-a", title: "A" });
+    const evidence = addIrisPlanEvidence("plan-conflict-refs", {
+      type: "note",
+      data: { text: "n" },
+    });
+
+    const conflict = createIrisPlanConflict("plan-conflict-refs", {
+      type: "blocked_task",
+      description: "Task is stuck",
+      taskIds: [task.id],
+      evidenceIds: [evidence.id],
+    });
+    assert.deepEqual(conflict.taskIds, [task.id]);
+    assert.deepEqual(conflict.evidenceIds, [evidence.id]);
+
+    assert.throws(
+      () =>
+        createIrisPlanConflict("plan-conflict-refs", {
+          type: "blocked_task",
+          description: "Bad ref",
+          taskIds: ["no-such-task"],
+        }),
+      /Iris task not found for conflict: no-such-task/,
+    );
+  });
+
+  test("resolves a conflict with a required resolution", () => {
+    createIrisPlan({ id: "plan-conflict-resolve", userRequest: "Resolve it" });
+    const conflict = createIrisPlanConflict("plan-conflict-resolve", {
+      type: "agent_disagreement",
+      description: "Two agents recommended different fixes.",
+    });
+
+    assert.throws(
+      () => resolveIrisPlanConflict("plan-conflict-resolve", conflict.id, "resolved", ""),
+      /resolution is required/,
+    );
+
+    const resolved = resolveIrisPlanConflict(
+      "plan-conflict-resolve",
+      conflict.id,
+      "resolved",
+      "Went with the approach backed by the passing test run.",
+      { now: Date.parse("2026-09-14T18:05:00.000Z") },
+    );
+    assert.equal(resolved.status, "resolved");
+    assert.equal(resolved.resolution, "Went with the approach backed by the passing test run.");
+    assert.equal(resolved.updatedAt, "2026-09-14T18:05:00.000Z");
+
+    const loaded = loadIrisPlanConflict("plan-conflict-resolve", conflict.id);
+    assert.equal(loaded.status, "resolved");
+  });
+
+  test("lists conflicts and filters by status", () => {
+    createIrisPlan({ id: "plan-conflict-list", userRequest: "List conflicts" });
+    const a = createIrisPlanConflict("plan-conflict-list", {
+      type: "other",
+      description: "First",
+    });
+    createIrisPlanConflict("plan-conflict-list", { type: "other", description: "Second" });
+    resolveIrisPlanConflict("plan-conflict-list", a.id, "dismissed", "Not actually a problem.");
+
+    assert.equal(listIrisPlanConflicts("plan-conflict-list").length, 2);
+    assert.equal(listIrisPlanConflicts("plan-conflict-list", { status: "open" }).length, 1);
+    assert.equal(listIrisPlanConflicts("plan-conflict-list", { status: "dismissed" }).length, 1);
+  });
+
+  test("legacy plans with no conflicts still load", () => {
+    const root = path.join(TEST_DIR, "iris-plans");
+    fs.mkdirSync(root, { recursive: true });
+    fs.writeFileSync(
+      path.join(root, "legacy-no-conflicts.json"),
+      JSON.stringify({
+        id: "legacy-no-conflicts",
+        userRequest: "Predates conflicts",
+        status: "draft",
+        tasks: [],
+        evidence: [],
+        createdAt: "2026-09-01T00:00:00.000Z",
+        updatedAt: "2026-09-01T00:00:00.000Z",
+      }),
+    );
+
+    const loaded = loadIrisPlan("legacy-no-conflicts");
+    assert.deepEqual(loaded.conflicts, []);
+    assert.deepEqual(listIrisPlanConflicts("legacy-no-conflicts"), []);
   });
 });

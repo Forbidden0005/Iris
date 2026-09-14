@@ -334,6 +334,42 @@ Current implementation:
   8's dispatch linking and needs the same explicit ownership handoff
   before anyone edits those files.
 
+### Slice 10: Conflict Records v1
+
+A first-class record for a disagreement or contradiction Iris (or a
+human) needs to resolve, instead of conflicts staying implicit in
+messages/logs.
+
+Current implementation:
+
+- `plan.conflicts` (array), embedded in the plan JSON — same storage
+  model as evidence and reviews, no SQLite.
+- Types: `agent_disagreement`, `test_vs_claim`, `blocked_task`,
+  `missing_evidence`, `other`. Statuses: `open`, `resolved`, `dismissed`.
+- Schema: `id`, `planId`, `type`, `description` (required, non-empty),
+  `status`, `taskIds`, `evidenceIds`, `resolution` (nullable),
+  `createdAt`, `updatedAt`, `metadata`. `taskIds`/`evidenceIds` are
+  validated against the plan the same way review packets are.
+- `lib/iris/plans.mjs` exports `createIrisPlanConflict`,
+  `listIrisPlanConflicts` (optionally filtered by `status`),
+  `loadIrisPlanConflict`, and `resolveIrisPlanConflict`.
+- **The one record type in this file that isn't append-only.** Evidence
+  and review packets are append-only because they're historical facts;
+  a conflict's whole purpose is to eventually stop being open, so
+  `resolveIrisPlanConflict` updates `status`/`resolution` in place.
+  Moving to `resolved` or `dismissed` requires a non-empty `resolution`
+  — closing a conflict without saying why defeats the point of recording
+  it. `resolveIrisPlanConflict(planId, conflictId, "open", ...)` is a
+  no-op resolution requirement (only non-`"open"` statuses require one).
+- Backward compatible: plans predating this slice have no `conflicts` key
+  and default to `[]` on load, same passthrough rule as evidence/reviews.
+- Not wired to anything that would create a conflict automatically (no
+  agent-disagreement detection, no test-vs-claim comparison). This slice
+  only adds the record type and its validated CRUD; something creating
+  conflict records from real signals is future work.
+- No dashboard rendering yet — same deferral reasoning as evidence/review
+  packets before their own dashboard slices landed.
+
 ## Suggested Next Implementation
 
 Start with Slice 3: Iris Plan Skeleton.
