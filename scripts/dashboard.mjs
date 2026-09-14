@@ -22,6 +22,7 @@ import {
   BUILT_IN_RT_AGENTS,
   normalizeRtAgentId,
 } from "../lib/agent-registry.mjs";
+import { toIrisAgentView } from "../lib/iris/identity.mjs";
 import { acquireStartupLock } from "../lib/runtime/startup-guard.mjs";
 import {
   buildToolInstructions,
@@ -8188,7 +8189,7 @@ ORDER BY day DESC, cost DESC;`;
               : ageSec < 300
                 ? "stale"
                 : "offline";
-        const entry = {
+        const entry = toIrisAgentView({
           id: canonicalId,
           model: a.model || "",
           fallbackModel: a.fallbackModel || "",
@@ -8223,7 +8224,7 @@ ORDER BY day DESC, cost DESC;`;
           liveness,
           lastSeen,
           ageSec,
-        };
+        });
         const prev = byCanonicalId.get(canonicalId);
         // Prefer the canonical crew-* config if both alias and canonical exist.
         if (!prev || a.id === canonicalId) byCanonicalId.set(canonicalId, entry);
@@ -8231,7 +8232,7 @@ ORDER BY day DESC, cost DESC;`;
       const agentList = [...byCanonicalId.values()];
       // Always show crew-lead in Agents so user can set his model (crew-lead.mjs reads from this config)
       if (!agentList.some((a) => a.id === "crew-lead")) {
-        agentList.push({
+        agentList.push(toIrisAgentView({
           id: "crew-lead",
           model: "groq/llama-3.3-70b-versatile",
           name: "Crew Lead",
@@ -8244,12 +8245,12 @@ ORDER BY day DESC, cost DESC;`;
           liveness: "unknown",
           lastSeen: null,
           ageSec: null,
-        });
+        }));
       }
       // Always show crew-orchestrator in Agents — PM loop uses this model
       // for routing/expanding (or falls back to crew-pm).
       if (!agentList.some((a) => a.id === "crew-orchestrator")) {
-        agentList.push({
+        agentList.push(toIrisAgentView({
           id: "crew-orchestrator",
           model: "",
           name: "Orchestrator (PM Loop)",
@@ -8265,7 +8266,7 @@ ORDER BY day DESC, cost DESC;`;
           liveness: "unknown",
           lastSeen: null,
           ageSec: null,
-        });
+        }));
       }
       // Merge providers from both locations so MODEL dropdown gets custom models from either
       const topProviders = cfg?.providers || {};

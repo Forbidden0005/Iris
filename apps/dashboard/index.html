@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>crewswarm dashboard</title>
+    <title>Iris</title>
     <link rel="icon" type="image/png" href="/favicon.png" />
     <!-- Font: system stack only to avoid CORS when dashboard (4319) and studio (3333) both load Inter from Google -->
     <link rel="stylesheet" href="/src/styles.css" />
@@ -15,8 +15,8 @@
     <!-- ── Sidebar ── -->
     <nav class="sidebar" role="navigation" aria-label="Main navigation">
       <div class="sidebar-brand">
-        <img class="brand-icon" src="/favicon.png" alt="crewswarm" loading="lazy" />
-        <span class="brand-name">Crew<span>Swarm</span></span>
+        <img class="brand-icon" src="/favicon.png" alt="Iris" loading="lazy" />
+        <span class="brand-name">Iris</span>
       </div>
       <div class="sidebar-status">
         <span class="status-dot" id="statusDot"></span>
@@ -142,7 +142,7 @@
           <div>
             <div class="page-title">RT Messages</div>
             <div class="page-sub">
-              Live feed from the crewswarm RT message bus
+              Live feed from the Iris runtime message bus
             </div>
           </div>
           <div style="display: flex; align-items: center; gap: 8px">
@@ -353,365 +353,162 @@
         <div id="filesContent"></div>
       </div>
 
-      <!-- Chat with crew-lead -->
+      <!-- Chat with Iris -->
       <div class="view active" id="chatView">
-        <div class="page-header">
-          <div>
-            <div class="page-title" id="chatAgentTitle">🧠 Crew Lead</div>
-            <div class="page-sub" id="chatAgentSub">
-              Conversational commander — chat naturally, dispatch tasks to the
-              crew
+        <div class="chat-home-shell">
+          <div class="chat-home-header">
+            <div>
+              <div class="chat-eyebrow">Iris command center</div>
+              <div class="chat-home-title" id="chatAgentTitle">Coordinate real work</div>
+              <div class="chat-home-sub" id="chatAgentSub">
+                Iris plans the job, assigns specialist agents, watches their evidence, and brings back the decision trail.
+              </div>
+            </div>
+            <div class="chat-home-actions">
+              <span id="crewLeadBadge" class="status-badge status-stopped">● offline</span>
+              <button data-action="clearChatHistory" class="btn-ghost chat-clear-btn">Clear</button>
             </div>
           </div>
-          <div style="display: flex; gap: 8px; align-items: center">
-            <span id="crewLeadBadge" class="status-badge status-stopped"
-              >● offline</span
-            >
-            <button
-              data-action="clearChatHistory"
-              class="btn-ghost"
-              style="font-size: 12px"
-            >
-              🗑 Clear
-            </button>
-          </div>
-        </div>
 
-        <div
-          style="
-            display: flex;
-            flex-direction: column;
-            height: calc(100vh - 160px);
-            gap: 10px;
-          "
-        >
-          <!-- Active CLI Process Status -->
-          <div
-            id="chatCLIProcessStatus"
-            style="
-              display: none;
-              background: var(--bg-card);
-              border: 1px solid var(--border);
-              border-radius: 8px;
-              padding: 12px;
-            "
-          ></div>
-
-          <!-- Active Tasks Panel -->
-          <div
-            id="activeTasksPanel"
-            style="
-              display: none;
-              background: var(--bg-card);
-              border: 1px solid var(--border);
-              border-radius: 8px;
-              overflow: hidden;
-            "
-          ></div>
-
-          <div
-            id="chatMessages"
-            style="
-              flex: 1;
-              overflow-y: auto;
-              display: flex;
-              flex-direction: column;
-              gap: 10px;
-              padding: 4px 2px;
-            "
-          ></div>
-          <div
-            class="chat-input-row"
-            style="
-              display: flex;
-              gap: 8px;
-              align-items: flex-end;
-              flex-shrink: 0;
-              position: relative;
-              overflow: visible;
-            "
-          >
-            <div
-              style="
-                flex: 1;
-                position: relative;
-                min-width: 0;
-                overflow: visible;
-              "
-            >
-              <textarea
-                id="chatInput"
-                aria-label="Chat message"
-                placeholder="Talk to crew-lead... (Shift+Enter for newline, Enter to send). Type @@ for commands."
-                style="
-                  width: 100%;
-                  resize: none;
-                  height: 56px;
-                  padding: 12px;
-                  font-size: 14px;
-                  line-height: 1.4;
-                  min-width: 0;
-                  box-sizing: border-box;
-                "
-              ></textarea>
-              <div
-                id="chatAtAtMenu"
-                style="
-                  display: none;
-                  position: absolute;
-                  bottom: 100%;
-                  left: 0;
-                  right: 0;
-                  margin-bottom: 4px;
-                  background: var(--bg-card);
-                  border: 1px solid var(--border);
-                  border-radius: 8px;
-                  max-height: 220px;
-                  overflow-y: auto;
-                  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-                  z-index: 100;
-                "
-              ></div>
-              <div
-                id="chatAtAtTemplate"
-                style="
-                  display: none;
-                  margin-top: 4px;
-                  padding: 8px 10px;
-                  font-size: 11px;
-                  font-family: monospace;
-                  background: var(--bg-card2);
-                  border: 1px solid var(--border);
-                  border-radius: 6px;
-                  color: var(--text-2);
-                  white-space: pre-wrap;
-                  word-break: break-all;
-                "
-              ></div>
+          <div class="chat-status-grid" aria-label="Iris system summary">
+            <div class="chat-status-card">
+              <span class="chat-status-label">Mode</span>
+              <strong>Lead orchestrator</strong>
             </div>
-            <button
-              id="attachImageBtn"
-              class="btn-ghost"
-              aria-label="Attach image"
-              title="Attach image for analysis"
-              style="height: 56px; padding: 0 14px; font-size: 20px"
-            >
-              📷
-            </button>
-            <button
-              id="recordVoiceBtn"
-              class="btn-ghost"
-              aria-label="Record voice"
-              title="Record voice message"
-              style="height: 56px; padding: 0 14px; font-size: 20px"
-            >
-              🎤
-            </button>
-            <button
-              id="chatSendBtn"
-              type="button"
-              data-action="sendChat"
-              class="btn-green"
-              aria-label="Send message"
-              style="height: 56px; padding: 0 24px; font-size: 15px"
-            >
-              Send
-            </button>
-            <input
-              type="file"
-              id="imageUpload"
-              accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.md"
-              style="display: none"
-            />
+            <div class="chat-status-card">
+              <span class="chat-status-label">Agents</span>
+              <strong>Ready to dispatch</strong>
+            </div>
+            <div class="chat-status-card">
+              <span class="chat-status-label">Workspace</span>
+              <strong>Local Iris runtime</strong>
+            </div>
           </div>
 
-          <!-- Project Tabs (replaces dropdown) -->
-          <div
-            id="chatProjectTabs"
-            style="
-              display: flex;
-              gap: 4px;
-              padding: 8px 12px;
-              background: var(--bg-card);
-              border-top: 1px solid var(--border-light);
-              overflow-x: auto;
-              flex-shrink: 0;
-            "
-          >
-            <button
-              class="project-tab active"
-              data-project-id="general"
-              onclick="
-                window.selectProjectTab && window.selectProjectTab('general')
-              "
-            >
-              🏠 General Chat
-            </button>
-          </div>
+          <div class="chat-workbench">
+            <!-- Active CLI Process Status -->
+            <div id="chatCLIProcessStatus" class="chat-inline-status"></div>
 
-          <div
-            style="
-              display: flex;
-              gap: 10px;
-              align-items: center;
-              flex-shrink: 0;
-              flex-wrap: wrap;
-              padding: 8px 0;
-              border-top: 1px solid var(--border-light);
-            "
-          >
-            <select
-              id="chatModeSelector"
-              style="
-                flex: 1;
-                min-width: 200px;
-                max-width: 280px;
-                font-size: 12px;
-                padding: 8px 10px;
-                background: var(--bg-card2);
-                color: var(--text-1);
-                border: 1px solid var(--border);
-                border-radius: 6px;
-              "
-              title="Choose who handles your messages"
-            >
-              <option value="crew-lead">
-                🧠 Crew Lead (default) — Planning & coordination
-              </option>
-              <optgroup label="───── Direct CLIs ─────">
-                <option value="cli:opencode">
-                  ⚡ OpenCode — Full workspace context
-                </option>
-                <option value="cli:cursor">
-                  🖱 Cursor CLI — Complex reasoning
-                </option>
-                <option value="cli:crew-cli">
-                  🔧 Crew CLI — TypeScript specialist
-                </option>
-                <option value="cli:codex">🟣 Codex CLI — OpenAI Codex</option>
-                <option value="cli:gemini">
-                  ✨ Gemini CLI — Google Gemini
-                </option>
-                <option value="cli:claude">
-                  🤖 Claude Code — Anthropic Claude
-                </option>
-              </optgroup>
-              <optgroup
-                label="───── Agents (LLM + @@CLI) ─────"
-                id="agentsOptgroup"
-              >
-                <!-- Agents loaded dynamically -->
-              </optgroup>
-            </select>
-            <select
-              id="passthroughModel"
-              style="
-                display: none;
-                flex: 1;
-                min-width: 140px;
-                max-width: 180px;
-                font-size: 12px;
-                padding: 8px 10px;
-                background: var(--bg-card2);
-                color: var(--text-1);
-                border: 1px solid var(--border);
-                border-radius: 6px;
-              "
-              title="Model for the selected engine"
-            >
-              <option value="">Model: Default</option>
-            </select>
-            <label
-              title="Inject recent Cursor agent chat history as context"
-              style="
-                display: flex;
-                align-items: center;
-                gap: 6px;
-                font-size: 12px;
-                color: var(--text-2);
-                cursor: pointer;
-                white-space: nowrap;
-                padding: 6px 10px;
-                background: var(--bg-card2);
-                border: 1px solid var(--border);
-                border-radius: 6px;
-              "
-            >
-              <input
-                type="checkbox"
-                id="passthroughInjectHistory"
-                style="cursor: pointer"
-              />
-              📋 History
-            </label>
-            <span
-              id="passthroughSessionIndicator"
-              title="Active session — context is retained between messages. Click to clear."
-              style="
-                display: none;
-                font-size: 11px;
-                padding: 6px 12px;
-                border-radius: 12px;
-                background: var(--green-hi);
-                color: #000;
-                cursor: pointer;
-                font-weight: 600;
-                white-space: nowrap;
-              "
-              data-action="clearPassthroughSession"
-              >● Session</span
-            >
-            <button
-              data-action="stopPassthrough"
-              title="Kill the running CLI process"
-              style="
-                display: none;
-                font-size: 12px;
-                padding: 6px 14px;
-                border-radius: 6px;
-                border: 1px solid var(--red-hi);
-                background: transparent;
-                color: var(--red-hi);
-                cursor: pointer;
-                font-weight: 600;
-              "
-            >
-              ⏹ Kill CLI
-            </button>
-            <div style="margin-left: auto; display: flex; gap: 6px">
-              <button
-                data-action="stopAll"
-                title="Stop all running pipelines (agents stay online)"
-                style="
-                  font-size: 11px;
-                  padding: 5px 10px;
-                  border-radius: 6px;
-                  border: 1px solid var(--border);
-                  background: var(--bg-card2);
-                  color: var(--text-2);
-                  cursor: pointer;
-                  white-space: nowrap;
-                "
-              >
-                ⏹ Stop All
-              </button>
-              <button
-                data-action="killAll"
-                title="Emergency: kill all agent processes"
-                style="
-                  font-size: 11px;
-                  padding: 5px 10px;
-                  border-radius: 6px;
-                  border: 1px solid var(--red-hi);
-                  background: transparent;
-                  color: var(--red-hi);
-                  cursor: pointer;
-                  font-weight: 600;
-                  white-space: nowrap;
-                "
-              >
-                ☠️ Kill Agents
-              </button>
+            <!-- Active Tasks Panel -->
+            <div id="activeTasksPanel" class="chat-inline-panel"></div>
+
+            <div class="chat-message-frame">
+              <div id="chatMessages" class="chat-message-stack"></div>
+              <div class="chat-empty-state">
+                <div class="chat-empty-kicker">Start with an outcome</div>
+                <h1>Tell Iris what to investigate, build, or coordinate.</h1>
+                <p>
+                  Keep it plain. Iris can decompose the work, send parts to specialists, watch progress, and summarize what is proven.
+                </p>
+                <div class="chat-suggestion-grid" aria-label="Example prompts">
+                  <button type="button" class="chat-suggestion" data-prompt="Build me a team to inspect this repo and report the highest-risk problems first.">
+                    <span>Investigate</span>
+                    Build me a team to inspect this repo
+                  </button>
+                  <button type="button" class="chat-suggestion" data-prompt="Find what is blocking the dashboard and propose the smallest safe fix.">
+                    <span>Debug</span>
+                    Find what is blocking the dashboard
+                  </button>
+                  <button type="button" class="chat-suggestion" data-prompt="Plan the next Iris architecture milestone with backend, agent loop, memory, and UI priorities.">
+                    <span>Plan</span>
+                    Shape the next Iris architecture milestone
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="chat-control-dock">
+              <div class="chat-input-row">
+                <div class="chat-composer-wrap">
+                  <textarea
+                    id="chatInput"
+                    aria-label="Chat message"
+                    placeholder="Ask Iris to investigate, build, compare, or coordinate..."
+                  ></textarea>
+                  <div id="chatAtAtMenu" class="chat-at-menu"></div>
+                  <div id="chatAtAtTemplate" class="chat-at-template"></div>
+                </div>
+                <button
+                  id="attachImageBtn"
+                  class="btn-ghost chat-icon-btn"
+                  aria-label="Attach image"
+                  title="Attach image for analysis"
+                >
+                  📷
+                </button>
+                <button
+                  id="recordVoiceBtn"
+                  class="btn-ghost chat-icon-btn"
+                  aria-label="Record voice"
+                  title="Record voice message"
+                >
+                  🎤
+                </button>
+                <button
+                  id="chatSendBtn"
+                  type="button"
+                  data-action="sendChat"
+                  class="btn-green chat-send-btn"
+                  aria-label="Send message"
+                >
+                  Send
+                </button>
+                <input
+                  type="file"
+                  id="imageUpload"
+                  accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.md"
+                  style="display: none"
+                />
+              </div>
+
+              <!-- Project Tabs (replaces dropdown) -->
+              <div id="chatProjectTabs">
+                <button
+                  class="project-tab active"
+                  data-project-id="general"
+                  onclick="
+                    window.selectProjectTab && window.selectProjectTab('general')
+                  "
+                >
+                  🏠 General Chat
+                </button>
+              </div>
+
+              <div class="chat-routing-row">
+                <select id="chatModeSelector" title="Choose who handles your messages">
+                  <option value="crew-lead">🧠 Iris (default) — Planning & coordination</option>
+                  <optgroup label="───── Direct CLIs ─────">
+                    <option value="cli:opencode">⚡ OpenCode — Full workspace context</option>
+                    <option value="cli:cursor">🖱 Cursor CLI — Complex reasoning</option>
+                    <option value="cli:crew-cli">🔧 Crew CLI — TypeScript specialist</option>
+                    <option value="cli:codex">🟣 Codex CLI — OpenAI Codex</option>
+                    <option value="cli:gemini">✨ Gemini CLI — Google Gemini</option>
+                    <option value="cli:claude">🤖 Claude Code — Anthropic Claude</option>
+                  </optgroup>
+                  <optgroup label="───── Agents (LLM + @@CLI) ─────" id="agentsOptgroup">
+                    <!-- Agents loaded dynamically -->
+                  </optgroup>
+                </select>
+                <select id="passthroughModel" title="Model for the selected engine">
+                  <option value="">Model: Default</option>
+                </select>
+                <label title="Inject recent Cursor agent chat history as context" class="chat-history-toggle">
+                  <input type="checkbox" id="passthroughInjectHistory" />
+                  <span>History</span>
+                </label>
+                <span
+                  id="passthroughSessionIndicator"
+                  title="Active session — context is retained between messages. Click to clear."
+                  data-action="clearPassthroughSession"
+                >● Session</span>
+                <button data-action="stopPassthrough" title="Kill the running CLI process" class="chat-danger-btn">
+                  Stop CLI
+                </button>
+                <div class="chat-safety-actions">
+                  <button data-action="stopAll" title="Stop all running pipelines (agents stay online)">Stop All</button>
+                  <button data-action="killAll" title="Emergency: kill all agent processes" class="danger">Kill Agents</button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -6499,17 +6296,17 @@
         </div>
       </div>
 
-      <!-- ── Message bar — redirects to crew-lead chat ── -->
+      <!-- ── Message bar — redirects to Iris chat ── -->
       <div class="msg-bar" style="justify-content: center; gap: 12px">
         <span style="font-size: 13px; color: var(--text-2)"
-          >Talk to the crew via</span
+          >Talk to Iris via</span
         >
         <button
           data-action="showChat"
           class="btn-green"
           style="font-size: 13px; padding: 8px 18px"
         >
-          🧠 Chat with crew-lead
+          🧠 Chat with Iris
         </button>
       </div>
 

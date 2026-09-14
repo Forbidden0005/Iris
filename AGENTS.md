@@ -1,3 +1,24 @@
+# Iris Fork Notes
+
+This repository is now the Iris starting point, forked from crewswarm.
+
+Iris is a new project: one primary assistant identity that can plan, spawn
+specialist agents, monitor work, gather evidence, resolve conflicts, verify
+results, and report back. Use crewswarm's existing runtime as the base, not as
+the product identity we are trying to preserve.
+
+Do not perform a repo-wide rename yet. Keep existing `crew-*` IDs, storage paths,
+scripts, and runtime contracts stable until compatibility shims and tests exist.
+For now, add Iris framing and new behavior above the working crewswarm core.
+
+Use OpenHands as reference material for backend boundaries, conversation UX,
+control-center polish, and long-term architecture. Use Open Swarm as dashboard
+inspiration only.
+
+See `docs/IRIS_FOUNDATION.md` before making product-direction changes.
+
+---
+
 # crewswarm — AI Setup Guide
 
 > This file is read automatically by Cursor, Claude Code, Codex, and most AI coding assistants.

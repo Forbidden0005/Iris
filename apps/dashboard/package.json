@@ -11,5 +11,8 @@
   "devDependencies": {
     "terser": "^5.46.1",
     "vite": "^6.4.1"
+  },
+  "dependencies": {
+    "crewswarm": "file:../.."
   }
 }

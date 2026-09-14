@@ -26,6 +26,7 @@ import {
   showSwarmChat,
   handleSwarmSSEEvent,
 } from "./tabs/swarm-chat-tab.js";
+import { getPrimaryAssistantInfo } from "./core/iris-identity.js";
 // Lazy-loaded benchmarks tab for code splitting
 let benchmarksTabModule = null;
 async function loadBenchmarksTabModule() {
@@ -342,16 +343,16 @@ async function loadCrewLeadInfo() {
     if (!cl) return;
     window._crewLeadInfo = {
       emoji: cl.emoji || "🧠",
-      name: cl.name || "crew-lead",
+      name: cl.displayName || "Iris",
       theme: cl.theme || "",
     };
     const titleEl = document.getElementById("chatAgentTitle");
     const subEl = document.getElementById("chatAgentSub");
     if (titleEl)
-      titleEl.textContent = (cl.emoji || "🧠") + " " + (cl.name || "Crew Lead");
+      titleEl.textContent = (cl.emoji || "🧠") + " " + (cl.displayName || "Iris");
     if (subEl && cl.theme)
       subEl.textContent =
-        cl.theme + " — chat naturally, dispatch tasks to the crew";
+        cl.theme + " — chat naturally, dispatch tasks to specialists";
   } catch (e) {
     /* keep defaults */
   }
@@ -629,7 +630,7 @@ function startAgentReplyListener() {
           const label = document.createElement("div");
           label.style.cssText =
             "font-size:11px;color:var(--text-3);padding:0 6px;";
-          const cl = window._crewLeadInfo || { emoji: "🧠", name: "crew-lead" };
+          const cl = getPrimaryAssistantInfo();
           label.textContent = cl.emoji + " " + cl.name + " (streaming...)";
 
           streamBubble = document.createElement("div");
@@ -757,7 +758,7 @@ function startAgentReplyListener() {
           // Promote streaming row → final bubble in place (do NOT remove then re-append).
           // Removing the stream loses the only visible copy if append/skip heuristics race.
           if (streamWrapper && streamBubble) {
-            const cl = window._crewLeadInfo || { emoji: "🧠", name: "crew-lead" };
+            const cl = getPrimaryAssistantInfo();
             const labelEl = streamWrapper.firstElementChild;
             if (labelEl && labelEl !== streamBubble) {
               labelEl.textContent = cl.emoji + " " + cl.name;

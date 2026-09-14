@@ -1,3 +1,8 @@
+import {
+  getMessageAgentName,
+  getPrimaryAssistantInfo,
+} from "./iris-identity.js";
+
 export function renderStatusBadge(liveness, ageSec) {
   if (liveness === "online")
     return '<span title="● online — heartbeat <90s" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 5px var(--green);margin-right:4px;flex-shrink:0;"></span>';
@@ -106,11 +111,11 @@ export function appendChatBubble(
   const labelEl = document.createElement("div");
   labelEl.style.cssText =
     "font-size:11px;color:var(--text-3);padding:0 6px;display:flex;align-items:center;gap:6px;";
-  const cl = window._crewLeadInfo || { emoji: "🧠", name: "crew-lead" };
+  const cl = getPrimaryAssistantInfo();
 
   // If sourceInfo provided (from history), show source indicator instead of default
   if (sourceInfo) {
-    let agentName = "crew-lead";
+    let agentName = "Iris";
     if (isUser) {
       agentName = "You";
     } else if (sourceInfo.agentName) {
@@ -124,8 +129,9 @@ export function appendChatBubble(
     } else if (sourceInfo.source === "agent") {
       agentName = sourceInfo.targetAgent || "agent";
     } else if (sourceInfo.source === "dashboard") {
-      agentName = "crew-lead";
+      agentName = "Iris";
     }
+    agentName = getMessageAgentName(sourceInfo.agentId, agentName);
     const engineLabel =
       !isUser && sourceInfo.engine && sourceInfo.engine !== agentName
         ? ` · ${sourceInfo.engine}`

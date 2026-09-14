@@ -6,6 +6,11 @@ import {
   shouldDropPassthroughStderrLine,
   summarizePassthroughTopErrorLine,
 } from "../../../../lib/browser/passthrough-stderr.js";
+import {
+  getAgentMentionLabel,
+  getMessageAgentName,
+  getPrimaryAssistantInfo,
+} from "../core/iris-identity.js";
 
 export function initChatActions(deps) {
   const {
@@ -311,7 +316,7 @@ export function initChatActions(deps) {
                     "📝";
                   const agentName =
                     msg.metadata?.agentName ||
-                    catalogAgent?.name ||
+                    getAgentMentionLabel(catalogAgent) ||
                     agentId ||
                     null;
                   const timestamp = new Date(msg.ts).toLocaleTimeString();
@@ -383,23 +388,23 @@ export function initChatActions(deps) {
             const errorDiv = document.createElement("div");
             errorDiv.style.cssText =
               "padding:12px;margin:8px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;color:#ef4444;font-size:13px;";
-            errorDiv.innerHTML = `⚠️ <strong>crew-lead unavailable</strong> — Cannot load project message history.<br><small>Check that crew-lead is running: <code>node crew-lead.mjs</code></small>`;
+            errorDiv.innerHTML = `⚠️ <strong>Iris unavailable</strong> — Cannot load project message history.<br><small>Check that the Iris lead runtime is running: <code>node crew-lead.mjs</code></small>`;
             box.appendChild(errorDiv);
           }
 
-          // Fall through to load standard crew-lead history (if crew-lead comes back up)
+          // Fall through to load standard lead history if the runtime comes back up.
           console.log(
-            "📚 [LOAD HISTORY] Falling back to crew-lead-only history...",
+            "📚 [LOAD HISTORY] Falling back to Iris-only history...",
           );
         }
       }
 
-      // STANDARD VIEW: Load crew-lead history only (fallback or general chat)
+      // STANDARD VIEW: Load Iris lead history only (fallback or general chat)
       let url = "/api/crew-lead/history?sessionId=owner";
       if (normalizedProjectId && normalizedProjectId !== "general") {
         url += "&projectId=" + encodeURIComponent(normalizedProjectId);
       }
-      console.log("📚 [LOAD HISTORY] Fetching crew-lead history:", url);
+      console.log("📚 [LOAD HISTORY] Fetching Iris lead history:", url);
 
       const d = await getJSON(url);
       if (isStale()) return;
@@ -592,7 +597,7 @@ export function initChatActions(deps) {
                 row.style.background = "";
               };
               row.innerHTML =
-                `<span style="color:var(--accent);font-weight:600;">@${agent.id}</span> <span style="color:var(--text-3);">${agent.name || agent.role || "agent"}</span>`;
+                `<span style="color:var(--accent);font-weight:600;">@${agent.id}</span> <span style="color:var(--text-3);">${getAgentMentionLabel(agent)}</span>`;
               row.onclick = function onclick() {
                 const tokenStart =
                   caret - mentionMatch[0].length + mentionMatch[1].length;
@@ -787,7 +792,7 @@ export function initChatActions(deps) {
     typingDiv.id = typingId;
     typingDiv.style.cssText =
       "font-size:12px;color:var(--text-3);padding:4px 6px;";
-    const cl = getCrewLeadInfo() || { emoji: "🧠", name: "crew-lead" };
+    const cl = getCrewLeadInfo() || getPrimaryAssistantInfo();
     typingDiv.textContent = cl.emoji + " " + cl.name + " is thinking...";
     const box = document.getElementById("chatMessages");
     box.appendChild(typingDiv);
@@ -1516,7 +1521,7 @@ export function initChatActions(deps) {
       if (agent) {
         agentInfo = {
           emoji: agent.emoji || "🤖",
-          name: agent.name || agentId,
+          name: getAgentMentionLabel(agent) || agentId,
           model: formatAgentModelLabel(agent),
         };
       }
@@ -1663,7 +1668,7 @@ export function initChatActions(deps) {
             opt.value = agent.id;
             const emoji = agent.emoji || "🤖";
             const modelName = formatAgentModelLabel(agent);
-            opt.textContent = `${emoji} ${agent.id} — ${modelName}`;
+            opt.textContent = `${emoji} ${getAgentMentionLabel(agent)} — ${modelName}`;
             agentsOptgroup.appendChild(opt);
           });
         lastAgentSelectorRefreshAt = Date.now();
@@ -1681,7 +1686,7 @@ export function initChatActions(deps) {
       const agents = data.agents || [];
 
       // Clear existing options (keep default)
-      selector.innerHTML = '<option value="">🧠 Crew Lead (default)</option>';
+      selector.innerHTML = '<option value="">🧠 Iris (default)</option>';
 
       // Add agents (exclude crew-lead and coordinators)
       const excludeAgents = new Set([
@@ -1697,7 +1702,7 @@ export function initChatActions(deps) {
           const opt = document.createElement("option");
           opt.value = agent.id;
           const modelName = formatAgentModelLabel(agent);
-          opt.textContent = `${agent.id} — ${modelName}`;
+          opt.textContent = `${getAgentMentionLabel(agent)} — ${modelName}`;
           selector.appendChild(opt);
         });
     } catch (err) {

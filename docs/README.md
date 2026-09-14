@@ -2,6 +2,12 @@
 
 Documentation index for the crewswarm multi-agent orchestration stack.
 
+## Iris fork
+
+| Doc | Description |
+|-----|-------------|
+| [IRIS_FOUNDATION.md](IRIS_FOUNDATION.md) | Iris product direction, inherited crewswarm runtime, first moves, and phase-1 non-goals |
+
 ## Canonical docs (source of truth)
 
 Start here. These are the maintained, authoritative guides:

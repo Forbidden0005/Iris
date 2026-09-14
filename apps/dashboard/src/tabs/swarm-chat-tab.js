@@ -1,5 +1,12 @@
 import { getJSON, postJSON } from "../core/api.js";
 import { escHtml, showNotification, showEmpty, showError } from "../core/dom.js";
+import {
+  getAgentDisplayName,
+  getMessageAgentName,
+  getPrimaryAssistantInfo,
+  IRIS_PRIMARY_LABEL,
+  IRIS_PRIMARY_RUNTIME_ID,
+} from "../core/iris-identity.js";
 import { state, persistState } from "../core/state.js";
 
 let hideAllViews = () => {};
@@ -29,7 +36,7 @@ function getPendingSwarmResponder(message = "") {
   }
   return {
     id: agent.id,
-    name: agent.name || agent.displayName || agent.id,
+    name: getAgentDisplayName(agent),
     emoji: agent.emoji || "🤖",
   };
 }
@@ -58,7 +65,7 @@ function showSwarmTyping(responder = null) {
   const speaker =
     responder ||
     pendingSwarmResponder ||
-    window._crewLeadInfo || { emoji: "🧠", name: "crew-lead" };
+    getPrimaryAssistantInfo();
   const wrapper = document.createElement("div");
   wrapper.id = "swarm-typing-wrapper";
   wrapper.style.cssText =
@@ -72,7 +79,7 @@ function showSwarmTyping(responder = null) {
 }
 
 const SOURCE_META = {
-  dashboard: { emoji: "🧠", label: "crew-lead" },
+  dashboard: { emoji: "🧠", label: IRIS_PRIMARY_LABEL },
   agent: { emoji: "🤖", label: "agent" },
   "sub-agent": { emoji: "👷", label: "sub-agent" },
   cli: { emoji: "⚡", label: "cli" },
@@ -166,10 +173,12 @@ async function loadSwarmMentionAgents(force = false) {
     .sort((a, b) => a.id.localeCompare(b.id))
     .map((participant) => ({
       id: participant.id,
-      name:
-        participant.kind === "cli"
-          ? `${participant.runtime} runtime`
-          : participant.kind,
+      name: participant.displayName ||
+        (participant.id === IRIS_PRIMARY_RUNTIME_ID
+          ? IRIS_PRIMARY_LABEL
+          : participant.kind === "cli"
+            ? `${participant.runtime} runtime`
+            : participant.kind),
       role: participant.kind,
       kind: participant.kind,
     }));
@@ -226,8 +235,8 @@ async function renderSwarmMentionAutocomplete() {
       menu.style.display = "none";
       hint.style.display = "block";
       hint.textContent =
-        agent.id === "crew-lead"
-          ? "Mention target: @crew-lead. Use this for notes or routing guidance."
+        agent.id === IRIS_PRIMARY_RUNTIME_ID
+          ? "Mention target: @crew-lead, Iris's current runtime ID. Use this for notes or routing guidance."
           : `Mention target: @${agent.id}. Use a specific work order if you want execution.`;
     };
     menu.appendChild(row);
@@ -236,7 +245,7 @@ async function renderSwarmMentionAutocomplete() {
   hint.style.display = "block";
   hint.textContent = prefix
     ? `Matching participants for @${prefix}`
-    : "Type a participant, e.g. @crew-lead for notes or @crew-coder with a specific work order.";
+    : "Type a participant, e.g. @crew-lead for Iris or @crew-coder with a specific work order.";
 }
 
 export async function showSwarmChat() {
@@ -276,7 +285,7 @@ async function loadSwarmAutonomy() {
   }
   if (input) {
     input.placeholder = enabled
-      ? "Talk in-channel. Use @crew-* or @codex/@cursor/@claude/@opencode/@gemini/@crew-cli to route work."
+      ? "Talk in-channel. Use @crew-lead for Iris, @crew-* for specialists, or @codex/@cursor/@claude/@opencode/@gemini/@crew-cli to route work."
       : "Autonomy is off. @mentions are informational until you turn routing back on.";
   }
 }
@@ -424,7 +433,7 @@ export function handleSwarmSSEEvent(event) {
               name: event.agentName || event.agent || "agent",
               emoji: event.agentEmoji || "🤖",
             }
-          : pendingSwarmResponder || window._crewLeadInfo || { emoji: "🧠", name: "crew-lead" };
+          : pendingSwarmResponder || getPrimaryAssistantInfo();
       label.textContent = `${speaker.emoji} ${speaker.name}`;
 
       streamBubble = document.createElement("div");
@@ -479,13 +488,13 @@ export function handleSwarmSSEEvent(event) {
         ? {
             agentName:
               event.agentName ||
-              (assistantAgent === "crew-lead"
-                ? (window._crewLeadInfo || {}).name || "crew-lead"
+              (assistantAgent === IRIS_PRIMARY_RUNTIME_ID
+                ? getPrimaryAssistantInfo().name
                 : assistantAgent || "agent"),
             agentEmoji:
               event.agentEmoji ||
-              (assistantAgent === "crew-lead"
-                ? (window._crewLeadInfo || {}).emoji || "🧠"
+              (assistantAgent === IRIS_PRIMARY_RUNTIME_ID
+                ? getPrimaryAssistantInfo().emoji
                 : "🤖"),
             model: event.model || null,
             ...(event.directChat ? { directChat: true } : {}),
@@ -612,14 +621,17 @@ async function sendSwarmMessage() {
       const replyAgentName =
         response.agentName ||
         pendingSwarmResponder?.name ||
-        (replyAgent === "crew-lead"
-          ? (window._crewLeadInfo || {}).name || "crew-lead"
-          : replyAgent);
+        getMessageAgentName(
+          replyAgent,
+          replyAgent === IRIS_PRIMARY_RUNTIME_ID
+            ? getPrimaryAssistantInfo().name
+            : replyAgent,
+        );
       const replyAgentEmoji =
         response.agentEmoji ||
         pendingSwarmResponder?.emoji ||
-        (replyAgent === "crew-lead"
-          ? (window._crewLeadInfo || {}).emoji || "🧠"
+        (replyAgent === IRIS_PRIMARY_RUNTIME_ID
+          ? getPrimaryAssistantInfo().emoji
           : "🤖");
       appendSwarmMessage({
         id: `local-assistant-${Date.now()}`,

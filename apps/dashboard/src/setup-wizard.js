@@ -1,5 +1,5 @@
 /**
- * Setup Wizard — first-run onboarding overlay for CrewSwarm dashboard.
+ * Setup Wizard — first-run onboarding overlay for Iris.
  * Shows when no API keys are configured (firstRun === true).
  * Step 1: Welcome  →  Step 2: API Keys  →  Step 3: CLI Engines
  * Vanilla JS, no frameworks. Matches the existing dark dashboard theme.
@@ -35,7 +35,7 @@ const ALL_PROVIDERS = [
 const CLI_ENGINES = [
   { id: "claude-code", cmd: "claude",   label: "Claude Code",  desc: "Anthropic's CLI agent. Best for complex reasoning and multi-file refactors.", installUrl: "https://docs.anthropic.com/en/docs/claude-code/overview", authCmd: "claude auth",  keyProvider: "anthropic" },
   { id: "codex",       cmd: "codex",    label: "Codex CLI",    desc: "OpenAI's CLI agent. Sandboxed execution with full file write access.",        installUrl: "https://github.com/openai/codex",                        authCmd: "codex auth",   keyProvider: "openai" },
-  { id: "crew-cli",    cmd: "crew",     label: "crew-cli",     desc: "CrewSwarm's own 3-tier pipeline. Supports Anthropic, OpenAI, Gemini, Groq, DeepSeek, and more.", installUrl: null,                                                      authCmd: null,           keyProvider: null },
+  { id: "crew-cli",    cmd: "crew",     label: "crew-cli",     desc: "Iris's inherited 3-tier pipeline. Supports Anthropic, OpenAI, Gemini, Groq, DeepSeek, and more.", installUrl: null,                                                      authCmd: null,           keyProvider: null },
   { id: "opencode",    cmd: "opencode", label: "OpenCode",     desc: "Multi-provider CLI agent. Supports OpenAI, Anthropic, Google, and more.",     installUrl: "https://github.com/opencode-ai/opencode",                authCmd: null,           keyProvider: null },
   { id: "gemini-cli",  cmd: "gemini",   label: "Gemini CLI",   desc: "Google's CLI agent. Fast inference with Gemini models.",                      installUrl: "https://github.com/google-gemini/gemini-cli",            authCmd: "gemini auth",  keyProvider: "google" },
   { id: "cursor",      cmd: "cursor",   label: "Cursor CLI",   desc: "Cursor's agent mode via CLI. Requires Cursor IDE installed.",                 installUrl: "https://www.cursor.com/",                                authCmd: null,           keyProvider: null },
@@ -78,7 +78,7 @@ function _showWizard() {
   _overlayEl.className = "setup-wizard-overlay";
   _overlayEl.setAttribute("role", "dialog");
   _overlayEl.setAttribute("aria-modal", "true");
-  _overlayEl.setAttribute("aria-label", "CrewSwarm setup wizard");
+  _overlayEl.setAttribute("aria-label", "Iris setup wizard");
 
   _renderStep();
   document.body.appendChild(_overlayEl);
@@ -158,9 +158,9 @@ function _buildWelcomeStep() {
   frag.innerHTML = `
     <div class="setup-wizard-hero">
       <div class="setup-wizard-logo-ring">
-        <img src="/favicon.png" alt="CrewSwarm" class="setup-wizard-logo" />
+        <img src="/favicon.png" alt="Iris" class="setup-wizard-logo" />
       </div>
-      <h1 class="setup-wizard-title">Welcome to CrewSwarm</h1>
+      <h1 class="setup-wizard-title">Welcome to Iris</h1>
       <p class="setup-wizard-subtitle">
         Multi-agent orchestration for AI coding tools.<br>
         Let's get you set up in 2 minutes.
@@ -412,7 +412,7 @@ function _buildEnginesStep() {
   header.innerHTML = `
     <h2 class="setup-wizard-section-title">CLI Engines</h2>
     <p class="setup-wizard-section-desc">
-      CrewSwarm dispatches tasks to these CLI coding agents.
+      Iris dispatches tasks to these CLI coding agents.
       You need at least one installed. Use the API keys from Step 2 to authenticate.
     </p>
   `;

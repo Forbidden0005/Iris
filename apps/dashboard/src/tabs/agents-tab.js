@@ -178,6 +178,10 @@ async function loadAgents_cfg() {
     }
     list.innerHTML = "";
     agents.forEach((a) => {
+      const displayName = a.displayName || a.name || a.id;
+      const runtimeLabel = a.runtimeId && a.runtimeId !== displayName
+        ? ` · ${a.runtimeId}`
+        : "";
       const card = document.createElement("div");
       card.className = "agent-card";
       card.id = "agent-card-" + a.id;
@@ -200,7 +204,7 @@ async function loadAgents_cfg() {
         <div class="agent-card-header">
           <div class="agent-avatar" id="avatar-${a.id}" style="position:relative;">${a.emoji}</div>
           <div class="agent-meta">
-            <div class="agent-id" style="display:flex;align-items:center;">${liveDot}${a.id} <span class="meta" style="font-weight:400;margin-left:4px;">· ${a.name}</span>
+            <div class="agent-id" style="display:flex;align-items:center;">${liveDot}${displayName} <span class="meta" style="font-weight:400;margin-left:4px;">${runtimeLabel}</span>
               ${MODEL_ROLE[a.id] ? '<span style="font-size:9px;font-weight:700;letter-spacing:0.04em;padding:1px 6px;border-radius:4px;margin-left:8px;' + (ROLE_STYLE[MODEL_ROLE[a.id]] || "") + '">' + MODEL_ROLE[a.id] + "</span>" : ""}
               <span id="coding-dot-${a.id}" style="display:none;margin-left:8px;align-items:center;gap:4px;font-size:11px;color:var(--accent);">
                 <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);animation:pulse 1s ease-in-out infinite;"></span>coding
