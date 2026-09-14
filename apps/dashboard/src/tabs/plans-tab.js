@@ -57,6 +57,20 @@ const REVIEW_SEVERITY_COLORS = {
   high: "var(--red)",
 };
 
+const CONFLICT_STATUS_COLORS = {
+  open: "var(--yellow)",
+  resolved: "var(--green)",
+  dismissed: "var(--text-3)",
+};
+
+const CONFLICT_TYPE_LABELS = {
+  agent_disagreement: "Agent disagreement",
+  test_vs_claim: "Test vs. claim",
+  blocked_task: "Blocked task",
+  missing_evidence: "Missing evidence",
+  other: "Other",
+};
+
 export function initPlansTab(deps = {}) {
   hideAllViews = deps.hideAllViews || hideAllViews;
   setNavActive = deps.setNavActive || setNavActive;
@@ -218,7 +232,78 @@ function renderPlanDetail(plan) {
     taskRows +
     renderEvidenceSection(plan) +
     renderReviewsSection(plan) +
+    renderConflictsSection(plan) +
     renderLimitsSection(plan)
+  );
+}
+
+// ── Conflicts (read-only) ───────────────────────────────────────────────────
+
+function renderConflictRow(conflict, tasks, evidence) {
+  const statusColor = CONFLICT_STATUS_COLORS[conflict?.status] || "var(--text-3)";
+  const typeLabel = escHtml(CONFLICT_TYPE_LABELS[conflict?.type] || conflict?.type || "Unknown");
+  const description = escHtml(conflict?.description || "");
+  const createdAt = formatTimestamp(conflict?.createdAt);
+
+  const taskLabels = resolveRefLabels(conflict?.taskIds, tasks, (t) => t.displayName || t.title || t.id);
+  const evidenceLabels = resolveRefLabels(
+    conflict?.evidenceIds,
+    evidence,
+    (e) => (EVIDENCE_TYPE_LABELS[e.type] || e.type || "evidence") + ": " + (e.title || e.id),
+  );
+  const refLines = [];
+  if (taskLabels.length) refLines.push("Tasks: " + taskLabels.map(escHtml).join(", "));
+  if (evidenceLabels.length) refLines.push("Evidence: " + evidenceLabels.map(escHtml).join(", "));
+
+  return (
+    '<div class="card" style="margin-bottom:8px;">' +
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">' +
+    "<div>" +
+    '<span style="font-size:11px;padding:2px 8px;border-radius:999px;background:var(--bg-card2);color:var(--text-2);border:1px solid var(--border);margin-right:8px;">' +
+    typeLabel +
+    "</span>" +
+    '<span style="font-size:11px;padding:2px 8px;border-radius:999px;background:' +
+    statusColor +
+    "1a;color:" +
+    statusColor +
+    ";border:1px solid " +
+    statusColor +
+    '40;">' +
+    escHtml(conflict?.status || "open") +
+    "</span>" +
+    "</div>" +
+    (createdAt
+      ? '<div class="meta" style="white-space:nowrap;">' + escHtml(createdAt) + "</div>"
+      : "") +
+    "</div>" +
+    '<div class="meta" style="margin-top:8px;">' +
+    description +
+    "</div>" +
+    (conflict?.resolution
+      ? '<div class="meta" style="margin-top:8px;">Resolution: ' + escHtml(conflict.resolution) + "</div>"
+      : "") +
+    (refLines.length
+      ? '<div style="margin-top:6px;">' +
+        refLines
+          .map((line) => '<div class="meta" style="font-size:11px;">' + line + "</div>")
+          .join("") +
+        "</div>"
+      : "") +
+    "</div>"
+  );
+}
+
+function renderConflictsSection(plan) {
+  const conflicts = Array.isArray(plan.conflicts) ? plan.conflicts : [];
+  const tasks = Array.isArray(plan.tasks) ? plan.tasks : [];
+  const evidence = Array.isArray(plan.evidence) ? plan.evidence : [];
+  const rows = conflicts.length
+    ? conflicts.map((entry) => renderConflictRow(entry, tasks, evidence)).join("")
+    : '<div class="meta" style="padding:12px 0;">No conflicts recorded yet.</div>';
+
+  return (
+    '<div class="meta" style="margin-top:20px;margin-bottom:8px;font-weight:600;">Conflicts</div>' +
+    rows
   );
 }
 
