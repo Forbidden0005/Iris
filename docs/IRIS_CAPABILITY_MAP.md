@@ -382,7 +382,7 @@ Current implementation:
 - No dashboard rendering yet — same deferral reasoning as evidence/review
   packets before their own dashboard slices landed.
 
-### Slice 11: User Approval/Revision Loop — PROPOSAL, not implemented
+### Slice 11: User Approval/Revision Loop — DECIDED, not implemented
 
 Every prior consequential slice in this project (Task+Evidence, Review
 Packet, Review Generator) started as a design proposal before any code
@@ -398,23 +398,35 @@ Proposed model:
 
 **Review packet states.** Extend the review packet, don't invent a
 parallel object. A review packet already has `status: draft | ready |
-archived` — add `pending_approval` between `ready` and a terminal state:
-`draft → ready → pending_approval → {approved, rejected, revise}`.
+archived` — add one new status, `pending_approval`, between `ready` and
+the existing terminal `archived`: `draft → ready → pending_approval →
+archived`. All three decisions (approve/reject/revise) land the packet on
+the *same* terminal `archived` status — no new status values for
+"approved"/"rejected" are added to the enum. Which of the three actually
+happened, and why, lives in the `approval` sub-object (see Audit trail
+fields below), not in `status`. This keeps the state machine small and
+reuses the terminal state every other review packet already ends up in.
 Reusing the review packet keeps risks/openQuestions/recommendations
 attached to the thing being approved, instead of a second record type
 that has to stay in sync with it.
 
 **User actions.** Three, and only three, decisions a human can make on a
 `pending_approval` review packet:
-- **Approve** — accepts the review as-is. Sets the plan's own `status` to
-  `completed`. This is the *only* path that can move a plan to
-  `completed` — Iris/dispatch never sets it there on their own claim.
-- **Request revision** — sends the review back for another pass. Does
-  *not* delete or archive the packet; does *not* automatically call
-  `generateIrisPlanReview` again — a human or caller has to trigger
-  regeneration separately. Requires a non-empty note explaining what
-  needs to change (same "no closing without saying why" rule Slice 10
-  already uses for conflicts).
+- **Approve** — accepts the review as-is. Moves the review packet to
+  `archived` and sets the *plan's own* `status` to `completed`. This is
+  the *only* path that can move a plan to `completed` — Iris/dispatch
+  never sets it there on their own claim.
+- **Request revision** — sends the review back for another pass. Routes
+  back to the *plan*, not to dispatch: the revision note is recorded as
+  an open question on the review packet (reusing the existing
+  `openQuestions` shape review packets already have) so it shows up
+  wherever the review is already displayed, with no new record type. It
+  does **not** trigger dispatch, does **not** automatically call
+  `generateIrisPlanReview` again, and does **not** create a task or
+  conflict on its own — a human or caller has to act on the note and
+  trigger regeneration separately, as an explicit next step. Requires a
+  non-empty note explaining what needs to change (same "no closing
+  without saying why" rule Slice 10 already uses for conflicts).
 - **Reject** — declines the review outright. Requires a non-empty note.
   Does not change the plan's `status` — a rejected review just means
   this particular summary wasn't accepted, not that the plan itself
@@ -426,8 +438,9 @@ that has to stay in sync with it.
 
 **New functions in `lib/iris/plans.mjs`:**
 `submitIrisPlanReviewForApproval(planId, reviewId, options?)` (draft/ready
-→ pending_approval; open design question below on whether it blocks on
-open conflicts), and
+→ pending_approval; throws if the plan has any `open` conflict referencing
+the review's `taskIds`/`evidenceIds`, unless `options.overrideOpenConflicts:
+true` is passed — see Decision 1 below), and
 `decideIrisPlanReviewApproval(planId, reviewId, decision, note, options?)`
 which validates `decision` is one of the three, requires `note` for
 `"rejected"`/`"revise"`, and is the only place a plan's `status` becomes
@@ -447,10 +460,14 @@ implicitly).
 
 **Dashboard.** A *new* explicit action per `pending_approval` review
 packet (Approve / Reject / Revise), each requiring the note-on-reject/
-revise the backend already enforces. This is the first mutation control
-this project would add beyond "generate a draft" — needs its own UI
-review before building, same as every dashboard slice so far went
-through a proposal → build cycle before code.
+revise the backend already enforces. Per Decision 3 below, an `archived`
+review packet (whatever decision closed it) stays visible in the Reviews
+section exactly like any other review — nothing hides or deletes it,
+consistent with every other record type in this project being
+append-only/audit-preserving. This is the first mutation control this
+project would add beyond "generate a draft" — needs its own UI review
+before building, same as every dashboard slice so far went through a
+proposal → build cycle before code.
 
 **Non-goals for this slice, explicitly:**
 - No automatic approval of anything, under any condition.
@@ -460,15 +477,50 @@ through a proposal → build cycle before code.
 - No re-running review generation automatically on "revise" — that stays
   a separate, explicit action.
 
-Open questions before implementing (need a decision, not more code):
+**Decisions** (resolves the three open questions from the original
+proposal — decided, not yet implemented):
 
-1. Should `submitIrisPlanReviewForApproval` hard-block on open conflicts
-   referencing the review, or just surface them and let the approver
-   decide with full information?
-2. Does "revise" go back to `draft` (re-generate) or stay `pending_approval`
-   with a note attached for a human to act on manually?
-3. Is a rejected/revised review packet archived, or does it stay visible
-   for audit alongside whatever superseded it?
+1. **Do open conflicts block approval? Decided: yes, blocks by default,
+   explicit override allowed.** `submitIrisPlanReviewForApproval` throws
+   if the plan has any `open` conflict whose `taskIds`/`evidenceIds`
+   overlap the review's own `taskIds`/`evidenceIds` — an approver
+   shouldn't be able to accidentally approve a review that a known,
+   unresolved disagreement or missing-evidence conflict already calls
+   into question. `options.overrideOpenConflicts: true` allows an
+   explicit bypass (the same "explicit escape hatch, not silent default"
+   pattern this project already uses for `force` on
+   `createDraftPlanFromChatRequest`) — the approver can still proceed
+   with full information, but has to say so, not have it happen by
+   default. Conflicts unrelated to this review's tasks/evidence never
+   block it.
+
+2. **Where does "request revision" route? Decided: back to the plan as a
+   revision note, not automatic dispatch.** The note is stored on the
+   review packet's own `openQuestions` array (no new record type), and
+   the packet moves to `archived` immediately — it does not stay
+   `pending_approval` waiting for something to happen to it. Regeneration
+   (a fresh `generateIrisPlanReview` call) is a separate, explicit,
+   human/caller-triggered action, same as it is today. Nothing about
+   "revise" ever touches dispatch, the RT bus, or creates a task —
+   confirmed consistent with the non-goals list above.
+
+3. **Do rejected reviews stay visible? Decided: yes, archived with the
+   decision and reason attached, never hidden or deleted.** All three
+   decisions terminate at the existing `archived` status (see Review
+   packet states above); the dashboard renders an archived review packet
+   the same way it renders any other one today, with the `approval`
+   sub-object's `decision`/`note` visible alongside it. This matches how
+   every other record type in this project already behaves — evidence,
+   reviews, and resolved conflicts are all append-only/kept-visible, never
+   deleted on a decision.
+
+**What is explicitly not built yet, as of this decision record:** no
+code for `submitIrisPlanReviewForApproval` or
+`decideIrisPlanReviewApproval` exists; no `pending_approval` status
+exists on any review packet in the current schema; no dashboard
+Approve/Reject/Revise controls exist. This section records the *decision*
+so implementation doesn't have to re-litigate these three questions —
+it is still a decision record, not a changelog entry.
 
 ### Slice 12: Advisory Run Limits v1
 
