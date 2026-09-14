@@ -16,3 +16,10 @@ export async function postJSON(p, body, signal) {
   if (!r.ok) throw new Error(txt.slice(0, 120));
   try { return JSON.parse(txt); } catch { throw new Error('Bad response: ' + txt.slice(0, 80)); }
 }
+
+export async function patchJSON(p, body, signal) {
+  const r = await fetch(p, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body), signal });
+  const txt = await r.text();
+  if (!r.ok) throw new Error(txt.slice(0, 120));
+  try { return JSON.parse(txt); } catch { throw new Error('Bad response: ' + txt.slice(0, 80)); }
+}

@@ -27,9 +27,11 @@ import {
   addIrisPlanEvidence,
   addIrisPlanTask,
   createIrisPlan,
+  createIrisPlanConflict,
   generateIrisPlanReview,
   listIrisPlans,
   loadIrisPlan,
+  resolveIrisPlanConflict,
   updateIrisPlanStatus,
   updateIrisPlanTaskStatus,
 } from "../lib/iris/plans.mjs";
@@ -6949,6 +6951,35 @@ const server = http.createServer(async (req, res) => {
             { projectId },
           );
           sendJson(res, 201, { ok: true, evidence, plan: loadIrisPlan(planId, { projectId }) });
+          return;
+        }
+
+        // Explicit, user-triggered conflict recording only. No auto-resolve
+        // from task state — a conflict stays "open" until a human resolves
+        // or dismisses it below.
+        if (req.method === "POST" && action === "conflicts" && parts.length === 2) {
+          const body = await readRequestJson(req);
+          const conflict = createIrisPlanConflict(
+            planId,
+            {
+              type: body.type,
+              description: body.description,
+              taskIds: Array.isArray(body.taskIds) ? body.taskIds : undefined,
+              evidenceIds: Array.isArray(body.evidenceIds) ? body.evidenceIds : undefined,
+            },
+            { projectId },
+          );
+          sendJson(res, 201, { ok: true, conflict, plan: loadIrisPlan(planId, { projectId }) });
+          return;
+        }
+
+        // taskId/taskAction are reused positionally here as conflictId/"resolve".
+        if (req.method === "PATCH" && action === "conflicts" && taskAction === "resolve" && parts.length === 4) {
+          const body = await readRequestJson(req);
+          const conflict = resolveIrisPlanConflict(planId, taskId, body.status, body.resolution, {
+            projectId,
+          });
+          sendJson(res, 200, { ok: true, conflict, plan: loadIrisPlan(planId, { projectId }) });
           return;
         }
 

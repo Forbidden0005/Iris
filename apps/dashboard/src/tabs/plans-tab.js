@@ -6,7 +6,7 @@
  * Deps: getJSON, postJSON (core/api), escHtml, showEmpty, showError,
  * showNotification (core/dom)
  */
-import { getJSON, postJSON } from "../core/api.js";
+import { getJSON, patchJSON, postJSON } from "../core/api.js";
 import { escHtml, showEmpty, showError, showNotification } from "../core/dom.js";
 import { state } from "../core/state.js";
 
@@ -240,7 +240,7 @@ function renderPlanDetail(plan) {
 
 // ── Conflicts (read-only) ───────────────────────────────────────────────────
 
-function renderConflictRow(conflict, tasks, evidence) {
+function renderConflictRow(conflict, tasks, evidence, planId) {
   const statusColor = CONFLICT_STATUS_COLORS[conflict?.status] || "var(--text-3)";
   const typeLabel = escHtml(CONFLICT_TYPE_LABELS[conflict?.type] || conflict?.type || "Unknown");
   const description = escHtml(conflict?.description || "");
@@ -290,6 +290,70 @@ function renderConflictRow(conflict, tasks, evidence) {
           .join("") +
         "</div>"
       : "") +
+    (conflict?.status === "open" ? renderResolveConflictControl(conflict.id, planId) : "") +
+    "</div>"
+  );
+}
+
+function renderResolveConflictControl(conflictId, planId) {
+  const idAttr = escHtml(conflictId);
+  const planIdAttr = escHtml(planId);
+  return (
+    '<div style="margin-top:8px;">' +
+    '<button type="button" class="btn-ghost" data-action="toggleResolveConflict" data-conflict-id="' +
+    idAttr +
+    '" style="font-size:12px;padding:4px 10px;">Resolve</button>' +
+    '<div id="resolveForm-' +
+    idAttr +
+    '" data-plan-id="' +
+    planIdAttr +
+    '" data-conflict-id="' +
+    idAttr +
+    '" style="display:none;margin-top:6px;gap:6px;max-width:380px;">' +
+    '<textarea class="resolve-note" placeholder="Resolution note (required)" rows="2" style="font-size:12px;width:100%;"></textarea>' +
+    '<div style="display:flex;gap:6px;margin-top:4px;">' +
+    '<button type="button" class="btn-green" data-action="submitResolveConflict" data-status="resolved" style="font-size:12px;padding:4px 10px;">Mark resolved</button>' +
+    '<button type="button" class="btn-ghost" data-action="submitResolveConflict" data-status="dismissed" style="font-size:12px;padding:4px 10px;">Dismiss</button>' +
+    "</div>" +
+    "</div>" +
+    "</div>"
+  );
+}
+
+function renderRecordConflictForm(plan) {
+  const idAttr = escHtml(plan.id);
+  const tasks = Array.isArray(plan.tasks) ? plan.tasks : [];
+  const taskOptions =
+    '<option value="">(no linked task)</option>' +
+    tasks
+      .map(
+        (t) =>
+          '<option value="' + escHtml(t.id) + '">' + escHtml(t.title || t.id) + "</option>",
+      )
+      .join("");
+
+  return (
+    '<div style="margin-top:8px;">' +
+    '<button type="button" class="btn-ghost" data-action="toggleRecordConflict" style="font-size:12px;padding:4px 10px;">+ Record conflict</button>' +
+    '<div id="recordConflictForm" data-plan-id="' +
+    idAttr +
+    '" style="display:none;margin-top:8px;padding:10px;border:1px solid var(--border);border-radius:8px;gap:6px;max-width:420px;">' +
+    '<select id="conflictType" style="font-size:12px;">' +
+    '<option value="agent_disagreement">Agent disagreement</option>' +
+    '<option value="test_vs_claim">Test vs. claim</option>' +
+    '<option value="blocked_task">Blocked task</option>' +
+    '<option value="missing_evidence">Missing evidence</option>' +
+    '<option value="other">Other</option>' +
+    "</select>" +
+    '<select id="conflictTaskId" style="font-size:12px;">' +
+    taskOptions +
+    "</select>" +
+    '<textarea id="conflictDescription" placeholder="Description" rows="2" style="font-size:12px;width:100%;"></textarea>' +
+    '<div style="display:flex;gap:6px;margin-top:4px;">' +
+    '<button type="button" class="btn-green" data-action="submitRecordConflict" style="font-size:12px;padding:4px 10px;">Record conflict</button>' +
+    '<button type="button" class="btn-ghost" data-action="cancelRecordConflict" style="font-size:12px;padding:4px 10px;">Cancel</button>' +
+    "</div>" +
+    "</div>" +
     "</div>"
   );
 }
@@ -299,12 +363,13 @@ function renderConflictsSection(plan) {
   const tasks = Array.isArray(plan.tasks) ? plan.tasks : [];
   const evidence = Array.isArray(plan.evidence) ? plan.evidence : [];
   const rows = conflicts.length
-    ? conflicts.map((entry) => renderConflictRow(entry, tasks, evidence)).join("")
+    ? conflicts.map((entry) => renderConflictRow(entry, tasks, evidence, plan.id)).join("")
     : '<div class="meta" style="padding:12px 0;">No conflicts recorded yet.</div>';
 
   return (
     '<div class="meta" style="margin-top:20px;margin-bottom:8px;font-weight:600;">Conflicts</div>' +
-    rows
+    rows +
+    renderRecordConflictForm(plan)
   );
 }
 
@@ -949,6 +1014,84 @@ document.addEventListener("click", async (e) => {
       showNotification("Failed to attach evidence: " + err.message, "error");
       submitAttachEvidenceBtn.disabled = false;
       submitAttachEvidenceBtn.textContent = originalText;
+    }
+    return;
+  }
+  const toggleRecordConflictBtn = e.target.closest('[data-action="toggleRecordConflict"]');
+  if (toggleRecordConflictBtn) {
+    const form = document.getElementById("recordConflictForm");
+    if (form) form.style.display = form.style.display === "none" ? "grid" : "none";
+    return;
+  }
+  const cancelRecordConflictBtn = e.target.closest('[data-action="cancelRecordConflict"]');
+  if (cancelRecordConflictBtn) {
+    const form = document.getElementById("recordConflictForm");
+    if (form) form.style.display = "none";
+    return;
+  }
+  const submitRecordConflictBtn = e.target.closest('[data-action="submitRecordConflict"]');
+  if (submitRecordConflictBtn) {
+    const form = document.getElementById("recordConflictForm");
+    const planId = form?.dataset.planId;
+    if (!planId || submitRecordConflictBtn.disabled) return;
+    const type = document.getElementById("conflictType")?.value || "other";
+    const taskId = document.getElementById("conflictTaskId")?.value || undefined;
+    const description = document.getElementById("conflictDescription")?.value.trim();
+    if (!description) {
+      showNotification("Describe the conflict before recording it", "error");
+      return;
+    }
+    const originalText = submitRecordConflictBtn.textContent;
+    submitRecordConflictBtn.disabled = true;
+    submitRecordConflictBtn.textContent = "Recording…";
+    try {
+      await postJSON("/api/iris/plans/" + encodeURIComponent(planId) + "/conflicts", {
+        type,
+        description,
+        taskIds: taskId ? [taskId] : undefined,
+      });
+      showNotification("Conflict recorded");
+      await openPlanDetail(planId);
+    } catch (err) {
+      showNotification("Failed to record conflict: " + err.message, "error");
+      submitRecordConflictBtn.disabled = false;
+      submitRecordConflictBtn.textContent = originalText;
+    }
+    return;
+  }
+  const toggleResolveBtn = e.target.closest('[data-action="toggleResolveConflict"]');
+  if (toggleResolveBtn) {
+    const conflictId = toggleResolveBtn.dataset.conflictId;
+    const form = document.getElementById("resolveForm-" + conflictId);
+    if (form) form.style.display = form.style.display === "none" ? "grid" : "none";
+    return;
+  }
+  const submitResolveBtn = e.target.closest('[data-action="submitResolveConflict"]');
+  if (submitResolveBtn) {
+    const form = submitResolveBtn.closest("[data-plan-id][data-conflict-id]");
+    const planId = form?.dataset.planId;
+    const conflictId = form?.dataset.conflictId;
+    const status = submitResolveBtn.dataset.status;
+    if (!planId || !conflictId || submitResolveBtn.disabled) return;
+    const resolution = form.querySelector(".resolve-note")?.value.trim();
+    if (!resolution) {
+      showNotification("A resolution note is required", "error");
+      return;
+    }
+    const originalText = submitResolveBtn.textContent;
+    submitResolveBtn.disabled = true;
+    submitResolveBtn.textContent = "Saving…";
+    try {
+      await patchJSON(
+        "/api/iris/plans/" + encodeURIComponent(planId) + "/conflicts/" + encodeURIComponent(conflictId) + "/resolve",
+        { status, resolution },
+      );
+      showNotification(status === "dismissed" ? "Conflict dismissed" : "Conflict resolved");
+      await openPlanDetail(planId);
+    } catch (err) {
+      showNotification("Failed to update conflict: " + err.message, "error");
+      submitResolveBtn.disabled = false;
+      submitResolveBtn.textContent = originalText;
     }
   }
 });
