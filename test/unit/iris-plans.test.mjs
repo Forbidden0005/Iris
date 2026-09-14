@@ -9,9 +9,11 @@ process.env.CREWSWARM_STATE_DIR = TEST_DIR;
 
 import { resetPaths } from "../../lib/runtime/paths.mjs";
 import {
+  addIrisPlanEvidence,
   addIrisPlanTask,
   clearIrisPlans,
   createIrisPlan,
+  listIrisPlanEvidence,
   listIrisPlans,
   loadIrisPlan,
   updateIrisPlanStatus,
@@ -147,6 +149,157 @@ describe("Iris plan skeleton", () => {
     assert.throws(
       () => addIrisPlanTask("good-plan", { id: "bad-task", status: "wat" }),
       /Invalid Iris task status/,
+    );
+  });
+});
+
+describe("Iris plan evidence", () => {
+  test("adds evidence to a plan", () => {
+    createIrisPlan({ id: "plan-evidence-basic", userRequest: "Ship the thing" });
+
+    const record = addIrisPlanEvidence("plan-evidence-basic", {
+      type: "note",
+      data: { text: "Looked fine on manual check" },
+    }, { now: Date.parse("2026-09-14T12:00:00.000Z") });
+
+    assert.equal(record.type, "note");
+    assert.equal(record.planId, "plan-evidence-basic");
+    assert.equal(record.data.text, "Looked fine on manual check");
+    assert.equal(record.createdAt, "2026-09-14T12:00:00.000Z");
+
+    const loaded = loadIrisPlan("plan-evidence-basic");
+    assert.equal(loaded.evidence.length, 1);
+    assert.equal(loaded.evidence[0].id, record.id);
+
+    const listed = listIrisPlanEvidence("plan-evidence-basic");
+    assert.deepEqual(listed, loaded.evidence);
+  });
+
+  test("generates a stable evidence id when omitted", () => {
+    createIrisPlan({ id: "plan-evidence-id", userRequest: "Check ids" });
+    const record = addIrisPlanEvidence("plan-evidence-id", {
+      type: "note",
+      data: { text: "note" },
+    });
+    assert.match(record.id, /^evidence_/);
+
+    const withId = addIrisPlanEvidence("plan-evidence-id", {
+      id: "evidence-fixed",
+      type: "note",
+      data: { text: "second note" },
+    });
+    assert.equal(withId.id, "evidence-fixed");
+  });
+
+  test("requires type-specific fields", () => {
+    createIrisPlan({ id: "plan-evidence-required", userRequest: "Check required fields" });
+
+    assert.throws(
+      () => addIrisPlanEvidence("plan-evidence-required", { type: "file", data: {} }),
+      /requires data\.path/,
+    );
+    assert.throws(
+      () => addIrisPlanEvidence("plan-evidence-required", { type: "command", data: {} }),
+      /requires data\.command/,
+    );
+    assert.throws(
+      () => addIrisPlanEvidence("plan-evidence-required", { type: "message", data: {} }),
+      /requires data\.excerpt/,
+    );
+    assert.throws(
+      () => addIrisPlanEvidence("plan-evidence-required", { type: "note", data: {} }),
+      /requires data\.text/,
+    );
+    assert.throws(
+      () => addIrisPlanEvidence("plan-evidence-required", { type: "artifact", data: {} }),
+      /requires data\.path or data\.url/,
+    );
+
+    // Valid minimal records for each type should not throw.
+    addIrisPlanEvidence("plan-evidence-required", { type: "file", data: { path: "a.txt" } });
+    addIrisPlanEvidence("plan-evidence-required", { type: "command", data: { command: "npm test" } });
+    addIrisPlanEvidence("plan-evidence-required", { type: "message", data: { excerpt: "looks good" } });
+    addIrisPlanEvidence("plan-evidence-required", { type: "artifact", data: { url: "https://example.com" } });
+  });
+
+  test("rejects an invalid evidence type", () => {
+    createIrisPlan({ id: "plan-evidence-invalid-type", userRequest: "Check type validation" });
+    assert.throws(
+      () => addIrisPlanEvidence("plan-evidence-invalid-type", { type: "screenshot", data: {} }),
+      /Invalid Iris evidence type/,
+    );
+  });
+
+  test("attaches evidence id to the referenced task", () => {
+    createIrisPlan({ id: "plan-evidence-task", userRequest: "Link evidence to a task" });
+    const task = addIrisPlanTask("plan-evidence-task", {
+      id: "task-with-evidence",
+      agentId: "qa",
+      title: "Run tests",
+    });
+    assert.deepEqual(task.evidenceIds, []);
+
+    const record = addIrisPlanEvidence("plan-evidence-task", {
+      type: "command",
+      taskId: "task-with-evidence",
+      data: { command: "npm test", exitCode: 0, passed: true },
+    });
+
+    const loaded = loadIrisPlan("plan-evidence-task");
+    const loadedTask = loaded.tasks.find((t) => t.id === "task-with-evidence");
+    assert.deepEqual(loadedTask.evidenceIds, [record.id]);
+
+    assert.throws(
+      () =>
+        addIrisPlanEvidence("plan-evidence-task", {
+          type: "note",
+          taskId: "no-such-task",
+          data: { text: "orphaned" },
+        }),
+      /Iris task not found: no-such-task/,
+    );
+  });
+
+  test("old plans with missing or raw evidence still load", () => {
+    // Simulate a plan file written before Evidence v1 existed: no evidence
+    // key at all, plus a second plan with a malformed evidence entry.
+    const root = path.join(TEST_DIR, "iris-plans");
+    fs.mkdirSync(root, { recursive: true });
+
+    fs.writeFileSync(
+      path.join(root, "legacy-no-evidence.json"),
+      JSON.stringify({
+        id: "legacy-no-evidence",
+        userRequest: "Predates evidence",
+        status: "draft",
+        tasks: [],
+        createdAt: "2026-09-01T00:00:00.000Z",
+        updatedAt: "2026-09-01T00:00:00.000Z",
+      }),
+    );
+
+    fs.writeFileSync(
+      path.join(root, "legacy-raw-evidence.json"),
+      JSON.stringify({
+        id: "legacy-raw-evidence",
+        userRequest: "Has junk evidence",
+        status: "draft",
+        tasks: [],
+        evidence: [{ note: "not a real evidence record" }],
+        createdAt: "2026-09-01T00:00:00.000Z",
+        updatedAt: "2026-09-01T00:00:00.000Z",
+      }),
+    );
+
+    const noEvidence = loadIrisPlan("legacy-no-evidence");
+    assert.deepEqual(noEvidence.evidence, []);
+
+    const rawEvidence = loadIrisPlan("legacy-raw-evidence");
+    assert.deepEqual(rawEvidence.evidence, [{ note: "not a real evidence record" }]);
+
+    assert.deepEqual(
+      listIrisPlans().map((p) => p.id).sort(),
+      ["legacy-no-evidence", "legacy-raw-evidence"],
     );
   });
 });

@@ -119,6 +119,41 @@ Acceptance criteria:
 - Evidence supports at least file, command, message, and note types.
 - Evidence records are serializable and validated.
 
+Current implementation — Evidence v1:
+
+- Evidence lives embedded in the plan's JSON file (`plan.evidence`, an
+  array), not a separate store. No SQLite.
+- Five types in v1: `file`, `command`, `message`, `note`, `artifact`.
+- Common fields on every evidence record: `id`, `planId`, `taskId`
+  (nullable), `type`, `title`, `summary` (nullable), `createdAt`, `source`
+  (freeform object or null), `data` (type-specific object), `metadata`.
+- Required fields inside `data`, enforced by `addIrisPlanEvidence`:
+  - `file` → `path`
+  - `command` → `command`
+  - `message` → `excerpt`
+  - `note` → `text`
+  - `artifact` → `path` or `url` (either one)
+- `id` and `title` are auto-generated when omitted (title falls back to a
+  type-specific default like `File: <path>`); `createdAt` defaults to now.
+- `lib/iris/plans.mjs` exports `addIrisPlanEvidence(planId, evidence, options?)`
+  and `listIrisPlanEvidence(planId, options?)`. Setting `evidence.taskId`
+  attaches the new evidence id to that task's `evidenceIds` — the referenced
+  task must already exist on the plan or the call throws.
+- **Evidence is manually attached only.** Nothing reads RT messages, task
+  logs, or the filesystem to generate evidence automatically. A caller
+  (dashboard, CLI, or a future dispatch hook) has to call
+  `addIrisPlanEvidence` explicitly. This is deliberate: Iris should not
+  claim proof of something it did not actually verify.
+- Backward compatibility: plans written before Evidence v1 (missing the
+  `evidence` key) or containing hand-edited/malformed evidence entries
+  still load without throwing — `loadIrisPlan`/`listIrisPlans` pass
+  existing evidence through as-is. Only *new* evidence added via
+  `addIrisPlanEvidence` is validated against the schema above.
+- The dashboard does not render evidence yet — Slice 5's Plan View still
+  only shows plan/task fields. Surfacing evidence read-only is left for a
+  follow-up once there's a real evidence-producing caller, so the UI isn't
+  built around empty arrays.
+
 ### Slice 5: Dashboard Plan View
 
 Expose plan/task/evidence records in the dashboard.
