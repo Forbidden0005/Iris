@@ -63,6 +63,9 @@
         <button class="nav-item" id="navProjects" data-view="projects">
           <span class="nav-icon">📁</span> Projects
         </button>
+        <button class="nav-item" id="navPlans" data-view="plans">
+          <span class="nav-icon">🗂️</span> Plans
+        </button>
         <button class="nav-item" id="navContacts" data-view="contacts">
           <span class="nav-icon">👥</span> Contacts
         </button>
@@ -1466,6 +1469,35 @@
           </div>
         </div>
         <div id="projectsList" style="display: grid; gap: 14px"></div>
+      </div>
+
+      <!-- Iris Plans (read-only) -->
+      <div class="view" id="plansView">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Plans</div>
+            <div class="page-sub">
+              A durable record of what Iris was asked to do — not a live
+              orchestration monitor. Nothing here updates automatically yet.
+            </div>
+          </div>
+        </div>
+
+        <div id="plansListPanel">
+          <div id="plansList" style="display: grid; gap: 14px"></div>
+        </div>
+
+        <div id="planDetailPanel" style="display: none">
+          <button
+            type="button"
+            class="btn-ghost"
+            data-action="closePlanDetail"
+            style="margin-bottom: 12px"
+          >
+            ← Back to plans
+          </button>
+          <div id="planDetailBody"></div>
+        </div>
       </div>
 
       <!-- Contacts -->

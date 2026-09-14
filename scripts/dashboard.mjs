@@ -23,6 +23,13 @@ import {
   normalizeRtAgentId,
 } from "../lib/agent-registry.mjs";
 import { toIrisAgentView } from "../lib/iris/identity.mjs";
+import {
+  createIrisPlan,
+  listIrisPlans,
+  loadIrisPlan,
+  updateIrisPlanStatus,
+  updateIrisPlanTaskStatus,
+} from "../lib/iris/plans.mjs";
 import { acquireStartupLock } from "../lib/runtime/startup-guard.mjs";
 import {
   buildToolInstructions,
@@ -6825,6 +6832,99 @@ const server = http.createServer(async (req, res) => {
         );
       }
       return true;
+    }
+
+    function sendJson(res, status, body) {
+      if (res.headersSent) return;
+      res.writeHead(status, { "content-type": "application/json" });
+      res.end(JSON.stringify(body));
+    }
+
+    async function readRequestJson(req) {
+      let body = "";
+      for await (const chunk of req) body += chunk;
+      return body ? JSON.parse(body) : {};
+    }
+
+    if (url.pathname === "/api/iris/plans" && req.method === "GET") {
+      try {
+        const projectId = url.searchParams.get("projectId") || undefined;
+        const status = url.searchParams.get("status") || undefined;
+        const plans = listIrisPlans({ projectId, status });
+        sendJson(res, 200, { ok: true, plans });
+      } catch (error) {
+        sendJson(res, 500, { ok: false, error: error.message });
+      }
+      return;
+    }
+
+    if (url.pathname === "/api/iris/plans" && req.method === "POST") {
+      try {
+        const body = await readRequestJson(req);
+        const plan = createIrisPlan({
+          id: body.id,
+          title: body.title,
+          userRequest: body.userRequest || body.request || "",
+          projectId: body.projectId,
+          requestedBy: body.requestedBy,
+          status: body.status,
+          tasks: body.tasks,
+          evidence: body.evidence,
+          metadata: body.metadata,
+        });
+        sendJson(res, 201, { ok: true, plan });
+      } catch (error) {
+        sendJson(res, 400, { ok: false, error: error.message });
+      }
+      return;
+    }
+
+    if (url.pathname.startsWith("/api/iris/plans/")) {
+      const parts = url.pathname
+        .slice("/api/iris/plans/".length)
+        .split("/")
+        .filter(Boolean)
+        .map((part) => decodeURIComponent(part));
+      const [planId, action, taskId, taskAction] = parts;
+      const projectId = url.searchParams.get("projectId") || undefined;
+
+      try {
+        if (!planId) {
+          sendJson(res, 400, { ok: false, error: "Iris plan id is required" });
+          return;
+        }
+
+        if (req.method === "GET" && parts.length === 1) {
+          const plan = loadIrisPlan(planId, { projectId });
+          if (!plan) {
+            sendJson(res, 404, { ok: false, error: "Iris plan not found" });
+            return;
+          }
+          sendJson(res, 200, { ok: true, plan });
+          return;
+        }
+
+        if (req.method === "PATCH" && action === "status" && parts.length === 2) {
+          const body = await readRequestJson(req);
+          const plan = updateIrisPlanStatus(planId, body.status, { projectId });
+          sendJson(res, 200, { ok: true, plan });
+          return;
+        }
+
+        if (req.method === "PATCH" && action === "tasks" && taskAction === "status" && parts.length === 4) {
+          const body = await readRequestJson(req);
+          const { status, ...updates } = body;
+          const task = updateIrisPlanTaskStatus(planId, taskId, status, updates, { projectId });
+          sendJson(res, 200, { ok: true, task, plan: loadIrisPlan(planId, { projectId }) });
+          return;
+        }
+
+        sendJson(res, 404, { ok: false, error: "Unknown Iris plan route" });
+      } catch (error) {
+        const status = /not found/i.test(error.message) ? 404 : 400;
+        sendJson(res, status, { ok: false, error: error.message });
+      }
+      return;
     }
 
     if (url.pathname === "/api/chat/unified" && req.method === "POST") {

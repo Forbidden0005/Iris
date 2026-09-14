@@ -52,6 +52,7 @@ import {
   restartService,
   stopService,
 } from "./tabs/services-tab.js";
+import { initPlansTab, showPlans } from "./tabs/plans-tab.js";
 import {
   initAgentsTab,
   showAgents,
@@ -320,6 +321,7 @@ function hideAllViews() {
 }
 
 initServicesTab({ hideAllViews, setNavActive });
+initPlansTab({ hideAllViews, setNavActive });
 initAgentsTab({ hideAllViews, setNavActive, refreshAgents: loadAgents_cfg });
 initPromptsTabDeps({ hideAllViews, setNavActive });
 initSwarmTab({ hideAllViews, setNavActive });
@@ -2004,6 +2006,7 @@ const VIEW_MAP = {
   build: showBuild,
   messaging: showMessaging,
   projects: showProjects,
+  plans: showPlans,
   contacts: showContacts,
   memory: showMemoryView,
   workflows: showWorkflows,
@@ -2148,6 +2151,7 @@ const ACTION_REGISTRY = {
   showFiles,
   showDLQ,
   showProjects,
+  showPlans,
   showAgents,
   showModels,
   showEngines,
@@ -2666,6 +2670,7 @@ const NAV_VIEW_MAP = {
   files: showFiles,
   dlq: showDLQ,
   projects: showProjects,
+  plans: showPlans,
   contacts: showContacts,
   agents: showAgents,
   models: showModels,
@@ -2802,6 +2807,7 @@ Object.assign(window, {
   showDLQ,
   showFiles,
   showModels,
+  showPlans,
   showProjects,
   showRT,
   showRunSkills,

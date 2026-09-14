@@ -7,6 +7,7 @@ Documentation index for the crewswarm multi-agent orchestration stack.
 | Doc | Description |
 |-----|-------------|
 | [IRIS_FOUNDATION.md](IRIS_FOUNDATION.md) | Iris product direction, inherited crewswarm runtime, first moves, and phase-1 non-goals |
+| [IRIS_CAPABILITY_MAP.md](IRIS_CAPABILITY_MAP.md) | Iris plan/task/evidence/review capability map and next implementation slices |
 
 ## Canonical docs (source of truth)
 
