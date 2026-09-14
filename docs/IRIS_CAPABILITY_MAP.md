@@ -287,6 +287,26 @@ Current implementation:
 - Not wired to dispatch, RT bus, or engine adapters — this slice only
   decides whether a plan record should exist.
 
+### Slice 8: Plan Task → Dispatch Linking (bridge only, not wired)
+
+A plan task and a real RT/dispatch task are currently unrelated — a plan
+task has no way to point at the actual work item dispatch created for it.
+
+Current implementation:
+
+- `task.dispatchTaskId` (nullable) added to the task schema in
+  `lib/iris/plans.mjs`. Backward compatible — existing task records
+  without it just load as `null`.
+- `linkIrisPlanTaskToDispatch(planId, taskId, dispatchTaskId, options?)` is
+  the only function that ever writes this field. It never generates a
+  dispatch id itself — it only records one a caller already has.
+- **Not wired to dispatch, the RT bus, `gateway-bridge.mjs`, or
+  `wave-dispatcher.mjs`.** Nothing calls this function yet. The real work —
+  having dispatch call back into Iris once it actually creates a task for
+  a plan's task — touches files explicitly protected across every slice
+  in this project and needs its own explicit ownership handoff before
+  anyone edits them, the same way chat-handler.mjs wiring did in Slice 7.
+
 ## Suggested Next Implementation
 
 Start with Slice 3: Iris Plan Skeleton.

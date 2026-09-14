@@ -15,6 +15,7 @@ import {
   createIrisPlan,
   createIrisPlanReview,
   generateIrisPlanReview,
+  linkIrisPlanTaskToDispatch,
   listIrisPlanEvidence,
   listIrisPlanReviews,
   listIrisPlans,
@@ -643,5 +644,52 @@ describe("Iris plan review generator", () => {
     const loadedPlan = loadIrisPlan(planId);
     assert.equal(loadedPlan.reviews.length, 1);
     assert.equal(loadedPlan.reviews[0].id, generated.id);
+  });
+});
+
+describe("Iris plan task dispatch linking", () => {
+  test("links a task to an external dispatch task id", () => {
+    createIrisPlan({ id: "plan-link-basic", userRequest: "Link a task" });
+    const task = addIrisPlanTask("plan-link-basic", { id: "task-a", title: "A" });
+    assert.equal(task.dispatchTaskId, null);
+
+    const linked = linkIrisPlanTaskToDispatch("plan-link-basic", "task-a", "rt-task-123", {
+      now: Date.parse("2026-09-14T16:00:00.000Z"),
+    });
+    assert.equal(linked.dispatchTaskId, "rt-task-123");
+    assert.equal(linked.updatedAt, "2026-09-14T16:00:00.000Z");
+
+    const loaded = loadIrisPlan("plan-link-basic");
+    assert.equal(loaded.tasks[0].dispatchTaskId, "rt-task-123");
+  });
+
+  test("rejects an empty dispatch task id", () => {
+    createIrisPlan({ id: "plan-link-empty", userRequest: "Reject empty" });
+    addIrisPlanTask("plan-link-empty", { id: "task-a", title: "A" });
+    assert.throws(
+      () => linkIrisPlanTaskToDispatch("plan-link-empty", "task-a", ""),
+      /dispatchTaskId is required/,
+    );
+  });
+
+  test("throws for an unknown plan or task", () => {
+    assert.throws(
+      () => linkIrisPlanTaskToDispatch("no-such-plan", "task-a", "rt-1"),
+      /Iris plan not found: no-such-plan/,
+    );
+
+    createIrisPlan({ id: "plan-link-unknown-task", userRequest: "Unknown task" });
+    assert.throws(
+      () => linkIrisPlanTaskToDispatch("plan-link-unknown-task", "no-such-task", "rt-1"),
+      /Iris task not found: no-such-task/,
+    );
+  });
+
+  test("existing task records without dispatchTaskId still load as null", () => {
+    createIrisPlan({ id: "plan-link-legacy", userRequest: "Legacy task" });
+    addIrisPlanTask("plan-link-legacy", { id: "task-a", title: "A" });
+
+    const loaded = loadIrisPlan("plan-link-legacy");
+    assert.equal(loaded.tasks[0].dispatchTaskId, null);
   });
 });
