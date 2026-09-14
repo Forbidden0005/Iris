@@ -34,6 +34,17 @@ const TASK_STATUS_COLORS = {
   cancelled: "var(--text-3)",
 };
 
+// Neutral on purpose — an evidence type badge is not a pass/fail signal.
+// Whether something is "verified" is up to the record's own fields
+// (e.g. command.passed), never implied by the UI.
+const EVIDENCE_TYPE_LABELS = {
+  file: "File",
+  command: "Command",
+  message: "Message",
+  note: "Note",
+  artifact: "Artifact",
+};
+
 export function initPlansTab(deps = {}) {
   hideAllViews = deps.hideAllViews || hideAllViews;
   setNavActive = deps.setNavActive || setNavActive;
@@ -192,7 +203,110 @@ function renderPlanDetail(plan) {
         "</div>"
       : "") +
     '<div class="meta" style="margin-bottom:8px;font-weight:600;">Tasks</div>' +
-    taskRows
+    taskRows +
+    renderEvidenceSection(plan)
+  );
+}
+
+// ── Evidence (read-only) ──────────────────────────────────────────────────
+
+function formatEvidenceCreatedAt(createdAt) {
+  if (!createdAt) return "";
+  const d = new Date(createdAt);
+  return Number.isNaN(d.getTime()) ? "" : d.toLocaleString();
+}
+
+function findTaskById(tasks, taskId) {
+  if (!taskId) return null;
+  return tasks.find((t) => t && t.id === taskId) || null;
+}
+
+function renderEvidenceDataPreview(type, data) {
+  const d = data && typeof data === "object" ? data : {};
+  const lines = [];
+
+  switch (type) {
+    case "file":
+      if (d.path) lines.push("Path: " + escHtml(d.path));
+      if (d.action) lines.push("Action: " + escHtml(d.action));
+      if (d.hash) lines.push("Hash: " + escHtml(d.hash));
+      break;
+    case "command":
+      if (d.command) lines.push("Command: " + escHtml(d.command));
+      if (d.exitCode !== undefined && d.exitCode !== null)
+        lines.push("Exit code: " + escHtml(String(d.exitCode)));
+      if (d.passed !== undefined && d.passed !== null)
+        lines.push("Passed: " + escHtml(String(d.passed)));
+      if (d.outputExcerpt) lines.push("Output: " + escHtml(d.outputExcerpt));
+      break;
+    case "message":
+      if (d.agentId) lines.push("Agent: " + escHtml(d.agentId));
+      if (d.excerpt) lines.push(escHtml(d.excerpt));
+      break;
+    case "note":
+      if (d.text) lines.push(escHtml(d.text));
+      break;
+    case "artifact":
+      if (d.path || d.url)
+        lines.push((d.path ? "Path: " : "URL: ") + escHtml(d.path || d.url));
+      if (d.label) lines.push("Label: " + escHtml(d.label));
+      break;
+    default:
+      break;
+  }
+
+  return lines
+    .map((line) => '<div class="meta" style="margin-top:4px;">' + line + "</div>")
+    .join("");
+}
+
+function renderEvidenceRow(entry, tasks) {
+  const type = String(entry?.type || "unknown");
+  const typeLabel = escHtml(EVIDENCE_TYPE_LABELS[type] || type || "Unknown");
+  const title = escHtml(entry?.title || "Untitled evidence");
+  const createdAt = formatEvidenceCreatedAt(entry?.createdAt);
+  const linkedTask = findTaskById(tasks, entry?.taskId);
+
+  return (
+    '<div class="card" style="margin-bottom:8px;">' +
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">' +
+    "<div>" +
+    '<span style="font-size:11px;padding:2px 8px;border-radius:999px;background:var(--bg-card2);color:var(--text-2);border:1px solid var(--border);margin-right:8px;">' +
+    typeLabel +
+    "</span>" +
+    '<strong style="font-size:13px;">' +
+    title +
+    "</strong>" +
+    "</div>" +
+    (createdAt
+      ? '<div class="meta" style="white-space:nowrap;">' + escHtml(createdAt) + "</div>"
+      : "") +
+    "</div>" +
+    (entry?.summary
+      ? '<div class="meta" style="margin-top:8px;">' + escHtml(entry.summary) + "</div>"
+      : "") +
+    (linkedTask
+      ? '<div class="meta" style="margin-top:8px;">Task: ' +
+        escHtml(linkedTask.displayName || linkedTask.title || linkedTask.id) +
+        "</div>"
+      : "") +
+    '<div style="margin-top:4px;">' +
+    renderEvidenceDataPreview(type, entry?.data) +
+    "</div>" +
+    "</div>"
+  );
+}
+
+function renderEvidenceSection(plan) {
+  const evidence = Array.isArray(plan.evidence) ? plan.evidence : [];
+  const tasks = Array.isArray(plan.tasks) ? plan.tasks : [];
+  const rows = evidence.length
+    ? evidence.map((entry) => renderEvidenceRow(entry, tasks)).join("")
+    : '<div class="meta" style="padding:12px 0;">No evidence attached yet.</div>';
+
+  return (
+    '<div class="meta" style="margin-top:20px;margin-bottom:8px;font-weight:600;">Evidence</div>' +
+    rows
   );
 }
 
