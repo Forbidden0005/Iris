@@ -24,6 +24,7 @@ import {
 } from "../lib/agent-registry.mjs";
 import { toIrisAgentView } from "../lib/iris/identity.mjs";
 import {
+  addIrisPlanTask,
   createIrisPlan,
   generateIrisPlanReview,
   listIrisPlans,
@@ -6909,6 +6910,25 @@ const server = http.createServer(async (req, res) => {
           const body = await readRequestJson(req);
           const plan = updateIrisPlanStatus(planId, body.status, { projectId });
           sendJson(res, 200, { ok: true, plan });
+          return;
+        }
+
+        // Explicit, user-triggered task creation only. No auto-dispatch —
+        // a newly created task is just a record until someone clicks
+        // "Dispatch task" separately.
+        if (req.method === "POST" && action === "tasks" && parts.length === 2) {
+          const body = await readRequestJson(req);
+          const task = addIrisPlanTask(
+            planId,
+            {
+              title: body.title,
+              instructions: body.instructions,
+              agentId: body.runtimeAgentId || body.agentId,
+              allowedTools: Array.isArray(body.allowedTools) ? body.allowedTools : undefined,
+            },
+            { projectId },
+          );
+          sendJson(res, 201, { ok: true, task, plan: loadIrisPlan(planId, { projectId }) });
           return;
         }
 

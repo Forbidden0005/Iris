@@ -230,6 +230,7 @@ function renderPlanDetail(plan) {
       : "") +
     '<div class="meta" style="margin-bottom:8px;font-weight:600;">Tasks</div>' +
     taskRows +
+    renderAddTaskForm(plan.id) +
     renderEvidenceSection(plan) +
     renderReviewsSection(plan) +
     renderConflictsSection(plan) +
@@ -604,6 +605,26 @@ function renderReviewsSection(plan) {
   );
 }
 
+function renderAddTaskForm(planId) {
+  const idAttr = escHtml(planId);
+  return (
+    '<div style="margin-top:8px;">' +
+    '<button type="button" class="btn-ghost" data-action="toggleAddTask" style="font-size:12px;padding:4px 10px;">+ Add task</button>' +
+    '<div id="addTaskForm" data-plan-id="' +
+    idAttr +
+    '" style="display:none;margin-top:8px;padding:10px;border:1px solid var(--border);border-radius:8px;gap:6px;max-width:420px;">' +
+    '<input id="addTaskTitle" placeholder="Title" style="font-size:12px;" />' +
+    '<textarea id="addTaskInstructions" placeholder="Instructions" rows="2" style="font-size:12px;"></textarea>' +
+    '<input id="addTaskAgent" placeholder="Agent (e.g. coder, qa, builder)" style="font-size:12px;" />' +
+    '<div style="display:flex;gap:6px;">' +
+    '<button type="button" class="btn-green" data-action="submitAddTask" style="font-size:12px;padding:4px 10px;">Add task</button>' +
+    '<button type="button" class="btn-ghost" data-action="cancelAddTask" style="font-size:12px;padding:4px 10px;">Cancel</button>' +
+    "</div>" +
+    "</div>" +
+    "</div>"
+  );
+}
+
 function renderTaskRow(task, planId) {
   const statusColor = TASK_STATUS_COLORS[task.status] || "var(--text-3)";
   const label = escHtml(task.displayName || task.runtimeAgentId || "agent");
@@ -767,6 +788,48 @@ document.addEventListener("click", async (e) => {
       showNotification("Failed to dispatch task: " + err.message, "error");
       dispatchBtn.disabled = false;
       dispatchBtn.textContent = originalText;
+    }
+    return;
+  }
+  const toggleAddTaskBtn = e.target.closest('[data-action="toggleAddTask"]');
+  if (toggleAddTaskBtn) {
+    const form = document.getElementById("addTaskForm");
+    if (form) form.style.display = form.style.display === "none" ? "grid" : "none";
+    return;
+  }
+  const cancelAddTaskBtn = e.target.closest('[data-action="cancelAddTask"]');
+  if (cancelAddTaskBtn) {
+    const form = document.getElementById("addTaskForm");
+    if (form) form.style.display = "none";
+    return;
+  }
+  const submitAddTaskBtn = e.target.closest('[data-action="submitAddTask"]');
+  if (submitAddTaskBtn) {
+    const form = document.getElementById("addTaskForm");
+    const planId = form?.dataset.planId;
+    if (!planId || submitAddTaskBtn.disabled) return;
+    const title = document.getElementById("addTaskTitle")?.value.trim();
+    const instructions = document.getElementById("addTaskInstructions")?.value.trim();
+    const agent = document.getElementById("addTaskAgent")?.value.trim();
+    if (!title && !instructions) {
+      showNotification("Give the task a title or instructions", "error");
+      return;
+    }
+    const originalText = submitAddTaskBtn.textContent;
+    submitAddTaskBtn.disabled = true;
+    submitAddTaskBtn.textContent = "Adding…";
+    try {
+      await postJSON("/api/iris/plans/" + encodeURIComponent(planId) + "/tasks", {
+        title,
+        instructions,
+        runtimeAgentId: agent || undefined,
+      });
+      showNotification("Task added");
+      await openPlanDetail(planId);
+    } catch (err) {
+      showNotification("Failed to add task: " + err.message, "error");
+      submitAddTaskBtn.disabled = false;
+      submitAddTaskBtn.textContent = originalText;
     }
   }
 });
