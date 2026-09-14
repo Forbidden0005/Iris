@@ -63,6 +63,8 @@ describe("createDraftPlanFromChatRequest", () => {
     assert.equal(plan.status, "draft");
     assert.equal(plan.projectId, "iris");
     assert.equal(plan.requestedBy, "tyler");
+    assert.equal(plan.userRequest, "Build me a team to audit the dashboard for security issues");
+    assert.equal(plan.title, "Build me a team to audit the dashboard for security issues");
     assert.equal(plan.metadata.source, "chat");
     assert.equal(plan.metadata.detected, true);
   });

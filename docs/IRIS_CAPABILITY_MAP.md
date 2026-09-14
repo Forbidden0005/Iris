@@ -286,6 +286,18 @@ Current implementation:
   suites still passing unchanged.
 - Not wired to dispatch, RT bus, or engine adapters — this slice only
   decides whether a plan record should exist.
+- **Scope note, re-confirmed:** this only ever creates a *plan* from a
+  coordination-shaped chat message — `title` (auto-derived from
+  `userRequest` via the same fallback every other plan-creation path
+  uses), `userRequest`, `projectId`, and `requestedBy` (the chat `userId`)
+  are all populated, verified by re-reading `createDraftPlanFromChatRequest`
+  and its call site directly. It never creates a task, links dispatch, or
+  attaches evidence — a chat-created plan shows up in the dashboard's Plan
+  View exactly like a manually created one (same list, sorted newest
+  first by `updatedAt`, same Refresh button), with `metadata.source:
+  "chat"` as the only marker distinguishing it from one made through the
+  API. Ordinary chat questions and small talk never create a plan; only
+  messages `looksLikeCoordinationRequest` matches do.
 
 ### Slice 8: Plan Task → Dispatch Linking (bridge only, not wired)
 
