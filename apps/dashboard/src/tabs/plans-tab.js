@@ -217,7 +217,68 @@ function renderPlanDetail(plan) {
     '<div class="meta" style="margin-bottom:8px;font-weight:600;">Tasks</div>' +
     taskRows +
     renderEvidenceSection(plan) +
-    renderReviewsSection(plan)
+    renderReviewsSection(plan) +
+    renderLimitsSection(plan)
+  );
+}
+
+// ── Run limits (read-only, advisory) ───────────────────────────────────────
+
+function computePlanUsage(plan) {
+  const tasks = Array.isArray(plan.tasks) ? plan.tasks : [];
+  const evidence = Array.isArray(plan.evidence) ? plan.evidence : [];
+  const reviews = Array.isArray(plan.reviews) ? plan.reviews : [];
+  return {
+    taskCount: tasks.length,
+    dispatchedTaskCount: tasks.filter((t) => Boolean(t?.dispatchTaskId)).length,
+    evidenceCount: evidence.length,
+    reviewGenerationCount: reviews.filter((r) => r?.metadata?.generated === true).length,
+  };
+}
+
+function renderLimitRow(label, used, max) {
+  const hasMax = typeof max === "number" && Number.isFinite(max);
+  return (
+    '<div class="meta" style="margin-top:4px;">' +
+    escHtml(label) +
+    ": " +
+    escHtml(String(used)) +
+    (hasMax ? " / " + escHtml(String(max)) : "") +
+    "</div>"
+  );
+}
+
+function renderLimitsSection(plan) {
+  const limits = plan.limits && typeof plan.limits === "object" ? plan.limits : {};
+  const usage = computePlanUsage(plan);
+
+  const rows =
+    renderLimitRow("Tasks", usage.taskCount, limits.maxTasks) +
+    renderLimitRow("Dispatched", usage.dispatchedTaskCount, limits.maxDispatches) +
+    renderLimitRow("Evidence attached", usage.evidenceCount, null) +
+    renderLimitRow("Reviews generated", usage.reviewGenerationCount, limits.maxReviewGenerations);
+
+  // Runtime/cost usage isn't tracked anywhere yet — show the declared
+  // limit as a note rather than pretending a "0 / N" usage number.
+  const untracked = [];
+  if (typeof limits.maxRuntimeMinutes === "number") {
+    untracked.push(
+      "Runtime limit: " + escHtml(String(limits.maxRuntimeMinutes)) + " min (usage not tracked yet)",
+    );
+  }
+  if (typeof limits.maxEstimatedCostUsd === "number") {
+    untracked.push(
+      "Cost limit: $" + escHtml(String(limits.maxEstimatedCostUsd)) + " (usage not tracked yet)",
+    );
+  }
+  const untrackedRows = untracked
+    .map((line) => '<div class="meta" style="margin-top:4px;">' + line + "</div>")
+    .join("");
+
+  return (
+    '<div class="meta" style="margin-top:20px;margin-bottom:8px;font-weight:600;">Run Limits (advisory)</div>' +
+    rows +
+    untrackedRows
   );
 }
 
