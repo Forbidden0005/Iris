@@ -25,6 +25,7 @@ import {
 import { toIrisAgentView } from "../lib/iris/identity.mjs";
 import {
   createIrisPlan,
+  generateIrisPlanReview,
   listIrisPlans,
   loadIrisPlan,
   updateIrisPlanStatus,
@@ -6916,6 +6917,19 @@ const server = http.createServer(async (req, res) => {
           const { status, ...updates } = body;
           const task = updateIrisPlanTaskStatus(planId, taskId, status, updates, { projectId });
           sendJson(res, 200, { ok: true, task, plan: loadIrisPlan(planId, { projectId }) });
+          return;
+        }
+
+        // Explicit, user-triggered draft generation only — no auto-generation,
+        // no LLM call, no status other than "draft" ever comes out of this.
+        if (req.method === "POST" && action === "reviews" && taskId === "generate" && parts.length === 3) {
+          const body = await readRequestJson(req);
+          const review = generateIrisPlanReview(planId, {
+            projectId,
+            taskIds: Array.isArray(body.taskIds) ? body.taskIds : undefined,
+            includePlanEvidence: body.includePlanEvidence === true,
+          });
+          sendJson(res, 201, { ok: true, review, plan: loadIrisPlan(planId, { projectId }) });
           return;
         }
 

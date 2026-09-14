@@ -6,8 +6,8 @@
  * Plans are not yet written automatically by dispatch, so this view is a
  * plan register, not a live orchestration monitor.
  */
-import { getJSON } from "../core/api.js";
-import { escHtml, showEmpty, showError } from "../core/dom.js";
+import { getJSON, postJSON } from "../core/api.js";
+import { escHtml, showEmpty, showError, showNotification } from "../core/dom.js";
 import { state } from "../core/state.js";
 
 let hideAllViews = () => {};
@@ -448,7 +448,12 @@ function renderReviewsSection(plan) {
     : '<div class="meta" style="padding:12px 0;">No review packets yet.</div>';
 
   return (
-    '<div class="meta" style="margin-top:20px;margin-bottom:8px;font-weight:600;">Reviews</div>' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px;margin-bottom:8px;">' +
+    '<div class="meta" style="font-weight:600;">Reviews</div>' +
+    '<button type="button" class="btn-ghost" data-action="generateReview" data-plan-id="' +
+    escHtml(plan.id) +
+    '" style="font-size:12px;padding:4px 10px;">Generate draft review</button>' +
+    "</div>" +
     rows
   );
 }
@@ -497,7 +502,7 @@ function renderTaskRow(task) {
 
 // ── Event delegation ──────────────────────────────────────────────────────
 
-document.addEventListener("click", (e) => {
+document.addEventListener("click", async (e) => {
   const refreshBtn = e.target.closest('[data-action="refreshPlans"]');
   if (refreshBtn) {
     loadPlans();
@@ -511,5 +516,28 @@ document.addEventListener("click", (e) => {
   const card = e.target.closest('[data-action="openPlan"]');
   if (card) {
     openPlanDetail(card.dataset.planId);
+    return;
+  }
+  const generateBtn = e.target.closest('[data-action="generateReview"]');
+  if (generateBtn) {
+    const planId = generateBtn.dataset.planId;
+    if (!planId || generateBtn.disabled) return;
+    const originalText = generateBtn.textContent;
+    generateBtn.disabled = true;
+    generateBtn.textContent = "Generating…";
+    try {
+      await postJSON(
+        "/api/iris/plans/" + encodeURIComponent(planId) + "/reviews/generate",
+        {},
+      );
+      showNotification("Draft review generated");
+      // Re-render from a fresh GET, which also replaces this button element
+      // (and its disabled state) with a new one.
+      await openPlanDetail(planId);
+    } catch (err) {
+      showNotification("Failed to generate review: " + err.message, "error");
+      generateBtn.disabled = false;
+      generateBtn.textContent = originalText;
+    }
   }
 });
