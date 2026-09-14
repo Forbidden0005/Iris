@@ -8,6 +8,7 @@
  */
 import { getJSON } from "../core/api.js";
 import { escHtml, showEmpty, showError } from "../core/dom.js";
+import { state } from "../core/state.js";
 
 let hideAllViews = () => {};
 let setNavActive = () => {};
@@ -51,7 +52,8 @@ export function showPlans() {
 function currentProjectId() {
   const selector = document.getElementById("chatProjectSelect");
   const value = String(selector?.value || "").trim();
-  return value && value !== "undefined" ? value : "general";
+  if (value && value !== "undefined") return value;
+  return state.chatActiveProjectId || "general";
 }
 
 function showPlanList() {
@@ -81,6 +83,11 @@ export async function loadPlans() {
   }
 }
 
+function truncate(text, max) {
+  const s = String(text || "").trim();
+  return s.length > max ? s.slice(0, max).trim() + "…" : s;
+}
+
 function renderPlanCard(plan) {
   const id = escHtml(plan.id);
   const title = escHtml(plan.title || "Untitled Iris plan");
@@ -88,6 +95,11 @@ function renderPlanCard(plan) {
   const taskCount = Array.isArray(plan.tasks) ? plan.tasks.length : 0;
   const updated = plan.updatedAt
     ? new Date(plan.updatedAt).toLocaleString()
+    : "";
+  const requestPreview = plan.userRequest
+    ? '<div class="meta" style="margin-top:6px;">' +
+      escHtml(truncate(plan.userRequest, 140)) +
+      "</div>"
     : "";
 
   return (
@@ -117,6 +129,7 @@ function renderPlanCard(plan) {
     taskCount +
     (taskCount === 1 ? " task" : " tasks") +
     "</div>" +
+    requestPreview +
     "</div>"
   );
 }
@@ -169,6 +182,9 @@ function renderPlanDetail(plan) {
     escHtml(plan.status || "draft") +
     "</span>" +
     "</div>" +
+    "</div>" +
+    '<div class="meta" style="margin-bottom:8px;">Project: ' +
+    escHtml(plan.projectId || "general") +
     "</div>" +
     (plan.userRequest
       ? '<div class="meta" style="margin-bottom:16px;white-space:pre-wrap;">' +
@@ -225,6 +241,11 @@ function renderTaskRow(task) {
 // ── Event delegation ──────────────────────────────────────────────────────
 
 document.addEventListener("click", (e) => {
+  const refreshBtn = e.target.closest('[data-action="refreshPlans"]');
+  if (refreshBtn) {
+    loadPlans();
+    return;
+  }
   const backBtn = e.target.closest('[data-action="closePlanDetail"]');
   if (backBtn) {
     showPlanList();
