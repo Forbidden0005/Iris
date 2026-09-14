@@ -45,6 +45,18 @@ const EVIDENCE_TYPE_LABELS = {
   artifact: "Artifact",
 };
 
+const REVIEW_STATUS_COLORS = {
+  draft: "var(--text-3)",
+  ready: "var(--accent)",
+  archived: "var(--text-3)",
+};
+
+const REVIEW_SEVERITY_COLORS = {
+  low: "var(--text-3)",
+  medium: "var(--yellow)",
+  high: "var(--red)",
+};
+
 export function initPlansTab(deps = {}) {
   hideAllViews = deps.hideAllViews || hideAllViews;
   setNavActive = deps.setNavActive || setNavActive;
@@ -204,13 +216,14 @@ function renderPlanDetail(plan) {
       : "") +
     '<div class="meta" style="margin-bottom:8px;font-weight:600;">Tasks</div>' +
     taskRows +
-    renderEvidenceSection(plan)
+    renderEvidenceSection(plan) +
+    renderReviewsSection(plan)
   );
 }
 
 // ── Evidence (read-only) ──────────────────────────────────────────────────
 
-function formatEvidenceCreatedAt(createdAt) {
+function formatTimestamp(createdAt) {
   if (!createdAt) return "";
   const d = new Date(createdAt);
   return Number.isNaN(d.getTime()) ? "" : d.toLocaleString();
@@ -264,7 +277,7 @@ function renderEvidenceRow(entry, tasks) {
   const type = String(entry?.type || "unknown");
   const typeLabel = escHtml(EVIDENCE_TYPE_LABELS[type] || type || "Unknown");
   const title = escHtml(entry?.title || "Untitled evidence");
-  const createdAt = formatEvidenceCreatedAt(entry?.createdAt);
+  const createdAt = formatTimestamp(entry?.createdAt);
   const linkedTask = findTaskById(tasks, entry?.taskId);
 
   return (
@@ -306,6 +319,136 @@ function renderEvidenceSection(plan) {
 
   return (
     '<div class="meta" style="margin-top:20px;margin-bottom:8px;font-weight:600;">Evidence</div>' +
+    rows
+  );
+}
+
+// ── Review packets (read-only) ────────────────────────────────────────────
+
+function resolveRefLabels(ids, collection, resolve) {
+  return (Array.isArray(ids) ? ids : []).map((id) => {
+    const found = collection.find((c) => c && c.id === id);
+    return found ? resolve(found) : String(id);
+  });
+}
+
+function renderReviewItem(item, tasks, evidence, showSeverity) {
+  const text = escHtml(item?.text || "");
+  const severity =
+    showSeverity && item?.severity
+      ? '<span style="font-size:10px;padding:1px 6px;border-radius:999px;background:' +
+        (REVIEW_SEVERITY_COLORS[item.severity] || "var(--text-3)") +
+        "1a;color:" +
+        (REVIEW_SEVERITY_COLORS[item.severity] || "var(--text-3)") +
+        ";border:1px solid " +
+        (REVIEW_SEVERITY_COLORS[item.severity] || "var(--text-3)") +
+        '40;margin-left:6px;">' +
+        escHtml(item.severity) +
+        "</span>"
+      : "";
+
+  const taskLabels = resolveRefLabels(
+    item?.taskIds,
+    tasks,
+    (t) => t.displayName || t.title || t.id,
+  );
+  const evidenceLabels = resolveRefLabels(
+    item?.evidenceIds,
+    evidence,
+    (e) => (EVIDENCE_TYPE_LABELS[e.type] || e.type || "evidence") + ": " + (e.title || e.id),
+  );
+
+  const refLines = [];
+  if (taskLabels.length) refLines.push("Tasks: " + taskLabels.map(escHtml).join(", "));
+  if (evidenceLabels.length)
+    refLines.push("Evidence: " + evidenceLabels.map(escHtml).join(", "));
+
+  return (
+    '<div class="meta" style="margin-top:6px;">' +
+    "• " +
+    text +
+    severity +
+    (refLines.length
+      ? '<div style="margin-top:2px;padding-left:14px;">' +
+        refLines
+          .map((line) => '<div class="meta" style="font-size:11px;">' + line + "</div>")
+          .join("") +
+        "</div>"
+      : "") +
+    "</div>"
+  );
+}
+
+function renderReviewSubsection(title, items, tasks, evidence, showSeverity) {
+  const list = Array.isArray(items) ? items : [];
+  if (!list.length) return "";
+  return (
+    '<div class="meta" style="margin-top:10px;font-weight:600;">' +
+    escHtml(title) +
+    " (" +
+    list.length +
+    ")</div>" +
+    list.map((item) => renderReviewItem(item, tasks, evidence, showSeverity)).join("")
+  );
+}
+
+function renderReviewCard(review, tasks, evidence) {
+  const statusColor = REVIEW_STATUS_COLORS[review?.status] || "var(--text-3)";
+  const title = escHtml(review?.title || "Untitled review");
+  const created = formatTimestamp(review?.createdAt);
+  const updated = formatTimestamp(review?.updatedAt);
+  const taskCount = Array.isArray(review?.taskIds) ? review.taskIds.length : 0;
+  const evidenceCount = Array.isArray(review?.evidenceIds) ? review.evidenceIds.length : 0;
+
+  return (
+    '<div class="card" style="margin-bottom:8px;">' +
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">' +
+    "<div>" +
+    '<strong style="font-size:13px;">' +
+    title +
+    "</strong>" +
+    '<span style="font-size:11px;padding:2px 8px;border-radius:999px;background:' +
+    statusColor +
+    "1a;color:" +
+    statusColor +
+    ";border:1px solid " +
+    statusColor +
+    '40;margin-left:8px;">' +
+    escHtml(review?.status || "draft") +
+    "</span>" +
+    "</div>" +
+    '<div class="meta" style="white-space:nowrap;">' +
+    escHtml(created) +
+    (updated && updated !== created ? " · updated " + escHtml(updated) : "") +
+    "</div>" +
+    "</div>" +
+    (review?.summary
+      ? '<div class="meta" style="margin-top:8px;">' + escHtml(review.summary) + "</div>"
+      : "") +
+    '<div class="meta" style="margin-top:8px;">' +
+    taskCount +
+    (taskCount === 1 ? " task" : " tasks") +
+    " referenced · " +
+    evidenceCount +
+    (evidenceCount === 1 ? " evidence item" : " evidence items") +
+    " referenced</div>" +
+    renderReviewSubsection("Risks", review?.risks, tasks, evidence, true) +
+    renderReviewSubsection("Open questions", review?.openQuestions, tasks, evidence, false) +
+    renderReviewSubsection("Recommendations", review?.recommendations, tasks, evidence, false) +
+    "</div>"
+  );
+}
+
+function renderReviewsSection(plan) {
+  const reviews = Array.isArray(plan.reviews) ? plan.reviews : [];
+  const tasks = Array.isArray(plan.tasks) ? plan.tasks : [];
+  const evidence = Array.isArray(plan.evidence) ? plan.evidence : [];
+  const rows = reviews.length
+    ? reviews.map((entry) => renderReviewCard(entry, tasks, evidence)).join("")
+    : '<div class="meta" style="padding:12px 0;">No review packets yet.</div>';
+
+  return (
+    '<div class="meta" style="margin-top:20px;margin-bottom:8px;font-weight:600;">Reviews</div>' +
     rows
   );
 }
