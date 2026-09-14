@@ -422,6 +422,38 @@ Open questions before implementing (need a decision, not more code):
 3. Is a rejected/revised review packet archived, or does it stay visible
    for audit alongside whatever superseded it?
 
+### Slice 12: Advisory Run Limits v1
+
+Rough ceilings a plan can optionally declare, so a human (or a future
+caller) can see when a plan is running larger than expected.
+
+Current implementation:
+
+- `plan.limits`: `{maxTasks, maxDispatches, maxReviewGenerations,
+  maxRuntimeMinutes, maxEstimatedCostUsd}`, all nullable numbers.
+  Backward compatible — plans predating this default to all-`null`.
+- `lib/iris/plans.mjs` exports `getIrisPlanLimits`, `setIrisPlanLimits`
+  (merges given fields; unknown keys ignored rather than throwing;
+  `null`/`undefined` clears a field), and `getIrisPlanUsage`, which
+  returns `{taskCount, dispatchedTaskCount, evidenceCount, reviewCount,
+  reviewGenerationCount, runtimeMinutes, estimatedCostUsd}`.
+- **These are advisory only — nothing in this codebase enforces them.**
+  Dispatch, chat, evidence, and review generation all keep working
+  identically whether a plan has limits set or not, and whether usage is
+  already over a declared limit or not. This slice adds visibility, not a
+  brake.
+- `runtimeMinutes` and `estimatedCostUsd` are always `null` in the usage
+  result — nothing in this codebase tracks elapsed dispatch time or spend
+  against a plan yet. A limit can be *set* for them (for future use), but
+  reporting a fabricated "0" or "unknown" as if it were real usage would
+  be exactly the kind of status-pretending this project avoids elsewhere;
+  `null` says plainly that the number doesn't exist yet.
+- Invalid limit values (non-numeric, negative, unknown field names) are
+  silently normalized to `null`/ignored rather than throwing — a caller
+  passing `{maxTasks: "five"}` gets a plan with `maxTasks: null`, not an
+  error, consistent with how legacy/malformed data is already handled
+  elsewhere in this file.
+
 ## Suggested Next Implementation
 
 Start with Slice 3: Iris Plan Skeleton.

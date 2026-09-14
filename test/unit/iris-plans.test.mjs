@@ -16,6 +16,8 @@ import {
   createIrisPlanConflict,
   createIrisPlanReview,
   generateIrisPlanReview,
+  getIrisPlanLimits,
+  getIrisPlanUsage,
   linkIrisPlanTaskToDispatch,
   listIrisPlanConflicts,
   listIrisPlanEvidence,
@@ -25,6 +27,7 @@ import {
   loadIrisPlanConflict,
   loadIrisPlanReview,
   resolveIrisPlanConflict,
+  setIrisPlanLimits,
   updateIrisPlanStatus,
   updateIrisPlanTaskStatus,
 } from "../../lib/iris/plans.mjs";
@@ -833,5 +836,116 @@ describe("Iris plan conflicts", () => {
     const loaded = loadIrisPlan("legacy-no-conflicts");
     assert.deepEqual(loaded.conflicts, []);
     assert.deepEqual(listIrisPlanConflicts("legacy-no-conflicts"), []);
+  });
+});
+
+describe("Iris plan advisory run limits", () => {
+  test("defaults to all-null limits when none are set", () => {
+    createIrisPlan({ id: "plan-limits-default", userRequest: "Check defaults" });
+    const limits = getIrisPlanLimits("plan-limits-default");
+    assert.deepEqual(limits, {
+      maxTasks: null,
+      maxDispatches: null,
+      maxReviewGenerations: null,
+      maxRuntimeMinutes: null,
+      maxEstimatedCostUsd: null,
+    });
+  });
+
+  test("accepts limits at creation and via setIrisPlanLimits", () => {
+    createIrisPlan({
+      id: "plan-limits-set",
+      userRequest: "Set limits",
+      limits: { maxTasks: 5, maxEstimatedCostUsd: 10 },
+    });
+    assert.deepEqual(getIrisPlanLimits("plan-limits-set"), {
+      maxTasks: 5,
+      maxDispatches: null,
+      maxReviewGenerations: null,
+      maxRuntimeMinutes: null,
+      maxEstimatedCostUsd: 10,
+    });
+
+    setIrisPlanLimits("plan-limits-set", { maxDispatches: 3, maxTasks: null });
+    assert.deepEqual(getIrisPlanLimits("plan-limits-set"), {
+      maxTasks: null,
+      maxDispatches: 3,
+      maxReviewGenerations: null,
+      maxRuntimeMinutes: null,
+      maxEstimatedCostUsd: 10,
+    });
+  });
+
+  test("ignores invalid limit values instead of throwing", () => {
+    createIrisPlan({
+      id: "plan-limits-invalid",
+      userRequest: "Invalid values",
+      limits: { maxTasks: "five", maxDispatches: -1, unknownField: 99 },
+    });
+    assert.deepEqual(getIrisPlanLimits("plan-limits-invalid"), {
+      maxTasks: null,
+      maxDispatches: null,
+      maxReviewGenerations: null,
+      maxRuntimeMinutes: null,
+      maxEstimatedCostUsd: null,
+    });
+  });
+
+  test("computes usage counts from tasks, evidence, and reviews", () => {
+    createIrisPlan({ id: "plan-usage-basic", userRequest: "Check usage" });
+    const taskA = addIrisPlanTask("plan-usage-basic", { id: "task-a", title: "A" });
+    addIrisPlanTask("plan-usage-basic", { id: "task-b", title: "B" });
+    linkIrisPlanTaskToDispatch("plan-usage-basic", taskA.id, "rt-task-1");
+    addIrisPlanEvidence("plan-usage-basic", { type: "note", data: { text: "n" } });
+    createIrisPlanReview("plan-usage-basic", { title: "Manual review" });
+    generateIrisPlanReview("plan-usage-basic");
+
+    const usage = getIrisPlanUsage("plan-usage-basic");
+    assert.equal(usage.taskCount, 2);
+    assert.equal(usage.dispatchedTaskCount, 1);
+    assert.equal(usage.evidenceCount, 1);
+    assert.equal(usage.reviewCount, 2);
+    assert.equal(usage.reviewGenerationCount, 1);
+    assert.equal(usage.runtimeMinutes, null);
+    assert.equal(usage.estimatedCostUsd, null);
+  });
+
+  test("reports zero usage for a fresh plan", () => {
+    createIrisPlan({ id: "plan-usage-empty", userRequest: "Fresh plan" });
+    assert.deepEqual(getIrisPlanUsage("plan-usage-empty"), {
+      taskCount: 0,
+      dispatchedTaskCount: 0,
+      evidenceCount: 0,
+      reviewCount: 0,
+      reviewGenerationCount: 0,
+      runtimeMinutes: null,
+      estimatedCostUsd: null,
+    });
+  });
+
+  test("legacy plans with no limits key still load with defaults", () => {
+    const root = path.join(TEST_DIR, "iris-plans");
+    fs.mkdirSync(root, { recursive: true });
+    fs.writeFileSync(
+      path.join(root, "legacy-no-limits.json"),
+      JSON.stringify({
+        id: "legacy-no-limits",
+        userRequest: "Predates limits",
+        status: "draft",
+        tasks: [],
+        evidence: [],
+        createdAt: "2026-09-01T00:00:00.000Z",
+        updatedAt: "2026-09-01T00:00:00.000Z",
+      }),
+    );
+
+    const loaded = loadIrisPlan("legacy-no-limits");
+    assert.deepEqual(loaded.limits, {
+      maxTasks: null,
+      maxDispatches: null,
+      maxReviewGenerations: null,
+      maxRuntimeMinutes: null,
+      maxEstimatedCostUsd: null,
+    });
   });
 });
