@@ -129,6 +129,7 @@
     "smoke": "node scripts/smoke-dispatch.mjs",
     "smoke:static": "bash scripts/smoke.sh",
     "smoke:iris-plan-stack": "node scripts/smoke-iris-plan-stack.mjs",
+    "demo:iris-plan-stack": "node scripts/demo-iris-plan-stack.mjs",
     "health": "node scripts/health-check.mjs",
     "doctor": "node scripts/doctor.mjs",
     "release:check": "bash scripts/release-check.sh",
