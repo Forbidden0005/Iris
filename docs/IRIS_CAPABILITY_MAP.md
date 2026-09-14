@@ -396,33 +396,69 @@ for building this loop.
 
 Proposed model:
 
-- Extend the review packet, don't invent a parallel object. A review
-  packet already has `status: draft | ready | archived` — add
-  `pending_approval` between `ready` and a terminal state, and an
-  `approval` sub-object: `{ decision: null | "approved" | "rejected" |
-  "revise", decidedBy, decidedAt, note }`. Reusing the review packet
-  keeps risks/openQuestions/recommendations attached to the thing being
-  approved, instead of a second record type that has to stay in sync.
-- New functions in `lib/iris/plans.mjs`: `submitIrisPlanReviewForApproval`
-  (draft/ready → pending_approval; probably requires zero *open* conflicts
-  referencing the review's `taskIds`, or requires the caller to
-  acknowledge them — open design question), and
-  `decideIrisPlanReviewApproval(planId, reviewId, decision, note, options)`
-  which validates `decision`, requires a note for `"rejected"`/`"revise"`
-  (same "no closing without saying why" rule Slice 10 already uses for
-  conflicts), and sets the plan's own status to `completed` only on
-  `"approved"` — Iris (or dispatch) never sets a plan to completed on its
-  own claim, only a human decision does, and only through this path.
-- Dashboard: a *new* explicit action per review packet (Approve / Reject /
-  Revise), each requiring the note-on-reject/revise the backend already
-  enforces. This is the first mutation control this project adds beyond
-  "generate a draft" — needs its own UI review before building, same as
-  every dashboard slice so far went through a proposal → build cycle.
-- Explicitly NOT in scope for this slice: automatic approval of anything,
-  auto-resolving conflicts on approval, or the approval decision doing
-  anything to dispatch/RT bus/engine adapters — approving a review changes
-  the plan's status field, nothing else, until a later slice explicitly
-  wires more.
+**Review packet states.** Extend the review packet, don't invent a
+parallel object. A review packet already has `status: draft | ready |
+archived` — add `pending_approval` between `ready` and a terminal state:
+`draft → ready → pending_approval → {approved, rejected, revise}`.
+Reusing the review packet keeps risks/openQuestions/recommendations
+attached to the thing being approved, instead of a second record type
+that has to stay in sync with it.
+
+**User actions.** Three, and only three, decisions a human can make on a
+`pending_approval` review packet:
+- **Approve** — accepts the review as-is. Sets the plan's own `status` to
+  `completed`. This is the *only* path that can move a plan to
+  `completed` — Iris/dispatch never sets it there on their own claim.
+- **Request revision** — sends the review back for another pass. Does
+  *not* delete or archive the packet; does *not* automatically call
+  `generateIrisPlanReview` again — a human or caller has to trigger
+  regeneration separately. Requires a non-empty note explaining what
+  needs to change (same "no closing without saying why" rule Slice 10
+  already uses for conflicts).
+- **Reject** — declines the review outright. Requires a non-empty note.
+  Does not change the plan's `status` — a rejected review just means
+  this particular summary wasn't accepted, not that the plan itself
+  failed.
+- What none of the three actions do: touch dispatch, the RT bus, or
+  engine adapters; auto-resolve any open conflict; auto-create a new
+  plan, task, or evidence record; retry or regenerate anything
+  automatically.
+
+**New functions in `lib/iris/plans.mjs`:**
+`submitIrisPlanReviewForApproval(planId, reviewId, options?)` (draft/ready
+→ pending_approval; open design question below on whether it blocks on
+open conflicts), and
+`decideIrisPlanReviewApproval(planId, reviewId, decision, note, options?)`
+which validates `decision` is one of the three, requires `note` for
+`"rejected"`/`"revise"`, and is the only place a plan's `status` becomes
+`completed`.
+
+**Audit trail fields.** Every decision is permanently attached to the
+review packet it was made on (append-only at the plan level — the
+existing plan file already keeps every review packet ever generated, so
+nothing about a past decision is overwritten): `approval: { decision:
+null | "approved" | "rejected" | "revise", decidedBy, decidedAt, note }`.
+`decidedBy` records who made the call (a user id/session, not "Iris") so
+a plan's history shows a human decision, not a self-report. No decision
+is ever silently overwritten — deciding again on an already-decided
+review packet should be rejected by the backend (matches how
+`resolveIrisPlanConflict` already refuses to reopen a resolved conflict
+implicitly).
+
+**Dashboard.** A *new* explicit action per `pending_approval` review
+packet (Approve / Reject / Revise), each requiring the note-on-reject/
+revise the backend already enforces. This is the first mutation control
+this project would add beyond "generate a draft" — needs its own UI
+review before building, same as every dashboard slice so far went
+through a proposal → build cycle before code.
+
+**Non-goals for this slice, explicitly:**
+- No automatic approval of anything, under any condition.
+- No auto-resolving conflicts as a side effect of approval.
+- No wiring to dispatch, RT bus, or engine adapters.
+- No new plan/task/evidence records created by an approval decision.
+- No re-running review generation automatically on "revise" — that stays
+  a separate, explicit action.
 
 Open questions before implementing (need a decision, not more code):
 
