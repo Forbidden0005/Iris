@@ -307,6 +307,33 @@ Current implementation:
   in this project and needs its own explicit ownership handoff before
   anyone edits them, the same way chat-handler.mjs wiring did in Slice 7.
 
+### Slice 9: Dispatch Completion → Evidence Bridge (bridge only, not wired)
+
+Evidence is currently 100% manually attached. This slice adds the mapping
+needed to attach it automatically from a real dispatch completion, without
+wiring that call site yet.
+
+Current implementation:
+
+- `lib/iris/dispatch-evidence-bridge.mjs` —
+  `attachEvidenceFromDispatchCompletion(planId, taskId, completion, options?)`
+  deterministically maps a `lib/runtime/task-lease.mjs` `finalizeTaskState`
+  completion record (`{taskKey, status, owner, attempt, error, note}`) into
+  a `type: "command"` Iris evidence record via the existing
+  `addIrisPlanEvidence`. `status === "done"` maps to `data.passed: true`;
+  `error`/`note` become `data.outputExcerpt` (omitted, not empty-stringed,
+  when there's nothing to say); `owner`/`taskKey`/`attempt` are preserved
+  in `source` for provenance, not folded into the evidence claim itself.
+- Restates what dispatch already reported — `passed: true` here means
+  "dispatch's own completion record said `status: done`," not that Iris
+  independently verified anything. Same non-verification posture as every
+  other evidence/review slice.
+- **Not wired.** Nothing in `lib/runtime/task-lease.mjs`, `gateway-bridge`,
+  or any dispatch path calls this. That callback — "a real dispatch task
+  just finished, tell Iris" — touches the same protected surface as Slice
+  8's dispatch linking and needs the same explicit ownership handoff
+  before anyone edits those files.
+
 ## Suggested Next Implementation
 
 Start with Slice 3: Iris Plan Skeleton.
