@@ -175,6 +175,37 @@ Acceptance criteria:
 - Review packet marks unresolved risks/conflicts.
 - No automatic high-impact action is introduced in this slice.
 
+Current implementation — Review Packet v1:
+
+- **Not an approval or automation system.** Creating a review packet never
+  changes a plan's or task's status. A risk, open question, or
+  recommendation is only as credible as the `evidenceIds` it actually
+  points to — the packet itself makes no independent verification claim.
+- Review packets live embedded in the plan's JSON file (`plan.reviews`, an
+  array), same storage model as evidence. No SQLite, no separate store.
+- Schema: `id`, `planId`, `title`, `summary`, `status`
+  (`draft` | `ready` | `archived`), `createdAt`, `updatedAt`, `taskIds`,
+  `evidenceIds`, `risks`, `openQuestions`, `recommendations`, `metadata`.
+- `risks` / `openQuestions` / `recommendations` share one item shape: `id`,
+  `text` (required), `severity` (optional, `low` | `medium` | `high`),
+  `evidenceIds` (optional), `taskIds` (optional).
+- `lib/iris/plans.mjs` exports `createIrisPlanReview(planId, review, options?)`,
+  `listIrisPlanReviews(planId, options?)`, and
+  `loadIrisPlanReview(planId, reviewId, options?)`.
+- Validation: `status` and any item `severity` must be one of the allowed
+  values; every `taskIds`/`evidenceIds` entry (at the packet level and
+  inside each risk/question/recommendation) must reference something that
+  actually exists on the plan, or the call throws. `id`/`title`/timestamps
+  auto-generate when omitted.
+- **Append-only in v1** — no update or delete on a review packet, matching
+  evidence's own append-only model. A new packet is the way to reflect a
+  changed understanding of the plan.
+- Backward compatible: plans written before this slice have no `reviews`
+  key and default to `[]` on load, same passthrough rule as evidence.
+- The dashboard does not render review packets yet — left for a follow-up
+  once there's a real caller producing them, same reasoning as Evidence
+  v1's initial deferral of dashboard work.
+
 ## Suggested Next Implementation
 
 Start with Slice 3: Iris Plan Skeleton.

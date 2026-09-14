@@ -13,9 +13,12 @@ import {
   addIrisPlanTask,
   clearIrisPlans,
   createIrisPlan,
+  createIrisPlanReview,
   listIrisPlanEvidence,
+  listIrisPlanReviews,
   listIrisPlans,
   loadIrisPlan,
+  loadIrisPlanReview,
   updateIrisPlanStatus,
   updateIrisPlanTaskStatus,
 } from "../../lib/iris/plans.mjs";
@@ -315,5 +318,161 @@ describe("Iris plan evidence", () => {
       listIrisPlans().map((p) => p.id).sort(),
       ["legacy-no-evidence", "legacy-raw-evidence"],
     );
+  });
+});
+
+describe("Iris plan review packets", () => {
+  test("creates a review packet with generated id and timestamps", () => {
+    createIrisPlan({ id: "plan-review-basic", userRequest: "Ship the thing" });
+
+    const review = createIrisPlanReview("plan-review-basic", {
+      title: "Pre-ship review",
+      summary: "Looks ready modulo one open question.",
+    }, { now: Date.parse("2026-09-14T13:00:00.000Z") });
+
+    assert.match(review.id, /^review_/);
+    assert.equal(review.planId, "plan-review-basic");
+    assert.equal(review.title, "Pre-ship review");
+    assert.equal(review.status, "draft");
+    assert.equal(review.createdAt, "2026-09-14T13:00:00.000Z");
+    assert.equal(review.updatedAt, "2026-09-14T13:00:00.000Z");
+    assert.deepEqual(review.taskIds, []);
+    assert.deepEqual(review.evidenceIds, []);
+    assert.deepEqual(review.risks, []);
+    assert.deepEqual(review.openQuestions, []);
+    assert.deepEqual(review.recommendations, []);
+  });
+
+  test("review records survive save and load, and list newest-appended order", () => {
+    createIrisPlan({ id: "plan-review-persist", userRequest: "Persist reviews" });
+    createIrisPlanReview("plan-review-persist", { title: "First pass" });
+    const second = createIrisPlanReview("plan-review-persist", { title: "Second pass" });
+
+    const loadedPlan = loadIrisPlan("plan-review-persist");
+    assert.equal(loadedPlan.reviews.length, 2);
+    assert.equal(loadedPlan.reviews[1].id, second.id);
+
+    const listed = listIrisPlanReviews("plan-review-persist");
+    assert.deepEqual(listed.map((r) => r.title), ["First pass", "Second pass"]);
+
+    const single = loadIrisPlanReview("plan-review-persist", second.id);
+    assert.deepEqual(single, second);
+    assert.equal(loadIrisPlanReview("plan-review-persist", "no-such-review"), null);
+  });
+
+  test("validates referenced taskIds exist on the plan", () => {
+    createIrisPlan({ id: "plan-review-tasks", userRequest: "Check task refs" });
+    const task = addIrisPlanTask("plan-review-tasks", { id: "task-real", title: "Do it" });
+
+    const review = createIrisPlanReview("plan-review-tasks", {
+      title: "Refs a real task",
+      taskIds: [task.id],
+    });
+    assert.deepEqual(review.taskIds, ["task-real"]);
+
+    assert.throws(
+      () =>
+        createIrisPlanReview("plan-review-tasks", {
+          title: "Refs a fake task",
+          taskIds: ["no-such-task"],
+        }),
+      /Iris task not found for review: no-such-task/,
+    );
+  });
+
+  test("validates referenced evidenceIds exist on the plan", () => {
+    createIrisPlan({ id: "plan-review-evidence", userRequest: "Check evidence refs" });
+    const evidence = addIrisPlanEvidence("plan-review-evidence", {
+      type: "note",
+      data: { text: "Looks fine" },
+    });
+
+    const review = createIrisPlanReview("plan-review-evidence", {
+      title: "Refs real evidence",
+      evidenceIds: [evidence.id],
+      recommendations: [
+        { text: "Ship it", evidenceIds: [evidence.id] },
+      ],
+    });
+    assert.deepEqual(review.evidenceIds, [evidence.id]);
+    assert.deepEqual(review.recommendations[0].evidenceIds, [evidence.id]);
+
+    assert.throws(
+      () =>
+        createIrisPlanReview("plan-review-evidence", {
+          title: "Refs fake evidence",
+          evidenceIds: ["no-such-evidence"],
+        }),
+      /Iris evidence not found for review: no-such-evidence/,
+    );
+
+    assert.throws(
+      () =>
+        createIrisPlanReview("plan-review-evidence", {
+          title: "Risk with fake evidence",
+          risks: [{ text: "Might break", evidenceIds: ["no-such-evidence"] }],
+        }),
+      /Iris evidence not found for review risk: no-such-evidence/,
+    );
+  });
+
+  test("captures risks, open questions, and recommendations", () => {
+    createIrisPlan({ id: "plan-review-items", userRequest: "Full review packet" });
+
+    const review = createIrisPlanReview("plan-review-items", {
+      title: "Full packet",
+      status: "ready",
+      risks: [{ text: "Rollback path untested", severity: "high" }],
+      openQuestions: [{ text: "Who owns the migration window?" }],
+      recommendations: [{ text: "Add a staging dry run" }],
+    });
+
+    assert.equal(review.status, "ready");
+    assert.equal(review.risks[0].severity, "high");
+    assert.match(review.risks[0].id, /^risk_/);
+    assert.match(review.openQuestions[0].id, /^openQuestion_/);
+    assert.match(review.recommendations[0].id, /^recommendation_/);
+
+    assert.throws(
+      () =>
+        createIrisPlanReview("plan-review-items", {
+          title: "Bad severity",
+          risks: [{ text: "Something", severity: "extreme" }],
+        }),
+      /Invalid Iris review severity/,
+    );
+  });
+
+  test("rejects invalid review status", () => {
+    createIrisPlan({ id: "plan-review-bad-status", userRequest: "Check status validation" });
+    assert.throws(
+      () =>
+        createIrisPlanReview("plan-review-bad-status", {
+          title: "Bad status",
+          status: "approved",
+        }),
+      /Invalid Iris review status/,
+    );
+  });
+
+  test("legacy plans with no reviews still load", () => {
+    const root = path.join(TEST_DIR, "iris-plans");
+    fs.mkdirSync(root, { recursive: true });
+    fs.writeFileSync(
+      path.join(root, "legacy-no-reviews.json"),
+      JSON.stringify({
+        id: "legacy-no-reviews",
+        userRequest: "Predates review packets",
+        status: "draft",
+        tasks: [],
+        evidence: [],
+        createdAt: "2026-09-01T00:00:00.000Z",
+        updatedAt: "2026-09-01T00:00:00.000Z",
+      }),
+    );
+
+    const loaded = loadIrisPlan("legacy-no-reviews");
+    assert.deepEqual(loaded.reviews, []);
+    assert.deepEqual(listIrisPlanReviews("legacy-no-reviews"), []);
   });
 });
