@@ -247,6 +247,46 @@ Current implementation — Review Generator v1:
   calls this automatically. It is a helper a future caller (CLI, dashboard
   button, or Iris itself) can invoke; this slice only adds the function.
 
+### Slice 7: Chat → Plan Bridge
+
+Automatically create a draft Iris plan when a chat message looks like a
+request for Iris to coordinate multi-step work, instead of only ever
+creating plans through helpers/API.
+
+Current implementation:
+
+- `lib/iris/chat-plan-bridge.mjs` — `looksLikeCoordinationRequest(text)` is
+  a deterministic, regex-based heuristic (no LLM call), styled after
+  `lib/crew-lead/intent.mjs`'s `parseServiceIntent`. Deliberately
+  over-inclusive: a false positive just creates an extra cheap, inert,
+  inspectable draft plan; a false negative silently loses the point of
+  this slice, which is the worse failure mode.
+  `createDraftPlanFromChatRequest(text, options)` calls the heuristic and,
+  on a match (or when `options.force: true`), creates a plan via the
+  existing `createIrisPlan` — always `status: "draft"`, never further
+  along, with `metadata: { source: "chat", detected }` so a generated plan
+  is distinguishable from a manually created one.
+- **This is the first slice to touch crew-lead runtime code**, done only
+  after explicit sign-off (Tyler: "Claude take crew-lead wiring"). The
+  actual edit in `lib/crew-lead/chat-handler.mjs` is one import line and a
+  4-line `try/catch` call at the top of `handleChat`, right after
+  `sharedThreadId` is computed and before any existing branch. It cannot
+  alter `handleChat`'s existing control flow, return value, or shared
+  state, and a failure inside it is caught and logged, never thrown.
+- Full behavioral coverage lives in
+  `test/unit/iris-chat-plan-bridge.test.mjs`, run in isolation against the
+  pure `chat-plan-bridge.mjs` functions. The one-call-site change inside
+  `handleChat` itself is *not* covered by an end-to-end test —
+  `handleChat` has a large, deeply-coupled dependency surface
+  (`_deps.loadConfig`, `loadHistory`, `appendHistory`, `broadcastSSE`, and
+  more used later in the function) that would take disproportionate effort
+  to stub just to exercise 4 already-isolated lines. Verified instead via
+  `node --check` on the edited file and the existing
+  `chat-handler-mentions.test.mjs` / `agent-roster-deterministic.test.mjs`
+  suites still passing unchanged.
+- Not wired to dispatch, RT bus, or engine adapters — this slice only
+  decides whether a plan record should exist.
+
 ## Suggested Next Implementation
 
 Start with Slice 3: Iris Plan Skeleton.
