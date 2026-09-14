@@ -1,10 +1,10 @@
 /**
- * Iris Plans tab — read-only view of Iris plan/task records.
- * Deps: getJSON (core/api), escHtml, showEmpty, showError (core/dom)
- *
- * This is intentionally read-only: no create/edit/status-change controls.
- * Plans are not yet written automatically by dispatch, so this view is a
- * plan register, not a live orchestration monitor.
+ * Iris Plans tab — mostly read-only view of Iris plan/task records, with
+ * two explicit, user-triggered actions: generating a draft review, and
+ * dispatching a task. Neither happens automatically. No create/edit/
+ * status-change controls beyond those two exist here.
+ * Deps: getJSON, postJSON (core/api), escHtml, showEmpty, showError,
+ * showNotification (core/dom)
  */
 import { getJSON, postJSON } from "../core/api.js";
 import { escHtml, showEmpty, showError, showNotification } from "../core/dom.js";
@@ -186,7 +186,7 @@ function renderPlanDetail(plan) {
   const tasks = Array.isArray(plan.tasks) ? plan.tasks : [];
 
   const taskRows = tasks.length
-    ? tasks.map(renderTaskRow).join("")
+    ? tasks.map((task) => renderTaskRow(task, plan.id)).join("")
     : '<div class="meta" style="padding:12px 0;">No tasks recorded on this plan yet.</div>';
 
   return (
@@ -458,7 +458,7 @@ function renderReviewsSection(plan) {
   );
 }
 
-function renderTaskRow(task) {
+function renderTaskRow(task, planId) {
   const statusColor = TASK_STATUS_COLORS[task.status] || "var(--text-3)";
   const label = escHtml(task.displayName || task.runtimeAgentId || "agent");
   const runtimeId =
@@ -496,7 +496,57 @@ function renderTaskRow(task) {
         escHtml(task.failureReason) +
         "</div>"
       : "") +
+    renderDispatchTaskControl(task, planId) +
     "</div>"
+  );
+}
+
+// ── Dispatch task (explicit, user-triggered only) ──────────────────────────
+
+function renderDispatchTaskControl(task, planId) {
+  const planIdAttr = escHtml(planId);
+  const taskIdAttr = escHtml(task.id);
+
+  if (task.dispatchTaskId) {
+    return (
+      '<div class="meta" style="margin-top:8px;">' +
+      "Dispatched: " +
+      escHtml(task.dispatchTaskId) +
+      "</div>" +
+      '<button type="button" class="btn-ghost" disabled style="margin-top:6px;font-size:12px;padding:4px 10px;" title="This task already has a dispatch id — dispatching again would risk duplicate work.">' +
+      "Dispatched" +
+      "</button>"
+    );
+  }
+
+  const missingReasons = [];
+  if (!task.runtimeAgentId) missingReasons.push("no runtime agent assigned");
+  if (!String(task.instructions || task.title || "").trim()) missingReasons.push("no instructions or title");
+
+  if (missingReasons.length) {
+    return (
+      '<button type="button" class="btn-ghost" disabled style="margin-top:8px;font-size:12px;padding:4px 10px;" title="Cannot dispatch: ' +
+      escHtml(missingReasons.join(", ")) +
+      '.">' +
+      "Dispatch task" +
+      "</button>"
+    );
+  }
+
+  const dispatchBody = String(task.instructions || task.title || "").trim();
+
+  return (
+    '<button type="button" class="btn-ghost" data-action="dispatchTask" data-plan-id="' +
+    planIdAttr +
+    '" data-task-id="' +
+    taskIdAttr +
+    '" data-agent="' +
+    escHtml(task.runtimeAgentId) +
+    '" data-task-body="' +
+    escHtml(dispatchBody) +
+    '" style="margin-top:8px;font-size:12px;padding:4px 10px;">' +
+    "Dispatch task" +
+    "</button>"
   );
 }
 
@@ -538,6 +588,39 @@ document.addEventListener("click", async (e) => {
       showNotification("Failed to generate review: " + err.message, "error");
       generateBtn.disabled = false;
       generateBtn.textContent = originalText;
+    }
+    return;
+  }
+  const dispatchBtn = e.target.closest('[data-action="dispatchTask"]');
+  if (dispatchBtn) {
+    const { planId, taskId, agent, taskBody } = dispatchBtn.dataset;
+    if (!planId || !taskId || dispatchBtn.disabled) return;
+    const originalText = dispatchBtn.textContent;
+    dispatchBtn.disabled = true;
+    dispatchBtn.textContent = "Dispatching…";
+    try {
+      const result = await postJSON("/api/dispatch", {
+        agent,
+        task: taskBody,
+        sessionId: currentProjectId(),
+        irisPlanId: planId,
+        irisTaskId: taskId,
+      });
+      // /api/dispatch can resolve with HTTP 200 and { ok: false, error }
+      // (e.g. when crew-lead itself is unreachable) — postJSON only
+      // rejects on a non-2xx status, so this must be checked explicitly
+      // or a failed dispatch would be reported as a success.
+      if (!result?.ok) {
+        throw new Error(result?.error || "dispatch failed");
+      }
+      showNotification("Task dispatched");
+      // Re-render from a fresh GET so dispatchTaskId appears once the
+      // dormant link hook has written it.
+      await openPlanDetail(planId);
+    } catch (err) {
+      showNotification("Failed to dispatch task: " + err.message, "error");
+      dispatchBtn.disabled = false;
+      dispatchBtn.textContent = originalText;
     }
   }
 });
