@@ -128,6 +128,7 @@
     "test:e2e:studio:headed": "node node_modules/playwright/cli.js test --config=playwright.config.js --headed",
     "smoke": "node scripts/smoke-dispatch.mjs",
     "smoke:static": "bash scripts/smoke.sh",
+    "smoke:iris-plan-stack": "node scripts/smoke-iris-plan-stack.mjs",
     "health": "node scripts/health-check.mjs",
     "doctor": "node scripts/doctor.mjs",
     "release:check": "bash scripts/release-check.sh",
