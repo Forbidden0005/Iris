@@ -24,6 +24,7 @@ import {
 } from "../lib/agent-registry.mjs";
 import { toIrisAgentView } from "../lib/iris/identity.mjs";
 import {
+  addIrisPlanEvidence,
   addIrisPlanTask,
   createIrisPlan,
   generateIrisPlanReview,
@@ -6929,6 +6930,25 @@ const server = http.createServer(async (req, res) => {
             { projectId },
           );
           sendJson(res, 201, { ok: true, task, plan: loadIrisPlan(planId, { projectId }) });
+          return;
+        }
+
+        // Explicit, user-triggered evidence attachment only. No auto-claiming
+        // of verification — addIrisPlanEvidence just validates the shape.
+        if (req.method === "POST" && action === "evidence" && parts.length === 2) {
+          const body = await readRequestJson(req);
+          const evidence = addIrisPlanEvidence(
+            planId,
+            {
+              type: body.type,
+              taskId: body.taskId || undefined,
+              title: body.title,
+              summary: body.summary,
+              data: body.data,
+            },
+            { projectId },
+          );
+          sendJson(res, 201, { ok: true, evidence, plan: loadIrisPlan(planId, { projectId }) });
           return;
         }
 

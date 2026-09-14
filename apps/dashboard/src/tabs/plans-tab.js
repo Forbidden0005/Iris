@@ -466,7 +466,71 @@ function renderEvidenceSection(plan) {
 
   return (
     '<div class="meta" style="margin-top:20px;margin-bottom:8px;font-weight:600;">Evidence</div>' +
-    rows
+    rows +
+    renderAttachEvidenceForm(plan)
+  );
+}
+
+// ── Attach evidence (explicit, user-triggered only) ────────────────────────
+
+function renderAttachEvidenceForm(plan) {
+  const idAttr = escHtml(plan.id);
+  const tasks = Array.isArray(plan.tasks) ? plan.tasks : [];
+  const taskOptions =
+    '<option value="">(no linked task)</option>' +
+    tasks
+      .map(
+        (t) =>
+          '<option value="' + escHtml(t.id) + '">' + escHtml(t.title || t.id) + "</option>",
+      )
+      .join("");
+
+  return (
+    '<div style="margin-top:8px;">' +
+    '<button type="button" class="btn-ghost" data-action="toggleAttachEvidence" style="font-size:12px;padding:4px 10px;">+ Attach evidence</button>' +
+    '<div id="attachEvidenceForm" data-plan-id="' +
+    idAttr +
+    '" style="display:none;margin-top:8px;padding:10px;border:1px solid var(--border);border-radius:8px;gap:6px;max-width:420px;">' +
+    '<select id="evidenceType" style="font-size:12px;">' +
+    '<option value="note">Note</option>' +
+    '<option value="file">File</option>' +
+    '<option value="command">Command</option>' +
+    '<option value="message">Message</option>' +
+    '<option value="artifact">Artifact</option>' +
+    "</select>" +
+    '<select id="evidenceTaskId" style="font-size:12px;">' +
+    taskOptions +
+    "</select>" +
+    '<input id="evidenceTitle" placeholder="Title (optional)" style="font-size:12px;" />' +
+    '<input id="evidenceSummary" placeholder="Summary (optional)" style="font-size:12px;" />' +
+    '<div data-evidence-fields="note"><textarea id="evidenceNoteText" placeholder="Note text" rows="2" style="font-size:12px;width:100%;"></textarea></div>' +
+    '<div data-evidence-fields="file" hidden>' +
+    '<input id="evidenceFilePath" placeholder="File path" style="font-size:12px;width:100%;margin-bottom:6px;" />' +
+    '<input id="evidenceFileAction" placeholder="Action (optional, e.g. read/write)" style="font-size:12px;width:100%;" />' +
+    "</div>" +
+    '<div data-evidence-fields="command" hidden>' +
+    '<input id="evidenceCommandText" placeholder="Command" style="font-size:12px;width:100%;margin-bottom:6px;" />' +
+    '<input id="evidenceExitCode" placeholder="Exit code (optional)" style="font-size:12px;width:100%;margin-bottom:6px;" />' +
+    '<select id="evidencePassed" style="font-size:12px;">' +
+    '<option value="">Passed? (optional)</option>' +
+    '<option value="true">Yes</option>' +
+    '<option value="false">No</option>' +
+    "</select>" +
+    "</div>" +
+    '<div data-evidence-fields="message" hidden>' +
+    '<input id="evidenceExcerpt" placeholder="Message excerpt" style="font-size:12px;width:100%;margin-bottom:6px;" />' +
+    '<input id="evidenceAgentId" placeholder="Agent id (optional)" style="font-size:12px;width:100%;" />' +
+    "</div>" +
+    '<div data-evidence-fields="artifact" hidden>' +
+    '<input id="evidenceArtifactPath" placeholder="Path or URL" style="font-size:12px;width:100%;margin-bottom:6px;" />' +
+    '<input id="evidenceArtifactLabel" placeholder="Label (optional)" style="font-size:12px;width:100%;" />' +
+    "</div>" +
+    '<div style="display:flex;gap:6px;margin-top:4px;">' +
+    '<button type="button" class="btn-green" data-action="submitAttachEvidence" style="font-size:12px;padding:4px 10px;">Attach evidence</button>' +
+    '<button type="button" class="btn-ghost" data-action="cancelAttachEvidence" style="font-size:12px;padding:4px 10px;">Cancel</button>' +
+    "</div>" +
+    "</div>" +
+    "</div>"
   );
 }
 
@@ -719,6 +783,15 @@ function renderDispatchTaskControl(task, planId) {
 
 // ── Event delegation ──────────────────────────────────────────────────────
 
+document.addEventListener("change", (e) => {
+  if (e.target && e.target.id === "evidenceType") {
+    const selected = e.target.value;
+    document.querySelectorAll("[data-evidence-fields]").forEach((el) => {
+      el.hidden = el.dataset.evidenceFields !== selected;
+    });
+  }
+});
+
 document.addEventListener("click", async (e) => {
   const refreshBtn = e.target.closest('[data-action="refreshPlans"]');
   if (refreshBtn) {
@@ -831,5 +904,98 @@ document.addEventListener("click", async (e) => {
       submitAddTaskBtn.disabled = false;
       submitAddTaskBtn.textContent = originalText;
     }
+    return;
+  }
+  const toggleAttachEvidenceBtn = e.target.closest('[data-action="toggleAttachEvidence"]');
+  if (toggleAttachEvidenceBtn) {
+    const form = document.getElementById("attachEvidenceForm");
+    if (form) form.style.display = form.style.display === "none" ? "grid" : "none";
+    return;
+  }
+  const cancelAttachEvidenceBtn = e.target.closest('[data-action="cancelAttachEvidence"]');
+  if (cancelAttachEvidenceBtn) {
+    const form = document.getElementById("attachEvidenceForm");
+    if (form) form.style.display = "none";
+    return;
+  }
+  const submitAttachEvidenceBtn = e.target.closest('[data-action="submitAttachEvidence"]');
+  if (submitAttachEvidenceBtn) {
+    const form = document.getElementById("attachEvidenceForm");
+    const planId = form?.dataset.planId;
+    if (!planId || submitAttachEvidenceBtn.disabled) return;
+    const type = document.getElementById("evidenceType")?.value || "note";
+    const taskId = document.getElementById("evidenceTaskId")?.value || undefined;
+    const title = document.getElementById("evidenceTitle")?.value.trim() || undefined;
+    const summary = document.getElementById("evidenceSummary")?.value.trim() || undefined;
+    const data = buildEvidenceData(type);
+    if (!data) {
+      showNotification("Fill in the required field for this evidence type", "error");
+      return;
+    }
+    const originalText = submitAttachEvidenceBtn.textContent;
+    submitAttachEvidenceBtn.disabled = true;
+    submitAttachEvidenceBtn.textContent = "Attaching…";
+    try {
+      await postJSON("/api/iris/plans/" + encodeURIComponent(planId) + "/evidence", {
+        type,
+        taskId,
+        title,
+        summary,
+        data,
+      });
+      showNotification("Evidence attached");
+      await openPlanDetail(planId);
+    } catch (err) {
+      showNotification("Failed to attach evidence: " + err.message, "error");
+      submitAttachEvidenceBtn.disabled = false;
+      submitAttachEvidenceBtn.textContent = originalText;
+    }
   }
 });
+
+function buildEvidenceData(type) {
+  const val = (id) => document.getElementById(id)?.value.trim() || "";
+  switch (type) {
+    case "file": {
+      const path = val("evidenceFilePath");
+      if (!path) return null;
+      const data = { path };
+      const action = val("evidenceFileAction");
+      if (action) data.action = action;
+      return data;
+    }
+    case "command": {
+      const command = val("evidenceCommandText");
+      if (!command) return null;
+      const data = { command };
+      const exitCode = val("evidenceExitCode");
+      if (exitCode && !Number.isNaN(Number(exitCode))) data.exitCode = Number(exitCode);
+      const passed = document.getElementById("evidencePassed")?.value;
+      if (passed === "true") data.passed = true;
+      else if (passed === "false") data.passed = false;
+      return data;
+    }
+    case "message": {
+      const excerpt = val("evidenceExcerpt");
+      if (!excerpt) return null;
+      const data = { excerpt };
+      const agentId = val("evidenceAgentId");
+      if (agentId) data.agentId = agentId;
+      return data;
+    }
+    case "artifact": {
+      const pathOrUrl = val("evidenceArtifactPath");
+      if (!pathOrUrl) return null;
+      const data = /^https?:\/\//i.test(pathOrUrl) ? { url: pathOrUrl } : { path: pathOrUrl };
+      const label = val("evidenceArtifactLabel");
+      if (label) data.label = label;
+      return data;
+    }
+    case "note":
+    default: {
+      const text = val("evidenceNoteText");
+      if (!text) return null;
+      return { text };
+    }
+  }
+}
