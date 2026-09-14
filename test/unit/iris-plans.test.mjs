@@ -14,6 +14,7 @@ import {
   clearIrisPlans,
   createIrisPlan,
   createIrisPlanReview,
+  generateIrisPlanReview,
   listIrisPlanEvidence,
   listIrisPlanReviews,
   listIrisPlans,
@@ -474,5 +475,173 @@ describe("Iris plan review packets", () => {
     const loaded = loadIrisPlan("legacy-no-reviews");
     assert.deepEqual(loaded.reviews, []);
     assert.deepEqual(listIrisPlanReviews("legacy-no-reviews"), []);
+  });
+});
+
+describe("Iris plan review generator", () => {
+  function setupPlan(id) {
+    createIrisPlan({ id, userRequest: "Generator fixture" });
+    return id;
+  }
+
+  test("generates a draft review from plan tasks/evidence", () => {
+    const planId = setupPlan("plan-gen-basic");
+    const task = addIrisPlanTask(planId, {
+      id: "task-a",
+      title: "Do the work",
+      status: "done",
+    });
+    updateIrisPlanTaskStatus(planId, task.id, "done", { summary: "Finished cleanly" });
+    const evidence = addIrisPlanEvidence(planId, {
+      type: "note",
+      taskId: task.id,
+      data: { text: "Looked fine" },
+    });
+
+    const review = generateIrisPlanReview(planId, {
+      now: Date.parse("2026-09-14T14:00:00.000Z"),
+    });
+
+    assert.match(review.id, /^review_/);
+    assert.equal(review.status, "draft");
+    assert.equal(review.title, "Review draft: Generator fixture");
+    assert.equal(
+      review.summary,
+      "Review draft for 1 task(s) with 1 attached evidence record(s).",
+    );
+    assert.deepEqual(review.taskIds, [task.id]);
+    assert.deepEqual(review.evidenceIds, [evidence.id]);
+    assert.deepEqual(review.risks, []);
+    assert.deepEqual(review.openQuestions, []);
+    assert.deepEqual(review.recommendations, []);
+    assert.equal(review.metadata.generated, true);
+  });
+
+  test("includes only selected taskIds when options.taskIds is provided", () => {
+    const planId = setupPlan("plan-gen-scoped");
+    const taskA = addIrisPlanTask(planId, { id: "task-a", title: "A" });
+    addIrisPlanTask(planId, { id: "task-b", title: "B" });
+
+    const review = generateIrisPlanReview(planId, { taskIds: [taskA.id] });
+
+    assert.deepEqual(review.taskIds, [taskA.id]);
+  });
+
+  test("includes linked evidence IDs but not evidence linked to unselected tasks", () => {
+    const planId = setupPlan("plan-gen-linked-evidence");
+    const taskA = addIrisPlanTask(planId, { id: "task-a", title: "A" });
+    const taskB = addIrisPlanTask(planId, { id: "task-b", title: "B" });
+    const evidenceA = addIrisPlanEvidence(planId, {
+      type: "note",
+      taskId: taskA.id,
+      data: { text: "for A" },
+    });
+    addIrisPlanEvidence(planId, {
+      type: "note",
+      taskId: taskB.id,
+      data: { text: "for B" },
+    });
+
+    const review = generateIrisPlanReview(planId, { taskIds: [taskA.id] });
+
+    assert.deepEqual(review.evidenceIds, [evidenceA.id]);
+  });
+
+  test("optionally includes plan-level (unlinked) evidence", () => {
+    const planId = setupPlan("plan-gen-plan-evidence");
+    const task = addIrisPlanTask(planId, { id: "task-a", title: "A" });
+    const linked = addIrisPlanEvidence(planId, {
+      type: "note",
+      taskId: task.id,
+      data: { text: "linked" },
+    });
+    const unlinked = addIrisPlanEvidence(planId, {
+      type: "note",
+      data: { text: "plan-level" },
+    });
+
+    const withoutFlag = generateIrisPlanReview(planId);
+    assert.deepEqual(withoutFlag.evidenceIds, [linked.id]);
+
+    const withFlag = generateIrisPlanReview(planId, { includePlanEvidence: true });
+    assert.deepEqual(new Set(withFlag.evidenceIds), new Set([linked.id, unlinked.id]));
+  });
+
+  test("creates risks and open questions for failed/blocked tasks and missing evidence", () => {
+    const planId = setupPlan("plan-gen-risks");
+    const failed = addIrisPlanTask(planId, { id: "task-failed", title: "Failed task" });
+    updateIrisPlanTaskStatus(planId, failed.id, "failed", { failureReason: "boom" });
+    const blocked = addIrisPlanTask(planId, { id: "task-blocked", title: "Blocked task" });
+    updateIrisPlanTaskStatus(planId, blocked.id, "blocked");
+    addIrisPlanTask(planId, { id: "task-no-evidence", title: "No evidence task" });
+
+    const review = generateIrisPlanReview(planId);
+
+    const riskTexts = review.risks.map((r) => r.text);
+    assert.ok(riskTexts.includes('Task "Failed task" failed.'));
+    assert.ok(riskTexts.includes('Task "Blocked task" is blocked.'));
+    assert.ok(riskTexts.some((t) => t.includes("no attached evidence")));
+
+    const failedRisk = review.risks.find((r) => r.text.includes("Failed task"));
+    assert.equal(failedRisk.severity, "high");
+    const blockedRisk = review.risks.find((r) => r.text.includes("Blocked task"));
+    assert.equal(blockedRisk.severity, "medium");
+
+    const openQuestionTexts = review.openQuestions.map((q) => q.text);
+    assert.ok(openQuestionTexts.some((t) => t.includes("no recorded summary")));
+    assert.ok(openQuestionTexts.some((t) => t.includes("Is evidence still needed")));
+
+    const recommendationTexts = review.recommendations.map((r) => r.text);
+    assert.ok(recommendationTexts.some((t) => t.includes("Resolve 2 failed/blocked task(s)")));
+  });
+
+  test("notes unsupported completion when all tasks are done with no evidence", () => {
+    const planId = setupPlan("plan-gen-done-no-evidence");
+    const task = addIrisPlanTask(planId, { id: "task-done", title: "Done task" });
+    updateIrisPlanTaskStatus(planId, task.id, "done", { summary: "Finished" });
+
+    const review = generateIrisPlanReview(planId);
+
+    assert.ok(
+      review.recommendations.some((r) =>
+        r.text.includes("completion is not fully supported by attached evidence"),
+      ),
+    );
+  });
+
+  test("never generates a ready review, even when the plan looks clean", () => {
+    const planId = setupPlan("plan-gen-clean");
+    const task = addIrisPlanTask(planId, { id: "task-clean", title: "Clean task" });
+    updateIrisPlanTaskStatus(planId, task.id, "done", { summary: "All good" });
+    addIrisPlanEvidence(planId, { type: "note", taskId: task.id, data: { text: "confirmed" } });
+
+    const review = generateIrisPlanReview(planId);
+
+    assert.equal(review.status, "draft");
+    assert.deepEqual(review.risks, []);
+    assert.deepEqual(review.recommendations, []);
+  });
+
+  test("rejects unknown selected taskIds", () => {
+    const planId = setupPlan("plan-gen-unknown-task");
+    addIrisPlanTask(planId, { id: "task-real", title: "Real" });
+
+    assert.throws(
+      () => generateIrisPlanReview(planId, { taskIds: ["no-such-task"] }),
+      /Iris task not found for review generation: no-such-task/,
+    );
+  });
+
+  test("generated packet survives save and load", () => {
+    const planId = setupPlan("plan-gen-persist");
+    const task = addIrisPlanTask(planId, { id: "task-a", title: "A" });
+    const generated = generateIrisPlanReview(planId, { taskIds: [task.id] });
+
+    const loaded = loadIrisPlanReview(planId, generated.id);
+    assert.deepEqual(loaded, generated);
+
+    const loadedPlan = loadIrisPlan(planId);
+    assert.equal(loadedPlan.reviews.length, 1);
+    assert.equal(loadedPlan.reviews[0].id, generated.id);
   });
 });

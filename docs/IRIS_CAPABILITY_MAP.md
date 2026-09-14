@@ -202,9 +202,50 @@ Current implementation — Review Packet v1:
   changed understanding of the plan.
 - Backward compatible: plans written before this slice have no `reviews`
   key and default to `[]` on load, same passthrough rule as evidence.
-- The dashboard does not render review packets yet — left for a follow-up
-  once there's a real caller producing them, same reasoning as Evidence
-  v1's initial deferral of dashboard work.
+- The dashboard renders review packets read-only in the Plan View's
+  Reviews section (status badge, summary, referenced task/evidence
+  counts, and risks/open questions/recommendations with resolved
+  task/evidence labels). No create/edit/status controls exist yet.
+
+Current implementation — Review Generator v1:
+
+- **Deterministic, non-LLM, and not a verification.** `generateIrisPlanReview`
+  in `lib/iris/plans.mjs` builds a draft review packet purely by reading a
+  plan's existing tasks and evidence — it makes no model call and invents
+  no facts. Every risk, open question, and recommendation it produces is a
+  direct, templated restatement of something already on the plan (a task's
+  status, whether a task has a summary, whether a task has any evidence
+  linked via `evidence.taskId`). It does not confirm those facts are
+  correct — it restates what the records already say.
+- Always produces `status: "draft"`, never `"ready"` — generating a
+  summary of records is not the same as a human or Iris actually having
+  reviewed them. Nothing promotes a generated packet to `"ready"`
+  automatically, now or later, without an explicit call elsewhere.
+- Scope: defaults to every task on the plan; pass `options.taskIds` to
+  scope to a subset (unknown ids throw). Evidence: includes evidence
+  linked to an in-scope task via `taskId`; pass
+  `options.includePlanEvidence: true` to also include evidence with no
+  `taskId` (plan-level evidence).
+- Generated content, by condition:
+  - Failed task → risk (`severity: "high"`); blocked task → risk
+    (`severity: "medium"`).
+  - Any in-scope tasks with no linked evidence → one aggregate risk
+    ("N task(s) have no attached evidence.") and one aggregate open
+    question phrased as a question, not a restated fact.
+  - Any in-scope tasks with no `summary` → one aggregate open question.
+  - Any failed/blocked tasks → one recommendation to resolve them before
+    treating the plan as complete.
+  - All in-scope tasks `done` but zero evidence attached → one
+    recommendation noting completion isn't supported by attached evidence.
+  - A clean plan (all done, evidence attached, no gaps) generates a draft
+    with empty `risks`/`openQuestions`/`recommendations` — the generator
+    does not manufacture concerns that aren't there.
+- `metadata: { generated: true, generatedBy: "generateIrisPlanReview" }` on
+  every generated packet, so callers/UI can distinguish a generated
+  summary from a manually authored review packet.
+- Not wired to chat, dispatch, RT bus, or any runtime event — nothing
+  calls this automatically. It is a helper a future caller (CLI, dashboard
+  button, or Iris itself) can invoke; this slice only adds the function.
 
 ## Suggested Next Implementation
 
