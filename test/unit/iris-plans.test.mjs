@@ -58,6 +58,20 @@ describe("Iris plan skeleton", () => {
     assert.deepEqual(loaded, plan);
   });
 
+  test("derives a title from userRequest that preserves letters and collapses whitespace", () => {
+    const plan = createIrisPlan({
+      id: "plan-title-derivation",
+      userRequest: "Assess   the   system's\nstatus\tacross services",
+    });
+
+    // A regex bug here previously stripped every "s" character instead of
+    // collapsing whitespace (e.g. "system's status" -> "sy tem' tatu").
+    assert.equal(plan.title, "Assess the system's status across services");
+
+    const loaded = loadIrisPlan("plan-title-derivation");
+    assert.deepEqual(loaded, plan);
+  });
+
   test("adds tasks with stable runtime IDs and Iris display labels", () => {
     createIrisPlan({ id: "plan-task-map", userRequest: "Build the thing" });
 
