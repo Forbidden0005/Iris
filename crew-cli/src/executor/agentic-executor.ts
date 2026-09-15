@@ -42,6 +42,7 @@ import { getGeminiOAuthToken, forceRefreshGeminiOAuth } from '../auth/gemini-oau
 import { computeVersionSuffix, buildBillingBlock, signBody } from '../auth/cch.js';
 import { createScratchpad, cleanupScratchpad, getScratchpadInstructions } from './scratchpad.js';
 import { TOOL_RESULT_CLEARING_PROMPT } from './tool-result-clearing.js';
+import { parseActTextFallback } from './act-text-fallback.js';
 
 // ---------------------------------------------------------------------------
 // System prompt
@@ -1360,6 +1361,18 @@ async function executeStreamingOpenAITurn(
     }
 
     if (toolCalls.length > 0) return { toolCalls, response: fullText, cost: 0 };
+
+    // Some local models (e.g. qwen2.5-coder via Ollama) narrate an ACT step
+    // as plain text instead of populating tool_calls. Recover a single call
+    // from the text deterministically rather than treating this as "done".
+    const textFallback = parseActTextFallback(fullText, effectiveTools.map(t => t.name));
+    if (textFallback) {
+      if (process.env.CREW_VERBOSE !== 'false') {
+        console.error(`\x1b[2m[act-text-fallback] recovered tool call "${textFallback.tool}" from plain-text ACT block\x1b[0m`);
+      }
+      return { toolCalls: [textFallback], response: fullText, cost: 0 };
+    }
+
     return { response: fullText, status: 'COMPLETE', cost: 0 };
   }
 
@@ -1378,6 +1391,14 @@ async function executeStreamingOpenAITurn(
       return { tool: tc.function?.name || '', params };
     });
     return { toolCalls, response: msg?.content || '', cost: 0 };
+  }
+
+  const nonStreamTextFallback = parseActTextFallback(msg?.content || '', effectiveTools.map(t => t.name));
+  if (nonStreamTextFallback) {
+    if (process.env.CREW_VERBOSE !== 'false') {
+      console.error(`\x1b[2m[act-text-fallback] recovered tool call "${nonStreamTextFallback.tool}" from plain-text ACT block\x1b[0m`);
+    }
+    return { toolCalls: [nonStreamTextFallback], response: msg?.content || '', cost: 0 };
   }
 
   return { response: msg?.content || '', status: 'COMPLETE', cost: 0 };
@@ -2242,9 +2263,11 @@ export async function runAgenticWorker(
   // Resolve provider early to report which model/provider is being used
   const resolvedProvider = await resolveProvider(model, options.tier);
 
-  // Auth summary — always show so user knows OAuth vs API key
+  // Auth summary — always show so user knows OAuth vs API key vs local/keyless
   if (resolvedProvider) {
-    const authMethod = resolvedProvider.isOAuth ? 'OAuth' : 'API key';
+    const authMethod = resolvedProvider.id === 'ollama'
+      ? 'local (no key)'
+      : resolvedProvider.isOAuth ? 'OAuth' : 'API key';
     console.error(`\x1b[2m[auth] ${resolvedProvider.model} via ${authMethod} (${resolvedProvider.id})\x1b[0m`);
   }
 
