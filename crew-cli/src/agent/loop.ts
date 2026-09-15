@@ -1,13 +1,31 @@
 /**
- * Iris minimal agent loop: objective -> plan -> dispatch -> evidence -> verify -> report.
+ * Iris minimal agent loop: objective -> plan -> local model/tool dispatch ->
+ * evidence -> verify -> report.
  *
  * Deliberately small and ugly. This is glue, not a framework: it wires
- * existing real pieces (LocalExecutor for the actual LLM call) together
- * into one function that can be called end to end.
+ * existing real pieces together into one function that can be called end
+ * to end.
+ *
+ * CORRECTION (see git history): the first version of this file defaulted
+ * to LocalExecutor, which only ever calls cloud-provider APIs
+ * (Anthropic/OpenAI/Gemini/...) and has no tool loop at all — it just
+ * returns raw LLM text. That is not Iris's architecture. Iris's runtime
+ * is supposed to route to local models (Qwen3 14B / Qwen3-Coder 30B via
+ * Ollama) and give them real local tools (files, shell, git). That
+ * runtime already exists in this repo as `runAgenticWorker()`
+ * (src/executor/agentic-executor.ts) + `Sandbox` + `GeminiToolAdapter` —
+ * it already has an Ollama-first, keyless provider path
+ * (http://localhost:11434/v1/chat/completions). This file previously
+ * ignored it entirely and went straight to `LocalExecutor` instead.
+ * `localAgentDispatcher()` below is the fix: it's the default dispatcher
+ * now, and it drives the real local tool loop. `LocalExecutor` is only
+ * used if a caller explicitly asks for it as a fallback.
  */
 
 import { randomUUID } from 'node:crypto';
 import { LocalExecutor, ExecutorOptions, ExecutorResult } from '../executor/local.js';
+import { runAgenticWorker } from '../executor/agentic-executor.js';
+import { Sandbox } from '../sandbox/index.js';
 
 export interface IrisTask {
   id: string;
@@ -48,6 +66,43 @@ export interface IrisReport {
 /** Anything with the same call shape as LocalExecutor.execute(). Lets tests inject a fake worker. */
 export interface Dispatcher {
   execute(task: string, options?: ExecutorOptions): Promise<ExecutorResult>;
+}
+
+/**
+ * Local, tool-using dispatcher: routes the objective to a local Ollama
+ * model (Qwen3 14B for general work, Qwen3-Coder 30B for code/tool-heavy
+ * work by default) and lets it act through real local tools (files, shell,
+ * git — see GeminiToolAdapter) via the existing runAgenticWorker() runtime.
+ * This is what "local-first" actually means for this loop: no cloud API
+ * key required, no fake dispatcher, real tool calls against `projectDir`.
+ */
+export function localAgentDispatcher(options: {
+  projectDir?: string;
+  model?: string;
+  tier?: 'fast' | 'standard' | 'heavy';
+  maxTurns?: number;
+} = {}): Dispatcher {
+  const projectDir = options.projectDir || process.cwd();
+  const sandbox = new Sandbox(projectDir);
+  const model = options.model || process.env.CREW_EXECUTION_MODEL || 'qwen3-coder:30b';
+
+  return {
+    async execute(task: string): Promise<ExecutorResult> {
+      const agentic = await runAgenticWorker(task, sandbox, {
+        model,
+        projectDir,
+        tier: options.tier,
+        maxTurns: options.maxTurns ?? 15,
+        stream: false,
+      });
+      return {
+        success: agentic.success,
+        result: agentic.output,
+        model: agentic.modelUsed || model,
+        providerId: agentic.providerId,
+      };
+    },
+  };
 }
 
 /**
@@ -151,13 +206,30 @@ export function verify(evidence: IrisEvidence): IrisVerification {
  */
 export async function runIris(
   objective: string,
-  options: { dispatcher?: Dispatcher; executorOptions?: ExecutorOptions } = {}
+  options: {
+    dispatcher?: Dispatcher;
+    executorOptions?: ExecutorOptions;
+    /** projectDir for the default local dispatcher's sandbox/tools */
+    projectDir?: string;
+    /** Explicit opt-in only: fall back to a cloud-provider LocalExecutor
+     *  call if the local Ollama dispatch fails. Off by default — cloud
+     *  keys are not the primary Iris path. */
+    cloudFallback?: boolean;
+  } = {}
 ): Promise<IrisReport> {
-  const dispatcher = options.dispatcher ?? new LocalExecutor();
+  const dispatcher = options.dispatcher ?? localAgentDispatcher({ projectDir: options.projectDir });
   const plan = makePlan(objective);
   const task = plan.tasks[0];
 
-  const evidence = await dispatchTask(task, dispatcher, options.executorOptions);
+  let evidence = await dispatchTask(task, dispatcher, options.executorOptions);
+
+  if (evidence.error && options.cloudFallback && !options.dispatcher) {
+    evidence = await dispatchTask(task, new LocalExecutor(), options.executorOptions);
+    evidence.error = evidence.error
+      ? `local dispatch failed, cloud fallback also failed: ${evidence.error}`
+      : evidence.error;
+  }
+
   const verification = verify(evidence);
 
   return {
