@@ -857,7 +857,38 @@ document.addEventListener("change", (e) => {
   }
 });
 
+// Plans-tab actions are handled entirely by this module, not by the
+// dashboard's central ACTION_REGISTRY (apps/dashboard/src/app.js). Both
+// listeners are on `document`, so this one (registered first, since
+// app.js imports this module before installing its own click listener)
+// runs first and handles the click — but without stopImmediatePropagation,
+// app.js's listener still runs afterward on the same event and logs a
+// spurious "unknown data-action" warning for every plans-tab action.
+const PLANS_TAB_ACTIONS = new Set([
+  "refreshPlans",
+  "closePlanDetail",
+  "openPlan",
+  "generateReview",
+  "dispatchTask",
+  "toggleAddTask",
+  "cancelAddTask",
+  "submitAddTask",
+  "toggleAttachEvidence",
+  "cancelAttachEvidence",
+  "submitAttachEvidence",
+  "toggleRecordConflict",
+  "cancelRecordConflict",
+  "submitRecordConflict",
+  "toggleResolveConflict",
+  "submitResolveConflict",
+]);
+
 document.addEventListener("click", async (e) => {
+  const actionEl = e.target.closest("[data-action]");
+  if (actionEl && PLANS_TAB_ACTIONS.has(actionEl.dataset.action)) {
+    e.stopImmediatePropagation();
+  }
+
   const refreshBtn = e.target.closest('[data-action="refreshPlans"]');
   if (refreshBtn) {
     loadPlans();

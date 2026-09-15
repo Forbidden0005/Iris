@@ -1458,6 +1458,16 @@ function appendRoadmapCard(box, { draftId, name, outputDir, roadmapMd }) {
   box.scrollTop = box.scrollHeight;
 }
 
+// Populates the chat composer from one of the empty-state suggestion
+// buttons (see index.html's #chatView suggestion grid) and sends it
+// immediately — same as if the user had typed it and pressed Enter.
+function useChatSuggestion(promptText) {
+  const input = document.getElementById("chatInput");
+  if (!input || !promptText) return;
+  input.value = promptText;
+  sendChat();
+}
+
 let lastAppendedAssistantContent = "";
 let lastAppendedUserContent = "";
 let lastSentContent = null;
@@ -2187,6 +2197,7 @@ const ACTION_REGISTRY = {
     }
   },
   sendChat,
+  useChatSuggestion,
   stopAll,
   killAll,
   stopPassthrough: killPassthrough,
