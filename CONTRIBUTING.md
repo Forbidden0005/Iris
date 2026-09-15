@@ -1,6 +1,6 @@
-# Contributing to crewswarm
+# Contributing to Iris
 
-Thanks for your interest. crewswarm is an active project and contributions are welcome -- bug fixes, new skills, agent improvements, engine integrations, and docs all matter.
+Thanks for your interest. Iris is an active project and contributions are welcome -- bug fixes, new skills, agent improvements, engine integrations, and docs all matter. Iris is forked from [crewswarm](https://github.com/crewswarm/crewswarm), so most of the runtime below (crew-lead, gateway-bridge, the RT bus, engines) is inherited crewswarm internals — see [docs/IRIS_FOUNDATION.md](docs/IRIS_FOUNDATION.md) for what Iris adds on top.
 
 ---
 
@@ -8,8 +8,8 @@ Thanks for your interest. crewswarm is an active project and contributions are w
 
 ```bash
 # 1. Clone the repo
-git clone https://github.com/crewswarm/crewswarm.git
-cd crewswarm
+git clone https://github.com/Forbidden0005/Iris.git
+cd Iris
 
 # 2. Install dependencies and bootstrap config
 npm install
@@ -307,7 +307,7 @@ describe('my feature', () => {
 
 ## Release process
 
-crewswarm uses `main` as the release branch. No versioned npm releases yet -- install from source.
+Iris uses `main` as the release branch. No versioned npm releases yet -- install from source.
 
 1. All PRs merge to `main`.
 2. `CHANGELOG.md` `[Unreleased]` section is updated with each PR.

@@ -15,9 +15,7 @@ We strongly recommend always running the latest commit on `main`.
 
 **Please do not open a public GitHub issue for security vulnerabilities.**
 
-Report privately via email:
-
-**info@crewswarm.ai**
+Report privately via [GitHub Security Advisories](https://github.com/Forbidden0005/Iris/security/advisories/new) on this repo.
 
 Include:
 - A description of the vulnerability and its potential impact
@@ -52,7 +50,7 @@ We follow **coordinated disclosure** — we ask that you give us reasonable time
 
 ### Out of scope
 
-- Issues that require physical access to the machine running crewswarm
+- Issues that require physical access to the machine running Iris
 - Issues in third-party LLM providers (Groq, Anthropic, OpenAI, etc.) — report those upstream
 - Denial-of-service via intentionally malformed requests from the local user
 - Social engineering attacks
@@ -61,7 +59,7 @@ We follow **coordinated disclosure** — we ask that you give us reasonable time
 
 ## Security model
 
-crewswarm is designed to run **locally on your machine** — not exposed to the internet by default. Key assumptions:
+Iris is designed to run **locally on your machine** — not exposed to the internet by default. Key assumptions:
 
 1. **Ports 4319, 5010, 18889 are localhost-only** — do not expose these ports publicly without a reverse proxy and proper authentication.
 2. **Agent tool calls are gated** — `@@RUN_CMD` from untrusted agents requires dashboard approval. Pre-approve only patterns you trust.
@@ -73,7 +71,7 @@ crewswarm is designed to run **locally on your machine** — not exposed to the 
 
 ## Hardening checklist
 
-If you expose crewswarm beyond localhost:
+If you expose Iris beyond localhost:
 
 - [ ] Put a reverse proxy (nginx/Caddy) with TLS in front of port 4319
 - [ ] Add IP allowlisting or HTTP Basic Auth at the proxy layer

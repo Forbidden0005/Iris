@@ -1,16 +1,15 @@
 {
-  "name": "crewswarm",
-  "version": "1.0.0",
-  "description": "Local-first multi-agent orchestration platform — coordinate AI coding agents, LLMs, and tools from a single dashboard",
+  "name": "iris",
+  "version": "0.1.0",
+  "description": "A single front-door assistant for supervised multi-agent coding work — plans, dispatches, gathers evidence, and reports back. Forked from crewswarm.",
   "type": "module",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/crewswarm/crewswarm.git"
+    "url": "https://github.com/Forbidden0005/Iris.git"
   },
-  "homepage": "https://crewswarm.ai",
   "bugs": {
-    "url": "https://github.com/crewswarm/crewswarm/issues"
+    "url": "https://github.com/Forbidden0005/Iris/issues"
   },
   "keywords": [
     "ai",
@@ -25,7 +24,7 @@
     "cursor"
   ],
   "bin": {
-    "crewswarm": "scripts/start.mjs"
+    "iris": "scripts/start.mjs"
   },
   "files": [
     "scripts/",

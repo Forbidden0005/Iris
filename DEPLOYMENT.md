@@ -1,17 +1,19 @@
-# crewswarm Deployment Guide
+# Iris Deployment Guide
 
-Three paths: npm for most users, source for contributors, Docker for servers and teams.
+Iris is not yet published to npm — install from source. Docker is available for servers/teams, inherited from the crewswarm fork this project is built on.
 
 ---
 
-## 1. npm Install (Recommended)
-
-Fastest way to get running. Installs the CLI globally and starts the full stack.
+## 1. Source Install (Recommended today)
 
 ```bash
-npm install -g crewswarm
-crewswarm
+git clone https://github.com/Forbidden0005/Iris.git
+cd Iris
+bash install.sh
+npm run restart-all
 ```
+
+This clones the repo, installs dependencies, builds the dashboard and crew-cli, and starts all services.
 
 Dashboard: http://localhost:4319
 Vibe IDE: http://localhost:3333
@@ -20,25 +22,12 @@ Add at least one API key in Dashboard → Providers. Groq is free at console.gro
 
 ---
 
-## 2. Source Install (Contributors)
-
-```bash
-git clone https://github.com/crewswarm/crewswarm
-cd crewswarm
-bash install.sh
-npm run restart-all
-```
-
-This clones the repo, installs dependencies, builds the dashboard and crew-cli, and starts all services.
-
----
-
-## 3. Docker Install (Servers & Teams)
+## 2. Docker Install (Servers & Teams)
 
 ### One-liner
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/crewswarm/crewswarm/main/scripts/install-docker.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Forbidden0005/Iris/main/scripts/install-docker.sh | bash
 ```
 
 This auto-installs Docker if needed, clones the repo, builds the image, configures security, and starts services.
@@ -46,8 +35,8 @@ This auto-installs Docker if needed, clones the repo, builds the image, configur
 ### Manual Docker
 
 ```bash
-git clone https://github.com/crewswarm/crewswarm
-cd crewswarm
+git clone https://github.com/Forbidden0005/Iris.git
+cd Iris
 docker compose up -d
 ```
 
@@ -78,7 +67,7 @@ This adds the 5-layer security model:
 4. **Command allowlist** — dashboard approval for new shell commands
 5. **Non-root execution** — UID 1000, no new privileges, all capabilities dropped
 
-Details: https://crewswarm.ai/security.html
+Details: see [SECURITY.md](SECURITY.md)
 
 ### Docker volumes
 
@@ -93,11 +82,11 @@ volumes:
 
 ---
 
-## 4. Configuration
+## 3. Configuration
 
 ### Config file
 
-crewswarm stores configuration in `~/.crewswarm/crewswarm.json`:
+Iris (via the inherited crewswarm runtime) stores configuration in `~/.crewswarm/crewswarm.json`:
 
 ```json
 {
@@ -151,7 +140,7 @@ crew-cli detects these automatically.
 
 ---
 
-## 5. Cloud Deployment
+## 4. Cloud Deployment
 
 ### AWS / GCP / DigitalOcean
 
@@ -159,7 +148,7 @@ Any Ubuntu VM works:
 
 ```bash
 ssh your-server
-curl -fsSL https://raw.githubusercontent.com/crewswarm/crewswarm/main/scripts/install-docker.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Forbidden0005/Iris/main/scripts/install-docker.sh | bash
 ```
 
 The install script handles Docker installation, image building, firewall setup, and service startup.
@@ -168,7 +157,7 @@ Access dashboard at `http://your-server-ip:4319`. For production, put nginx or C
 
 ```bash
 # Example with Caddy (auto-TLS)
-caddy reverse-proxy --from crewswarm.example.com --to localhost:4319
+caddy reverse-proxy --from iris.example.com --to localhost:4319
 ```
 
 ### Kubernetes (roadmap)
@@ -177,7 +166,7 @@ Helm charts and Terraform modules are planned but not yet available. Deploy via 
 
 ---
 
-## 6. Health Checks
+## 5. Health Checks
 
 ```bash
 # CLI diagnostics (checks Node, git, API keys, gateway, CLI version)
@@ -189,7 +178,7 @@ curl http://localhost:18889/health
 
 ---
 
-## 7. Troubleshooting
+## 6. Troubleshooting
 
 **Services won't start:**
 ```bash
@@ -220,21 +209,17 @@ npm run restart-all
 
 ## npm Packages
 
-| Package | Install | Description |
-|---------|---------|-------------|
-| crewswarm | `npm i -g crewswarm` | Full platform (dashboard, services, CLI) |
-| crewswarm-cli | `npm i -g crewswarm-cli` | Standalone CLI only |
-| crewswarm-openclaw-plugin | `npm i crewswarm-openclaw-plugin` | OpenClaw integration plugin |
+Not published yet. Install from source (Section 1) until Iris has a versioned release.
 
 ---
 
 ## Links
 
-- [Documentation](https://crewswarm.ai/docs.html)
-- [Security Architecture](https://crewswarm.ai/security.html)
-- [Model Recommendations](https://crewswarm.ai/models.html)
-- [Deploy Page](https://crewswarm.ai/deploy.html)
+- [README.md](README.md)
+- [docs/IRIS_FOUNDATION.md](docs/IRIS_FOUNDATION.md) — product direction
+- [docs/IRIS_CAPABILITY_MAP.md](docs/IRIS_CAPABILITY_MAP.md) — capability map
+- [SECURITY.md](SECURITY.md) — security architecture and reporting
 
 ---
 
-**Last updated:** 2026-04-05
+**Last updated:** 2026-09-14
