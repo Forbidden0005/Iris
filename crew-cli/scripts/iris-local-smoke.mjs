@@ -24,6 +24,16 @@ function log(msg) {
   console.log(msg);
 }
 
+function printHardwareGuidance() {
+  log('[iris-local-smoke] hardware guidance:');
+  log('  GTX 1080 Ti / 11GB VRAM, 32GB RAM: use the defaults');
+  log('    planning: qwen3:8b       (ollama pull qwen3:8b)');
+  log('    code:     qwen2.5-coder:7b  (ollama pull qwen2.5-coder:7b)');
+  log('  qwen3:14b is a viable IRIS_MODEL_PLANNING override on this card if it performs acceptably for you — test it, do not assume.');
+  log('  qwen3-coder:30b does NOT fit in 11GB VRAM. Only set IRIS_MODEL_CODE=qwen3-coder:30b');
+  log('  if you explicitly accept slow CPU/RAM offload (32GB RAM, much slower than the 7B default).');
+}
+
 async function checkOllama() {
   try {
     const res = await fetch(`${OLLAMA_URL}/api/tags`, { signal: AbortSignal.timeout(3000) });
@@ -55,6 +65,7 @@ async function main() {
     log('  ollama serve   # if it is not already running as a service');
     log('[iris-local-smoke] Then pull the required models:');
     for (const m of REQUIRED_MODELS) log(`  ollama pull ${m}`);
+    printHardwareGuidance();
     process.exitCode = 1;
     return;
   }
@@ -65,10 +76,15 @@ async function main() {
     log(`[iris-local-smoke] FAIL: missing required model(s): ${missing.join(', ')}`);
     log('[iris-local-smoke] Pull them with:');
     for (const m of missing) log(`  ollama pull ${m}`);
+    printHardwareGuidance();
     process.exitCode = 1;
     return;
   }
   log(`[iris-local-smoke] OK: required models present (planning=${IRIS_MODEL_PLANNING}, code=${IRIS_MODEL_CODE})`);
+  if (IRIS_MODEL_CODE.startsWith('qwen3-coder:30b') || IRIS_MODEL_PLANNING.startsWith('qwen3:14b')) {
+    log('[iris-local-smoke] NOTE: you have overridden a default to a heavier model.');
+    printHardwareGuidance();
+  }
 
   log(`[iris-local-smoke] running objective through runIris(): "${OBJECTIVE}"`);
   let report;

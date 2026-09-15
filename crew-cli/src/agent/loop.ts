@@ -69,13 +69,19 @@ export interface Dispatcher {
 }
 
 /**
- * Simple model routing: planning/conversation goes to Qwen3 14B, code/
- * tool-heavy execution goes to Qwen3-Coder 30B. Both default to local
- * Ollama tags and can be overridden via env — but the default is always
- * local, never a cloud model name.
+ * Simple model routing: planning/conversation vs code/tool-heavy execution.
+ *
+ * Defaults are sized for an 11GB-VRAM card (e.g. GTX 1080 Ti), not for a
+ * high-memory workstation: qwen3-coder:30b does not fit in 11GB VRAM and
+ * runs slow on CPU/RAM offload, so it is NOT the default — it's an
+ * explicit opt-in via IRIS_MODEL_CODE for people with the memory for it.
+ * qwen3:14b is left available as an opt-in too, for the same reason
+ * (fits tighter on 11GB than qwen3:8b). Both default to local Ollama
+ * tags and can be overridden via env — but the default is always local,
+ * never a cloud model name.
  */
-export const IRIS_MODEL_PLANNING = process.env.IRIS_MODEL_PLANNING || 'qwen3:14b';
-export const IRIS_MODEL_CODE = process.env.IRIS_MODEL_CODE || 'qwen3-coder:30b';
+export const IRIS_MODEL_PLANNING = process.env.IRIS_MODEL_PLANNING || 'qwen3:8b';
+export const IRIS_MODEL_CODE = process.env.IRIS_MODEL_CODE || 'qwen2.5-coder:7b';
 
 export function selectModel(kind: 'planning' | 'code'): string {
   return kind === 'planning' ? IRIS_MODEL_PLANNING : IRIS_MODEL_CODE;
