@@ -179,9 +179,10 @@ async function loadAgents_cfg() {
     list.innerHTML = "";
     agents.forEach((a) => {
       const displayName = a.displayName || a.name || a.id;
-      const runtimeLabel = a.runtimeId && a.runtimeId !== displayName
-        ? ` · ${a.runtimeId}`
-        : "";
+      const labelParts = [];
+      if (a.irisLabel && a.irisLabel !== displayName) labelParts.push(a.irisLabel);
+      if (a.runtimeId && a.runtimeId !== displayName) labelParts.push(a.runtimeId);
+      const runtimeLabel = labelParts.length ? ` · ${labelParts.join(" · ")}` : "";
       const card = document.createElement("div");
       card.className = "agent-card";
       card.id = "agent-card-" + a.id;

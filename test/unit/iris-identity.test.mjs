@@ -44,8 +44,26 @@ describe("Iris identity layer", () => {
       id: "crew-coder",
       runtimeId: "crew-coder",
       displayName: "Builder",
+      irisLabel: "Builder",
       productName: "Iris",
       model: "openai/gpt-5",
     });
+  });
+
+  test("falls back to the Iris role label when no custom name is set", () => {
+    const view = toIrisAgentView({ id: "crew-coder", name: "crew-coder" });
+    assert.equal(view.displayName, "Builder");
+    assert.equal(view.irisLabel, "Builder");
+  });
+
+  test("preserves a user's custom agent name instead of overwriting it with the Iris label", () => {
+    const view = toIrisAgentView({ id: "crew-coder", name: "Ziggy" });
+    assert.equal(view.displayName, "Ziggy", "custom name must win over the Iris label");
+    assert.equal(view.irisLabel, "Builder", "the Iris role label is still available separately");
+  });
+
+  test("does not treat the runtime id itself as a custom name", () => {
+    const view = toIrisAgentView({ id: "coder", name: "coder" });
+    assert.equal(view.displayName, "Builder");
   });
 });
