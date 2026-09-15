@@ -69,6 +69,19 @@ export interface Dispatcher {
 }
 
 /**
+ * Simple model routing: planning/conversation goes to Qwen3 14B, code/
+ * tool-heavy execution goes to Qwen3-Coder 30B. Both default to local
+ * Ollama tags and can be overridden via env — but the default is always
+ * local, never a cloud model name.
+ */
+export const IRIS_MODEL_PLANNING = process.env.IRIS_MODEL_PLANNING || 'qwen3:14b';
+export const IRIS_MODEL_CODE = process.env.IRIS_MODEL_CODE || 'qwen3-coder:30b';
+
+export function selectModel(kind: 'planning' | 'code'): string {
+  return kind === 'planning' ? IRIS_MODEL_PLANNING : IRIS_MODEL_CODE;
+}
+
+/**
  * Local, tool-using dispatcher: routes the objective to a local Ollama
  * model (Qwen3 14B for general work, Qwen3-Coder 30B for code/tool-heavy
  * work by default) and lets it act through real local tools (files, shell,
@@ -79,12 +92,13 @@ export interface Dispatcher {
 export function localAgentDispatcher(options: {
   projectDir?: string;
   model?: string;
+  kind?: 'planning' | 'code';
   tier?: 'fast' | 'standard' | 'heavy';
   maxTurns?: number;
 } = {}): Dispatcher {
   const projectDir = options.projectDir || process.cwd();
   const sandbox = new Sandbox(projectDir);
-  const model = options.model || process.env.CREW_EXECUTION_MODEL || 'qwen3-coder:30b';
+  const model = options.model || selectModel(options.kind || 'code');
 
   return {
     async execute(task: string): Promise<ExecutorResult> {
@@ -211,13 +225,15 @@ export async function runIris(
     executorOptions?: ExecutorOptions;
     /** projectDir for the default local dispatcher's sandbox/tools */
     projectDir?: string;
+    /** 'planning' -> Qwen3 14B, 'code' (default) -> Qwen3-Coder 30B */
+    kind?: 'planning' | 'code';
     /** Explicit opt-in only: fall back to a cloud-provider LocalExecutor
      *  call if the local Ollama dispatch fails. Off by default — cloud
      *  keys are not the primary Iris path. */
     cloudFallback?: boolean;
   } = {}
 ): Promise<IrisReport> {
-  const dispatcher = options.dispatcher ?? localAgentDispatcher({ projectDir: options.projectDir });
+  const dispatcher = options.dispatcher ?? localAgentDispatcher({ projectDir: options.projectDir, kind: options.kind });
   const plan = makePlan(objective);
   const task = plan.tasks[0];
 
