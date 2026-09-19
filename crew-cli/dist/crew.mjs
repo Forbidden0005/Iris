@@ -3015,6 +3015,8 @@ async function executeHookCommand(command, stdinData, timeoutMs) {
         resolve20({ message: stdout.trim() || void 0 });
       }
     });
+    proc.stdin.on("error", () => {
+    });
     proc.stdin.write(stdinData);
     proc.stdin.end();
   });
@@ -3380,7 +3382,7 @@ var init_docker_sandbox = __esm({
 // src/tools/gemini/crew-adapter.ts
 import { execSync as execSync3 } from "node:child_process";
 import { mkdir as mkdir3, readFile as readFile7, readdir as readdir2, writeFile as writeFile3 } from "node:fs/promises";
-import { dirname as dirname4, join as join9, resolve as resolve4 } from "node:path";
+import { dirname as dirname4, isAbsolute, join as join9, relative as relative2, resolve as resolve4 } from "node:path";
 function getActivityDescription(tool, p) {
   const s = (k) => String(p[k] || "").replace(/^.*\//, "");
   const f = (k) => String(p[k] || "");
@@ -3642,9 +3644,9 @@ var init_crew_adapter = __esm({
     _backgroundProcesses = /* @__PURE__ */ new Map();
     GeminiToolAdapter = class _GeminiToolAdapter {
       constructor(sandbox, constraintLevel = "full") {
-        this.sandbox = sandbox;
         this._filesRead = /* @__PURE__ */ new Set();
         this._realWorkspaceRoot = null;
+        this.sandbox = sandbox;
         const workspaceRoot = sandbox.getBaseDir() || process.cwd();
         this.config = new CrewConfig(workspaceRoot);
         this.messageBus = new CrewMessageBus();
@@ -3672,7 +3674,8 @@ var init_crew_adapter = __esm({
         } catch {
           realPath = resolvedPath;
         }
-        return realPath.startsWith(root + "/") || realPath === root;
+        const rel = relative2(root, realPath);
+        return rel === "" || !rel.startsWith("..") && !isAbsolute(rel);
       }
       get constraintLevel() {
         return this._constraintLevel;
@@ -4068,9 +4071,9 @@ var init_crew_adapter = __esm({
         }
       }
       async writeFile(params) {
-        const isAbsolute = params.file_path.startsWith("/");
+        const isAbsolute2 = params.file_path.startsWith("/");
         const { existsSync: existsSync26 } = await import("node:fs");
-        const checkPath = isAbsolute ? params.file_path : resolve4(this.config.getWorkspaceRoot(), params.file_path);
+        const checkPath = isAbsolute2 ? params.file_path : resolve4(this.config.getWorkspaceRoot(), params.file_path);
         if (existsSync26(checkPath)) {
           const { statSync: statSync2 } = await import("node:fs");
           const size = statSync2(checkPath).size;
@@ -4083,7 +4086,7 @@ var init_crew_adapter = __esm({
             };
           }
         }
-        if (isAbsolute) {
+        if (isAbsolute2) {
           try {
             const { mkdir: mkdir26, writeFile: writeFile26 } = await import("node:fs/promises");
             const { dirname: dirname9 } = await import("node:path");
@@ -4157,8 +4160,8 @@ var init_crew_adapter = __esm({
         if (!this.isInsideWorkspace(filePath)) {
           return { success: false, error: `Access denied: path "${params.file_path}" resolves outside workspace root.` };
         }
-        const { relative: relative7 } = await import("node:path");
-        const relPath = filePath.startsWith(realRoot) ? relative7(realRoot, filePath) : params.file_path;
+        const { relative: relative8 } = await import("node:path");
+        const relPath = filePath.startsWith(realRoot) ? relative8(realRoot, filePath) : params.file_path;
         if (!this._filesRead.has(params.file_path) && !this._filesRead.has(filePath) && !this._filesRead.has(relPath)) {
           return {
             success: false,
@@ -6751,9 +6754,11 @@ ${turnGuidance}` : turnGuidance;
         const output = String(result2 || "");
         if (call.tool === "run_shell_command" || call.tool === "shell" || call.tool === "run_cmd") {
           const command = String(call.params.command || "");
+          const commandLower = command.toLowerCase();
           for (const goal of this.state.verificationGoals) {
             if (goal.status !== "pending") continue;
-            if (goal.description.includes(command) || command.includes("test") && goal.description.includes("test") || command.includes("lint") && goal.description.includes("lint") || command.includes("build") && goal.description.includes("build")) {
+            const descriptionLower = goal.description.toLowerCase();
+            if (descriptionLower.includes(commandLower) || commandLower.includes("test") && descriptionLower.includes("test") || commandLower.includes("lint") && descriptionLower.includes("lint") || commandLower.includes("build") && descriptionLower.includes("build")) {
               if (!output.includes("FAIL") && !output.includes("error") && !output.includes("Error")) {
                 this.state.proveGoal(goal.id, `${call.tool}: ${command}`);
               } else {
@@ -7693,6 +7698,120 @@ var init_scratchpad = __esm({
   }
 });
 
+// src/executor/act-text-fallback.ts
+function parseCallArgs(argsStr) {
+  const params = {};
+  const argRe = /([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|-?\d+(?:\.\d+)?|true|false|null)/g;
+  let m;
+  while ((m = argRe.exec(argsStr)) !== null) {
+    const key = m[1];
+    let raw = m[2];
+    if (raw.startsWith('"') && raw.endsWith('"') || raw.startsWith("'") && raw.endsWith("'")) {
+      raw = raw.slice(1, -1);
+      params[key] = raw.replace(/\\(.)/g, "$1");
+    } else if (raw === "true") {
+      params[key] = true;
+    } else if (raw === "false") {
+      params[key] = false;
+    } else if (raw === "null") {
+      params[key] = null;
+    } else {
+      params[key] = Number(raw);
+    }
+  }
+  return params;
+}
+function matchFunctionCallSyntax(text, toolNames) {
+  const callRe = /\b([a-zA-Z_][a-zA-Z0-9_]*)\s*\(([^()]*)\)/g;
+  let m;
+  while ((m = callRe.exec(text)) !== null) {
+    const name = m[1];
+    if (toolNames.has(name)) {
+      return { tool: name, params: parseCallArgs(m[2]) };
+    }
+  }
+  return null;
+}
+function matchFencedJsonToolCall(text, toolNames) {
+  const fenceRe = /```(?:json)?\s*([\s\S]*?)```/g;
+  let m;
+  while ((m = fenceRe.exec(text)) !== null) {
+    const parsed = tryParseToolCallJson(m[1], toolNames);
+    if (parsed) return parsed;
+  }
+  return null;
+}
+function matchInlineJsonToolCall(text, toolNames) {
+  const braceStart = text.indexOf("{");
+  if (braceStart === -1) return null;
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] !== "{") continue;
+    let depth = 0;
+    for (let j = i; j < text.length; j++) {
+      if (text[j] === "{") depth++;
+      else if (text[j] === "}") {
+        depth--;
+        if (depth === 0) {
+          const candidate = text.slice(i, j + 1);
+          const parsed = tryParseToolCallJson(candidate, toolNames);
+          if (parsed) return parsed;
+          break;
+        }
+      }
+    }
+  }
+  return null;
+}
+function tryParseToolCallJson(jsonText, toolNames) {
+  let obj;
+  try {
+    obj = JSON.parse(jsonText.trim());
+  } catch {
+    return null;
+  }
+  if (!obj || typeof obj !== "object") return null;
+  const o = obj;
+  if (typeof o.tool === "string" && toolNames.has(o.tool)) {
+    return { tool: o.tool, params: o.params || {} };
+  }
+  if (typeof o.name === "string" && toolNames.has(o.name)) {
+    const args = o.arguments;
+    if (typeof args === "string") {
+      try {
+        return { tool: o.name, params: JSON.parse(args) };
+      } catch {
+        return { tool: o.name, params: {} };
+      }
+    }
+    return { tool: o.name, params: args || {} };
+  }
+  if (o.function && typeof o.function === "object") {
+    const fn = o.function;
+    if (typeof fn.name === "string" && toolNames.has(fn.name)) {
+      const args = fn.arguments;
+      if (typeof args === "string") {
+        try {
+          return { tool: fn.name, params: JSON.parse(args) };
+        } catch {
+          return { tool: fn.name, params: {} };
+        }
+      }
+      return { tool: fn.name, params: args || {} };
+    }
+  }
+  return null;
+}
+function parseActTextFallback(text, availableToolNames) {
+  if (!text || !text.trim() || availableToolNames.length === 0) return null;
+  const toolNames = new Set(availableToolNames);
+  return matchFencedJsonToolCall(text, toolNames) || matchFunctionCallSyntax(text, toolNames) || matchInlineJsonToolCall(text, toolNames);
+}
+var init_act_text_fallback = __esm({
+  "src/executor/act-text-fallback.ts"() {
+    "use strict";
+  }
+});
+
 // src/collections/index.ts
 var collections_exports = {};
 __export(collections_exports, {
@@ -7700,7 +7819,7 @@ __export(collections_exports, {
   searchCollection: () => searchCollection
 });
 import { readdir as readdir3, readFile as readFile10, stat as stat3 } from "node:fs/promises";
-import { extname as extname2, join as join13, relative as relative2, resolve as resolve5 } from "node:path";
+import { extname as extname2, join as join13, relative as relative3, resolve as resolve5 } from "node:path";
 function tokenize(text) {
   return text.toLowerCase().replace(/[^a-z0-9\s_-]/g, " ").split(/\s+/).filter((t) => t.length > 1);
 }
@@ -7812,7 +7931,7 @@ async function buildCollectionIndex(paths, options = {}) {
         continue;
       }
       fileCount++;
-      const rel = relative2(resolve5(rootPath, st.isDirectory() ? "." : ".."), file);
+      const rel = relative3(resolve5(rootPath, st.isDirectory() ? "." : ".."), file);
       const chunks = chunkFile(content, rel);
       allChunks.push(...chunks);
     }
@@ -7916,6 +8035,7 @@ var init_collections = __esm({
 // src/executor/agentic-executor.ts
 var agentic_executor_exports = {};
 __export(agentic_executor_exports, {
+  L3_SYSTEM_PROMPT_COMPACT: () => L3_SYSTEM_PROMPT_COMPACT,
   compressTurnHistory: () => compressTurnHistory,
   formatToolResult: () => formatToolResult,
   historyToGeminiContents: () => historyToGeminiContents,
@@ -8191,7 +8311,82 @@ function compactToolDeclarations(tools, turn, model) {
   }));
 }
 async function resolveProvider(modelOverride, preferTier) {
-  const effectiveModel = (modelOverride || process.env.CREW_EXECUTION_MODEL || "").trim().toLowerCase();
+  let effectiveModel = (modelOverride || process.env.CREW_EXECUTION_MODEL || "").trim().toLowerCase();
+  const providerModelMatch = effectiveModel.match(/^([a-z][\w-]*):(.+)$/);
+  if (providerModelMatch) {
+    const [, explicitProvider, modelPart] = providerModelMatch;
+    const isModelTag = /^\d+b$|^cloud$|^latest$|^q\d|^fp\d|^gguf$/i.test(modelPart.split(":")[0] || "");
+    if (!isModelTag) {
+      const providerAliases = {
+        "anthropic": "anthropic",
+        "claude": "anthropic",
+        "openai": "openai",
+        "gpt": "openai",
+        "google": "gemini",
+        "gemini": "gemini",
+        "xai": "grok",
+        "grok": "grok",
+        "groq": "groq",
+        "deepseek": "deepseek",
+        "mistral": "mistral",
+        "cerebras": "cerebras",
+        "nvidia": "nvidia",
+        "fireworks": "fireworks",
+        "together": "together",
+        "openrouter": "openrouter",
+        "opencode": "opencode",
+        "zen": "opencode",
+        "perplexity": "perplexity",
+        "ollama": "ollama"
+      };
+      const resolvedId = providerAliases[explicitProvider] || explicitProvider;
+      if (resolvedId === "ollama") {
+        return {
+          key: "ollama",
+          model: modelPart,
+          driver: "openai",
+          apiUrl: "http://localhost:11434/v1/chat/completions",
+          id: "ollama"
+        };
+      }
+      if (resolvedId === "anthropic" && process.env.CREW_NO_OAUTH !== "true") {
+        try {
+          const oauth = await getOAuthToken();
+          if (oauth?.accessToken) {
+            return { key: oauth.accessToken, model: modelPart, driver: "anthropic", id: "anthropic-oauth", isOAuth: true };
+          }
+        } catch {
+        }
+      }
+      if (resolvedId === "openai" && process.env.CREW_NO_OAUTH !== "true") {
+        try {
+          const oauth = await getOpenAIOAuthToken();
+          if (oauth?.accessToken) {
+            return { key: oauth.accessToken, model: modelPart, driver: "openai", apiUrl: OPENAI_CODEX_API_URL, id: "openai-oauth", isOAuth: true };
+          }
+        } catch {
+        }
+      }
+      if (resolvedId === "gemini" && process.env.CREW_NO_OAUTH !== "true") {
+        try {
+          const oauth = await getGeminiOAuthToken();
+          if (oauth?.accessToken) {
+            return { key: oauth.accessToken, model: modelPart, driver: "gemini", id: "gemini-oauth", isOAuth: true };
+          }
+        } catch {
+        }
+      }
+      const p = PROVIDER_ORDER.find((p2) => p2.id === resolvedId);
+      if (p) {
+        const key = process.env[p.envKey];
+        if (key && key.length >= 5) {
+          return { key, model: modelPart, driver: p.driver, apiUrl: p.apiUrl, id: p.id };
+        }
+      }
+      console.warn(`[crew-cli] \u26A0\uFE0F Provider "${explicitProvider}" specified but no API key found (${resolvedId})`);
+      return null;
+    }
+  }
   if (process.env.CREW_NO_OAUTH !== "true") {
     const wantsOpenAI = effectiveModel.includes("gpt") || effectiveModel.includes("openai") || effectiveModel.includes("o3") || effectiveModel.includes("o4");
     const wantsGemini = effectiveModel.includes("gemini");
@@ -8251,6 +8446,16 @@ async function resolveProvider(modelOverride, preferTier) {
     }
   }
   if (effectiveModel) {
+    const isOllamaModel = effectiveModel.includes(":cloud") || effectiveModel.includes(":latest") || /^(qwen|llama|gemma|phi|mistral|deepseek-coder|codellama|lfm)\d*[-.:]/.test(effectiveModel);
+    if (isOllamaModel) {
+      return {
+        key: "ollama",
+        model: modelOverride || effectiveModel,
+        driver: "openai",
+        apiUrl: "http://localhost:11434/v1/chat/completions",
+        id: "ollama"
+      };
+    }
     if (effectiveModel.includes("/") && !effectiveModel.startsWith("accounts/") && !effectiveModel.startsWith("models/")) {
       const forcedProvider = process.env.CREW_PROVIDER?.toLowerCase();
       if (forcedProvider) {
@@ -8266,17 +8471,20 @@ async function resolveProvider(modelOverride, preferTier) {
       }
     }
     for (const p of PROVIDER_ORDER) {
-      const key = process.env[p.envKey];
-      if (!key || key.length < 5) continue;
+      const isKeyless = p.id === "ollama";
+      const key = isKeyless ? "ollama" : process.env[p.envKey];
+      if (!isKeyless && (!key || key.length < 5)) continue;
       if (p.envKey === "GOOGLE_API_KEY" && process.env.GEMINI_API_KEY) continue;
       if (p.modelPrefix && effectiveModel.includes(p.modelPrefix)) {
-        return { key, model: modelOverride || process.env.CREW_EXECUTION_MODEL || p.model, driver: p.driver, apiUrl: p.apiUrl, id: p.id };
+        return { key: key || "ollama", model: modelOverride || process.env.CREW_EXECUTION_MODEL || p.model, driver: p.driver, apiUrl: p.apiUrl, id: p.id };
       }
     }
+    console.warn(`[crew-cli] \u26A0\uFE0F No provider matched model "${effectiveModel}" \u2014 trying OpenAI-compatible fallback`);
     for (const p of PROVIDER_ORDER) {
       const key = process.env[p.envKey];
       if (!key || key.length < 5) continue;
       if (p.driver === "openai" || p.driver === "openrouter") {
+        console.warn(`[crew-cli] \u26A0\uFE0F Falling back to ${p.id} (${p.apiUrl}) \u2014 model may not be available there`);
         return { key, model: modelOverride || effectiveModel, driver: p.driver, apiUrl: p.apiUrl, id: p.id };
       }
     }
@@ -8755,6 +8963,13 @@ async function executeStreamingOpenAITurn(fullTask, tools, apiUrl, apiKey, model
       }
     }
     if (toolCalls.length > 0) return { toolCalls, response: fullText, cost: 0 };
+    const textFallback = parseActTextFallback(fullText, effectiveTools.map((t) => t.name));
+    if (textFallback) {
+      if (process.env.CREW_VERBOSE !== "false") {
+        console.error(`\x1B[2m[act-text-fallback] recovered tool call "${textFallback.tool}" from plain-text ACT block\x1B[0m`);
+      }
+      return { toolCalls: [textFallback], response: fullText, cost: 0 };
+    }
     return { response: fullText, status: "COMPLETE", cost: 0 };
   }
   const data = await res.json();
@@ -8775,6 +8990,13 @@ async function executeStreamingOpenAITurn(fullTask, tools, apiUrl, apiKey, model
       return { tool: tc.function?.name || "", params };
     });
     return { toolCalls, response: msg?.content || "", cost: 0 };
+  }
+  const nonStreamTextFallback = parseActTextFallback(msg?.content || "", effectiveTools.map((t) => t.name));
+  if (nonStreamTextFallback) {
+    if (process.env.CREW_VERBOSE !== "false") {
+      console.error(`\x1B[2m[act-text-fallback] recovered tool call "${nonStreamTextFallback.tool}" from plain-text ACT block\x1B[0m`);
+    }
+    return { toolCalls: [nonStreamTextFallback], response: msg?.content || "", cost: 0 };
   }
   return { response: msg?.content || "", status: "COMPLETE", cost: 0 };
 }
@@ -9219,16 +9441,17 @@ async function runAgenticWorker(task, sandbox, options = {}) {
     }
     globalThis.__crewAdaptiveWeightsLoaded = true;
   }
+  const includeScratchpad = options.includeScratchpad ?? true;
   const sessionId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-  const scratchDir = createScratchpad(sessionId);
+  const scratchDir = includeScratchpad ? createScratchpad(sessionId) : "";
   const baseSystemPrompt = options.systemPrompt || L3_SYSTEM_PROMPT;
   const topOfMind = await loadTopOfMind(projectDir);
-  const systemPrompt = baseSystemPrompt + getScratchpadInstructions(scratchDir) + TOOL_RESULT_CLEARING_PROMPT + topOfMind;
+  const systemPrompt = baseSystemPrompt + (includeScratchpad ? getScratchpadInstructions(scratchDir) : "") + TOOL_RESULT_CLEARING_PROMPT + topOfMind;
   const stream = options.stream ?? !process.env.CREW_NO_STREAM;
   const jit = options.priorDiscoveredFiles?.length ? JITContextTracker.fromPrior(options.priorDiscoveredFiles) : new JITContextTracker();
   const resolvedProvider = await resolveProvider(model, options.tier);
   if (resolvedProvider) {
-    const authMethod = resolvedProvider.isOAuth ? "OAuth" : "API key";
+    const authMethod = resolvedProvider.id === "ollama" ? "local (no key)" : resolvedProvider.isOAuth ? "OAuth" : "API key";
     console.error(`\x1B[2m[auth] ${resolvedProvider.model} via ${authMethod} (${resolvedProvider.id})\x1B[0m`);
   }
   if (verbose) {
@@ -9236,15 +9459,17 @@ async function runAgenticWorker(task, sandbox, options = {}) {
     console.log(`[AgenticExecutor] Provider: ${prov} | Stream: ${stream} | Tools: ${allTools.length} | Constraint: ${constraintLevel}`);
   }
   let enrichedTask = task;
-  try {
-    const repoContext = await buildRepoMapContext(task, projectDir);
-    if (repoContext) {
-      enrichedTask = `${task}${repoContext}`;
-      if (verbose) {
-        console.log(`[AgenticExecutor] Repo-map: ${repoContext.length} chars injected`);
+  if (options.includeRepoMap ?? true) {
+    try {
+      const repoContext = await buildRepoMapContext(task, projectDir);
+      if (repoContext) {
+        enrichedTask = `${task}${repoContext}`;
+        if (verbose) {
+          console.log(`[AgenticExecutor] Repo-map: ${repoContext.length} chars injected`);
+        }
       }
+    } catch {
     }
-  } catch {
   }
   try {
     const correctionsContext = await loadCorrectionsContext(projectDir);
@@ -9483,7 +9708,7 @@ function stripThinkActObserve(text) {
   out = out.replace(/^---\s*$/gm, "");
   return out.trim();
 }
-var L3_SYSTEM_PROMPT, PROVIDER_ORDER, JITContextTracker, MAX_RETRIES;
+var L3_SYSTEM_PROMPT, L3_SYSTEM_PROMPT_COMPACT, PROVIDER_ORDER, JITContextTracker, MAX_RETRIES;
 var init_agentic_executor = __esm({
   "src/executor/agentic-executor.ts"() {
     "use strict";
@@ -9503,6 +9728,7 @@ var init_agentic_executor = __esm({
     init_cch();
     init_scratchpad();
     init_tool_result_clearing();
+    init_act_text_fallback();
     L3_SYSTEM_PROMPT = `You are a senior AI engineer executing coding tasks autonomously.
 
 ## Cognitive Loop: THINK \u2192 ACT \u2192 OBSERVE
@@ -9595,6 +9821,18 @@ Every turn, follow this exact pattern:
 - Do NOT apologize or explain failures at length \u2014 just fix them and move on.
 - Do NOT add features, refactor, or "improve" code beyond what the task asks.
 - Do NOT add comments, docstrings, or type annotations to code you didn't change.`;
+    L3_SYSTEM_PROMPT_COMPACT = `You are an AI engineer executing coding tasks autonomously via local tools.
+
+## Loop: THINK -> ACT -> OBSERVE
+Each turn: briefly state the next step, call the tool(s) needed, then read the result and decide the next step. Stop as soon as the task is verified done.
+
+## Rules
+- Do exactly what was asked. No unrelated refactors, comments, or "improvements".
+- Always read_file before editing. Use replace for targeted edits, write_file only for new files.
+- Prefer dedicated tools over shell (read_file, grep_search, glob) over cat/rg/find.
+- After changes: run the build/test command implied by the task and report the result.
+- If a tool call fails, don't repeat it unchanged \u2014 adjust your approach.
+- Keep responses short: what you did and the verification result. No preamble, no restating the task.`;
     PROVIDER_ORDER = [
       // Heavy tier — L2 brain (complex multi-file tasks, planning)
       { id: "openai", envKey: "OPENAI_API_KEY", model: "gpt-4.1", driver: "openai", apiUrl: "https://api.openai.com/v1/chat/completions", modelPrefix: "gpt", tier: "heavy" },
@@ -9619,6 +9857,19 @@ Every turn, follow this exact pattern:
       { id: "opencode", envKey: "OPENCODE_API_KEY", model: "qwen3.6-plus-free", driver: "openai", apiUrl: "https://opencode.ai/zen/v1/chat/completions", modelPrefix: "qwen3.6", tier: "standard" },
       { id: "opencode", envKey: "OPENCODE_API_KEY", model: "trinity-large-preview-free", driver: "openai", apiUrl: "https://opencode.ai/zen/v1/chat/completions", modelPrefix: "trinity", tier: "standard" },
       { id: "opencode", envKey: "OPENCODE_API_KEY", model: "big-pickle", driver: "openai", apiUrl: "https://opencode.ai/zen/v1/chat/completions", modelPrefix: "big-pickle", tier: "standard" },
+      // Ollama — local/cloud models via OpenAI-compatible API (keyless, always available)
+      { id: "ollama", envKey: "OLLAMA_DUMMY", model: "gemma4:31b-cloud", driver: "openai", apiUrl: "http://localhost:11434/v1/chat/completions", modelPrefix: "gemma", tier: "standard" },
+      { id: "ollama", envKey: "OLLAMA_DUMMY", model: "glm-5.1:cloud", driver: "openai", apiUrl: "http://localhost:11434/v1/chat/completions", modelPrefix: "glm-5.1", tier: "standard" },
+      { id: "ollama", envKey: "OLLAMA_DUMMY", model: "glm-5:cloud", driver: "openai", apiUrl: "http://localhost:11434/v1/chat/completions", modelPrefix: "glm-5:", tier: "standard" },
+      { id: "ollama", envKey: "OLLAMA_DUMMY", model: "glm-4.7:cloud", driver: "openai", apiUrl: "http://localhost:11434/v1/chat/completions", modelPrefix: "glm-4", tier: "standard" },
+      { id: "ollama", envKey: "OLLAMA_DUMMY", model: "minimax-m2.7:cloud", driver: "openai", apiUrl: "http://localhost:11434/v1/chat/completions", modelPrefix: "minimax", tier: "standard" },
+      { id: "ollama", envKey: "OLLAMA_DUMMY", model: "kimi-k2.5:cloud", driver: "openai", apiUrl: "http://localhost:11434/v1/chat/completions", modelPrefix: "kimi-k2", tier: "standard" },
+      { id: "ollama", envKey: "OLLAMA_DUMMY", model: "deepseek-v3.2:cloud", driver: "openai", apiUrl: "http://localhost:11434/v1/chat/completions", modelPrefix: "deepseek-v3", tier: "standard" },
+      { id: "ollama", envKey: "OLLAMA_DUMMY", model: "qwen3-coder-next:cloud", driver: "openai", apiUrl: "http://localhost:11434/v1/chat/completions", modelPrefix: "qwen3-coder", tier: "standard" },
+      { id: "ollama", envKey: "OLLAMA_DUMMY", model: "devstral-2:123b-cloud", driver: "openai", apiUrl: "http://localhost:11434/v1/chat/completions", modelPrefix: "devstral", tier: "standard" },
+      { id: "ollama", envKey: "OLLAMA_DUMMY", model: "nemotron-3-super:cloud", driver: "openai", apiUrl: "http://localhost:11434/v1/chat/completions", modelPrefix: "nemotron", tier: "standard" },
+      // Perplexity
+      { id: "perplexity", envKey: "PERPLEXITY_API_KEY", model: "sonar", driver: "openai", apiUrl: "https://api.perplexity.ai/chat/completions", modelPrefix: "sonar", tier: "standard" },
       // Fallback — free tier
       { id: "openrouter", envKey: "OPENROUTER_API_KEY", model: "google/gemini-2.0-flash-exp:free", driver: "openrouter", apiUrl: "https://openrouter.ai/api/v1/chat/completions", modelPrefix: "openrouter", tier: "standard" },
       // Additional providers (OpenAI-compatible, cheap workers)
@@ -10883,7 +11134,7 @@ var init_structured_json = __esm({
 
 // src/prompts/dual-l2.ts
 import { mkdir as mkdir5, writeFile as writeFile5, readFile as readFile11 } from "node:fs/promises";
-import { resolve as resolve6, join as join14, relative as relative3 } from "node:path";
+import { resolve as resolve6, join as join14, relative as relative4 } from "node:path";
 import { execSync as execSync4 } from "node:child_process";
 import { existsSync as existsSync7 } from "node:fs";
 var DualL2Planner;
@@ -11092,7 +11343,7 @@ ${context}`.toLowerCase();
         try {
           const tree = this.shellSafe(`find ${cwd} -maxdepth 2 -not -path '*/node_modules/*' -not -path '*/.git/*' -not -path '*/dist/*' -not -path '*/.crew/*' | head -60`);
           if (tree) {
-            const paths = tree.split("\n").map((p) => relative3(cwd, p)).filter((p) => p && !p.startsWith("."));
+            const paths = tree.split("\n").map((p) => relative4(cwd, p)).filter((p) => p && !p.startsWith("."));
             sections.push(`## Project Structure
 ${paths.join("\n")}`);
           }
@@ -11120,7 +11371,7 @@ Deps: ${Object.keys(pkg.dependencies || {}).slice(0, 15).join(", ")}`);
             }
           }
           if (relevantFiles.size > 0) {
-            const relPaths = [...relevantFiles].map((f) => relative3(cwd, f)).slice(0, 15);
+            const relPaths = [...relevantFiles].map((f) => relative4(cwd, f)).slice(0, 15);
             sections.push(`## Files matching task keywords [${uniqueKw.join(", ")}]
 ${relPaths.join("\n")}`);
           }
@@ -11128,7 +11379,7 @@ ${relPaths.join("\n")}`);
           for (const file of topFiles) {
             try {
               const content = await readFile11(file, "utf8");
-              const relPath = relative3(cwd, file);
+              const relPath = relative4(cwd, file);
               const lines = content.split("\n");
               const keyLines = lines.filter(
                 (l) => /export |function |class |app\.(get|post|put)|router\.|endpoint|\/api\/|interface |type /.test(l)
@@ -11167,7 +11418,7 @@ ${gitLog}`);
         try {
           const tree = this.shellSafe(`find ${cwd} -maxdepth 2 -type f -not -path '*/node_modules/*' -not -path '*/.git/*' -not -path '*/dist/*' | head -80`);
           if (tree) {
-            const relPaths = tree.split("\n").map((p) => relative3(cwd, p)).filter(Boolean);
+            const relPaths = tree.split("\n").map((p) => relative4(cwd, p)).filter(Boolean);
             sections.push(`## Project Structure
 ${relPaths.join("\n")}`);
           }
@@ -11190,7 +11441,7 @@ Deps: ${Object.keys(parsed.dependencies || {}).join(", ")}`);
           for (const kw of uniqueKeywords) {
             const grepResult = this.shellSafe(`grep -rl "${kw}" ${cwd} --include="*.ts" --include="*.js" --include="*.mjs" --include="*.html" -not -path "*/node_modules/*" -not -path "*/.git/*" -not -path "*/dist/*" 2>/dev/null | head -10`);
             if (grepResult) {
-              const files = grepResult.split("\n").map((p) => relative3(cwd, p)).filter(Boolean);
+              const files = grepResult.split("\n").map((p) => relative4(cwd, p)).filter(Boolean);
               sections.push(`## Files matching "${kw}"
 ${files.join("\n")}`);
             }
@@ -11200,7 +11451,7 @@ ${files.join("\n")}`);
             for (const file of relevantFiles.split("\n").filter(Boolean).slice(0, 3)) {
               const content = await readFile11(file, "utf8").catch(() => "");
               if (content) {
-                const relPath = relative3(cwd, file);
+                const relPath = relative4(cwd, file);
                 const preview = content.split("\n").slice(0, 80).join("\n");
                 sections.push(`## ${relPath} (first 80 lines)
 \`\`\`
@@ -12587,7 +12838,7 @@ var init_qa_gate = __esm({
 
 // src/context/project-context.ts
 import { readFile as readFile12, readdir as readdir5, stat as stat5 } from "node:fs/promises";
-import { join as join18, extname as extname3, relative as relative4 } from "node:path";
+import { join as join18, extname as extname3, relative as relative5 } from "node:path";
 async function buildProjectContext(projectRoot) {
   const fileTree = [];
   await walkDir(projectRoot, projectRoot, fileTree, 0, 3, 500);
@@ -12619,7 +12870,7 @@ async function walkDir(base, dir, entries, depth, maxDepth, maxFiles) {
     const fullPath = join18(dir, name);
     try {
       const s = await stat5(fullPath);
-      const relPath = relative4(base, fullPath);
+      const relPath = relative5(base, fullPath);
       const ext = extname3(name);
       if (s.isDirectory()) {
         entries.push({ path: relPath, type: "dir", size: 0, ext: "" });
@@ -13278,7 +13529,7 @@ import { execSync as execSync5 } from "node:child_process";
 import { readFile as readFile14, writeFile as writeFile6, mkdir as mkdir7 } from "node:fs/promises";
 import { existsSync as existsSync10 } from "node:fs";
 import { createHash as createHash3 } from "node:crypto";
-import { relative as relative5, join as join19 } from "node:path";
+import { relative as relative6, join as join19 } from "node:path";
 function extractKeywords(query) {
   return (query.toLowerCase().match(/\b[a-z]{3,}\b/g) || []).filter((kw) => !STOP_WORDS.has(kw));
 }
@@ -13441,7 +13692,7 @@ async function autoLoadRelevantFiles(query, cwd, options = {}) {
       const fullPath = join19(cwd, file);
       const content = await readFile14(fullPath, "utf8");
       if (charsUsed + content.length > charBudget) break;
-      const relPath = relative5(cwd, file);
+      const relPath = relative6(cwd, file);
       contextParts.push(`
 === ${relPath} ===
 ${content}`);
@@ -16025,10 +16276,10 @@ var init_worker_pool = __esm({
     init_logger();
     WorkerPool = class {
       constructor(options) {
-        this.options = options;
         this.queue = [];
         this.activeWorkers = 0;
         this.logger = new Logger();
+        this.options = options;
         this.concurrency = options.concurrency || 3;
         this.maxRetries = options.maxRetries || 2;
         this.timeoutMs = options.timeoutMs || 12e4;
@@ -17183,7 +17434,7 @@ __export(blast_radius_exports, {
 });
 import { execFile as execFile9 } from "node:child_process";
 import { promisify as promisify10 } from "node:util";
-import { relative as relative6, resolve as resolve18 } from "node:path";
+import { relative as relative7, resolve as resolve18 } from "node:path";
 function severityRank(level) {
   if (level === "high") return 3;
   if (level === "medium") return 2;
@@ -17251,7 +17502,7 @@ async function analyzeBlastRadius(cwd, options = {}) {
   const graphPaths = new Set(graph.nodes.map((n) => n.path));
   const changedSet = /* @__PURE__ */ new Set();
   for (const file of rawChanged) {
-    const rel = relative6(rootDir, resolve18(rootDir, file));
+    const rel = relative7(rootDir, resolve18(rootDir, file));
     if (graphPaths.has(rel)) changedSet.add(rel);
   }
   const affectedFiles = collectImporters(graph, changedSet, maxDepth);
@@ -20944,9 +21195,9 @@ function startWatchMode(rootDir, onEvent, ignored = ["node_modules", ".git", "di
   }
   const watcher = watch(rootDir, { recursive: true }, async (eventType, filename) => {
     if (!filename) return;
-    const relative7 = String(filename);
-    if (ignored.some((p) => relative7.includes(p))) return;
-    const fullPath = join30(rootDir, relative7);
+    const relative8 = String(filename);
+    if (ignored.some((p) => relative8.includes(p))) return;
+    const fullPath = join30(rootDir, relative8);
     const event = await inspectFileForTodos(fullPath);
     await onEvent(event);
     if (broadcaster) {
@@ -27435,9 +27686,28 @@ async function main(args = []) {
     return;
   }
   const cliVersion = await getInstalledCliVersion() || "0.1.0-alpha";
-  program.name("crew").description("crewswarm CLI - Agent orchestration made simple").version(cliVersion);
+  program.name("crew").description("crewswarm CLI - Agent orchestration made simple").version(cliVersion).addHelpText("after", `
+Examples:
+  $ crew doctor                          Check Node/git/Ollama/config health
+  $ crew chat "explain this repo"        One-shot chat, routed to the best agent
+  $ crew auto "fix the failing test"     Autonomous mode, iterates until done
+  $ crew auto "add input validation" --auto-apply
+                                          Autonomous mode, applies edits automatically
+
+First time here? See docs/RUNNING-LOCALLY.md for local (Ollama) setup,
+or run "crew doctor" to check your environment before running a task.
+`);
   program.option("--legacy-router", "Use legacy routing path (disables UnifiedPipeline default)", false);
-  program.command("chat").description("Chat with crewswarm (automatically routed to best agent)").argument("<input...>", "Message or question").option("-p, --project <path>", "Project directory").option("-g, --gateway <url>", "Override gateway URL").option("-m, --model <id>", "Model override for direct/bypass gateway paths", executorPrimary || void 0).option("--engine <id>", "Engine override for direct/bypass gateway paths (e.g. cursor)", cliDefaults.engine || void 0).option("--direct", "Request direct execution path on gateway", false).option("--bypass", "Request bypass/orchestrator-skip path on gateway", false).option("--crew", "Use full multi-agent crew via gateway (like OpenCode PM loop)", false).option("--apply", "Auto-apply sandbox changes to disk after completion", false).option("--image <path>", "Attach an image file to the prompt (repeatable)", collectOption, []).option("--context-image <path>", "Attach an image file as context (repeatable)", collectOption, []).option("--image-max-bytes <n>", "Max bytes per image context payload", "250000").option("--cross-repo", "Inject sibling repository context", false).option("--context-file <path>", "Attach a file as additional context (repeatable)", collectOption, []).option("--context-repo <path>", "Attach git context from another repo (repeatable)", collectOption, []).option("--stdin", "Read additional context from stdin", false).option("--max-context-tokens <n>", "Max context token budget (approx, chars/4)").option("--context-budget-mode <mode>", "trim | stop when budget exceeded", "trim").option("--docs", "Inject matching docs context via collections search", false).option("--docs-path <paths...>", "Custom paths for docs search (default: docs/ + project root)").option("--docs-code", "Include source code files in docs retrieval index", Boolean(cliDefaults.docsCode)).option("--fallback-model <id>", "Fallback model chain entry (repeatable)", collectOption, []).option("--retry-attempts <n>", "Retry attempts for transient failures", "2").option("--strict-preflight", "Block execution if doctor checks fail", false).option("--json", "Output machine-readable JSON envelope", false).action(async (inputArray, options) => {
+  program.command("chat").description("Chat with crewswarm (automatically routed to best agent)").argument("<input...>", "Message or question").option("-p, --project <path>", "Project directory").option("-g, --gateway <url>", "Override gateway URL").option("-m, --model <id>", "Model override for direct/bypass gateway paths", executorPrimary || void 0).option("--engine <id>", "Engine override for direct/bypass gateway paths (e.g. cursor)", cliDefaults.engine || void 0).option("--direct", "Request direct execution path on gateway", false).option("--bypass", "Request bypass/orchestrator-skip path on gateway", false).option("--crew", "Use full multi-agent crew via gateway (like OpenCode PM loop)", false).option("--apply", "Auto-apply sandbox changes to disk after completion", false).option("--image <path>", "Attach an image file to the prompt (repeatable)", collectOption, []).option("--context-image <path>", "Attach an image file as context (repeatable)", collectOption, []).option("--image-max-bytes <n>", "Max bytes per image context payload", "250000").option("--cross-repo", "Inject sibling repository context", false).option("--context-file <path>", "Attach a file as additional context (repeatable)", collectOption, []).option("--context-repo <path>", "Attach git context from another repo (repeatable)", collectOption, []).option("--stdin", "Read additional context from stdin", false).option("--max-context-tokens <n>", "Max context token budget (approx, chars/4)").option("--context-budget-mode <mode>", "trim | stop when budget exceeded", "trim").option("--docs", "Inject matching docs context via collections search", false).option("--docs-path <paths...>", "Custom paths for docs search (default: docs/ + project root)").option("--docs-code", "Include source code files in docs retrieval index", Boolean(cliDefaults.docsCode)).option("--fallback-model <id>", "Fallback model chain entry (repeatable)", collectOption, []).option("--retry-attempts <n>", "Retry attempts for transient failures", "2").option("--strict-preflight", "Block execution if doctor checks fail", false).option("--json", "Output machine-readable JSON envelope", false).addHelpText("after", `
+Examples:
+  $ crew chat "what does this function do?"
+  $ crew chat "summarize recent commits" --stdin < git-log.txt
+  $ crew chat "refactor auth.js" --apply           Apply resulting edits to disk
+  $ crew chat "describe the API" --docs            Retrieve matching docs as context
+
+If this fails with a connection error, the local model server (Ollama) is
+probably not running \u2014 see docs/RUNNING-LOCALLY.md.
+`).action(async (inputArray, options) => {
     let input = inputArray.join(" ");
     try {
       const policy = getExecutionPolicy({
@@ -27648,7 +27918,15 @@ ${multiContext}`;
       process.exit(1);
     }
   });
-  program.command("auto").description("Autonomous mode - LLM iterates on task until completion without approval prompts").argument("<task...>", "Task description").option("-p, --project <path>", "Project directory", process.cwd()).option("-g, --gateway <url>", "Override gateway URL").option("-m, --model <id>", "Model override", workerPrimary || void 0).option("--fallback-model <id>", "Fallback model chain entry (repeatable)", collectOption, []).option("--max-iterations <n>", "Maximum autonomous iterations", "10").option("--auto-apply", "Automatically apply sandbox changes when task completes", false).option("--cross-repo", "Inject sibling repository context", false).option("--cache", "Enable output cache for autonomous iterations", false).option("--cache-ttl <sec>", "Output cache TTL in seconds", "1800").option("--no-memory", "Disable shared AgentKeeper memory").option("--memory-max <n>", "Max recalled memory entries", String(cliDefaults.memoryMax ?? 3)).option("--memory-require-validation", "Store memory only when validation is marked passed", false).option("--lsp-auto-fix", "Run LSP diagnostics and auto-dispatch fixes after edits", false).option("--lsp-auto-fix-max-attempts <n>", "Max LSP auto-fix attempts per iteration", "3").option("--no-blast-radius-gate", "Disable blast-radius safety gate before auto-apply").option("--blast-radius-threshold <level>", "Blast-radius gate threshold: low|medium|high", "high").option("--force-auto-apply", "Bypass blast-radius gate and auto-apply anyway", false).option("--escalate-risk", "Escalate high-risk patches to QA and Security before completion", false).option("--risk-threshold <level>", "Escalation threshold: low|medium|high", "high").action(async (taskArray, options) => {
+  program.command("auto").description("Autonomous mode - LLM iterates on task until completion without approval prompts").argument("<task...>", "Task description").option("-p, --project <path>", "Project directory", process.cwd()).option("-g, --gateway <url>", "Override gateway URL").option("-m, --model <id>", "Model override", workerPrimary || void 0).option("--fallback-model <id>", "Fallback model chain entry (repeatable)", collectOption, []).option("--max-iterations <n>", "Maximum autonomous iterations", "10").option("--auto-apply", "Automatically apply sandbox changes when task completes", false).option("--cross-repo", "Inject sibling repository context", false).option("--cache", "Enable output cache for autonomous iterations", false).option("--cache-ttl <sec>", "Output cache TTL in seconds", "1800").option("--no-memory", "Disable shared AgentKeeper memory").option("--memory-max <n>", "Max recalled memory entries", String(cliDefaults.memoryMax ?? 3)).option("--memory-require-validation", "Store memory only when validation is marked passed", false).option("--lsp-auto-fix", "Run LSP diagnostics and auto-dispatch fixes after edits", false).option("--lsp-auto-fix-max-attempts <n>", "Max LSP auto-fix attempts per iteration", "3").option("--no-blast-radius-gate", "Disable blast-radius safety gate before auto-apply").option("--blast-radius-threshold <level>", "Blast-radius gate threshold: low|medium|high", "high").option("--force-auto-apply", "Bypass blast-radius gate and auto-apply anyway", false).option("--escalate-risk", "Escalate high-risk patches to QA and Security before completion", false).option("--risk-threshold <level>", "Escalation threshold: low|medium|high", "high").addHelpText("after", `
+Examples:
+  $ crew auto "fix the divide-by-zero bug in src/math.ts"
+  $ crew auto "add tests for the parser" --auto-apply
+  $ crew auto "migrate to the new API" --max-iterations 20
+
+Runs until the model reports the task complete or --max-iterations is hit.
+Pending edits are held in a sandbox and previewed unless --auto-apply is set.
+`).action(async (taskArray, options) => {
     const task = taskArray.join(" ");
     const projectDir = options.project || process.cwd();
     const maxIterations = Number.parseInt(options.maxIterations || "10", 10);

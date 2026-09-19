@@ -26,6 +26,7 @@ import { randomUUID } from 'node:crypto';
 import { LocalExecutor, ExecutorOptions, ExecutorResult } from '../executor/local.js';
 import { runAgenticWorker, L3_SYSTEM_PROMPT_COMPACT } from '../executor/agentic-executor.js';
 import { Sandbox } from '../sandbox/index.js';
+import { formatFriendlyFailure } from './friendly-errors.js';
 
 export interface IrisTask {
   id: string;
@@ -175,7 +176,7 @@ export async function dispatchTask(
       error = 'executor reported failure';
     }
   } catch (err) {
-    error = err instanceof Error ? err.message : String(err);
+    error = formatFriendlyFailure(err);
   }
 
   const finishedAt = new Date();
