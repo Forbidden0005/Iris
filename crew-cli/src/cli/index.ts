@@ -801,7 +801,18 @@ export async function main(args = []) {
   program
     .name('crew')
     .description('crewswarm CLI - Agent orchestration made simple')
-    .version(cliVersion);
+    .version(cliVersion)
+    .addHelpText('after', `
+Examples:
+  $ crew doctor                          Check Node/git/Ollama/config health
+  $ crew chat "explain this repo"        One-shot chat, routed to the best agent
+  $ crew auto "fix the failing test"     Autonomous mode, iterates until done
+  $ crew auto "add input validation" --auto-apply
+                                          Autonomous mode, applies edits automatically
+
+First time here? See docs/RUNNING-LOCALLY.md for local (Ollama) setup,
+or run "crew doctor" to check your environment before running a task.
+`);
 
   program.option('--legacy-router', 'Use legacy routing path (disables UnifiedPipeline default)', false);
 
@@ -833,6 +844,16 @@ export async function main(args = []) {
     .option('--retry-attempts <n>', 'Retry attempts for transient failures', '2')
     .option('--strict-preflight', 'Block execution if doctor checks fail', false)
     .option('--json', 'Output machine-readable JSON envelope', false)
+    .addHelpText('after', `
+Examples:
+  $ crew chat "what does this function do?"
+  $ crew chat "summarize recent commits" --stdin < git-log.txt
+  $ crew chat "refactor auth.js" --apply           Apply resulting edits to disk
+  $ crew chat "describe the API" --docs            Retrieve matching docs as context
+
+If this fails with a connection error, the local model server (Ollama) is
+probably not running — see docs/RUNNING-LOCALLY.md.
+`)
     .action(async (inputArray, options) => {
       let input = inputArray.join(' ');
       try {
@@ -1087,6 +1108,15 @@ export async function main(args = []) {
     .option('--force-auto-apply', 'Bypass blast-radius gate and auto-apply anyway', false)
     .option('--escalate-risk', 'Escalate high-risk patches to QA and Security before completion', false)
     .option('--risk-threshold <level>', 'Escalation threshold: low|medium|high', 'high')
+    .addHelpText('after', `
+Examples:
+  $ crew auto "fix the divide-by-zero bug in src/math.ts"
+  $ crew auto "add tests for the parser" --auto-apply
+  $ crew auto "migrate to the new API" --max-iterations 20
+
+Runs until the model reports the task complete or --max-iterations is hit.
+Pending edits are held in a sandbox and previewed unless --auto-apply is set.
+`)
     .action(async (taskArray, options) => {
       const task = taskArray.join(' ');
       const projectDir = options.project || process.cwd();

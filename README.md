@@ -46,6 +46,10 @@ npm run restart-all
 
 Dashboard opens at `localhost:4319`, Vibe IDE at `localhost:3333`.
 
+Want to run the agent loop itself locally with a local model (no cloud API
+key)? See **[docs/RUNNING-LOCALLY.md](docs/RUNNING-LOCALLY.md)** for Ollama
+install, model pulls, and troubleshooting.
+
 ### Try the Iris plan/task/evidence stack directly (no dashboard, no LLM)
 
 ```bash

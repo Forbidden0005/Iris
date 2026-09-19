@@ -79,7 +79,15 @@ Commands:
 
 Options:
   -h, --help     display help for command
-  -V, --version  output the version number`);
+  -V, --version  output the version number
+
+Examples:
+  crew doctor                          Check Node/git/Ollama/config health
+  crew chat "explain this repo"        One-shot chat, routed to the best agent
+  crew auto "fix the failing test"     Autonomous mode, iterates until done
+
+Run "crew <command> --help" for command-specific options and examples.
+First time here? See docs/RUNNING-LOCALLY.md for local (Ollama) setup.`);
   process.exit(0);
 }
 
