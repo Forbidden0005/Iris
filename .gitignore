@@ -3,6 +3,7 @@ node_modules/
 
 # User config and state
 .crewswarm/
+crew-cli/.iris/
 .crew/
 .gemini/
 .claude/
