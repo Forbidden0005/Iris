@@ -1,9 +1,9 @@
 # Running Iris locally (Ollama + local models)
 
-Iris's default execution path is **local-first**: `crew auto` / `crew chat`
-(standalone mode) route work to a local model served by
-[Ollama](https://ollama.com), and let it act through real local tools
-(files, shell, git) — no cloud API key required. This guide covers the
+Iris's v0 execution path is **local-first**: `npm run iris:run` routes a task
+through the local Iris loop, talks to a local model served by
+[Ollama](https://ollama.com), and lets it act through real local tools
+(files, shell, git). No cloud API key is required. This guide covers the
 five-minute setup for that path and what to do when it fails.
 
 ## 1. Install Ollama
@@ -34,21 +34,23 @@ curl http://localhost:11434/api/version
 
 Iris picks a model based on task kind:
 
-| Task kind  | Default model         | Approx. size | Use case                          |
-|------------|------------------------|--------------|------------------------------------|
-| `planning` | `qwen3:14b`             | ~9 GB        | Planning / reasoning-heavy work    |
-| `code`     | `qwen3-coder:30b`       | ~19 GB       | Default — code and tool-heavy work |
+| Task kind  | Default model          | Use case                          |
+|------------|-------------------------|------------------------------------|
+| `planning` | `qwen3:8b`              | Planning / reasoning-heavy work    |
+| `code`     | `qwen2.5-coder:7b`      | Default — code and tool-heavy work |
 
 Pull what fits your hardware:
 
 ```bash
-ollama pull qwen3:14b          # ~11GB VRAM/RAM or more
-ollama pull qwen3-coder:30b    # ~24GB VRAM/RAM or more (default for `code`)
+ollama pull qwen3:8b
+ollama pull qwen2.5-coder:7b
 ```
 
-If you have less memory available, `qwen3:8b` is a lighter opt-in that still
-fits comfortably on ~11GB. Override the model per run with `--model`, or set
-`IRIS_MODEL_CODE` / `IRIS_MODEL_PLANNING` env vars to change the defaults.
+These defaults are sized for the current local-first path and have been tested
+on an 11GB VRAM / 32GB RAM Windows machine. `qwen3:14b` is a viable planning
+override if it performs acceptably for you. `qwen3-coder:30b` does **not** fit
+comfortably in 11GB VRAM; only set `IRIS_MODEL_CODE=qwen3-coder:30b` if you
+explicitly accept slow CPU/RAM offload.
 
 ## 4. Install and build crew-cli
 
@@ -61,13 +63,13 @@ npm run build
 ## 5. Run it
 
 ```bash
-node bin/crew.js doctor          # sanity-check Node, git, Ollama, config
-node bin/crew.js chat "list the files in this repo"
-node bin/crew.js auto "fix the divide-by-zero bug in src/math.ts"
+npm run iris:local-smoke
+npm run iris:run -- "Inspect this repo by listing the project root, read package.json, run node --import tsx --test tests/unit/agent-loop.test.js, and report evidence."
 ```
 
-`crew doctor` is the fastest way to confirm Ollama is reachable and a model
-is pulled before running a real task.
+`iris:local-smoke` is the fastest end-to-end check. It confirms Ollama is
+reachable, checks the required models, runs a deterministic repo-inspection
+objective, and writes evidence under `crew-cli/.iris/runs/`.
 
 ## Troubleshooting
 
@@ -76,27 +78,27 @@ Ollama isn't running. Start it with `ollama serve` (or open the Ollama app),
 then retry. Confirm with `curl http://localhost:11434/api/version`.
 
 **"model ... not found" / 404 from Ollama**
-The model referenced by the run (default `qwen3-coder:30b` for code tasks,
-`qwen3:14b` for planning) hasn't been pulled yet. Run:
+The model referenced by the run (default `qwen2.5-coder:7b` for code tasks,
+`qwen3:8b` for planning) hasn't been pulled yet. Run:
 ```bash
 ollama pull <model-name>
 ```
-`crew doctor` and the CLI's own error output both name the missing model.
+The Iris preflight output names the missing model.
 
 **Timeouts / requests that never finish generating**
 Local models on constrained hardware (CPU-only, or a GPU with tight VRAM)
 can take longer than the per-request timeout to produce a full response.
 Try:
-- a smaller model (`qwen3:8b` instead of `qwen3-coder:30b`)
 - a smaller/narrower task
-- raising `CREW_SHELL_TIMEOUT` for shell-heavy tasks, or `--retry-attempts`
-  on `crew chat` to retry transient failures automatically
+- `IRIS_MODEL_CODE=qwen2.5-coder:3b` for a faster code model experiment
+- rerunning once after Ollama has warmed the model
 
 **A tool call failed (shell command, file write, ...)**
 The CLI's error output includes the underlying command/path — check that
 the binary is installed and the path exists in the project directory you
-passed with `--project` (default: current directory).
+passed with `--project-dir` (default: current directory).
 
 **Still stuck?**
-Run `node bin/crew.js doctor` — it checks Node version, git, config, and the
-gateway URL, and prints a hint alongside each failing check.
+Run `npm run iris:local-smoke` again and read the preflight section first. If
+Ollama is reachable and the required models are present, the `.iris/runs/`
+evidence file from the failed run is the next thing to inspect.

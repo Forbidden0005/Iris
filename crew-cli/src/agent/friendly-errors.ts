@@ -73,7 +73,7 @@ export function classifyFailure(error: unknown): FriendlyFailure {
       kind: 'timeout',
       summary: 'The request to the model timed out before it finished generating.',
       hint: 'Local models can be slow on constrained hardware. Try a smaller/faster model, ' +
-        'reduce the task size, or increase CREW_SHELL_TIMEOUT / retry with --retry-attempts.',
+        'reduce the task size, or retry after Ollama has warmed the model.',
     };
   }
 

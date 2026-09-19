@@ -33,7 +33,7 @@ describe('friendly-errors: classifyFailure', () => {
   it('recognizes a request timeout', () => {
     const failure = classifyFailure(new Error('The operation was aborted'));
     assert.equal(failure.kind, 'timeout');
-    assert.match(failure.hint, /smaller|faster|retry/i);
+    assert.match(failure.hint, /smaller|faster|warmed/i);
   });
 
   it('recognizes a failed shell tool call', () => {
