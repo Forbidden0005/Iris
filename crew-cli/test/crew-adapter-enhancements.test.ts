@@ -139,6 +139,29 @@ describe('crew-adapter enhancements', () => {
     });
   });
 
+  // ── Workspace boundary guard ────────────────────────────────────────
+
+  describe('workspace boundary guard', () => {
+    it('allows writing a file inside the workspace root', async () => {
+      const { adapter } = await makeTempProject();
+      const result = await adapter.executeTool('write_file', {
+        file_path: 'nested/dir/file.ts',
+        content: 'export const x = 1;\n'
+      });
+      assert.equal(result.success, true, result.error);
+    });
+
+    it('rejects a relative path that escapes the workspace root', async () => {
+      const { adapter } = await makeTempProject();
+      const result = await adapter.executeTool('write_file', {
+        file_path: '../escaped.ts',
+        content: 'const x = 1;\n'
+      });
+      assert.equal(result.success, false);
+      assert.ok(result.error?.includes('outside workspace root'), result.error);
+    });
+  });
+
   // ── Background shell ───────────────────────────────────────────────
 
   describe('background shell execution', () => {

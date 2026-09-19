@@ -7,7 +7,7 @@ import { runPreToolUseHooks, runPostToolUseHooks } from '../../hooks/index.js';
 import { enterWorktree, exitWorktree, mergeWorktree, listWorktrees } from '../worktree.js';
 import { execSync } from 'node:child_process';
 import { mkdir, readFile, readdir, stat, writeFile } from 'node:fs/promises';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, isAbsolute, join, relative, resolve } from 'node:path';
 import {
   GLOB_TOOL_NAME,
   GREP_TOOL_NAME,
@@ -296,7 +296,8 @@ export class GeminiToolAdapter {
     } catch {
       realPath = resolvedPath;
     }
-    return realPath.startsWith(root + '/') || realPath === root;
+    const rel = relative(root, realPath);
+    return rel === '' || (!rel.startsWith('..') && !isAbsolute(rel));
   }
 
   get constraintLevel(): ConstraintLevel {

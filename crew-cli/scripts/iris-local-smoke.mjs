@@ -17,7 +17,9 @@ import { IRIS_MODEL_PLANNING, IRIS_MODEL_CODE, runIris } from '../src/agent/loop
 
 const OLLAMA_URL = process.env.OLLAMA_URL || 'http://localhost:11434';
 const OBJECTIVE = process.env.IRIS_SMOKE_OBJECTIVE
-  || 'Inspect this repo, identify the test command, run it, and report what happened with evidence.';
+  || 'List the files in the tests/unit directory, then run the shell command '
+    + '`node --import tsx --test tests/unit/agent-loop.test.js` and report the '
+    + 'pass/fail counts from its output as evidence.';
 const REQUIRED_MODELS = [IRIS_MODEL_PLANNING, IRIS_MODEL_CODE];
 
 function log(msg) {
