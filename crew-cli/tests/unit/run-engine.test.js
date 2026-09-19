@@ -134,6 +134,27 @@ describe('RunEngine', async () => {
     assert.ok(goals.some(g => g.description.includes('npm run lint')));
   });
 
+  it('proves the task-text "tests pass" goal via a run_shell_command test run (no explicit verificationCommands)', async () => {
+    // Regression test: the heuristic goal text is "Tests pass after changes"
+    // (capital T). checkVerificationProof() used to compare it against the
+    // command with a case-sensitive .includes('test'), so it never matched
+    // and the run always reported failure even though the test command
+    // clearly succeeded.
+    const engine = new RunEngine({ task: 'run the unit tests and report evidence', maxTurns: 2 });
+
+    const mockLLM = async () => ({
+      response: 'done',
+      status: 'COMPLETE',
+      toolCalls: [{ tool: 'run_shell_command', params: { command: 'node --test tests/unit/agent-loop.test.js' } }]
+    });
+    const mockTool = async () => 'All unit tests passed successfully.';
+
+    const result = await engine.execute(mockLLM, mockTool);
+    assert.ok(result.verificationPassed);
+    assert.ok(result.success);
+    assert.equal(result.runState.phase, 'complete');
+  });
+
   it('runs verification commands', async () => {
     let turnCount = 0;
     const engine = new RunEngine({
