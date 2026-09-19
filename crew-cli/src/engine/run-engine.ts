@@ -404,14 +404,16 @@ export class RunEngine {
     // Shell commands can prove verification goals
     if (call.tool === 'run_shell_command' || call.tool === 'shell' || call.tool === 'run_cmd') {
       const command = String(call.params.command || '');
+      const commandLower = command.toLowerCase();
       for (const goal of this.state.verificationGoals) {
         if (goal.status !== 'pending') continue;
 
+        const descriptionLower = goal.description.toLowerCase();
         // Match command to goal
-        if (goal.description.includes(command) ||
-            (command.includes('test') && goal.description.includes('test')) ||
-            (command.includes('lint') && goal.description.includes('lint')) ||
-            (command.includes('build') && goal.description.includes('build'))) {
+        if (descriptionLower.includes(commandLower) ||
+            (commandLower.includes('test') && descriptionLower.includes('test')) ||
+            (commandLower.includes('lint') && descriptionLower.includes('lint')) ||
+            (commandLower.includes('build') && descriptionLower.includes('build'))) {
           // Check if it passed (no error in output)
           if (!output.includes('FAIL') && !output.includes('error') && !output.includes('Error')) {
             this.state.proveGoal(goal.id, `${call.tool}: ${command}`);
