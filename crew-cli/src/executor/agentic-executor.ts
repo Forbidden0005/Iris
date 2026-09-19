@@ -163,6 +163,32 @@ Every turn, follow this exact pattern:
 - Do NOT add features, refactor, or "improve" code beyond what the task asks.
 - Do NOT add comments, docstrings, or type annotations to code you didn't change.`;
 
+/**
+ * Compact system prompt for the local-first (Ollama) dispatcher.
+ *
+ * L3_SYSTEM_PROMPT above is sized for cloud models with large context
+ * budgets and fast inference. Local models on consumer GPUs (7B-14B on
+ * 11GB VRAM) are both context- and throughput-constrained: the full
+ * prompt plus repo-map context plus scratchpad/corrections text can push
+ * generation past the 120s per-turn timeout before any tokens come back,
+ * which surfaces as "executor reported failure / worker returned no
+ * text" even though the model was simply still thinking. This is the
+ * same THINK/ACT/OBSERVE contract and tool list, stripped to what a
+ * local tool-loop run actually needs.
+ */
+export const L3_SYSTEM_PROMPT_COMPACT = `You are an AI engineer executing coding tasks autonomously via local tools.
+
+## Loop: THINK -> ACT -> OBSERVE
+Each turn: briefly state the next step, call the tool(s) needed, then read the result and decide the next step. Stop as soon as the task is verified done.
+
+## Rules
+- Do exactly what was asked. No unrelated refactors, comments, or "improvements".
+- Always read_file before editing. Use replace for targeted edits, write_file only for new files.
+- Prefer dedicated tools over shell (read_file, grep_search, glob) over cat/rg/find.
+- After changes: run the build/test command implied by the task and report the result.
+- If a tool call fails, don't repeat it unchanged — adjust your approach.
+- Keep responses short: what you did and the verification result. No preamble, no restating the task.`;
+
 // ---------------------------------------------------------------------------
 // Corrections injection — load recent corrections to prevent repeat mistakes
 // ---------------------------------------------------------------------------
@@ -2211,6 +2237,14 @@ export async function runAgenticWorker(
     maxBudgetUsd?: number;
     /** Explicit verification commands to run after edits */
     verificationCommands?: string[];
+    /** Inject repo-map (codebase search) context into the task. Default true.
+     *  Set false for local/small-model dispatch where the extra context can
+     *  push a turn past the per-request timeout before it finishes generating. */
+    includeRepoMap?: boolean;
+    /** Append per-session scratchpad-directory instructions to the system
+     *  prompt. Default true. Set false to keep the prompt minimal for
+     *  local/small-model dispatch. */
+    includeScratchpad?: boolean;
   } = {}
 ): Promise<AgenticExecutorResult> {
   // Resolve constraint level: explicit > persona-derived > full (default)
@@ -2245,14 +2279,15 @@ export async function runAgenticWorker(
   }
 
   // Feature: Per-session scratchpad — give each run an isolated temp directory
+  const includeScratchpad = options.includeScratchpad ?? true;
   const sessionId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-  const scratchDir = createScratchpad(sessionId);
+  const scratchDir = includeScratchpad ? createScratchpad(sessionId) : '';
   const baseSystemPrompt = options.systemPrompt || L3_SYSTEM_PROMPT;
   // Append scratchpad instructions + tool-result clearing notice + top-of-mind
   const topOfMind = await loadTopOfMind(projectDir);
   const systemPrompt =
     baseSystemPrompt +
-    getScratchpadInstructions(scratchDir) +
+    (includeScratchpad ? getScratchpadInstructions(scratchDir) : '') +
     TOOL_RESULT_CLEARING_PROMPT +
     topOfMind;
   const stream = options.stream ?? !process.env.CREW_NO_STREAM; // Stream by default
@@ -2278,16 +2313,18 @@ export async function runAgenticWorker(
 
   // Inject repo-map context
   let enrichedTask = task;
-  try {
-    const repoContext = await buildRepoMapContext(task, projectDir);
-    if (repoContext) {
-      enrichedTask = `${task}${repoContext}`;
-      if (verbose) {
-        console.log(`[AgenticExecutor] Repo-map: ${repoContext.length} chars injected`);
+  if (options.includeRepoMap ?? true) {
+    try {
+      const repoContext = await buildRepoMapContext(task, projectDir);
+      if (repoContext) {
+        enrichedTask = `${task}${repoContext}`;
+        if (verbose) {
+          console.log(`[AgenticExecutor] Repo-map: ${repoContext.length} chars injected`);
+        }
       }
+    } catch {
+      // Non-fatal
     }
-  } catch {
-    // Non-fatal
   }
 
   // Inject past corrections to prevent repeat mistakes
