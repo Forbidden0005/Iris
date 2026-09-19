@@ -24,7 +24,7 @@
 
 import { randomUUID } from 'node:crypto';
 import { LocalExecutor, ExecutorOptions, ExecutorResult } from '../executor/local.js';
-import { runAgenticWorker } from '../executor/agentic-executor.js';
+import { runAgenticWorker, L3_SYSTEM_PROMPT_COMPACT } from '../executor/agentic-executor.js';
 import { Sandbox } from '../sandbox/index.js';
 
 export interface IrisTask {
@@ -114,6 +114,12 @@ export function localAgentDispatcher(options: {
         tier: options.tier,
         maxTurns: options.maxTurns ?? 15,
         stream: false,
+        // Local models run on constrained hardware (7B-14B on ~11GB VRAM):
+        // keep the prompt small so a turn finishes generating well inside
+        // the per-request timeout instead of returning empty text.
+        systemPrompt: L3_SYSTEM_PROMPT_COMPACT,
+        includeRepoMap: false,
+        includeScratchpad: false,
       });
       return {
         success: agentic.success,
