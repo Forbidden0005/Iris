@@ -41,7 +41,7 @@ const {
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-const TMP_DIR = path.join(os.tmpdir(), `crew-executor-test-${process.pid}`);
+const TMP_DIR = path.join(os.tmpdir(), `iris-executor-test-${process.pid}`);
 
 function makeTmp(subdir = "") {
   const dir = subdir ? path.join(TMP_DIR, subdir) : TMP_DIR;
@@ -103,30 +103,30 @@ describe("AGENT_TOOL_ROLE_DEFAULTS", () => {
     }
   });
 
-  it("crew-coder includes write_file, read_file, run_cmd", () => {
-    const perms = AGENT_TOOL_ROLE_DEFAULTS["crew-coder"];
+  it("iris-coder includes write_file, read_file, run_cmd", () => {
+    const perms = AGENT_TOOL_ROLE_DEFAULTS["iris-coder"];
     assert.ok(perms.has("write_file"));
     assert.ok(perms.has("read_file"));
     assert.ok(perms.has("run_cmd"));
   });
 
-  it("crew-qa includes read_file and skill but NOT write_file", () => {
-    const perms = AGENT_TOOL_ROLE_DEFAULTS["crew-qa"];
+  it("iris-qa includes read_file and skill but NOT write_file", () => {
+    const perms = AGENT_TOOL_ROLE_DEFAULTS["iris-qa"];
     assert.ok(perms.has("read_file"));
     assert.ok(perms.has("skill"));
     assert.ok(!perms.has("write_file"));
   });
 
-  it("crew-github includes run_cmd and git", () => {
-    const perms = AGENT_TOOL_ROLE_DEFAULTS["crew-github"];
+  it("iris-github includes run_cmd and git", () => {
+    const perms = AGENT_TOOL_ROLE_DEFAULTS["iris-github"];
     assert.ok(perms.has("run_cmd"));
     assert.ok(perms.has("git"));
   });
 
-  it("crew-lead has all major capabilities", () => {
-    const perms = AGENT_TOOL_ROLE_DEFAULTS["crew-lead"];
+  it("iris-lead has all major capabilities", () => {
+    const perms = AGENT_TOOL_ROLE_DEFAULTS["iris-lead"];
     for (const cap of ["read_file", "write_file", "mkdir", "run_cmd", "web_search", "web_fetch", "skill", "dispatch", "telegram"]) {
-      assert.ok(perms.has(cap), `crew-lead should have ${cap}`);
+      assert.ok(perms.has(cap), `iris-lead should have ${cap}`);
     }
   });
 });
@@ -134,24 +134,24 @@ describe("AGENT_TOOL_ROLE_DEFAULTS", () => {
 // ── isAutoApproveAgent ────────────────────────────────────────────────────────
 
 describe("isAutoApproveAgent", () => {
-  it("returns true for crew-fixer (static set)", () => {
-    assert.equal(isAutoApproveAgent("crew-fixer"), true);
+  it("returns true for iris-fixer (static set)", () => {
+    assert.equal(isAutoApproveAgent("iris-fixer"), true);
   });
 
-  it("returns true for crew-github (static set)", () => {
-    assert.equal(isAutoApproveAgent("crew-github"), true);
+  it("returns true for iris-github (static set)", () => {
+    assert.equal(isAutoApproveAgent("iris-github"), true);
   });
 
-  it("returns true for crew-pm (static set)", () => {
-    assert.equal(isAutoApproveAgent("crew-pm"), true);
+  it("returns true for iris-pm (static set)", () => {
+    assert.equal(isAutoApproveAgent("iris-pm"), true);
   });
 
-  it("returns false for crew-qa (not in static set, not auto-approved role)", () => {
-    assert.equal(isAutoApproveAgent("crew-qa"), false);
+  it("returns false for iris-qa (not in static set, not auto-approved role)", () => {
+    assert.equal(isAutoApproveAgent("iris-qa"), false);
   });
 
   it("returns false for unknown agent", () => {
-    assert.equal(isAutoApproveAgent("crew-unknown-xyz"), false);
+    assert.equal(isAutoApproveAgent("iris-unknown-xyz"), false);
   });
 
   it("returns false for empty string", () => {
@@ -162,40 +162,40 @@ describe("isAutoApproveAgent", () => {
 // ── loadAgentToolPermissions ──────────────────────────────────────────────────
 
 describe("loadAgentToolPermissions", () => {
-  it("returns a Set for crew-coder", () => {
-    const perms = loadAgentToolPermissions("crew-coder");
+  it("returns a Set for iris-coder", () => {
+    const perms = loadAgentToolPermissions("iris-coder");
     assert.ok(perms instanceof Set);
     assert.ok(perms.has("write_file"));
   });
 
-  it("returns a Set for crew-qa that includes at least read_file and skill", () => {
-    // Note: real ~/.crewswarm/crewswarm.json may extend crew-qa permissions beyond
+  it("returns a Set for iris-qa that includes at least read_file and skill", () => {
+    // Note: real ~/.iris/iris.json may extend iris-qa permissions beyond
     // the static default (read_file + skill). We only verify the guaranteed minimums.
-    const perms = loadAgentToolPermissions("crew-qa");
+    const perms = loadAgentToolPermissions("iris-qa");
     assert.ok(perms instanceof Set);
     assert.ok(perms.has("read_file"));
     assert.ok(perms.has("skill"));
   });
 
   it("returns a Set for an unknown agent with basic permissions", () => {
-    const perms = loadAgentToolPermissions("crew-unknown-totally-new-agent");
+    const perms = loadAgentToolPermissions("iris-unknown-totally-new-agent");
     assert.ok(perms instanceof Set);
     // Unknown agents get read_file, write_file, mkdir, run_cmd by default
     assert.ok(perms.has("read_file"));
     assert.ok(perms.has("write_file"));
   });
 
-  it("returns Set for crew-lead with web_search and web_fetch", () => {
-    const perms = loadAgentToolPermissions("crew-lead");
+  it("returns Set for iris-lead with web_search and web_fetch", () => {
+    const perms = loadAgentToolPermissions("iris-lead");
     assert.ok(perms.has("web_search"));
     assert.ok(perms.has("web_fetch"));
   });
 
-  it("AGENT_TOOL_ROLE_DEFAULTS crew-telegram does not include write_file", () => {
+  it("AGENT_TOOL_ROLE_DEFAULTS iris-telegram does not include write_file", () => {
     // Verify the static default (used in permission-denial tests below)
-    assert.ok(!AGENT_TOOL_ROLE_DEFAULTS["crew-telegram"].has("write_file"));
-    assert.ok(!AGENT_TOOL_ROLE_DEFAULTS["crew-telegram"].has("mkdir"));
-    assert.ok(!AGENT_TOOL_ROLE_DEFAULTS["crew-telegram"].has("run_cmd"));
+    assert.ok(!AGENT_TOOL_ROLE_DEFAULTS["iris-telegram"].has("write_file"));
+    assert.ok(!AGENT_TOOL_ROLE_DEFAULTS["iris-telegram"].has("mkdir"));
+    assert.ok(!AGENT_TOOL_ROLE_DEFAULTS["iris-telegram"].has("run_cmd"));
   });
 });
 
@@ -359,7 +359,7 @@ describe("isCommandBlocked", () => {
 
 describe("isCommandAllowlisted", () => {
   it("returns a boolean (function does not throw)", () => {
-    // The allowlist file at ~/.crewswarm/cmd-allowlist.json may or may not exist.
+    // The allowlist file at ~/.iris/cmd-allowlist.json may or may not exist.
     // We just verify the function returns a boolean without throwing.
     const result = isCommandAllowlisted("npm test");
     assert.ok(typeof result === "boolean");
@@ -428,7 +428,7 @@ describe("sanitizeToolPath", () => {
 });
 
 // ── Helper: inject a read-only test agent (no write_file, no mkdir, no run_cmd) ──
-// We use a synthetic agent name that won't appear in ~/.crewswarm/crewswarm.json
+// We use a synthetic agent name that won't appear in ~/.iris/iris.json
 // and inject it via loadAgentList with a _role of "researcher" which only gets
 // read_file, web_search, web_fetch, skill.
 const READONLY_AGENT = "test-readonly-xyzabc-9999";
@@ -438,7 +438,7 @@ function injectTestAgents() {
   initTools({
     loadAgentList: () => [
       { id: READONLY_AGENT, _role: "researcher" },
-      { id: TELEGRAM_ONLY_AGENT, tools: { crewswarmAllow: [] }, _role: "researcher" },
+      { id: TELEGRAM_ONLY_AGENT, tools: { irisAllow: [] }, _role: "researcher" },
     ],
     getOpencodeProjectDir: () => TMP_DIR,
     resolveConfig: () => ({}),
@@ -473,7 +473,7 @@ describe("executeToolCalls — @@WRITE_FILE", () => {
   it("writes a file and returns success result", async () => {
     const outPath = path.join(TMP_DIR, "write-test.txt");
     const reply = `@@WRITE_FILE ${outPath}\nhello world\n@@END_FILE`;
-    const results = await executeToolCalls(reply, "crew-coder");
+    const results = await executeToolCalls(reply, "iris-coder");
     assert.ok(results.some(r => r.includes("Wrote") && r.includes(outPath)));
     assert.equal(fs.readFileSync(outPath, "utf8"), "hello world\n");
   });
@@ -481,7 +481,7 @@ describe("executeToolCalls — @@WRITE_FILE", () => {
   it("creates parent directories automatically", async () => {
     const outPath = path.join(TMP_DIR, "nested", "deep", "file.txt");
     const reply = `@@WRITE_FILE ${outPath}\ncontent\n@@END_FILE`;
-    const results = await executeToolCalls(reply, "crew-coder");
+    const results = await executeToolCalls(reply, "iris-coder");
     assert.ok(results.some(r => r.includes("Wrote")));
     assert.ok(fs.existsSync(outPath));
   });
@@ -501,7 +501,7 @@ describe("executeToolCalls — @@WRITE_FILE", () => {
     const file1 = path.join(TMP_DIR, "multi1.txt");
     const file2 = path.join(TMP_DIR, "multi2.txt");
     const reply = `@@WRITE_FILE ${file1}\nalpha\n@@END_FILE\n@@WRITE_FILE ${file2}\nbeta\n@@END_FILE`;
-    const results = await executeToolCalls(reply, "crew-coder");
+    const results = await executeToolCalls(reply, "iris-coder");
     assert.equal(results.filter(r => r.includes("Wrote")).length, 2);
     assert.equal(fs.readFileSync(file1, "utf8"), "alpha\n");
     assert.equal(fs.readFileSync(file2, "utf8"), "beta\n");
@@ -510,7 +510,7 @@ describe("executeToolCalls — @@WRITE_FILE", () => {
   it("suppresses write when suppressWriteIfSearchPending is true and reply has both search and write", async () => {
     const outPath = path.join(TMP_DIR, "suppressed.txt");
     const reply = `@@WEB_SEARCH nodejs best practices\n@@WRITE_FILE ${outPath}\ncontent\n@@END_FILE`;
-    const results = await executeToolCalls(reply, "crew-coder", { suppressWriteIfSearchPending: true });
+    const results = await executeToolCalls(reply, "iris-coder", { suppressWriteIfSearchPending: true });
     assert.ok(results.some(r => r.includes("Write suppressed")));
     assert.ok(!fs.existsSync(outPath));
   });
@@ -518,7 +518,7 @@ describe("executeToolCalls — @@WRITE_FILE", () => {
   it("does NOT suppress write when no pending search in reply", async () => {
     const outPath = path.join(TMP_DIR, "no-suppress.txt");
     const reply = `@@WRITE_FILE ${outPath}\ndata\n@@END_FILE`;
-    const results = await executeToolCalls(reply, "crew-coder", { suppressWriteIfSearchPending: true });
+    const results = await executeToolCalls(reply, "iris-coder", { suppressWriteIfSearchPending: true });
     assert.ok(results.some(r => r.includes("Wrote")));
     assert.ok(fs.existsSync(outPath));
   });
@@ -531,7 +531,7 @@ describe("executeToolCalls — @@APPEND_FILE", () => {
     const outPath = path.join(TMP_DIR, "append-test.txt");
     fs.writeFileSync(outPath, "line1\n", "utf8");
     const reply = `@@APPEND_FILE ${outPath}\nline2\n@@END_FILE`;
-    const results = await executeToolCalls(reply, "crew-coder");
+    const results = await executeToolCalls(reply, "iris-coder");
     assert.ok(results.some(r => r.includes("Appended")));
     const content = fs.readFileSync(outPath, "utf8");
     assert.ok(content.includes("line1"));
@@ -541,7 +541,7 @@ describe("executeToolCalls — @@APPEND_FILE", () => {
   it("creates file if it doesn't exist when appending", async () => {
     const outPath = path.join(TMP_DIR, "append-new.txt");
     const reply = `@@APPEND_FILE ${outPath}\nnew content\n@@END_FILE`;
-    const results = await executeToolCalls(reply, "crew-coder");
+    const results = await executeToolCalls(reply, "iris-coder");
     assert.ok(results.some(r => r.includes("Appended")));
     assert.ok(fs.existsSync(outPath));
   });
@@ -564,14 +564,14 @@ describe("executeToolCalls — @@READ_FILE", () => {
     const filePath = path.join(TMP_DIR, "read-me.txt");
     fs.writeFileSync(filePath, "read this content", "utf8");
     const reply = `@@READ_FILE ${filePath}`;
-    const results = await executeToolCalls(reply, "crew-coder");
+    const results = await executeToolCalls(reply, "iris-coder");
     assert.ok(results.some(r => r.includes("read this content")));
   });
 
   it("returns error message when file does not exist", async () => {
     const filePath = path.join(TMP_DIR, "no-such-file-xyz.txt");
     const reply = `@@READ_FILE ${filePath}`;
-    const results = await executeToolCalls(reply, "crew-coder");
+    const results = await executeToolCalls(reply, "iris-coder");
     assert.ok(results.some(r => r.includes("Cannot read")));
   });
 
@@ -580,16 +580,16 @@ describe("executeToolCalls — @@READ_FILE", () => {
     fs.writeFileSync(filePath, "content", "utf8");
     // Inject a custom agent whose _role gives only run_cmd (ops role has read_file too,
     // so we need a role with absolutely no read_file). Use a synthetic agent with
-    // crewswarmAllow: ['run_cmd'] — but loadAgentToolPermissions only uses crewswarmAllow
+    // irisAllow: ['run_cmd'] — but loadAgentToolPermissions only uses irisAllow
     // when the agent is found in a config FILE, not via _loadAgentList injection.
-    // Instead, verify the static default for crew-security lacks these, then test it.
-    // crew-security only has read_file + run_cmd per AGENT_TOOL_ROLE_DEFAULTS.
-    // If crewswarm.json doesn't add write_file to crew-security, this test passes.
+    // Instead, verify the static default for iris-security lacks these, then test it.
+    // iris-security only has read_file + run_cmd per AGENT_TOOL_ROLE_DEFAULTS.
+    // If iris.json doesn't add write_file to iris-security, this test passes.
     // Skip gracefully if the real config grants read_file to all agents.
-    const crewSecurityPerms = loadAgentToolPermissions("crew-security");
+    const crewSecurityPerms = loadAgentToolPermissions("iris-security");
     if (!crewSecurityPerms.has("read_file")) {
-      // crew-security genuinely lacks read_file (unusual) — test it
-      const results = await executeToolCalls(`@@READ_FILE ${filePath}`, "crew-security");
+      // iris-security genuinely lacks read_file (unusual) — test it
+      const results = await executeToolCalls(`@@READ_FILE ${filePath}`, "iris-security");
       assert.ok(results.some(r => r.includes("does not have read_file permission")));
     } else {
       // Verify that a researcher-role agent has read_file (positive check)
@@ -605,7 +605,7 @@ describe("executeToolCalls — @@READ_FILE", () => {
     // JS files use 4000 char limit; write 5000 chars
     fs.writeFileSync(filePath, "x".repeat(5000), "utf8");
     const reply = `@@READ_FILE ${filePath}`;
-    const results = await executeToolCalls(reply, "crew-coder");
+    const results = await executeToolCalls(reply, "iris-coder");
     assert.ok(results.some(r => r.includes("[truncated]")));
   });
 
@@ -614,7 +614,7 @@ describe("executeToolCalls — @@READ_FILE", () => {
     // 3000 chars — well under 12000 doc limit
     fs.writeFileSync(filePath, "# Doc\n" + "A".repeat(3000), "utf8");
     const reply = `@@READ_FILE ${filePath}`;
-    const results = await executeToolCalls(reply, "crew-coder");
+    const results = await executeToolCalls(reply, "iris-coder");
     assert.ok(results.some(r => r.includes("doc.md") && !r.includes("[truncated]")));
   });
 });
@@ -625,7 +625,7 @@ describe("executeToolCalls — @@MKDIR", () => {
   it("creates a directory", async () => {
     const dirPath = path.join(TMP_DIR, "new-dir-exec");
     const reply = `@@MKDIR ${dirPath}`;
-    const results = await executeToolCalls(reply, "crew-coder");
+    const results = await executeToolCalls(reply, "iris-coder");
     assert.ok(results.some(r => r.includes("Created directory")));
     assert.ok(fs.existsSync(dirPath));
     assert.ok(fs.statSync(dirPath).isDirectory());
@@ -635,7 +635,7 @@ describe("executeToolCalls — @@MKDIR", () => {
     const dirPath = path.join(TMP_DIR, "already-exists-dir");
     fs.mkdirSync(dirPath, { recursive: true });
     const reply = `@@MKDIR ${dirPath}`;
-    const results = await executeToolCalls(reply, "crew-coder");
+    const results = await executeToolCalls(reply, "iris-coder");
     assert.ok(results.some(r => r.includes("Created directory")));
   });
 
@@ -656,20 +656,20 @@ describe("executeToolCalls — @@MKDIR", () => {
 describe("executeToolCalls — @@RUN_CMD", () => {
   it("executes a safe command and returns stdout", async () => {
     const reply = `@@RUN_CMD echo hello-from-test`;
-    // crew-fixer is auto-approved so no approval gate needed
-    const results = await executeToolCalls(reply, "crew-fixer");
+    // iris-fixer is auto-approved so no approval gate needed
+    const results = await executeToolCalls(reply, "iris-fixer");
     assert.ok(results.some(r => r.includes("hello-from-test")));
   });
 
   it("blocks dangerous rm -rf command", async () => {
     const reply = `@@RUN_CMD rm -rf /tmp/something`;
-    const results = await executeToolCalls(reply, "crew-fixer");
+    const results = await executeToolCalls(reply, "iris-fixer");
     assert.ok(results.some(r => r.includes("Blocked dangerous command")));
   });
 
   it("blocks sudo command", async () => {
     const reply = `@@RUN_CMD sudo whoami`;
-    const results = await executeToolCalls(reply, "crew-fixer");
+    const results = await executeToolCalls(reply, "iris-fixer");
     assert.ok(results.some(r => r.includes("Blocked dangerous command")));
   });
 
@@ -682,10 +682,10 @@ describe("executeToolCalls — @@RUN_CMD", () => {
     restoreDefaultDeps();
   });
 
-  it("runs git status for crew-github (has git permission)", async () => {
+  it("runs git status for iris-github (has git permission)", async () => {
     const reply = `@@RUN_CMD git status`;
-    // crew-github has git permission; run from a git repo
-    const results = await executeToolCalls(reply, "crew-github");
+    // iris-github has git permission; run from a git repo
+    const results = await executeToolCalls(reply, "iris-github");
     // Either succeeds or fails due to cwd, but should NOT be a permission error
     assert.ok(!results.some(r => r.includes("does not have git permission")));
   });
@@ -701,15 +701,15 @@ describe("executeToolCalls — @@RUN_CMD", () => {
 
   it("returns error result when command fails (non-zero exit)", async () => {
     const reply = `@@RUN_CMD node -e "process.exit(1)"`;
-    const results = await executeToolCalls(reply, "crew-fixer");
+    const results = await executeToolCalls(reply, "iris-fixer");
     assert.ok(results.some(r => r.includes("❌")));
   });
 
   it("skips approval gate when RT client is null (auto-resolve path)", async () => {
     setRtClient(null);
-    // crew-coder is NOT auto-approved, but RT client is null so needsApproval=false
+    // iris-coder is NOT auto-approved, but RT client is null so needsApproval=false
     const reply = `@@RUN_CMD echo no-approval-needed`;
-    const results = await executeToolCalls(reply, "crew-coder");
+    const results = await executeToolCalls(reply, "iris-coder");
     // Should succeed without hanging
     assert.ok(results.some(r => r.includes("no-approval-needed") || r.includes("echo")));
   });
@@ -720,25 +720,25 @@ describe("executeToolCalls — @@RUN_CMD", () => {
 describe("executeToolCalls — @@SKILL", () => {
   it("returns 'not found' when skill is unknown", async () => {
     const reply = `@@SKILL nonexistent-skill-xyz {}`;
-    const results = await executeToolCalls(reply, "crew-coder");
+    const results = await executeToolCalls(reply, "iris-coder");
     assert.ok(results.some(r => r.includes("not found")));
   });
 
   it("returns permission error when agent lacks skill permission", async () => {
-    // crew-security has only read_file + run_cmd per static defaults (no skill)
+    // iris-security has only read_file + run_cmd per static defaults (no skill)
     // Verify this is actually the case before asserting
-    const crewSecPerms = loadAgentToolPermissions("crew-security");
+    const crewSecPerms = loadAgentToolPermissions("iris-security");
     if (!crewSecPerms.has("skill")) {
       const reply = `@@SKILL some-skill {}`;
-      const results = await executeToolCalls(reply, "crew-security");
+      const results = await executeToolCalls(reply, "iris-security");
       assert.ok(results.some(r => r.includes("does not have skill permission")));
     } else {
-      // Real config extended crew-security with skill — use researcher agent instead
+      // Real config extended iris-security with skill — use researcher agent instead
       injectTestAgents();
       // researcher role: read_file, web_search, web_fetch, skill — so check without skill
       // Use a completely bare agent via a custom injected agent list
       initTools({
-        loadAgentList: () => [{ id: "crew-noskill-test", tools: { crewswarmAllow: ["read_file"] } }],
+        loadAgentList: () => [{ id: "iris-noskill-test", tools: { irisAllow: ["read_file"] } }],
         getOpencodeProjectDir: () => TMP_DIR,
         resolveConfig: () => ({}),
         resolveTelegramBridgeConfig: () => ({}),
@@ -748,17 +748,17 @@ describe("executeToolCalls — @@SKILL", () => {
         notifyTelegramSkillApproval: async () => {},
         executeSkill: async () => "result",
       });
-      // crew-noskill-test won't be found in config files so falls to _loadAgentList
-      // but crewswarmAllow must contain at least one crewswarm tool name to be used
-      // Since "read_file" is a crewswarm tool name, it will use ["read_file"] only
+      // iris-noskill-test won't be found in config files so falls to _loadAgentList
+      // but irisAllow must contain at least one iris tool name to be used
+      // Since "read_file" is a iris tool name, it will use ["read_file"] only
       // — no skill permission
       const reply = `@@SKILL some-skill {}`;
-      // But wait: the config file path is checked first and "crew-noskill-test" won't be there.
-      // Then role defaults: no match. Then _loadAgentList: agent found with crewswarmAllow=["read_file"].
-      // BUT crewswarmAllow is only checked in the file loop, not in _loadAgentList.
+      // But wait: the config file path is checked first and "iris-noskill-test" won't be there.
+      // Then role defaults: no match. Then _loadAgentList: agent found with irisAllow=["read_file"].
+      // BUT irisAllow is only checked in the file loop, not in _loadAgentList.
       // _loadAgentList only checks _role. Since no _role set, falls through to unknown default.
       // Unknown default: read_file, write_file, mkdir, run_cmd — still no skill.
-      const results = await executeToolCalls(reply, "crew-noskill-test");
+      const results = await executeToolCalls(reply, "iris-noskill-test");
       assert.ok(results.some(r => r.includes("does not have skill permission") || r.includes("not found")));
       restoreDefaultDeps();
     }
@@ -766,7 +766,7 @@ describe("executeToolCalls — @@SKILL", () => {
 
   it("returns error for bad JSON params", async () => {
     const reply = `@@SKILL myskill {bad json here}`;
-    const results = await executeToolCalls(reply, "crew-coder");
+    const results = await executeToolCalls(reply, "iris-coder");
     assert.ok(results.some(r => r.includes("bad JSON params")));
   });
 
@@ -785,7 +785,7 @@ describe("executeToolCalls — @@SKILL", () => {
     });
 
     const reply = `@@SKILL my-test-skill {"key":"val"}`;
-    const results = await executeToolCalls(reply, "crew-coder");
+    const results = await executeToolCalls(reply, "iris-coder");
     assert.ok(results.some(r => r.includes("my-test-skill") && r.includes("skill-executed-ok")));
 
     // Restore
@@ -806,7 +806,7 @@ describe("executeToolCalls — @@SKILL", () => {
     });
 
     const reply = `@@SKILL approval-skill {}`;
-    const results = await executeToolCalls(reply, "crew-coder");
+    const results = await executeToolCalls(reply, "iris-coder");
     assert.ok(results.some(r => r.includes("requires approval")));
 
     // Restore
@@ -821,24 +821,24 @@ describe("executeToolCalls — @@DEFINE_SKILL", () => {
     const skillName = `unit-test-skill-${Date.now()}`;
     const skillJson = JSON.stringify({ description: "A test skill", url: "https://example.com/api", method: "POST" });
     const reply = `@@DEFINE_SKILL ${skillName}\n${skillJson}\n@@END_SKILL`;
-    const results = await executeToolCalls(reply, "crew-coder");
+    const results = await executeToolCalls(reply, "iris-coder");
     assert.ok(results.some(r => r.includes(`"${skillName}" saved`)));
     // Cleanup
-    const skillPath = path.join(os.homedir(), ".crewswarm", "skills", `${skillName}.json`);
+    const skillPath = path.join(os.homedir(), ".iris", "skills", `${skillName}.json`);
     try { fs.unlinkSync(skillPath); } catch {}
   });
 
   it("returns error for invalid JSON in DEFINE_SKILL", async () => {
     const reply = `@@DEFINE_SKILL bad-skill\nnot valid json here\n@@END_SKILL`;
-    const results = await executeToolCalls(reply, "crew-coder");
+    const results = await executeToolCalls(reply, "iris-coder");
     assert.ok(results.some(r => r.includes("invalid JSON")));
   });
 
   it("returns permission error when agent lacks define_skill", async () => {
     const skillName = `perm-test-skill-${Date.now()}`;
     const reply = `@@DEFINE_SKILL ${skillName}\n{"description":"x"}\n@@END_SKILL`;
-    // crew-fixer has no define_skill permission
-    const results = await executeToolCalls(reply, "crew-fixer");
+    // iris-fixer has no define_skill permission
+    const results = await executeToolCalls(reply, "iris-fixer");
     assert.ok(results.some(r => r.includes("does not have define_skill permission")));
   });
 });
@@ -847,46 +847,46 @@ describe("executeToolCalls — @@DEFINE_SKILL", () => {
 
 describe("executeToolCalls — web_search / web_fetch permission denial", () => {
   it("returns permission error for @@WEB_SEARCH when agent lacks web_search", async () => {
-    // crew-coder static default has no web_search; verify and test
-    const coderPerms = AGENT_TOOL_ROLE_DEFAULTS["crew-coder"];
+    // iris-coder static default has no web_search; verify and test
+    const coderPerms = AGENT_TOOL_ROLE_DEFAULTS["iris-coder"];
     if (!coderPerms.has("web_search")) {
-      const results = await executeToolCalls(`@@WEB_SEARCH nodejs tips`, "crew-coder");
+      const results = await executeToolCalls(`@@WEB_SEARCH nodejs tips`, "iris-coder");
       assert.ok(results.some(r => r.includes("does not have web_search permission")));
     } else {
-      // Real config added web_search to crew-coder — skip, just assert boolean
-      assert.ok(true, "skipped: real config granted crew-coder web_search");
+      // Real config added web_search to iris-coder — skip, just assert boolean
+      assert.ok(true, "skipped: real config granted iris-coder web_search");
     }
   });
 
   it("returns permission error for @@WEB_FETCH when agent lacks web_fetch", async () => {
-    const coderPerms = AGENT_TOOL_ROLE_DEFAULTS["crew-coder"];
+    const coderPerms = AGENT_TOOL_ROLE_DEFAULTS["iris-coder"];
     if (!coderPerms.has("web_fetch")) {
-      const results = await executeToolCalls(`@@WEB_FETCH https://example.com`, "crew-coder");
+      const results = await executeToolCalls(`@@WEB_FETCH https://example.com`, "iris-coder");
       assert.ok(results.some(r => r.includes("does not have web_fetch permission")));
     } else {
-      assert.ok(true, "skipped: real config granted crew-coder web_fetch");
+      assert.ok(true, "skipped: real config granted iris-coder web_fetch");
     }
   });
 
   it("returns permission error for @@TELEGRAM when agent lacks telegram", async () => {
-    // crew-security (read_file + run_cmd) definitely has no telegram
-    const crewSecPerms = loadAgentToolPermissions("crew-security");
+    // iris-security (read_file + run_cmd) definitely has no telegram
+    const crewSecPerms = loadAgentToolPermissions("iris-security");
     if (!crewSecPerms.has("telegram")) {
-      const results = await executeToolCalls(`@@TELEGRAM hello`, "crew-security");
+      const results = await executeToolCalls(`@@TELEGRAM hello`, "iris-security");
       assert.ok(results.some(r => r.includes("does not have telegram permission")));
     } else {
-      assert.ok(true, "skipped: real config granted crew-security telegram");
+      assert.ok(true, "skipped: real config granted iris-security telegram");
     }
   });
 
   it("returns permission error for @@BROWSER when agent lacks browser", async () => {
-    // crew-security (read_file + run_cmd) definitely has no browser
-    const crewSecPerms = loadAgentToolPermissions("crew-security");
+    // iris-security (read_file + run_cmd) definitely has no browser
+    const crewSecPerms = loadAgentToolPermissions("iris-security");
     if (!crewSecPerms.has("browser")) {
-      const results = await executeToolCalls(`@@BROWSER navigate https://example.com`, "crew-security");
+      const results = await executeToolCalls(`@@BROWSER navigate https://example.com`, "iris-security");
       assert.ok(results.some(r => r.includes("does not have browser permission")));
     } else {
-      assert.ok(true, "skipped: real config granted crew-security browser");
+      assert.ok(true, "skipped: real config granted iris-security browser");
     }
   });
 });
@@ -895,24 +895,24 @@ describe("executeToolCalls — web_search / web_fetch permission denial", () => 
 
 describe("executeToolCalls — edge cases", () => {
   it("returns empty array for reply with no tool markers", async () => {
-    const results = await executeToolCalls("Just a plain text response with no markers.", "crew-coder");
+    const results = await executeToolCalls("Just a plain text response with no markers.", "iris-coder");
     assert.equal(results.length, 0);
   });
 
   it("returns empty array for empty string reply", async () => {
-    const results = await executeToolCalls("", "crew-coder");
+    const results = await executeToolCalls("", "iris-coder");
     assert.equal(results.length, 0);
   });
 
   it("handles null reply gracefully without throwing", async () => {
     await assert.doesNotReject(async () => {
-      await executeToolCalls(null, "crew-coder");
+      await executeToolCalls(null, "iris-coder");
     });
   });
 
   it("returns array for reply with unmatched @@WRITE_FILE (no @@END_FILE)", async () => {
     const reply = `@@WRITE_FILE /tmp/no-end-file.txt\ncontent here`;
-    const results = await executeToolCalls(reply, "crew-coder");
+    const results = await executeToolCalls(reply, "iris-coder");
     // No match because @@END_FILE is missing — returns empty results
     assert.ok(Array.isArray(results));
     assert.equal(results.length, 0);
@@ -927,7 +927,7 @@ describe("executeToolCalls — edge cases", () => {
       `@@END_FILE`,
       `@@MKDIR ${dirPath}`,
     ].join("\n");
-    const results = await executeToolCalls(reply, "crew-coder");
+    const results = await executeToolCalls(reply, "iris-coder");
     assert.ok(results.some(r => r.includes("Wrote")));
     assert.ok(results.some(r => r.includes("Created directory")));
   });

@@ -1,5 +1,5 @@
 export const IRIS_PRIMARY_LABEL = "Iris";
-export const IRIS_PRIMARY_RUNTIME_ID = "crew-lead";
+export const IRIS_PRIMARY_RUNTIME_ID = "iris-lead";
 
 export function getPrimaryAssistantInfo() {
   return window._crewLeadInfo || { emoji: "🧠", name: IRIS_PRIMARY_LABEL };

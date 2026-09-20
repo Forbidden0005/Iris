@@ -1610,7 +1610,7 @@ nav .btn:hover {
 }
 
 .comparison-table .highlight,
-.compare-table .col-crew,
+.compare-table .col-iris,
 .compare-table .cell-good,
 .highlight {
   color: var(--accent);
@@ -2564,7 +2564,7 @@ footer {
   margin-right: auto;
 }
 
-/* How crewswarm differs (framework-only) */
+/* How iris differs (framework-only) */
 .differs-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -4604,7 +4604,7 @@ img[data-src].loaded {
   position: sticky;
   top: 0;
 }
-.compare-table thead th.col-crew {
+.compare-table thead th.col-iris {
   color: var(--accent);
 }
 .compare-table tbody tr:last-child td { border-bottom: none; }

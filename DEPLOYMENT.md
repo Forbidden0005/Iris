@@ -1,6 +1,6 @@
 # Iris Deployment Guide
 
-Iris is not yet published to npm — install from source. Docker is available for servers/teams, inherited from the crewswarm fork this project is built on.
+Iris is not yet published to npm — install from source. Docker is available for servers/teams, inherited from the iris fork this project is built on.
 
 ---
 
@@ -13,7 +13,7 @@ bash install.sh
 npm run restart-all
 ```
 
-This clones the repo, installs dependencies, builds the dashboard and crew-cli, and starts all services.
+This clones the repo, installs dependencies, builds the dashboard and iris-cli, and starts all services.
 
 Dashboard: http://localhost:4319
 Vibe IDE: http://localhost:3333
@@ -45,7 +45,7 @@ docker compose up -d
 | Service | Port | Description |
 |---------|------|-------------|
 | Dashboard | 4319 | Web control plane — agents, providers, models, build logs |
-| crew-lead | 5010 | Chat commander — routes tasks to agents |
+| iris-lead | 5010 | Chat commander — routes tasks to agents |
 | RT Message Bus | 18889 | Real-time agent communication backbone |
 | Code Engine | 4096 | Coding execution server for engine lanes |
 | MCP Server | 5020 | 64 tools via JSON-RPC for MCP clients |
@@ -74,7 +74,7 @@ Details: see [SECURITY.md](SECURITY.md)
 ```yaml
 volumes:
   # Config, API keys, agent prompts, chat history — the only persistent state
-  - crewswarm-config:/root/.crewswarm
+  - iris-config:/root/.iris
 
   # Workspace for CLI output and Vibe file browsing
   - ./workspace:/workspace:rw
@@ -86,7 +86,7 @@ volumes:
 
 ### Config file
 
-Iris (via the inherited crewswarm runtime) stores configuration in `~/.crewswarm/crewswarm.json`:
+Iris (via the inherited iris runtime) stores configuration in `~/.iris/iris.json`:
 
 ```json
 {
@@ -98,9 +98,9 @@ Iris (via the inherited crewswarm runtime) stores configuration in `~/.crewswarm
     "deepseek": { "apiKey": "sk-..." }
   },
   "agents": [
-    { "id": "crew-pm", "model": "groq/llama-3.3-70b-versatile" },
-    { "id": "crew-coder", "model": "anthropic/claude-sonnet-4-20250514" },
-    { "id": "crew-qa", "model": "google/gemini-2.5-flash" }
+    { "id": "iris-pm", "model": "groq/llama-3.3-70b-versatile" },
+    { "id": "iris-coder", "model": "anthropic/claude-sonnet-4-20250514" },
+    { "id": "iris-qa", "model": "google/gemini-2.5-flash" }
   ]
 }
 ```
@@ -122,7 +122,7 @@ Claude and OpenAI support OAuth — log in once, no keys required:
 - Claude: `claude auth login` (from Claude Code CLI)
 - OpenAI: `codex auth login` (from Codex CLI)
 
-crew-cli detects these automatically.
+iris-cli detects these automatically.
 
 ### Environment variables
 
@@ -130,12 +130,12 @@ crew-cli detects these automatically.
 |----------|---------|-------------|
 | `RT_PORT` | 18889 | RT message bus port |
 | `RT_AUTH_TOKEN` | auto | Bus authentication token |
-| `CREWSWARM_OUTPUT_PATH` | ~/.crewswarm/output | Agent output directory |
-| `CREWSWARM_WORKSPACE` | cwd | Default workspace path |
-| `CREW_EFFORT` | auto | Force effort level (low/medium/high) |
-| `CREW_NO_STREAM` | false | Disable streaming output |
-| `CREW_MAX_SESSION_TOKENS` | 100000 | Token budget per session |
-| `CREWSWARM_WORKTREE_ISOLATION` | true | Git worktree isolation for parallel agents |
+| `IRIS_OUTPUT_PATH` | ~/.iris/output | Agent output directory |
+| `IRIS_WORKSPACE` | cwd | Default workspace path |
+| `IRIS_EFFORT` | auto | Force effort level (low/medium/high) |
+| `IRIS_NO_STREAM` | false | Disable streaming output |
+| `IRIS_MAX_SESSION_TOKENS` | 100000 | Token budget per session |
+| `IRIS_WORKTREE_ISOLATION` | true | Git worktree isolation for parallel agents |
 | `TELEGRAM_BOT_TOKEN` | - | Telegram bridge bot token |
 
 ---
@@ -170,7 +170,7 @@ Helm charts and Terraform modules are planned but not yet available. Deploy via 
 
 ```bash
 # CLI diagnostics (checks Node, git, API keys, gateway, CLI version)
-crew doctor
+iris doctor
 
 # HTTP health check (Docker/production)
 curl http://localhost:18889/health
@@ -198,11 +198,11 @@ npm run restart-all
 - Add keys in Dashboard → Providers tab
 - Or set environment variables (GROQ_API_KEY, etc.)
 - Or use OAuth: `claude auth login` / `codex auth login`
-- Run `crew doctor` to verify
+- Run `iris doctor` to verify
 
 **High memory usage:**
-- Assign cheaper models to non-critical agents (crew-pm, crew-qa)
-- Reduce `CREW_MAX_SESSION_TOKENS`
+- Assign cheaper models to non-critical agents (iris-pm, iris-qa)
+- Reduce `IRIS_MAX_SESSION_TOKENS`
 - Docker: set memory limits in docker-compose.yml
 
 ---

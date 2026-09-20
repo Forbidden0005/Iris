@@ -1,11 +1,11 @@
-# crewswarm Secure Docker Deployment
+# iris Secure Docker Deployment
 # Based on OpenCode RCE (CVE-2026-22812), AI agent security research, and Docker best practices
 
 services:
-  crewswarm:
+  iris:
     build: .
-    image: crewswarm/crewswarm:latest
-    container_name: crewswarm
+    image: iris/iris:latest
+    container_name: iris
     restart: unless-stopped
 
     # ── Security: Read-Only Root Filesystem ───────────────────────────────
@@ -27,7 +27,7 @@ services:
     # Prevents privilege escalation inside container
     security_opt:
       - no-new-privileges:true
-      - apparmor=crewswarm-restricted  # Custom AppArmor profile
+      - apparmor=iris-restricted  # Custom AppArmor profile
 
     # ── Security: Non-Root User ────────────────────────────────────────────
     # Run as UID 1000 (non-root)
@@ -36,7 +36,7 @@ services:
     # ── Ports ──────────────────────────────────────────────────────────────
     ports:
       - "127.0.0.1:4319:4319"   # Dashboard (localhost only)
-      - "127.0.0.1:5010:5010"   # crew-lead (localhost only)
+      - "127.0.0.1:5010:5010"   # iris-lead (localhost only)
       - "127.0.0.1:18889:18889" # RT bus (localhost only)
       # Do NOT expose 4096 (OpenCode RCE port) to network
       # Do NOT expose 5020 (MCP) to network unless behind auth
@@ -45,8 +45,8 @@ services:
     volumes:
       # Config (read-write, required)
       - type: volume
-        source: crewswarm-config
-        target: /home/crewswarm/.crewswarm
+        source: iris-config
+        target: /home/iris/.iris
         read_only: false
 
       # Project directory (read-write, sandboxed)
@@ -71,20 +71,20 @@ services:
 
       # Engine auth tokens (read-only)
       # SECURITY: Only mount if you trust the agents completely
-      # Better: Use API keys in crewswarm.json instead
-      # - ${HOME}/.claude:/home/crewswarm/.claude:ro
-      # - ${HOME}/.cursor:/home/crewswarm/.cursor:ro
+      # Better: Use API keys in iris.json instead
+      # - ${HOME}/.claude:/home/iris/.claude:ro
+      # - ${HOME}/.cursor:/home/iris/.cursor:ro
 
     # ── Environment ────────────────────────────────────────────────────────
     environment:
       - NODE_ENV=production
-      - CREWSWARM_BIND_HOST=0.0.0.0
-      - CREWSWARM_RT_HOST=0.0.0.0
+      - IRIS_BIND_HOST=0.0.0.0
+      - IRIS_RT_HOST=0.0.0.0
       
       # Security: Disable features that could be exploited
-      - CREWSWARM_OPENCODE_DISABLE_SERVER=true  # Blocks CVE-2026-22812
-      - CREWSWARM_REQUIRE_APPROVAL=true         # Force command approval
-      - CREWSWARM_NETWORK_ISOLATION=strict      # Block metadata endpoints
+      - IRIS_OPENCODE_DISABLE_SERVER=true  # Blocks CVE-2026-22812
+      - IRIS_REQUIRE_APPROVAL=true         # Force command approval
+      - IRIS_NETWORK_ISOLATION=strict      # Block metadata endpoints
 
     # ── Resource Limits ────────────────────────────────────────────────────
     # Prevent DoS from runaway agents
@@ -102,7 +102,7 @@ services:
 
     # ── Network ────────────────────────────────────────────────────────────
     networks:
-      - crewswarm_net
+      - iris_net
 
     # ── Health Check ───────────────────────────────────────────────────────
     healthcheck:
@@ -114,7 +114,7 @@ services:
 
 # ── Network Configuration ──────────────────────────────────────────────────
 networks:
-  crewswarm_net:
+  iris_net:
     driver: bridge
     internal: false  # Allow outbound, but restrict with firewall
     ipam:
@@ -123,22 +123,22 @@ networks:
 
 # ── Volumes ────────────────────────────────────────────────────────────────
 volumes:
-  crewswarm-config:
+  iris-config:
     driver: local
     driver_opts:
       type: none
       o: bind,uid=1000,gid=1000
-      device: ${HOME}/.crewswarm
+      device: ${HOME}/.iris
 
 # ── Security Notes ─────────────────────────────────────────────────────────
 # 
 # 1. OpenCode RCE (CVE-2026-22812):
 #    - Port 4096 is NOT exposed to network
-#    - CREWSWARM_OPENCODE_DISABLE_SERVER=true blocks the vulnerable server
+#    - IRIS_OPENCODE_DISABLE_SERVER=true blocks the vulnerable server
 #    - If you must use OpenCode server, add authentication
 #
 # 2. Filesystem Isolation:
-#    - Only /workspace and ~/.crewswarm are writable
+#    - Only /workspace and ~/.iris are writable
 #    - Root filesystem is read-only (prevents persistent backdoors)
 #    - No access to /home, /etc, /root, other projects
 #
@@ -153,16 +153,16 @@ volumes:
 #    - All capabilities dropped
 #
 # 5. Approval Fatigue:
-#    - Command allowlist required (~/.crewswarm/cmd-allowlist.json)
+#    - Command allowlist required (~/.iris/cmd-allowlist.json)
 #    - Dashboard shows approval UI for unknown commands
 #    - Rate limiting prevents rapid-fire attacks
 #
 # 6. AppArmor Profile:
-#    - See apparmor/crewswarm-restricted.profile
+#    - See apparmor/iris-restricted.profile
 #    - Enforces container escape prevention
 #    - Restricts ptrace, mount, raw sockets
 #
 # 7. Secrets Management:
-#    - API keys should be in ~/.crewswarm/crewswarm.json (mounted volume)
+#    - API keys should be in ~/.iris/iris.json (mounted volume)
 #    - Do NOT mount ~/.ssh, ~/.aws, ~/.docker (contains credentials)
 #    - Do NOT mount engine OAuth tokens unless absolutely necessary

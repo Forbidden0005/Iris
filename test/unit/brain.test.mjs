@@ -1,5 +1,5 @@
 /**
- * Unit tests for lib/crew-lead/brain.mjs
+ * Unit tests for lib/iris-lead/brain.mjs
  *
  * Covers: initBrain, appendToBrain, readGlobalRules, writeGlobalRules,
  *         appendGlobalRule, getWorkspaceRoot, searchCodebase
@@ -21,7 +21,7 @@ import {
   appendGlobalRule,
   getWorkspaceRoot,
   searchCodebase,
-} from "../../lib/crew-lead/brain.mjs";
+} from "../../lib/iris-lead/brain.mjs";
 
 const tmpDir = path.join(os.tmpdir(), `brain-test-${process.pid}-${Date.now()}`);
 const brainPath = path.join(tmpDir, "brain.md");
@@ -38,21 +38,21 @@ describe("brain", () => {
   });
 
   it("appendToBrain writes a dated entry to the brain file", () => {
-    const result = appendToBrain("crew-coder", "found a bug in auth");
-    assert.ok(result.includes("crew-coder"));
+    const result = appendToBrain("iris-coder", "found a bug in auth");
+    assert.ok(result.includes("iris-coder"));
     assert.ok(result.includes("found a bug in auth"));
     const content = fs.readFileSync(brainPath, "utf8");
-    assert.ok(content.includes("crew-coder"));
+    assert.ok(content.includes("iris-coder"));
   });
 
-  it("appendToBrain to a projectDir creates a .crewswarm/brain.md", () => {
+  it("appendToBrain to a projectDir creates a .iris/brain.md", () => {
     const projectDir = path.join(tmpDir, "myproject");
     fs.mkdirSync(projectDir, { recursive: true });
-    appendToBrain("crew-qa", "tests pass", projectDir);
-    const projectBrain = path.join(projectDir, ".crewswarm", "brain.md");
+    appendToBrain("iris-qa", "tests pass", projectDir);
+    const projectBrain = path.join(projectDir, ".iris", "brain.md");
     assert.ok(fs.existsSync(projectBrain));
     const content = fs.readFileSync(projectBrain, "utf8");
-    assert.ok(content.includes("crew-qa"));
+    assert.ok(content.includes("iris-qa"));
   });
 
   it("readGlobalRules returns empty string when no rules file", () => {
@@ -80,10 +80,10 @@ describe("brain", () => {
 
 describe("brain – getWorkspaceRoot", () => {
   it("returns process.cwd() by default", () => {
-    const prev = process.env.CREW_LEAD_WORKSPACE;
-    delete process.env.CREW_LEAD_WORKSPACE;
+    const prev = process.env.IRIS_LEAD_WORKSPACE;
+    delete process.env.IRIS_LEAD_WORKSPACE;
     assert.equal(getWorkspaceRoot(), process.cwd());
-    if (prev !== undefined) process.env.CREW_LEAD_WORKSPACE = prev;
+    if (prev !== undefined) process.env.IRIS_LEAD_WORKSPACE = prev;
   });
 });
 

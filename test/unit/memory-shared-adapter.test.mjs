@@ -2,7 +2,7 @@
  * Unit tests for lib/memory/shared-adapter.mjs
  *
  * Covers:
- *  - CREW_MEMORY_DIR: constant value
+ *  - IRIS_MEMORY_DIR: constant value
  *  - isSharedMemoryAvailable: reflects whether CLI bundle loaded
  *  - initSharedMemory: creates directory structure (mocked via env override)
  *  - getAgentKeeper / getAgentMemory / getMemoryBroker: return null when CLI unavailable
@@ -21,7 +21,7 @@ import os from "node:os";
 import path from "node:path";
 
 const {
-  CREW_MEMORY_DIR,
+  IRIS_MEMORY_DIR,
   isSharedMemoryAvailable,
   initSharedMemory,
   getAgentKeeper,
@@ -37,22 +37,22 @@ const {
   migrateBrainToMemory,
 } = await import("../../lib/memory/shared-adapter.mjs");
 
-// ── CREW_MEMORY_DIR ────────────────────────────────────────────────────────
+// ── IRIS_MEMORY_DIR ────────────────────────────────────────────────────────
 
-describe("shared-adapter — CREW_MEMORY_DIR", () => {
+describe("shared-adapter — IRIS_MEMORY_DIR", () => {
   it("is a non-empty string", () => {
-    assert.equal(typeof CREW_MEMORY_DIR, "string");
-    assert.ok(CREW_MEMORY_DIR.length > 0);
+    assert.equal(typeof IRIS_MEMORY_DIR, "string");
+    assert.ok(IRIS_MEMORY_DIR.length > 0);
   });
 
-  it("defaults to ~/.crewswarm/shared-memory when env var is absent", () => {
-    const expected = path.join(os.homedir(), ".crewswarm", "shared-memory");
+  it("defaults to ~/.iris/shared-memory when env var is absent", () => {
+    const expected = path.join(os.homedir(), ".iris", "shared-memory");
     // Only check when env var not set (if set we can't predict exact value)
-    if (!process.env.CREW_MEMORY_DIR) {
-      assert.equal(CREW_MEMORY_DIR, expected);
+    if (!process.env.IRIS_MEMORY_DIR) {
+      assert.equal(IRIS_MEMORY_DIR, expected);
     } else {
       // If overridden, still a valid string
-      assert.equal(typeof CREW_MEMORY_DIR, "string");
+      assert.equal(typeof IRIS_MEMORY_DIR, "string");
     }
   });
 });
@@ -66,7 +66,7 @@ describe("shared-adapter — isSharedMemoryAvailable", () => {
   });
 
   it("returns false when CLI bundle is not present (normal CI environment)", () => {
-    // In CI / test env the crew-cli dist bundle typically isn't built
+    // In CI / test env the iris-cli dist bundle typically isn't built
     // We just assert it is consistently one or the other — never throws
     assert.doesNotThrow(() => isSharedMemoryAvailable());
   });
@@ -88,11 +88,11 @@ describe("shared-adapter — factory functions when CLI unavailable", () => {
   });
 
   it("getAgentMemory returns null or an object", () => {
-    const result = getAgentMemory("crew-test");
+    const result = getAgentMemory("iris-test");
     assert.ok(result === null || typeof result === "object");
   });
 
-  it("getAgentMemory defaults agentId to crew-lead", () => {
+  it("getAgentMemory defaults agentId to iris-lead", () => {
     assert.doesNotThrow(() => getAgentMemory());
   });
 
@@ -102,7 +102,7 @@ describe("shared-adapter — factory functions when CLI unavailable", () => {
   });
 
   it("getMemoryBroker respects crewId option", () => {
-    assert.doesNotThrow(() => getMemoryBroker("/tmp", { crewId: "crew-qa" }));
+    assert.doesNotThrow(() => getMemoryBroker("/tmp", { crewId: "iris-qa" }));
   });
 });
 
@@ -115,7 +115,7 @@ describe("shared-adapter — recordTaskMemory", () => {
       task: "test task",
       result: "done",
       tier: "worker",
-      agent: "crew-coder"
+      agent: "iris-coder"
     });
     assert.equal(typeof result, "object");
     assert.ok("ok" in result || "error" in result);
@@ -138,16 +138,16 @@ describe("shared-adapter — recordTaskMemory", () => {
 describe("shared-adapter — rememberFact", () => {
   it("returns null when AgentMemory unavailable", () => {
     if (isSharedMemoryAvailable()) return;
-    const result = rememberFact("crew-lead", "important fact", {});
+    const result = rememberFact("iris-lead", "important fact", {});
     assert.equal(result, null);
   });
 
   it("accepts options with critical flag", () => {
-    assert.doesNotThrow(() => rememberFact("crew-lead", "critical fact", { critical: true }));
+    assert.doesNotThrow(() => rememberFact("iris-lead", "critical fact", { critical: true }));
   });
 
   it("accepts options with tags", () => {
-    assert.doesNotThrow(() => rememberFact("crew-lead", "tagged fact", { tags: ["test", "unit"] }));
+    assert.doesNotThrow(() => rememberFact("iris-lead", "tagged fact", { tags: ["test", "unit"] }));
   });
 });
 
@@ -179,7 +179,7 @@ describe("shared-adapter — recallMemoryContext", () => {
         includeCode: true,
         pathHints: ["lib/"],
         preferSuccessful: true,
-        crewId: "crew-lead"
+        crewId: "iris-lead"
       })
     );
   });
@@ -201,7 +201,7 @@ describe("shared-adapter — searchMemory", () => {
 
   it("accepts options without throwing", async () => {
     await assert.doesNotReject(() =>
-      searchMemory("/tmp", "query", { maxResults: 5, crewId: "crew-pm" })
+      searchMemory("/tmp", "query", { maxResults: 5, crewId: "iris-pm" })
     );
   });
 });
@@ -210,11 +210,11 @@ describe("shared-adapter — searchMemory", () => {
 
 describe("shared-adapter — stats and compact", () => {
   it("getMemoryStats returns null or object when unavailable", () => {
-    const result = getMemoryStats("crew-lead");
+    const result = getMemoryStats("iris-lead");
     assert.ok(result === null || typeof result === "object");
   });
 
-  it("getMemoryStats defaults to crew-lead", () => {
+  it("getMemoryStats defaults to iris-lead", () => {
     assert.doesNotThrow(() => getMemoryStats());
   });
 
@@ -235,7 +235,7 @@ describe("shared-adapter — initSharedMemory", () => {
   let tmpDir;
 
   before(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "crew-test-memory-"));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "iris-test-memory-"));
   });
 
   after(() => {
@@ -247,7 +247,7 @@ describe("shared-adapter — initSharedMemory", () => {
     assert.equal(typeof result, "object");
     assert.ok("ok" in result);
     assert.ok("path" in result);
-    assert.equal(result.path, CREW_MEMORY_DIR);
+    assert.equal(result.path, IRIS_MEMORY_DIR);
   });
 
   it("creates the shared memory directory", () => {
@@ -271,7 +271,7 @@ describe("shared-adapter — migrateBrainToMemory", () => {
   let brainPath;
 
   before(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "crew-test-brain-"));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "iris-test-brain-"));
     brainPath = path.join(tmpDir, "brain.md");
   });
 
@@ -281,15 +281,15 @@ describe("shared-adapter — migrateBrainToMemory", () => {
 
   it("returns error object when AgentMemory unavailable", async () => {
     if (isSharedMemoryAvailable()) return;
-    fs.writeFileSync(brainPath, "# Brain\nsome fact about crew-coder\n");
-    const result = await migrateBrainToMemory(brainPath, "crew-lead");
+    fs.writeFileSync(brainPath, "# Brain\nsome fact about iris-coder\n");
+    const result = await migrateBrainToMemory(brainPath, "iris-lead");
     assert.equal(typeof result, "object");
     assert.ok("ok" in result);
     assert.equal(result.ok, false);
   });
 
   it("returns error when brain file does not exist", async () => {
-    const result = await migrateBrainToMemory("/nonexistent/brain.md", "crew-lead");
+    const result = await migrateBrainToMemory("/nonexistent/brain.md", "iris-lead");
     assert.equal(typeof result, "object");
     assert.ok("ok" in result || "error" in result);
     assert.equal(result.ok, false);

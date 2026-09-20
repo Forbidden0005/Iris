@@ -1,5 +1,5 @@
 /**
- * Unit tests for lib/crew-lead/retry-manager.mjs
+ * Unit tests for lib/iris-lead/retry-manager.mjs
  *
  * Covers:
  *  - shouldRetryQuestion: detects question patterns, respects max retries
@@ -20,7 +20,7 @@ import {
   getRetryStats,
   resetRetries,
   checkRetries,
-} from "../../lib/crew-lead/retry-manager.mjs";
+} from "../../lib/iris-lead/retry-manager.mjs";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -81,7 +81,7 @@ describe("retry-manager — shouldRetryPlan", () => {
   it("returns shouldRetry: true for a coder agent that returned a plan", () => {
     const taskId = freshTaskId();
     const longPlan = "Here's the implementation plan.\n" + "## Implementation Plan\n" + "Step 1...\n".repeat(50);
-    const result = shouldRetryPlan(taskId, "crew-coder", longPlan);
+    const result = shouldRetryPlan(taskId, "iris-coder", longPlan);
     assert.equal(result.shouldRetry, true);
     assert.equal(result.reason, "plan");
   });
@@ -89,36 +89,36 @@ describe("retry-manager — shouldRetryPlan", () => {
   it("returns shouldRetry: false for a non-coder agent", () => {
     const taskId = freshTaskId();
     const longPlan = "Here's the plan.\n## Plan\n" + "Step...\n".repeat(50);
-    const result = shouldRetryPlan(taskId, "crew-lead", longPlan);
+    const result = shouldRetryPlan(taskId, "iris-lead", longPlan);
     assert.equal(result.shouldRetry, false);
   });
 
   it("returns shouldRetry: false when content contains work markers", () => {
     const taskId = freshTaskId();
     const content = "## Overview\n" + "Details...\n".repeat(50) + "\n@@WRITE_FILE index.js done.";
-    const result = shouldRetryPlan(taskId, "crew-coder", content);
+    const result = shouldRetryPlan(taskId, "iris-coder", content);
     assert.equal(result.shouldRetry, false);
   });
 
   it("returns shouldRetry: false for short content (under 300 chars)", () => {
     const taskId = freshTaskId();
-    const result = shouldRetryPlan(taskId, "crew-coder", "## Plan\nShort.");
+    const result = shouldRetryPlan(taskId, "iris-coder", "## Plan\nShort.");
     assert.equal(result.shouldRetry, false);
   });
 
-  it("detects crew-frontend as a coder agent", () => {
+  it("detects iris-frontend as a coder agent", () => {
     const taskId = freshTaskId();
     const longPlan = "Here's the design.\n## Design\n" + "Component...\n".repeat(50);
-    const result = shouldRetryPlan(taskId, "crew-frontend", longPlan);
+    const result = shouldRetryPlan(taskId, "iris-frontend", longPlan);
     assert.equal(result.shouldRetry, true);
   });
 
   it("stops retrying after MAX_RETRIES_PER_TASK (2) attempts", () => {
     const taskId = freshTaskId();
     const plan = "Here's what I'll do.\n## Approach\n" + "Step...\n".repeat(50);
-    shouldRetryPlan(taskId, "crew-coder", plan);
-    shouldRetryPlan(taskId, "crew-coder", plan);
-    const r3 = shouldRetryPlan(taskId, "crew-coder", plan);
+    shouldRetryPlan(taskId, "iris-coder", plan);
+    shouldRetryPlan(taskId, "iris-coder", plan);
+    const r3 = shouldRetryPlan(taskId, "iris-coder", plan);
     assert.equal(r3.shouldRetry, false, "third plan retry should be blocked");
   });
 });
@@ -213,7 +213,7 @@ describe("retry-manager — resetRetries", () => {
 describe("retry-manager — checkRetries", () => {
   it("returns shouldRetry: false for clean completion", () => {
     const taskId = freshTaskId();
-    const result = checkRetries(taskId, "crew-coder", "All done. @@WRITE_FILE foo.js created files.");
+    const result = checkRetries(taskId, "iris-coder", "All done. @@WRITE_FILE foo.js created files.");
     assert.equal(result.shouldRetry, false);
   });
 
@@ -221,7 +221,7 @@ describe("retry-manager — checkRetries", () => {
     const taskId = freshTaskId();
     // Content that matches both bail and question
     const content = "I'm sorry, but I couldn't complete it. Would you like me to try again?";
-    const result = checkRetries(taskId, "crew-coder", content);
+    const result = checkRetries(taskId, "iris-coder", content);
     assert.equal(result.reason, "bail", "bail should take priority");
   });
 });

@@ -3,11 +3,11 @@ name: Publish to npm
 on:
   push:
     tags:
-      - 'v*'           # crewswarm: v0.9.0, v1.0.0, etc.
-      - 'cli-v*'       # crew-cli:  cli-v0.2.0, etc.
+      - 'v*'           # iris: v0.9.0, v1.0.0, etc.
+      - 'cli-v*'       # iris-cli:  cli-v0.2.0, etc.
 
 jobs:
-  publish-crewswarm:
+  publish-iris:
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     permissions:
@@ -42,7 +42,7 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-  publish-crew-cli:
+  publish-iris-cli:
     if: startsWith(github.ref, 'refs/tags/cli-v')
     runs-on: ubuntu-latest
     permissions:
@@ -53,8 +53,8 @@ jobs:
         with:
           node-version: 22
           registry-url: https://registry.npmjs.org
-      - name: Build crew-cli
-        working-directory: crew-cli
+      - name: Build iris-cli
+        working-directory: iris-cli
         run: |
           npm install --ignore-scripts
           npm run build
@@ -67,8 +67,8 @@ jobs:
           else
             echo "tag=latest" >> "$GITHUB_OUTPUT"
           fi
-      - name: Publish crew-cli
-        working-directory: crew-cli
+      - name: Publish iris-cli
+        working-directory: iris-cli
         run: npm publish --access public --tag ${{ steps.tag.outputs.tag }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

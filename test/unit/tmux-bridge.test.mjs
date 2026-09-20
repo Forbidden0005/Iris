@@ -26,21 +26,21 @@ describe("tmux-bridge", () => {
   describe("detect", () => {
     it("returns false when TMUX env is not set", () => {
       delete process.env.TMUX;
-      delete process.env.CREWSWARM_TMUX_BRIDGE;
+      delete process.env.IRIS_TMUX_BRIDGE;
       _reset();
       assert.equal(detect(), false);
     });
 
-    it("returns false when CREWSWARM_TMUX_BRIDGE is not set", () => {
+    it("returns false when IRIS_TMUX_BRIDGE is not set", () => {
       process.env.TMUX = "/tmp/tmux-1000/default,12345,0";
-      delete process.env.CREWSWARM_TMUX_BRIDGE;
+      delete process.env.IRIS_TMUX_BRIDGE;
       _reset();
       assert.equal(detect(), false);
     });
 
-    it("returns false when CREWSWARM_TMUX_BRIDGE is 0", () => {
+    it("returns false when IRIS_TMUX_BRIDGE is 0", () => {
       process.env.TMUX = "/tmp/tmux-1000/default,12345,0";
-      process.env.CREWSWARM_TMUX_BRIDGE = "0";
+      process.env.IRIS_TMUX_BRIDGE = "0";
       _reset();
       assert.equal(detect(), false);
     });
@@ -67,7 +67,7 @@ describe("tmux-bridge", () => {
   describe("no-op when unavailable", () => {
     beforeEach(() => {
       delete process.env.TMUX;
-      delete process.env.CREWSWARM_TMUX_BRIDGE;
+      delete process.env.IRIS_TMUX_BRIDGE;
       _reset();
     });
 
@@ -76,19 +76,19 @@ describe("tmux-bridge", () => {
     });
 
     it("label returns false", () => {
-      assert.equal(label("crew-coder"), false);
+      assert.equal(label("iris-coder"), false);
     });
 
     it("resolve returns null", () => {
-      assert.equal(resolve("crew-coder"), null);
+      assert.equal(resolve("iris-coder"), null);
     });
 
     it("read returns null", () => {
-      assert.equal(read("crew-coder"), null);
+      assert.equal(read("iris-coder"), null);
     });
 
     it("send returns false", () => {
-      assert.equal(send("crew-coder", "hello"), false);
+      assert.equal(send("iris-coder", "hello"), false);
     });
 
     it("list returns empty array", () => {

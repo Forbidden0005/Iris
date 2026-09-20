@@ -1,10 +1,10 @@
 /**
- * Unit tests for lib/crew-lead/agent-manager.mjs
+ * Unit tests for lib/iris-lead/agent-manager.mjs
  *
  * Covers: AGENT_ROLE_PRESETS, createAgent (validation),
  *         listDynamicAgents, removeDynamicAgent (validation)
  *
- * Skips: actual creation/removal (writes to ~/.crewswarm/crewswarm.json)
+ * Skips: actual creation/removal (writes to ~/.iris/iris.json)
  */
 
 import { describe, it } from "node:test";
@@ -15,7 +15,7 @@ import {
   createAgent,
   listDynamicAgents,
   removeDynamicAgent,
-} from "../../lib/crew-lead/agent-manager.mjs";
+} from "../../lib/iris-lead/agent-manager.mjs";
 
 describe("agent-manager – AGENT_ROLE_PRESETS", () => {
   it("has coder, researcher, writer, auditor, ops, generalist presets", () => {
@@ -39,9 +39,9 @@ describe("agent-manager – AGENT_ROLE_PRESETS", () => {
   });
 
   it("promptTemplate returns a string containing the agent id", () => {
-    const result = AGENT_ROLE_PRESETS.researcher.promptTemplate("crew-test-agent", "testing");
+    const result = AGENT_ROLE_PRESETS.researcher.promptTemplate("iris-test-agent", "testing");
     assert.ok(typeof result === "string");
-    assert.ok(result.includes("crew-test-agent"));
+    assert.ok(result.includes("iris-test-agent"));
   });
 });
 
@@ -61,7 +61,7 @@ describe("agent-manager – listDynamicAgents", () => {
 describe("agent-manager – removeDynamicAgent", () => {
   it("throws for a non-existent dynamic agent", () => {
     assert.throws(
-      () => removeDynamicAgent("crew-nonexistent-xyz-99999"),
+      () => removeDynamicAgent("iris-nonexistent-xyz-99999"),
       /not a dynamic agent/i,
     );
   });

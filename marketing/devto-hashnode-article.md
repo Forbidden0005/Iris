@@ -1,17 +1,17 @@
 ---
-title: "crewswarm: The Multi-Agent AI Coding Platform Where You're the PM"
+title: "iris: The Multi-Agent AI Coding Platform Where You're the PM"
 tags: "ai, opensource, productivity, devtools"
 published: false
-canonical_url: "https://crewswarm.ai/blog/crewswarm-multi-agent-coding"
+canonical_url: "https://iris.ai/blog/iris-multi-agent-coding"
 ---
 
-# crewswarm: The Multi-Agent AI Coding Platform Where You're the PM
+# iris: The Multi-Agent AI Coding Platform Where You're the PM
 
 Hit your Claude session limit mid-refactor. Switch to Codex, re-explain everything, lose context. Try Gemini CLI, hit their quota too. Every AI coding tool locks you into one provider, one model, one conversation. You can't switch without starting over.
 
-crewswarm is the orchestration layer that fixes this.
+iris is the orchestration layer that fixes this.
 
-## What crewswarm is
+## What iris is
 
 A local-first, open-source platform where you're the PM and AI agents are your engineering team. You describe the work once. The system plans it, dispatches it to specialist agents, runs them in parallel, and verifies the output.
 
@@ -19,28 +19,28 @@ The mental model: you stop being the typist. You start being the coordinator.
 
 ## The stack
 
-### crew-lead (router)
+### iris-lead (router)
 Analyzes every task: is this a quick answer, a single-agent job, or does it need parallel execution across multiple specialists?
 
 ### Wave orchestrator
-Breaks complex work into parallel waves. crew-coder-back builds the API while crew-coder-front wires the UI while crew-qa writes tests while crew-security audits — all simultaneously, each in an isolated git worktree so they can't step on each other.
+Breaks complex work into parallel waves. iris-coder-back builds the API while iris-coder-front wires the UI while iris-qa writes tests while iris-security audits — all simultaneously, each in an isolated git worktree so they can't step on each other.
 
 ### 20+ specialist agents
-crew-coder, crew-qa, crew-fixer, crew-security, crew-pm, crew-copywriter, crew-github, crew-architect, and more. Each has its own system prompt, model, and tools. They share persistent memory but get fresh context windows — so no agent is polluted by another's work.
+iris-coder, iris-qa, iris-fixer, iris-security, iris-pm, iris-copywriter, iris-github, iris-architect, and more. Each has its own system prompt, model, and tools. They share persistent memory but get fresh context windows — so no agent is polluted by another's work.
 
 ### 6 coding engines
-Claude Code, Cursor, Codex CLI, Gemini CLI, OpenCode, and crew-cli. Hit a rate limit? The next task routes to a different engine automatically. Session state resumes across all of them — switch mid-conversation without losing context.
+Claude Code, Cursor, Codex CLI, Gemini CLI, OpenCode, and iris-cli. Hit a rate limit? The next task routes to a different engine automatically. Session state resumes across all of them — switch mid-conversation without losing context.
 
 ### PM Loop
 Point it at a ROADMAP.md and walk away. It reads the next unchecked item, dispatches to the right agents, marks it done or failed, and moves on. It ships features autonomously.
 
-## crew-cli: the missing CLI for every model
+## iris-cli: the missing CLI for every model
 
 This is the piece that doesn't exist anywhere else.
 
 Grok doesn't have a coding CLI. DeepSeek doesn't have one. Qwen, Kimi, Groq, MiniMax, Ollama — none of them have agentic coding tools. Claude Code only works with Anthropic models. Codex only works with OpenAI. Gemini CLI only works with Google.
 
-crew-cli gives **every model** a full agentic coding environment:
+iris-cli gives **every model** a full agentic coding environment:
 
 - **45+ built-in tools** — file I/O, git, LSP diagnostics, shell, web search, Docker sandbox, memory, sub-agent spawning
 - **3-tier pipeline** — L1 router (cheap model picks the path), L2 planner (expensive model decomposes complex tasks), L3 workers (tool-using execution)
@@ -50,7 +50,7 @@ crew-cli gives **every model** a full agentic coding environment:
 
 Every other AI coding CLI runs a blind loop: prompt the model, execute its tool call, repeat until it says "done." There's no memory of what failed, no proof that it worked, no feedback between turns.
 
-crew-cli wraps every task in 8 quality modules:
+iris-cli wraps every task in 8 quality modules:
 
 1. **Failure memory** — records what went wrong and blocks the model from repeating it
 2. **Verification gate** — won't declare "done" without proof (tests pass, build succeeds, files exist)
@@ -84,16 +84,16 @@ Plus 17 more at 100/100. Full list in the README.
 
 Groq GPT-OSS 20B ($0.0003/task) produces the same verified code as Claude Opus ($0.03/task) — 100x cheaper, same quality. The engine is the equalizer. Cheap models fail without it because they skip verification, hallucinate edits, and loop. The engine prevents those failure modes.
 
-## 8 surfaces, one crew
+## 8 surfaces, one iris
 
 Work from wherever fits your workflow:
 
 - **Vibe** — browser IDE with Monaco editor, integrated terminal, multi-engine chat, and live file sync. Agents edit a file, you see it update in 500ms. No Electron, no install.
 - **Dashboard** — control plane for agents, providers, models, costs, execution traces
-- **crew-cli** — terminal-native. `crew exec "build this"` from your project folder
-- **crewchat** — native chat for quick routing and project context
-- **Telegram & WhatsApp** — message your crew from your phone
-- **OpenClaw** — crewswarm works as a plugin for OpenClaw's desktop apps
+- **iris-cli** — terminal-native. `iris exec "build this"` from your project folder
+- **irischat** — native chat for quick routing and project context
+- **Telegram & WhatsApp** — message your iris from your phone
+- **OpenClaw** — iris works as a plugin for OpenClaw's desktop apps
 - **MCP server** — expose 64 tools to any MCP-compatible client (Claude Desktop, VS Code)
 
 Same agents, same persistent memory, any surface.
@@ -104,7 +104,7 @@ The 3-tier pipeline separates cost by responsibility:
 
 - **L1 router:** Groq GPT-OSS 20B or Gemini Flash Lite — $0.0001/classification
 - **L2 planner:** Claude Sonnet or GPT-5.4 — $0.003-0.02/plan (only when needed)
-- **L3 workers:** Any model through crew-cli — $0.0003-0.03/task
+- **L3 workers:** Any model through iris-cli — $0.0003-0.03/task
 
 Best value stack: L1 Groq + L2 Gemini Flash Lite + L3 DeepSeek Chat = **$0.006 per feature**.
 
@@ -112,7 +112,7 @@ Not every step needs a premium reasoning model. The router is a classification t
 
 ## Comparison
 
-| Feature | crewswarm | Claude Code | Codex CLI | Gemini CLI | Cursor |
+| Feature | iris | Claude Code | Codex CLI | Gemini CLI | Cursor |
 |---------|-----------|-------------|-----------|------------|--------|
 | Multi-model routing | 40+ models | Anthropic only | OpenAI only | Google only | Multi |
 | Specialist agents | 20+ | 1 | 1 | 1 | 1 |
@@ -128,28 +128,28 @@ Not every step needs a premium reasoning model. The router is a classification t
 ## Get started
 
 ```bash
-npm i -g crewswarm
-crew doctor
-crew chat "refactor the auth middleware and write tests"
+npm i -g iris
+iris doctor
+iris chat "refactor the auth middleware and write tests"
 ```
 
 Or clone the full stack:
 
 ```bash
 git clone https://github.com/crewswarm/crewswarm
-cd crewswarm && bash install.sh
+cd iris && bash install.sh
 ```
 
 Open the dashboard at `http://localhost:4319` and Vibe at `http://localhost:3333`.
 
 ## Links
 
-- **Site:** https://crewswarm.ai
+- **Site:** https://iris.ai
 - **Repo:** https://github.com/crewswarm/crewswarm
-- **Vibe IDE:** https://crewswarm.ai/vibe.html
-- **Models & benchmarks:** https://crewswarm.ai/models.html
-- **Twitter:** https://twitter.com/crewswarm
+- **Vibe IDE:** https://iris.ai/vibe.html
+- **Models & benchmarks:** https://iris.ai/models.html
+- **Twitter:** https://twitter.com/iris
 
 ---
 
-*crewswarm is open source under MIT license. Built for developers who want control over which models, which providers, and where their code runs.*
+*iris is open source under MIT license. Built for developers who want control over which models, which providers, and where their code runs.*

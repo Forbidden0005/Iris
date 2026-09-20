@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * CrewSwarm Vibe Watch Server
+ * Iris Vibe Watch Server
  * WebSocket server for CLI → Vibe file change broadcasts
  * 
  * Listens on ws://127.0.0.1:3334/ws

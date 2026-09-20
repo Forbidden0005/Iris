@@ -65,7 +65,7 @@ async function disableDashboardSSE(page) {
 // Fixtures
 // ---------------------------------------------------------------------------
 
-const TG_STATUS_RUNNING = { running: true, botName: "crewswarm_bot" };
+const TG_STATUS_RUNNING = { running: true, botName: "iris_bot" };
 const TG_STATUS_STOPPED = { running: false };
 
 const WA_STATUS_RUNNING = { running: true, number: "14155551234", authSaved: true };
@@ -79,14 +79,14 @@ const TG_CONFIG_FIXTURE = {
     "444555666": "Bob",
   },
   userRouting: {
-    "111222333": "crew-main",
+    "111222333": "iris-main",
   },
   topicRouting: {},
 };
 
 const WA_CONFIG_FIXTURE = {
   allowedNumbers: ["+14155551234", "+14155559876"],
-  targetAgent: "crew-lead",
+  targetAgent: "iris-lead",
   contactNames: { "14155551234": "Jeff" },
   userRouting: {},
 };
@@ -97,7 +97,7 @@ const TG_MESSAGES_FIXTURE = [
     ts: new Date("2026-04-02T10:00:00").getTime(),
     firstName: "Alice",
     username: "alice_t",
-    text: "Hello crewswarm, run the deployment pipeline",
+    text: "Hello iris, run the deployment pipeline",
   },
   {
     direction: "outbound",
@@ -127,7 +127,7 @@ const TG_SESSIONS_FIXTURE = [
     messageCount: 8,
     lastTs: Date.now() - 5 * 60 * 1000,
     messages: [
-      { role: "user", content: "Hello crewswarm" },
+      { role: "user", content: "Hello iris" },
       { role: "assistant", content: "Hello! How can I help?" },
     ],
   },
@@ -215,7 +215,7 @@ async function stubCommsEndpoints(page, opts = {}) {
       body: JSON.stringify([]),
     });
   });
-  await page.route("**/api/crew-lead/status", async (route) => {
+  await page.route("**/api/iris-lead/status", async (route) => {
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -289,7 +289,7 @@ test.describe("Comms tab — navigation and status indicators", () => {
 
     const badge = page.locator("#tgStatusBadge");
     await expect(badge).toBeVisible({ timeout: 8_000 });
-    await expect(badge).toContainText("@crewswarm_bot", { timeout: 8_000 });
+    await expect(badge).toContainText("@iris_bot", { timeout: 8_000 });
     await expect(badge).toHaveClass(/status-active/, { timeout: 4_000 });
   });
 
@@ -450,10 +450,10 @@ test.describe("Comms tab — Telegram config and controls", () => {
   test("per-user routing dropdown reflects saved routing", async ({ page }) => {
     await navigateToComms(page);
 
-    // Alice (111222333) routes to crew-main
+    // Alice (111222333) routes to iris-main
     const routeSel = page.locator("#tgRoute-111222333");
     await expect(routeSel).toBeVisible({ timeout: 8_000 });
-    await expect(routeSel).toHaveValue("crew-main", { timeout: 8_000 });
+    await expect(routeSel).toHaveValue("iris-main", { timeout: 8_000 });
   });
 
   test("Start Telegram bridge button calls POST /api/telegram/start", async ({
@@ -572,7 +572,7 @@ test.describe("Comms tab — message history", () => {
     const feed = page.locator("#tgMessageFeed");
     await expect(feed).toBeVisible({ timeout: 8_000 });
     await expect(feed).toContainText(
-      "Hello crewswarm, run the deployment pipeline",
+      "Hello iris, run the deployment pipeline",
       { timeout: 8_000 }
     );
     await expect(feed).toContainText(
@@ -662,12 +662,12 @@ test.describe("Comms tab — WhatsApp config", () => {
     await expect(numbersEl).toHaveValue(/\+14155551234/, { timeout: 8_000 });
   });
 
-  test("WhatsApp target agent field defaults to crew-lead", async ({ page }) => {
+  test("WhatsApp target agent field defaults to iris-lead", async ({ page }) => {
     await navigateToComms(page);
 
     const agentEl = page.locator("#waTargetAgent");
     await expect(agentEl).toBeVisible({ timeout: 8_000 });
-    await expect(agentEl).toHaveValue("crew-lead", { timeout: 8_000 });
+    await expect(agentEl).toHaveValue("iris-lead", { timeout: 8_000 });
   });
 
   test("Save WhatsApp config posts to /api/whatsapp/config with numbers and agent", async ({
@@ -701,7 +701,7 @@ test.describe("Comms tab — WhatsApp config", () => {
 
     await page.waitForTimeout(600);
     expect(saveRequests.length).toBeGreaterThanOrEqual(1);
-    expect(saveRequests[0]).toHaveProperty("targetAgent", "crew-lead");
+    expect(saveRequests[0]).toHaveProperty("targetAgent", "iris-lead");
     expect(saveRequests[0].allowedNumbers).toContain("+14155551234");
   });
 

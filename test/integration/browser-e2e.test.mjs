@@ -77,17 +77,17 @@ after(async () => {
 
 afterEach(async () => {
   if (previousDisableAutoharness === undefined) {
-    delete process.env.CREWSWARM_DISABLE_AUTOHARNESS;
+    delete process.env.IRIS_DISABLE_AUTOHARNESS;
   } else {
-    process.env.CREWSWARM_DISABLE_AUTOHARNESS = previousDisableAutoharness;
+    process.env.IRIS_DISABLE_AUTOHARNESS = previousDisableAutoharness;
   }
   await closeBrowser();
 });
 
 describe("@@BROWSER live integration", { timeout: 120000 }, () => {
   test("navigates, screenshots, types, and clicks against a local page", async (t) => {
-    previousDisableAutoharness = process.env.CREWSWARM_DISABLE_AUTOHARNESS;
-    process.env.CREWSWARM_DISABLE_AUTOHARNESS = "1";
+    previousDisableAutoharness = process.env.IRIS_DISABLE_AUTOHARNESS;
+    process.env.IRIS_DISABLE_AUTOHARNESS = "1";
     if (!playwrightAvailable) {
       t.skip("Playwright package is not installed in this environment");
       return;
@@ -95,7 +95,7 @@ describe("@@BROWSER live integration", { timeout: 120000 }, () => {
 
     const navigateResults = await executeToolCalls(
       `@@BROWSER navigate ${baseUrl}`,
-      "crew-coder-back",
+      "iris-coder-back",
       { projectId: "browser-e2e" }
     );
     if (skipForMissingBrowser(t, navigateResults)) return;
@@ -104,7 +104,7 @@ describe("@@BROWSER live integration", { timeout: 120000 }, () => {
 
     const screenshotResults = await executeToolCalls(
       `@@BROWSER screenshot ${baseUrl}`,
-      "crew-coder-back",
+      "iris-coder-back",
       { projectId: "browser-e2e" }
     );
     assert.match(screenshotResults.join("\n"), /\[tool:browser\] ✅ screenshot/);
@@ -113,16 +113,16 @@ describe("@@BROWSER live integration", { timeout: 120000 }, () => {
     assert.equal(fs.existsSync(screenshotMatch[1]), true);
 
     const typeResults = await executeToolCalls(
-      `@@BROWSER type ${baseUrl} #q "crewswarm E2E"`,
-      "crew-coder-back",
+      `@@BROWSER type ${baseUrl} #q "iris E2E"`,
+      "iris-coder-back",
       { projectId: "browser-e2e" }
     );
     assert.match(typeResults.join("\n"), /\[tool:browser\] ✅ type/);
-    assert.match(typeResults.join("\n"), /text="crewswarm E2E"/);
+    assert.match(typeResults.join("\n"), /text="iris E2E"/);
 
     const clickResults = await executeToolCalls(
       `@@BROWSER click ${baseUrl} #go`,
-      "crew-coder-back",
+      "iris-coder-back",
       { projectId: "browser-e2e" }
     );
     assert.match(clickResults.join("\n"), /\[tool:browser\] ✅ click/);

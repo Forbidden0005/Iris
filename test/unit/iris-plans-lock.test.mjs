@@ -10,7 +10,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const WORKER = path.join(__dirname, "helpers", "iris-plan-lock-worker.mjs");
 
 const TEST_DIR = path.join(os.tmpdir(), `iris-plans-lock-test-${process.pid}`);
-process.env.CREWSWARM_STATE_DIR = TEST_DIR;
+process.env.IRIS_STATE_DIR = TEST_DIR;
 
 import { resetPaths } from "../../lib/runtime/paths.mjs";
 import { createIrisPlan, loadIrisPlan, clearIrisPlans } from "../../lib/iris/plans.mjs";

@@ -25,10 +25,10 @@ import crypto from "node:crypto";
 // Set up temp dirs BEFORE importing the module (it reads env at evaluation time)
 const TEST_SHARED_MEMORY_DIR = path.join(
   os.tmpdir(),
-  `crewswarm-lease-test-${process.pid}`
+  `iris-lease-test-${process.pid}`
 );
 process.env.SHARED_MEMORY_DIR = TEST_SHARED_MEMORY_DIR;
-process.env.CREWSWARM_RT_AGENT = "test-agent";
+process.env.IRIS_RT_AGENT = "test-agent";
 
 const {
   taskKeyFor,

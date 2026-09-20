@@ -33,7 +33,7 @@ function createMockPlaywright() {
 afterEach(async () => {
   await closeBrowser();
   __setPlaywrightForTests(null);
-  delete process.env.CREWSWARM_DISABLE_AUTOHARNESS;
+  delete process.env.IRIS_DISABLE_AUTOHARNESS;
 });
 
 describe("@@BROWSER tool execution", () => {
@@ -41,7 +41,7 @@ describe("@@BROWSER tool execution", () => {
     __setPlaywrightForTests(createMockPlaywright());
     const results = await executeToolCalls(
       "@@BROWSER navigate https://example.com",
-      "crew-coder-back",
+      "iris-coder-back",
       { projectId: "test-browser" }
     );
 
@@ -53,20 +53,20 @@ describe("@@BROWSER tool execution", () => {
   test("parses quoted text for type commands", async () => {
     __setPlaywrightForTests(createMockPlaywright());
     const results = await executeToolCalls(
-      '@@BROWSER type https://example.com input[name="q"] "crewswarm"',
-      "crew-coder-back",
+      '@@BROWSER type https://example.com input[name="q"] "iris"',
+      "iris-coder-back",
       { projectId: "test-browser" }
     );
 
     assert.match(results.join("\n"), /\[tool:browser\] ✅ type https:\/\/example\.com/);
-    assert.match(results.join("\n"), /text="crewswarm"/);
+    assert.match(results.join("\n"), /text="iris"/);
   });
 
   test("supports screenshot actions", async () => {
     __setPlaywrightForTests(createMockPlaywright());
     const results = await executeToolCalls(
       "@@BROWSER screenshot https://example.com",
-      "crew-coder-back",
+      "iris-coder-back",
       { projectId: "test-browser" }
     );
 
@@ -78,7 +78,7 @@ describe("@@BROWSER tool execution", () => {
     __setPlaywrightForTests(createMockPlaywright());
     const results = await executeToolCalls(
       "@@BROWSER click https://example.com .missing",
-      "crew-coder-back",
+      "iris-coder-back",
       { projectId: "test-browser" }
     );
 
@@ -89,30 +89,30 @@ describe("@@BROWSER tool execution", () => {
     __setPlaywrightForTests(createMockPlaywright());
     const results = await executeToolCalls(
       "@@BROWSER navigate https://example.com",
-      "crew-pm",
+      "iris-pm",
       { projectId: "test-browser" }
     );
 
-    assert.match(results.join("\n"), /\[tool:browser\] ⛔ crew-pm does not have browser permission/);
+    assert.match(results.join("\n"), /\[tool:browser\] ⛔ iris-pm does not have browser permission/);
   });
 
   test("skips autoharness traces when explicitly disabled", async () => {
     __setPlaywrightForTests(createMockPlaywright());
-    process.env.CREWSWARM_DISABLE_AUTOHARNESS = "1";
+    process.env.IRIS_DISABLE_AUTOHARNESS = "1";
 
     const projectId = `test-browser-disabled-${Date.now()}`;
     const traceFile = path.join(
       os.tmpdir(),
-      "crewswarm-autoharness",
+      "iris-autoharness",
       "traces",
-      "crew-coder-back",
+      "iris-coder-back",
       `${projectId}.tools.jsonl`
     );
     fs.rmSync(traceFile, { force: true });
 
     const results = await executeToolCalls(
       "@@BROWSER navigate https://example.com",
-      "crew-coder-back",
+      "iris-coder-back",
       { projectId }
     );
 

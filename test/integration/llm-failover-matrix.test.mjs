@@ -1,6 +1,6 @@
 import { test, describe, before, after } from "node:test";
 import assert from "node:assert/strict";
-import { initLlmCaller, callLLM } from "../../lib/crew-lead/llm-caller.mjs";
+import { initLlmCaller, callLLM } from "../../lib/iris-lead/llm-caller.mjs";
 
 const origFetch = globalThis.fetch;
 

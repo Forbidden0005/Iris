@@ -1,6 +1,6 @@
-# crewswarm Integrations
+# iris Integrations
 
-> **Platform bridges** — Connect crewswarm to Telegram, WhatsApp, MCP, and more
+> **Platform bridges** — Connect iris to Telegram, WhatsApp, MCP, and more
 
 ## What Lives Here
 
@@ -17,7 +17,7 @@
 ### Setup
 
 1. Create bot via [@BotFather](https://t.me/BotFather)
-2. Add token to `~/.crewswarm/telegram-bridge.json`:
+2. Add token to `~/.iris/telegram-bridge.json`:
    ```json
    {"token": "8078407232:AAHVNzRnoUilRbIBjwh..."}
    ```
@@ -32,9 +32,9 @@
 {
   "topicRouting": {
     "-100XXXXXXXXXX": {
-      "20": "crew-loco",
-      "94": "crew-pm",
-      "main": "crew-lead"
+      "20": "iris-loco",
+      "94": "iris-pm",
+      "main": "iris-lead"
     }
   }
 }
@@ -44,7 +44,7 @@
 - Topic agents can dispatch to specialists
 - Role-based permissions (PM vs coder vs chat-only)
 
-**Logs:** `~/.crewswarm/logs/telegram-bridge.jsonl`
+**Logs:** `~/.iris/logs/telegram-bridge.jsonl`
 
 ---
 
@@ -56,22 +56,22 @@
 
 1. Start: `npm run whatsapp`
 2. Scan QR code (WhatsApp → Linked Devices)
-3. Auth persists in `~/.crewswarm/whatsapp-auth/`
+3. Auth persists in `~/.iris/whatsapp-auth/`
 
 ### Restrict Access
 
-In `~/.crewswarm/crewswarm.json` → `env`:
+In `~/.iris/iris.json` → `env`:
 ```json
 {"WA_ALLOWED_NUMBERS": "+15551234567,+15559876543"}
 ```
 
-**Logs:** `~/.crewswarm/logs/whatsapp-bridge.jsonl`
+**Logs:** `~/.iris/logs/whatsapp-bridge.jsonl`
 
 ---
 
 ## MCP Server
 
-**Model Context Protocol** server — exposes crewswarm agents as MCP tools for:
+**Model Context Protocol** server — exposes iris agents as MCP tools for:
 - Cursor IDE
 - Claude Code
 - OpenCode
@@ -91,7 +91,7 @@ Add to `~/.cursor/mcp.json` (or `~/.claude/mcp.json`, `~/.config/opencode/mcp.js
 ```json
 {
   "mcpServers": {
-    "crewswarm": {
+    "iris": {
       "url": "http://127.0.0.1:5020/mcp",
       "headers": {
         "Authorization": "Bearer <your-rt-auth-token>"
@@ -101,15 +101,15 @@ Add to `~/.cursor/mcp.json` (or `~/.claude/mcp.json`, `~/.config/opencode/mcp.js
 }
 ```
 
-Get token: `cat ~/.crewswarm/crewswarm.json | python3 -c "import json,sys; print(json.load(sys.stdin)['rt']['authToken'])"`
+Get token: `cat ~/.iris/iris.json | python3 -c "import json,sys; print(json.load(sys.stdin)['rt']['authToken'])"`
 
 ### Available Tools
 
 - `dispatch_agent` — Send task to any agent
 - `list_agents` — List all agents and status
 - `run_pipeline` — Multi-agent orchestration
-- `chat_stinki` — Talk to crew-lead
-- `crewswarm_status` — Live system status
+- `chat_stinki` — Talk to iris-lead
+- `iris_status` — Live system status
 - `smart_dispatch` — Get execution plan before running
 - `skill_*` — All 44 skills as MCP tools
 
@@ -143,7 +143,7 @@ updatePreferences('whatsapp:15551234567@s.whatsapp.net', {
 });
 ```
 
-**Database:** `~/.crewswarm/contacts.db`
+**Database:** `~/.iris/contacts.db`
 
 ### 3. Preference Extraction
 Auto-extract user preferences from conversation history.
@@ -187,7 +187,7 @@ node integrations/mcp-server.mjs
 1. **Telegram allowlist:** `telegram-bridge.json → allowedChatIds`
 2. **WhatsApp allowlist:** `WA_ALLOWED_NUMBERS` env var
 3. **MCP auth:** Bearer token required for all requests
-4. **Message logging:** All messages logged to `~/.crewswarm/logs/`
+4. **Message logging:** All messages logged to `~/.iris/logs/`
 
 ## Troubleshooting
 
@@ -199,7 +199,7 @@ node integrations/telegram-bridge.mjs &
 
 **WhatsApp QR expired:** Delete auth and re-scan
 ```bash
-rm -rf ~/.crewswarm/whatsapp-auth/
+rm -rf ~/.iris/whatsapp-auth/
 node integrations/whatsapp-bridge.mjs
 ```
 

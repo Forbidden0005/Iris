@@ -6,7 +6,7 @@
     "runtime": ["codex", "codex-cli"],
     "payloadKey": "useCodex",
     "agentConfigKey": "useCodex",
-    "envVar": "CREWSWARM_CODEX"
+    "envVar": "IRIS_CODEX"
   },
   "bin": "codex",
   "installCmd": "npm install -g @openai/codex",
@@ -15,9 +15,9 @@
   "color": "#a78bfa",
   "icon": "codex",
   "agentConfigKey": "useCodex",
-  "envToggle": "CREWSWARM_CODEX",
+  "envToggle": "IRIS_CODEX",
   "authNote": "Uses OAuth — run `codex login` once to authenticate. No API key needed.",
-  "bestFor": ["crew-coder", "crew-coder-back", "crew-coder-front", "crew-fixer"],
+  "bestFor": ["iris-coder", "iris-coder-back", "iris-coder-front", "iris-fixer"],
   "traits": [
     "danger-full-access sandbox — full machine access, no approval prompts",
     "Non-interactive exec mode (codex exec --json)",
@@ -31,7 +31,7 @@
   "jsonOutputEvent": "item.completed",
   "jsonOutputField": "item.text",
   "mcpSetup": {
-    "command": "codex mcp add crewswarm --url \"http://127.0.0.1:5020/mcp\" --bearer-token-env-var CREWSWARM_TOKEN",
-    "envRequired": "CREWSWARM_TOKEN"
+    "command": "codex mcp add iris --url \"http://127.0.0.1:5020/mcp\" --bearer-token-env-var IRIS_TOKEN",
+    "envRequired": "IRIS_TOKEN"
   }
 }

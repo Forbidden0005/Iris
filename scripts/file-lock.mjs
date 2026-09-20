@@ -1,12 +1,12 @@
 /**
  * File locking utilities for safe config writes
- * Prevents concurrent writes to crewswarm.json that could cause corruption
+ * Prevents concurrent writes to iris.json that could cause corruption
  */
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 
-const lockDir = path.join(os.tmpdir(), 'crewswarm-locks');
+const lockDir = path.join(os.tmpdir(), 'iris-locks');
 const locks = new Map(); // In-memory lock tracking
 
 /**

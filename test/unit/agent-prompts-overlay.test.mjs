@@ -10,14 +10,14 @@ const MODULE_PATH = pathToFileURL(
 ).href;
 
 test("writeAgentPrompt persists raw prompt text while runtime reads augmented text", async () => {
-  const tmpHome = fs.mkdtempSync(path.join(os.tmpdir(), "crewswarm-prompts-"));
-  const cfgDir = path.join(tmpHome, ".crewswarm");
+  const tmpHome = fs.mkdtempSync(path.join(os.tmpdir(), "iris-prompts-"));
+  const cfgDir = path.join(tmpHome, ".iris");
   fs.mkdirSync(cfgDir, { recursive: true });
   fs.writeFileSync(
     path.join(cfgDir, "agent-prompts.json"),
     JSON.stringify(
       {
-        "crew-coder": "Base prompt line",
+        "iris-coder": "Base prompt line",
       },
       null,
       2,
@@ -29,25 +29,25 @@ test("writeAgentPrompt persists raw prompt text while runtime reads augmented te
 
   try {
     const mod = await import(`${MODULE_PATH}?t=${Date.now()}`);
-    const rawBefore = mod.getRawAgentPrompts()["crew-coder"];
-    const augmentedBefore = mod.getAgentPrompts()["crew-coder"];
+    const rawBefore = mod.getRawAgentPrompts()["iris-coder"];
+    const augmentedBefore = mod.getAgentPrompts()["iris-coder"];
     assert.match(augmentedBefore, /Shared Chat \+ @Mention System/);
 
-    mod.writeAgentPrompt("crew-coder", `${rawBefore}\nExtra rule`);
+    mod.writeAgentPrompt("iris-coder", `${rawBefore}\nExtra rule`);
 
     const persisted = JSON.parse(
       fs.readFileSync(path.join(cfgDir, "agent-prompts.json"), "utf8"),
     );
     assert.equal(
-      persisted["crew-coder"],
+      persisted["iris-coder"],
       "Base prompt line\nExtra rule",
     );
     assert.doesNotMatch(
-      persisted["crew-coder"],
+      persisted["iris-coder"],
       /Shared Chat \+ @Mention System/,
     );
 
-    const augmentedAfter = mod.getAgentPrompts()["crew-coder"];
+    const augmentedAfter = mod.getAgentPrompts()["iris-coder"];
     assert.match(augmentedAfter, /Shared Chat \+ @Mention System/);
     assert.match(augmentedAfter, /Extra rule/);
   } finally {

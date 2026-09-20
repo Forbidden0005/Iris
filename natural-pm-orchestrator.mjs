@@ -14,8 +14,8 @@ import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const CREWSWARM_DIR = process.env.CREWSWARM_DIR || process.env.OPENCLAW_DIR || __dirname;
-const GATEWAY_BRIDGE_PATH = `${CREWSWARM_DIR}/gateway-bridge.mjs`;
+const IRIS_DIR = process.env.IRIS_DIR || process.env.OPENCLAW_DIR || __dirname;
+const GATEWAY_BRIDGE_PATH = `${IRIS_DIR}/gateway-bridge.mjs`;
 
 // Parser rules: extract task dispatch from natural language
 function parseNaturalLanguagePlan(text) {
@@ -70,21 +70,21 @@ function parseNaturalLanguagePlan(text) {
 
 function normalizeAgentName(name) {
   const map = {
-    'codex': 'crew-coder',
-    'coder': 'crew-coder',
-    'developer': 'crew-coder',
-    'qa': 'crew-qa',
-    'tester': 'crew-qa',
-    'test': 'crew-qa',
-    'fixer': 'crew-fixer',
-    'debugger': 'crew-fixer',
-    'security': 'crew-security',
-    'guardian': 'crew-security',
-    'audit': 'crew-security',
-    'pm': 'crew-pm',
-    'planner': 'crew-pm',
-    'quill': 'crew-main',
-    'main': 'crew-main',
+    'codex': 'iris-coder',
+    'coder': 'iris-coder',
+    'developer': 'iris-coder',
+    'qa': 'iris-qa',
+    'tester': 'iris-qa',
+    'test': 'iris-qa',
+    'fixer': 'iris-fixer',
+    'debugger': 'iris-fixer',
+    'security': 'iris-security',
+    'guardian': 'iris-security',
+    'audit': 'iris-security',
+    'pm': 'iris-pm',
+    'planner': 'iris-pm',
+    'quill': 'iris-main',
+    'main': 'iris-main',
   };
   return map[name] || name;
 }
@@ -97,20 +97,20 @@ async function askPM(requirement) {
 "${requirement}"
 
 Tell me which agents should work on this. Available agents:
-- Codex (crew-coder): implements code
-- Tester (crew-qa): writes tests
-- Fixer (crew-fixer): debugs issues
+- Codex (iris-coder): implements code
+- Tester (iris-qa): writes tests
+- Fixer (iris-fixer): debugs issues
 - Security (security): audits for vulnerabilities
 
 Explain your plan naturally. For example:
 "I'll have Codex create the file, then Tester will write tests for it."`;
 
     const proc = spawn('node', [GATEWAY_BRIDGE_PATH, naturalPrompt], {
-      cwd: CREWSWARM_DIR,
+      cwd: IRIS_DIR,
       stdio: ['ignore', 'pipe', 'pipe'],
       env: {
         ...process.env,
-        CREWSWARM_RT_AGENT: 'crew-pm',
+        IRIS_RT_AGENT: 'iris-pm',
       },
     });
     
@@ -151,7 +151,7 @@ async function dispatchTask(agent, task) {
   
   const runSend = () => new Promise((resolve, reject) => {
     const proc = spawn('node', [GATEWAY_BRIDGE_PATH, '--send', agent, task], {
-      cwd: CREWSWARM_DIR,
+      cwd: IRIS_DIR,
       stdio: ['ignore', 'pipe', 'pipe'],
       env: { ...process.env },
     });
@@ -165,9 +165,9 @@ async function dispatchTask(agent, task) {
 
   const runLegacy = () => new Promise((resolve, reject) => {
     const proc = spawn('node', [GATEWAY_BRIDGE_PATH, task], {
-      cwd: CREWSWARM_DIR,
+      cwd: IRIS_DIR,
       stdio: ['ignore', 'pipe', 'pipe'],
-      env: { ...process.env, CREWSWARM_RT_AGENT: agent },
+      env: { ...process.env, IRIS_RT_AGENT: agent },
     });
     let stdout = '';
     let stderr = '';
@@ -218,7 +218,7 @@ async function main() {
     if (dispatch.length === 0) {
       console.log('⚠️  PM didn\'t assign any tasks. Falling back to direct execution.');
       dispatch.push({
-        agent: 'crew-coder',
+        agent: 'iris-coder',
         task: requirement,
         acceptance: 'Task completed'
       });

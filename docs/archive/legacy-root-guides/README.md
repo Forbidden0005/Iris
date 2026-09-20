@@ -7,10 +7,10 @@ Use this map if you have bookmarks or old links:
 | Old path (removed) | Use instead |
 |--------------------|-------------|
 | `STUDIO-SETUP-COMPLETE.md` (root) | [`apps/vibe/STUDIO-SETUP-COMPLETE.md`](../../apps/vibe/STUDIO-SETUP-COMPLETE.md), [`apps/vibe/README.md`](../../apps/vibe/README.md) |
-| `CREWCHAT-QUICKSTART.md` | [`apps/crewchat/`](../../apps/crewchat/) (sources), [`docs/CANONICAL/INSTALL.md`](../../CANONICAL/INSTALL.md) (optional build flags) |
+| `CREWCHAT-QUICKSTART.md` | [`apps/irischat/`](../../apps/irischat/) (sources), [`docs/CANONICAL/INSTALL.md`](../../CANONICAL/INSTALL.md) (optional build flags) |
 | `MULTIMODAL-TAB-UI-COMPLETE.md` | [`docs/CANONICAL/SURFACES.md`](../../CANONICAL/SURFACES.md), [`docs/CANONICAL/DASHBOARD-TABS.md`](../../CANONICAL/DASHBOARD-TABS.md) |
 | `CHAT-HISTORY-AND-RAG-COMPLETE.md` | [`docs/CANONICAL/MEMORY.md`](../../CANONICAL/MEMORY.md), [`docs/UNIFIED-API.md`](../../UNIFIED-API.md) |
-| `SHARED-MEMORY-INTEGRATION.md` | [`docs/CANONICAL/MEMORY.md`](../../CANONICAL/MEMORY.md), [`crew-cli/docs/SHARED-MEMORY.md`](../../../crew-cli/docs/SHARED-MEMORY.md) |
+| `SHARED-MEMORY-INTEGRATION.md` | [`docs/CANONICAL/MEMORY.md`](../../CANONICAL/MEMORY.md), [`iris-cli/docs/SHARED-MEMORY.md`](../../../iris-cli/docs/SHARED-MEMORY.md) |
 | `WHATSAPP-TELEGRAM-INTEGRATION.md` | [`docs/CANONICAL/SURFACES.md`](../../CANONICAL/SURFACES.md), [`docs/TROUBLESHOOTING.md`](../../TROUBLESHOOTING.md), bridge sources `telegram-bridge.mjs` / `whatsapp-bridge.mjs` |
 | `GENERIC-COLLECTIONS.md` | [`lib/collections/index.mjs`](../../../lib/collections/index.mjs), [`docs/CANONICAL/MEMORY.md`](../../CANONICAL/MEMORY.md) (RAG role) |
 | `FINAL-TEST-RESULTS.md` | [`docs/CANONICAL/TESTING.md`](../../CANONICAL/TESTING.md) |

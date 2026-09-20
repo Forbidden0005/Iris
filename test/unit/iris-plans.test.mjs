@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 
 const TEST_DIR = path.join(os.tmpdir(), `iris-plans-test-${process.pid}`);
-process.env.CREWSWARM_STATE_DIR = TEST_DIR;
+process.env.IRIS_STATE_DIR = TEST_DIR;
 
 import { resetPaths } from "../../lib/runtime/paths.mjs";
 import {
@@ -96,14 +96,14 @@ describe("Iris plan skeleton", () => {
     }, { now: Date.parse("2026-09-14T10:05:00.000Z") });
 
     assert.equal(task.id, "task-builder");
-    assert.equal(task.runtimeAgentId, "crew-coder");
+    assert.equal(task.runtimeAgentId, "iris-coder");
     assert.equal(task.displayName, "Builder");
     assert.equal(task.status, "pending");
     assert.deepEqual(task.allowedTools, ["read", "write"]);
 
     const loaded = loadIrisPlan("plan-task-map");
     assert.equal(loaded.tasks.length, 1);
-    assert.equal(loaded.tasks[0].runtimeAgentId, "crew-coder");
+    assert.equal(loaded.tasks[0].runtimeAgentId, "iris-coder");
   });
 
   test("updates plan and task statuses with timestamps", () => {

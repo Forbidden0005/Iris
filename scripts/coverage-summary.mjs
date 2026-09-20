@@ -40,7 +40,7 @@ console.log("  Coverage Summary");
 console.log(`  Generated: ${data.timestamp}`);
 console.log("========================================");
 console.log(fmtRow("Root", data.root));
-console.log(fmtRow("crew-cli", data.crewCli));
+console.log(fmtRow("iris-cli", data.crewCli));
 console.log(fmtRow("Overall", data.overall));
 console.log("========================================");
 console.log(`\nFull report: coverage/coverage-report.md`);

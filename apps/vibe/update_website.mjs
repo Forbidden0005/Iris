@@ -4,26 +4,26 @@ import path from 'path';
 const INDEX_PATH = '../website/index.html';
 let html = fs.readFileSync(INDEX_PATH, 'utf8');
 
-console.log('🚀 Updating crewswarm.ai marketing site...');
+console.log('🚀 Updating iris.ai marketing site...');
 
 // 1. Tagline & Agent Count Consistency
 // Ensuring all instances of 20 or 21 are updated to "21+" for future-proofing
 html = html.replace('<h1>One idea.<br/>One build.<br/>', '<h1>One idea.<br/>One build.<br/>');
 html = html.replace(/20 specialist agents/g, '21+ specialist agents');
-html = html.replace(/21-agent specialist crew/g, '21+ specialist agent crew');
+html = html.replace(/21-agent specialist iris/g, '21+ specialist agent iris');
 
-// 2. Add Vibe to Control Surfaces (replacing crewchat cs-item)
+// 2. Add Vibe to Control Surfaces (replacing irischat cs-item)
 const crewChatCsItem = `<div class="cs-item cs-native">
-                  <strong>crewchat</strong>
+                  <strong>irischat</strong>
                   <span>Menu bar app — same conversation, one click away</span>
                 </div>`;
 
 const vibeCsItem = `<div class="cs-item cs-native">
-                  <strong><a href="vibe.html" style="color:var(--accent);">crewswarm Vibe</a></strong>
+                  <strong><a href="vibe.html" style="color:var(--accent);">iris Vibe</a></strong>
                   <span>Browser-native IDE with Monaco — real-time file tree + agent chat.</span>
                 </div>
                 <div class="cs-item cs-native">
-                  <strong>crewchat v2.0</strong>
+                  <strong>irischat v2.0</strong>
                   <span>Quick & Advanced modes — multimodal image + voice support.</span>
                 </div>`;
 
@@ -65,7 +65,7 @@ const waveFaq = `          <div class="faq-item">
               <span>What are "Waves" and parallel dispatch?</span>
               <span class="faq-icon">+</span>
             </button>
-            <div class="faq-answer"><div class="faq-answer-inner"><p>Waves allow multiple specialists (like crew-coder and crew-qa) to work simultaneously on different parts of the same project. Tasks in Wave 1 must finish before Wave 2 starts, but everything inside a wave runs in parallel.</p></div></div>
+            <div class="faq-answer"><div class="faq-answer-inner"><p>Waves allow multiple specialists (like iris-coder and iris-qa) to work simultaneously on different parts of the same project. Tasks in Wave 1 must finish before Wave 2 starts, but everything inside a wave runs in parallel.</p></div></div>
           </div>`;
 
 html = html.replace(faqListStart, faqListStart + '\n' + waveFaq);

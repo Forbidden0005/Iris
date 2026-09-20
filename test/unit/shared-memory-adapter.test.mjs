@@ -2,7 +2,7 @@
  * Unit tests for lib/memory/shared-adapter.mjs
  *
  * Covers:
- *  - CREW_MEMORY_DIR: exported constant
+ *  - IRIS_MEMORY_DIR: exported constant
  *  - isSharedMemoryAvailable: returns boolean
  *  - initSharedMemory: creates directory structure
  *  - getAgentKeeper / getAgentMemory / getMemoryBroker: return value or null
@@ -17,13 +17,13 @@ import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 
-const TEST_DIR = path.join(os.tmpdir(), `crewswarm-shared-mem-test-${process.pid}-${Date.now()}`);
+const TEST_DIR = path.join(os.tmpdir(), `iris-shared-mem-test-${process.pid}-${Date.now()}`);
 
 // Set env to redirect shared memory dir
-process.env.CREW_MEMORY_DIR = TEST_DIR;
+process.env.IRIS_MEMORY_DIR = TEST_DIR;
 
 const {
-  CREW_MEMORY_DIR,
+  IRIS_MEMORY_DIR,
   isSharedMemoryAvailable,
   initSharedMemory,
   getAgentKeeper,
@@ -37,9 +37,9 @@ after(() => {
   fs.rmSync(TEST_DIR, { recursive: true, force: true });
 });
 
-describe("shared-memory-adapter — CREW_MEMORY_DIR", () => {
+describe("shared-memory-adapter — IRIS_MEMORY_DIR", () => {
   it("uses the env var when set", () => {
-    assert.equal(CREW_MEMORY_DIR, TEST_DIR);
+    assert.equal(IRIS_MEMORY_DIR, TEST_DIR);
   });
 });
 
@@ -56,8 +56,8 @@ describe("shared-memory-adapter — initSharedMemory", () => {
     assert.equal(result.ok, true);
     assert.equal(result.path, TEST_DIR);
     assert.ok(fs.existsSync(TEST_DIR));
-    assert.ok(fs.existsSync(path.join(TEST_DIR, ".crew")));
-    assert.ok(fs.existsSync(path.join(TEST_DIR, ".crew", "agent-memory")));
+    assert.ok(fs.existsSync(path.join(TEST_DIR, ".iris")));
+    assert.ok(fs.existsSync(path.join(TEST_DIR, ".iris", "agent-memory")));
   });
 });
 

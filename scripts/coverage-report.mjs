@@ -84,9 +84,9 @@ try {
     true
   );
   const crewCliCoverage = runStep(
-    "crew-cli-coverage",
+    "iris-cli-coverage",
     "npm run test:coverage",
-    path.join(ROOT, "crew-cli")
+    path.join(ROOT, "iris-cli")
   );
 
   // Parse metrics from each suite
@@ -150,7 +150,7 @@ ${rootIntegration.output.trim() || "No output."}
 
 </details>
 
-## crew-cli coverage
+## iris-cli coverage
 
 ${metricsTable(crewCliMetrics)}
 
@@ -177,7 +177,7 @@ ${metricsTable(overallMetrics)}
 
 - coverage/root-unit-coverage.log
 - coverage/root-integration-bounded.log
-- coverage/crew-cli-coverage.log
+- coverage/iris-cli-coverage.log
 `;
 
   const reportPath = path.join(OUT_DIR, "coverage-report.md");
@@ -193,9 +193,9 @@ ${metricsTable(overallMetrics)}
     console.log("  Root:     (metrics not available)");
   }
   if (crewCliMetrics) {
-    console.log(`  crew-cli: ${crewCliMetrics.lines.toFixed(1)}% lines | ${crewCliMetrics.branches.toFixed(1)}% branches | ${crewCliMetrics.functions.toFixed(1)}% funcs`);
+    console.log(`  iris-cli: ${crewCliMetrics.lines.toFixed(1)}% lines | ${crewCliMetrics.branches.toFixed(1)}% branches | ${crewCliMetrics.functions.toFixed(1)}% funcs`);
   } else {
-    console.log("  crew-cli: (metrics not available)");
+    console.log("  iris-cli: (metrics not available)");
   }
   if (overallMetrics) {
     console.log(`  Overall:  ${overallMetrics.lines.toFixed(1)}% lines | ${overallMetrics.branches.toFixed(1)}% branches | ${overallMetrics.functions.toFixed(1)}% funcs`);

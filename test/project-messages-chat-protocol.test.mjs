@@ -11,13 +11,13 @@ import {
 const PROJECT_ID = "test-chat-protocol";
 
 beforeEach(() => {
-  process.env.CREWSWARM_TEST_MODE = "true";
+  process.env.IRIS_TEST_MODE = "true";
   resetPaths();
   clearProjectMessages(PROJECT_ID);
 });
 
 after(() => {
-  process.env.CREWSWARM_TEST_MODE = "true";
+  process.env.IRIS_TEST_MODE = "true";
   resetPaths();
   clearProjectMessages(PROJECT_ID);
 });
@@ -26,8 +26,8 @@ test("filters messages by mentioned agent", () => {
   saveProjectMessage(PROJECT_ID, {
     source: "dashboard",
     role: "user",
-    content: "@crew-main check this",
-    metadata: { mentions: ["crew-main"] },
+    content: "@iris-main check this",
+    metadata: { mentions: ["iris-main"] },
   });
   saveProjectMessage(PROJECT_ID, {
     source: "dashboard",
@@ -37,11 +37,11 @@ test("filters messages by mentioned agent", () => {
   });
 
   const messages = loadProjectMessages(PROJECT_ID, {
-    mentionedAgent: "crew-main",
+    mentionedAgent: "iris-main",
   });
 
   assert.equal(messages.length, 1);
-  assert.equal(messages[0].content, "@crew-main check this");
+  assert.equal(messages[0].content, "@iris-main check this");
 });
 
 test("filters messages by thread id", () => {

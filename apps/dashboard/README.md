@@ -1,6 +1,6 @@
-# crewswarm-dashboard
+# iris-dashboard
 
-Real-time control panel for CrewSwarm. Vanilla JS + Vite, no framework dependencies.
+Real-time control panel for Iris. Vanilla JS + Vite, no framework dependencies.
 
 ## Development
 
@@ -23,7 +23,7 @@ npm run preview    # preview production build
 src/
   app.js              # Main app entry, tab routing, SSE connections
   styles.css          # Global styles (dark theme)
-  chat/               # Chat tab (crew-lead conversation)
+  chat/               # Chat tab (iris-lead conversation)
   tabs/               # Tab modules (Build, Swarm, Agents, Engines, etc.)
   components/         # Shared UI components
   core/               # Core utilities (SSE, state, API client)
@@ -34,7 +34,7 @@ src/
 
 ## Key tabs
 
-- **Chat** -- Talk to crew-lead, dispatch tasks
+- **Chat** -- Talk to iris-lead, dispatch tasks
 - **Build** -- One-click build from a requirement
 - **Swarm** -- Active sessions and agent activity
 - **Agents** -- Configure sub-agents, models, permissions
@@ -44,6 +44,6 @@ src/
 
 ## Notes
 
-- Connects to crew-lead at `http://localhost:5010` by default
+- Connects to iris-lead at `http://localhost:5010` by default
 - All state comes from SSE streams and REST API -- no local state management
 - Brotli-compressed `.br` files are pre-built for production serving

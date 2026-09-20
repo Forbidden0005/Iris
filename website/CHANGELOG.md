@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to crewswarm will be documented in this file.
+All notable changes to iris will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **L2 planner benchmark**: 14 models at 90/100 task decomposition quality
 - **DESIGN.md artifact**: L2 planner now generates design system docs alongside PDD, ROADMAP, ARCH
 - **Tool auto-filter**: reduces tool count per task based on detected domains (coding, git, web, etc.)
-- **Top-of-mind**: persistent instructions from ~/.crewswarm/instructions.md and .crew/instructions.md injected every turn
+- **Top-of-mind**: persistent instructions from ~/.iris/instructions.md and .iris/instructions.md injected every turn
 - **Chat recall** (`/recall`): semantic search across past sessions — keyword + fuzzy token matching
 - **Summon** (`/summon`): switch specialist personas mid-task without context reset
 - **Multi-turn sub-agent dialogue**: `agent_message` tool for back-and-forth with spawned sub-agents
@@ -24,9 +24,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **15 Playwright tests** for Testing tab covering all 8 new dashboard features
 
 ### Changed
-- crew-cli version: 0.3.5 → 0.3.13
+- iris-cli version: 0.3.5 → 0.3.13
 - `/model` and `/models` consolidated into `/stack` command
-- Brand lowercase: "crewswarm" everywhere (was mixed "CrewSwarm")
+- Brand lowercase: "iris" everywhere (was mixed "Iris")
 - L2 routing: creation tasks get full decomposition, refactors stay atomic
 - All execution personas now get full tool access in standalone mode
 - Effort detection improved for multi-part tasks
@@ -53,8 +53,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Post-sampling hooks**: run custom logic after each LLM+tool turn
 - **Max-output recovery**: detects truncation, compacts and retries
 - **Reactive compaction**: auto-compact on context-too-long errors
-- **CI pipeline**: unit + crew-cli + Playwright tests run in parallel on push/PR
-- **4,530 tests** across unit, integration, crew-cli, and Playwright suites
+- **CI pipeline**: unit + iris-cli + Playwright tests run in parallel on push/PR
+- **4,530 tests** across unit, integration, iris-cli, and Playwright suites
 - **Quality benchmark**: tests code correctness (tsc --strict, test pass, no regressions), not just file creation
 
 ### Changed
@@ -62,14 +62,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - OpenAPI spec: 142 → 264 endpoints
 - Test count: ~900 → 4,530
 - Dashboard: 249 sync I/O calls converted to async
-- npm start now launches full stack (RT bus + crew-lead + dashboard)
+- npm start now launches full stack (RT bus + iris-lead + dashboard)
 
 ### Fixed
 - Spending cap checks + OAuth TTL refresh
 - Auth tokens and selectors for Playwright specs
 - Stale pm-loop processes killed between test blocks
 - OpenCode default model prefix corrected
-- crew-lead health status no longer dumped on greetings
+- iris-lead health status no longer dumped on greetings
 - Read-before-edit guard extended to append_file
 
 ## [0.9.3] - 2026-03-30
@@ -79,7 +79,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Benchmark callout**: 18 models at 100/100 (later expanded to 29) (updated: single-model testing shows 5 models pass all tests solo)
 - **OpenCode/Zen provider**: 7 model prefixes, 39 models + free tier
 - **Hard tier benchmark**: multi-file coding tasks
-- **CREW_PROVIDER env var**: explicit provider routing for `/model` command
+- **IRIS_PROVIDER env var**: explicit provider routing for `/model` command
 - **Cerebras, Mistral, NVIDIA providers**: added to provider resolver and config key loader
 - **Fireworks, Together, Hugging Face**: added to config key loader
 - **Adaptive weights**: learn from benchmark trajectories
@@ -93,7 +93,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Flush sandbox to disk before shell commands
 - Low-effort turn limit: 3 → 6
-- `.crew/` directory excluded from diffs
+- `.iris/` directory excluded from diffs
 - qaApproved defaults to false when deterministic gate rejects
 - Filesystem sync before quality benchmark checks
 
@@ -102,28 +102,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **Streaming output for all providers**: local.ts and multi-turn-drivers.ts now stream tokens incrementally for Groq, Grok, Gemini, DeepSeek, Anthropic, OpenAI, Mistral, and Cerebras — no more blank screen while waiting for full response
 - **Shared SSE stream helpers**: new `stream-helpers.ts` with `streamOpenAIResponse()`, `streamAnthropicResponse()`, `streamGeminiResponse()` — reusable across all code paths
-- **PreToolUse/PostToolUse hook system**: new `hooks/index.ts` — define hooks in `.crew/hooks.json` with regex matchers and shell commands; PreToolUse can allow/deny/modify tool input, PostToolUse fires after execution; tool input piped as JSON on stdin
+- **PreToolUse/PostToolUse hook system**: new `hooks/index.ts` — define hooks in `.iris/hooks.json` with regex matchers and shell commands; PreToolUse can allow/deny/modify tool input, PostToolUse fires after execution; tool input piped as JSON on stdin
 - **Token-aware auto-compaction**: new `context/token-compaction.ts` with `estimateTokens()`, `getContextWindow()` (model-specific), `adaptiveCompressionRatio()` — history compression now adapts to context window usage instead of fixed 3+5 ratios
 - **JSONL crash-safe transcripts**: `conversation-transcript.ts` rewritten to append-only JSONL — each turn is one JSON line, survives mid-write crashes, corrupt lines skipped on load
 - **Multi-session resume**: `/sessions` lists all past sessions with turn count, token usage, and first message; `/resume [id]` loads and continues any previous session with interactive picker
 - **Git worktree isolation**: new `tools/worktree.ts` with `enter_worktree`, `exit_worktree`, `merge_worktree`, `list_worktrees` tools — agents work in isolated git worktrees on separate branches, auto-cleanup if no changes, squash merge back if changes made
-- **Dashboard env vars**: added `CREW_NO_STREAM`, `CREW_HOOKS_FILE`, `CREW_MAX_SESSION_TOKENS` to Settings → crew-cli section
+- **Dashboard env vars**: added `IRIS_NO_STREAM`, `IRIS_HOOKS_FILE`, `IRIS_MAX_SESSION_TOKENS` to Settings → iris-cli section
 - **Session manager**: `setSessionId()` method for switching sessions on `/resume`
 
 ### Changed
-- crew-cli version: 0.3.0 → 0.3.1
+- iris-cli version: 0.3.0 → 0.3.1
 - `historyToGeminiContents()` and `historyToOpenAIMessages()` now accept model parameter for context-window-aware compression
 - `ConversationTranscriptStore` now stores per-session JSONL files (`transcript-{id}.jsonl`) instead of single JSON blob
-- Token-aware trimming in session store via `CREW_MAX_SESSION_TOKENS` (default 100K)
+- Token-aware trimming in session store via `IRIS_MAX_SESSION_TOKENS` (default 100K)
 
 ## [0.9.1] - 2026-03-28
 
 ### Fixed
-- **Dashboard direct agent chat**: `/chat` endpoint now respects `agentId` — selecting an agent in the dashboard routes directly to that agent's model and prompt instead of crew-lead
+- **Dashboard direct agent chat**: `/chat` endpoint now respects `agentId` — selecting an agent in the dashboard routes directly to that agent's model and prompt instead of iris-lead
 - **Claude Code `--bare` flag**: removed — broke OAuth auth, caused "Not logged in" / "no text output" for all Claude Code dispatch tasks
 - **WhatsApp self-chat**: stop AI replying to other people's chats — only `@lid` JIDs matching the bot's own linked identity are treated as self-chat
-- **Dashboard engine labels**: added `direct-llm`, `claude-code`, `gemini-cli`, `crew-cli` to badge display (was showing raw IDs or wrong engine)
-- **crew-cli projectDir**: guard as string — `Sandbox({ baseDir: null })` threw "path argument must be of type string"
+- **Dashboard engine labels**: added `direct-llm`, `claude-code`, `gemini-cli`, `iris-cli` to badge display (was showing raw IDs or wrong engine)
+- **iris-cli projectDir**: guard as string — `Sandbox({ baseDir: null })` threw "path argument must be of type string"
 - **Gemini CLI**: updated 0.34.0 → 0.35.2 (fixed `sysctl` crash on macOS), removed broken `MCP_DOCKER` from config
 - **Stale session cleanup**: when `--resume` fails (expired session), clear the stored ID so next call starts fresh
 - **Pipeline wave warmup**: 30s → 90s timeout (Claude Code takes ~45s through dispatch)
@@ -138,9 +138,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Gemini CLI + OpenCode: already working, no changes needed
 - **Clear session** button in Vibe UI + `POST /api/engine-passthrough/clear-session` endpoint
 - **21 new E2E tests**: multi-engine dispatch (7), chat passthrough + session resume (6), cron workflow lifecycle (5), PM loop multi-engine (1), surfaces dispatch (2)
-- **Multi-engine file creation test**: all 6 engines verified creating real HTML files (Cursor 12s, Codex 33s, Claude 33s, Gemini 21s, OpenCode 6s, crew-cli 3s)
+- **Multi-engine file creation test**: all 6 engines verified creating real HTML files (Cursor 12s, Codex 33s, Claude 33s, Gemini 21s, OpenCode 6s, iris-cli 3s)
 - **Session resume E2E**: proved Claude remembers "MANGO_42" across two separate passthrough messages
-- **Website overhaul**: hero rewrite ("The only multi-engine AI coding platform"), competitor table (vs Cursor/Windsurf/Devin/Copilot), rate limits section, per-agent model pricing, $0 pricing section, "Built with crewswarm" proof points, quickstart terminal video (6 frames), 14-slide demo slideshow, GitHub stars badge, SEO (title, meta, schema, keywords, aria-labels), sitemap + robots.txt
+- **Website overhaul**: hero rewrite ("The only multi-engine AI coding platform"), competitor table (vs Cursor/Windsurf/Devin/Copilot), rate limits section, per-agent model pricing, $0 pricing section, "Built with iris" proof points, quickstart terminal video (6 frames), 14-slide demo slideshow, GitHub stars badge, SEO (title, meta, schema, keywords, aria-labels), sitemap + robots.txt
 - **Shareable GIFs**: quickstart.gif (442KB), demo.gif (1.1MB) for Reddit/X
 - **Launch plan**: docs/LAUNCH-PLAN.md with HN, Reddit, X posts, FAQ for HN comments
 - **FUNDING.yml**: GitHub Sponsors enabled
@@ -157,22 +157,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Vibe: diff preview for ALL 6 engine writes (not just @@WRITE_FILE) — Monaco side-by-side diff
 - Vibe: multi-file diff queue with Accept / Dismiss / Accept All buttons
 - Vibe: reject reverts CLI-written files to previous content on disk
-- crew-cli REPL: deferred sandbox apply in manual/assist mode — shows diff before writing
-- crew-cli: `crew plan` generates 7 planning artifacts with dual-model validation
-- crew-cli: `crew test-first` TDD pipeline (tests → implement → validate)
-- crew-cli: `crew validate` blind code review with scores and verdicts
-- crew-cli: `crew auto` autonomous mode
-- crew-cli: `crew doctor` health check (6/7 checks)
+- iris-cli REPL: deferred sandbox apply in manual/assist mode — shows diff before writing
+- iris-cli: `iris plan` generates 7 planning artifacts with dual-model validation
+- iris-cli: `iris test-first` TDD pipeline (tests → implement → validate)
+- iris-cli: `iris validate` blind code review with scores and verdicts
+- iris-cli: `iris auto` autonomous mode
+- iris-cli: `iris doctor` health check (6/7 checks)
 - Website: CLI page rewritten with 7 commands and 3-tier pipeline diagram
 - Website: 4-step workflow demo (build → polish → errors → security)
 - Website: architecture section updated (22 agents, 6 engines, RT bus channels)
 - Launch plan with HN post, Twitter thread, Reddit posts, FAQ
 
 ### Fixed
-- crew-cli: file writes blocked by path traversal guard on absolute paths
-- crew-cli: `[object Object]` response serialization
-- crew-cli: REPL hang from home directory (repo indexer now skips ~ and /)
-- crew-cli: binary was pointing to stale Desktop copy (relinked)
+- iris-cli: file writes blocked by path traversal guard on absolute paths
+- iris-cli: `[object Object]` response serialization
+- iris-cli: REPL hang from home directory (repo indexer now skips ~ and /)
+- iris-cli: binary was pointing to stale Desktop copy (relinked)
 - Claude Code: stale session resume causing "no text output" — dispatch tasks start fresh
 - Website: performance 70→78 (mascot resize, favicon webp, fetchpriority, cache TTL)
 - Website: mobile overflow fixes, architecture section accuracy
@@ -185,7 +185,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Clear session button in Vibe + API endpoint
 - 21 new E2E tests (multi-engine dispatch, chat passthrough, session resume, cron workflow, PM loop multi-engine)
 - 12 new LLM providers: Together, HuggingFace, Venice, Moonshot, MiniMax, Volcengine, Qianfan, Fireworks, OpenRouter, vLLM, SGLang (total: 24)
-- OpenClaw plugin published to npm (`crewswarm-openclaw-plugin`) — 22 agents accessible from OpenClaw's 336K user base
+- OpenClaw plugin published to npm (`iris-openclaw-plugin`) — 22 agents accessible from OpenClaw's 336K user base
 - OpenClaw API key migration in install.sh — auto-detects `~/.openclaw/openclaw.json`
 - CODE_OF_CONDUCT.md (Contributor Covenant v2.1)
 - docs/TESTING.md — all ~1,100 test cases documented across 8 suites
@@ -208,21 +208,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Stale session auto-cleanup on resume failure
 - `--bare` flag removed from Claude Code runner (was causing "Not logged in")
 - `@whiskeysockets/baileys` moved to optionalDependencies (npm install works without git)
-- Dashboard engine labels fixed (direct-llm, claude-code, gemini-cli, crew-cli)
+- Dashboard engine labels fixed (direct-llm, claude-code, gemini-cli, iris-cli)
 - Gemini CLI updated 0.34.0 → 0.35.2 (fixed sysctl crash)
-- crew-cli projectDir string guard (fixed "path argument" error)
-- Removed hardcoded Cursor engine from crew-orchestrator dispatch
+- iris-cli projectDir string guard (fixed "path argument" error)
+- Removed hardcoded Cursor engine from iris-orchestrator dispatch
 - Claude Code stale session resume causing "no text output" — dispatch tasks now start fresh
 - Vibe IDE: added `--output-format stream-json --verbose` for Claude Code + stream parser
 - Reverted `--bare` flag (breaks OAuth auth)
 
-### crew-cli (0.2.4)
+### iris-cli (0.2.4)
 - Fixed file writes: path traversal guard blocked all absolute paths — now writes directly for absolute, sandbox for relative
 - Fixed `[object Object]` response serialization — tool results now extract `.output`/`.error`
 - Fixed REPL hang from home directory — repo indexer skips `~` and `/`
-- Added all providers from `crewswarm.json` to status dashboard (was hardcoded to 6)
+- Added all providers from `iris.json` to status dashboard (was hardcoded to 6)
 - REPL mode picker: error logging instead of silent swallow
-- Relinked `crew` binary to repo (was pointing to stale Desktop copy)
+- Relinked `iris` binary to repo (was pointing to stale Desktop copy)
 
 ### Website
 - Hero rewrite, competitor table, rate limits section, per-agent model pricing
@@ -249,7 +249,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PM loop process now exits cleanly after main() completes
 - PM loop E2E test: fixed stop-file path mismatch (was using wrong directory)
 - PM loop E2E test: wrapped describe blocks in `concurrency: 1` to prevent races
-- Pipeline-waves E2E: switched from crew-main (hangs) to crew-coder, added warm-up preflight
+- Pipeline-waves E2E: switched from iris-main (hangs) to iris-coder, added warm-up preflight
 - Dashboard-api integration tests: added `concurrency: 1` to prevent timeout cascade
 - WhatsApp bridge test: graceful handling of stale PID files
 
@@ -262,7 +262,7 @@ Initial beta milestone — PM-led multi-agent orchestration for software develop
 ### Added
 
 #### Core Features
-- **20 specialist agents** — crew-coder, crew-pm, crew-qa, crew-fixer, crew-security, crew-github, crew-copywriter, crew-frontend, crew-main, and more
+- **20 specialist agents** — iris-coder, iris-pm, iris-qa, iris-fixer, iris-security, iris-github, iris-copywriter, iris-frontend, iris-main, and more
 - **5 execution engines** — OpenCode, Cursor CLI, Claude Code, Codex CLI, and Gemini CLI
 - **PM Loop autonomous mode** — reads `ROADMAP.md`, dispatches items, retries failures, self-extends
 - **Real file writes** — `@@WRITE_FILE`, `@@READ_FILE`, `@@MKDIR`, `@@RUN_CMD` tools with actual disk I/O
@@ -279,7 +279,7 @@ Initial beta milestone — PM-led multi-agent orchestration for software develop
 - **Dashboard** — Web UI on port 4319 (Chat, Agents, Build, Services, Settings, Providers tabs)
 - **Telegram bridge** — Full bidirectional integration with topic routing
 - **WhatsApp bridge** — Personal bot via Baileys (scan QR once)
-- **crew-cli** — Command-line interface for all operations
+- **iris-cli** — Command-line interface for all operations
 - **MCP server** — Port 5020 exposes agents to Cursor, Claude Code, OpenCode, Codex
 
 #### Infrastructure
@@ -291,10 +291,10 @@ Initial beta milestone — PM-led multi-agent orchestration for software develop
 - **Health checks** — `openswitchctl doctor` and `npm run health` diagnostics
 
 #### Planning & Orchestration
-- **Domain-aware planning** — Routes roadmap items to specialized PM agents (crew-pm-cli, crew-pm-frontend, crew-pm-core)
+- **Domain-aware planning** — Routes roadmap items to specialized PM agents (iris-pm-cli, iris-pm-frontend, iris-pm-core)
 - **Wave dispatcher** — Parallel task execution with dependency management
 - **Pipeline DSL** — Chain sequential tasks with `@@PIPELINE`
-- **crew-judge** — Autonomous decision maker for PM loop (CONTINUE/SHIP/RESET)
+- **iris-judge** — Autonomous decision maker for PM loop (CONTINUE/SHIP/RESET)
 - **PDD + TECH-SPEC + ROADMAP** — Three-document planning per project
 
 #### Multimodal Support
@@ -304,7 +304,7 @@ Initial beta milestone — PM-led multi-agent orchestration for software develop
 
 ### Changed
 - **Engine routing** — Default changed to direct LLM calls (faster, cheaper)
-- **Session management** — Per-project isolation with `~/.crewswarm/sessions/`
+- **Session management** — Per-project isolation with `~/.iris/sessions/`
 - **Memory layer** — Unified MemoryBroker blends AgentMemory + AgentKeeper + Collections
 
 ### Fixed
@@ -335,7 +335,7 @@ Initial beta milestone — PM-led multi-agent orchestration for software develop
 - **Pre-launch security audit** — Removed exposed API keys, added security checks
 - **Documentation cleanup** — Moved 280+ session summaries to `docs/dev-notes/`
 - **KNOWN-ISSUES.md** — Comprehensive known issues documentation
-- **Project message persistence** — All chat messages auto-saved to `~/.crewswarm/project-messages/`
+- **Project message persistence** — All chat messages auto-saved to `~/.iris/project-messages/`
 - **Unified chat history** — CLI, dashboard, and bridge messages all saved in one place
 - **Auto-RAG indexing** — Project messages automatically indexed for semantic search
 - **Cache headers** — Prevents stale data when switching tabs
@@ -346,7 +346,7 @@ Initial beta milestone — PM-led multi-agent orchestration for software develop
 - **API key management** — Example files with placeholders, real files in `.gitignore`
 
 ### Fixed
-- Git security — Removed `crew-cli/setup-keys.sh` from tracking
+- Git security — Removed `iris-cli/setup-keys.sh` from tracking
 - Documentation bloat — Reduced root markdown files by 43%
 
 ### Planned for v1.0
@@ -355,8 +355,8 @@ Initial beta milestone — PM-led multi-agent orchestration for software develop
 - Video demos — YouTube walkthroughs
 
 ### Shipped since beta (not yet in versioned release)
-- **Browser automation** — CDP client with headless Chrome, screenshots, console error capture (`crew-cli/src/browser/index.ts`)
-- **Background Agent System (AutoFix)** — persisted job queue, unattended worker loop, safety gates (`crew-cli/src/autofix/`)
+- **Browser automation** — CDP client with headless Chrome, screenshots, console error capture (`iris-cli/src/browser/index.ts`)
+- **Background Agent System (AutoFix)** — persisted job queue, unattended worker loop, safety gates (`iris-cli/src/autofix/`)
 
 ---
 

@@ -6,7 +6,7 @@ import path from "node:path";
 
 const jsonMode = process.argv.includes("--json");
 const home = os.homedir();
-const crewDir = path.join(home, ".crewswarm");
+const crewDir = path.join(home, ".iris");
 const logsDir = path.join(crewDir, "logs");
 
 function exists(file) {
@@ -47,7 +47,7 @@ const payload = {
   },
   checklist: [
     "1. Start the stack with `npm run restart-all`.",
-    "2. Run `node scripts/health-check.mjs` and confirm crew-lead/dashboard are up.",
+    "2. Run `node scripts/health-check.mjs` and confirm iris-lead/dashboard are up.",
     "3. For Telegram: run `node --test test/e2e/telegram-roundtrip.test.mjs` with a configured bot token.",
     "4. For WhatsApp: run `node --test test/e2e/whatsapp-roundtrip.test.mjs` after QR auth is established.",
     "5. Send one inbound message and confirm project/history logs update.",
@@ -59,7 +59,7 @@ if (jsonMode) {
   process.exit(0);
 }
 
-console.log("CrewSwarm live bridge matrix");
+console.log("Iris live bridge matrix");
 console.log("");
 console.log("Telegram:");
 console.log(`  configured: ${payload.telegram.configured ? "yes" : "no"}`);

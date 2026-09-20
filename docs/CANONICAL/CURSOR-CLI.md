@@ -1,18 +1,18 @@
-# Cursor CLI (`agent`) in crewswarm
+# Cursor CLI (`agent`) in iris
 
-crewswarm **does not ship or control** the Cursor CLI. It **spawns** the same `agent` binary you would run in Terminal (see `lib/engines/runners.mjs` and `lib/crew-lead/http-server.mjs` engine passthrough for `cursor`).
+iris **does not ship or control** the Cursor CLI. It **spawns** the same `agent` binary you would run in Terminal (see `lib/engines/runners.mjs` and `lib/iris-lead/http-server.mjs` engine passthrough for `cursor`).
 
-If Cursor’s tool fails before it prints stream-json, crewswarm only sees **exit code + stderr** — there is nothing to “fix” in the orchestration layer until **`agent` works in a normal shell**.
+If Cursor’s tool fails before it prints stream-json, iris only sees **exit code + stderr** — there is nothing to “fix” in the orchestration layer until **`agent` works in a normal shell**.
 
 ## Official CLI reference
 
-Run **`agent --help`** on your machine for the current flag list. Commonly relevant to crewswarm:
+Run **`agent --help`** on your machine for the current flag list. Commonly relevant to iris:
 
 | Flag / env | Purpose |
 |------------|---------|
 | `-p` / `--print` | Non-interactive / script mode |
 | `--output-format stream-json` | NDJSON events on stdout (what we parse) |
-| `--stream-partial-output` | **Smaller text deltas** with `--print` + `stream-json` (crewswarm passes this for dashboard / Vibe / gateway) |
+| `--stream-partial-output` | **Smaller text deltas** with `--print` + `stream-json` (iris passes this for dashboard / Vibe / gateway) |
 | `--force` / `--yolo` | Allow tools without interactive approval |
 | `--trust` | Trust workspace in headless mode |
 | `--workspace <path>` | Project root (we pass your `projectDir`) |
@@ -22,7 +22,7 @@ Run **`agent --help`** on your machine for the current flag list. Commonly relev
 
 Subcommands: `agent models`, `agent status`, `agent update`, etc.
 
-## Quick smoke test (run outside crewswarm)
+## Quick smoke test (run outside iris)
 
 ```bash
 agent --list-models
@@ -33,7 +33,7 @@ Both commands must succeed (or stream assistant output) **before** dashboard pas
 
 ## `ERROR: SecItemCopyMatching failed -50` (macOS)
 
-That message comes from **macOS Security / Keychain** while Cursor’s CLI tries to read stored session or credentials. It is **not** a crewswarm bug.
+That message comes from **macOS Security / Keychain** while Cursor’s CLI tries to read stored session or credentials. It is **not** a iris bug.
 
 Typical causes:
 
@@ -57,8 +57,8 @@ A full machine reboot is usually unnecessary; **app relaunch + re-auth** fixes m
 
 For scripts, servers, and automation, Cursor documents using an API key so `agent` does not rely on interactive Keychain/session state:
 
-- Set **`CURSOR_API_KEY`** in the environment before starting **crew-lead**, agent bridges, or the dashboard process that spawns passthrough.
-- Or pass **`--api-key`** to `agent` (crewswarm does not add this flag by default; prefer env).
+- Set **`CURSOR_API_KEY`** in the environment before starting **iris-lead**, agent bridges, or the dashboard process that spawns passthrough.
+- Or pass **`--api-key`** to `agent` (iris does not add this flag by default; prefer env).
 
 Official references:
 
@@ -66,19 +66,19 @@ Official references:
 - [Headless CLI](https://cursor.com/docs/cli/headless)
 - [Background agent API / API key](https://cursor.com/docs/background-agent/api/api-key-info) (how to obtain a key, if applicable to your plan)
 
-In crewswarm, put persistent vars in **`~/.crewswarm/crewswarm.json` → `env`** or **Dashboard → Settings → Environment Variables**, then **restart** the services that spawn `agent` (at minimum **crew-lead** and any **gateway** processes).
+In iris, put persistent vars in **`~/.iris/iris.json` → `env`** or **Dashboard → Settings → Environment Variables**, then **restart** the services that spawn `agent` (at minimum **iris-lead** and any **gateway** processes).
 
-## crewswarm-specific knobs
+## iris-specific knobs
 
 | Variable | Purpose |
 |----------|---------|
 | `CURSOR_CLI_BIN` | Absolute path to `agent` if not `~/.local/bin/agent` or `PATH` |
-| `CREWSWARM_CURSOR_MODEL` | Default `--model` for passthrough / gateway (e.g. `composer-2-fast`) |
+| `IRIS_CURSOR_MODEL` | Default `--model` for passthrough / gateway (e.g. `composer-2-fast`) |
 | `CURSOR_DEFAULT_MODEL` | Alternative default read by passthrough |
 | `CURSOR_API_KEY` | Cursor CLI auth when Keychain path fails (see above) |
 
-Per-agent Cursor model: `cursorCliModel` in `crewswarm.json` (see `lib/bridges/cli-executor.mjs`).
+Per-agent Cursor model: `cursorCliModel` in `iris.json` (see `lib/bridges/cli-executor.mjs`).
 
 ## When to use another engine
 
-If `agent` cannot be stabilized on a machine (e.g. locked-down CI without Keychain/API key), switch that agent to **OpenCode**, **Claude Code**, **Codex**, or **Direct API** in **Dashboard → Settings → Engines** — crewswarm does not require Cursor CLI.
+If `agent` cannot be stabilized on a machine (e.g. locked-down CI without Keychain/API key), switch that agent to **OpenCode**, **Claude Code**, **Codex**, or **Direct API** in **Dashboard → Settings → Engines** — iris does not require Cursor CLI.

@@ -14,16 +14,16 @@ import assert from "node:assert/strict";
 // ─── Env var defaults (inline from source files) ──────────────────────────
 
 const DEFAULTS = {
-  CREWSWARM_ENGINE_IDLE_TIMEOUT_MS:    300_000,  // 5 min idle
-  CREWSWARM_ENGINE_MAX_TOTAL_MS:       45 * 60 * 1000, // 45 min absolute
+  IRIS_ENGINE_IDLE_TIMEOUT_MS:    300_000,  // 5 min idle
+  IRIS_ENGINE_MAX_TOTAL_MS:       45 * 60 * 1000, // 45 min absolute
   PM_AGENT_IDLE_TIMEOUT_MS:            15 * 60 * 1000, // 15 min PM subprocess idle
-  CREWSWARM_GEMINI_CLI_ENABLED:        false,
-  CREWSWARM_GEMINI_CLI_MODEL:          "gemini-default",
-  CREWSWARM_DISPATCH_CLAIMED_TIMEOUT_MS: 900_000, // 15 min
+  IRIS_GEMINI_CLI_ENABLED:        false,
+  IRIS_GEMINI_CLI_MODEL:          "gemini-default",
+  IRIS_DISPATCH_CLAIMED_TIMEOUT_MS: 900_000, // 15 min
   PM_USE_SPECIALISTS:                  true,
   PM_SELF_EXTEND:                      true,
   PM_EXTEND_EVERY:                     5,
-  PM_CODER_AGENT:                      "crew-coder",
+  PM_CODER_AGENT:                      "iris-coder",
   PM_MAX_CONCURRENT:                   20,
   PHASED_TASK_TIMEOUT_MS:              600_000,  // 10 min
 };
@@ -36,40 +36,40 @@ function parseBool(val, def) {
 function parseIntVal(val, def) { return global.parseInt(val || String(def), 10); }
 function parseStr(val, def) { return val || def; }
 
-// ─── CREWSWARM_ENGINE_IDLE_TIMEOUT_MS ──────────────────────────────────────
+// ─── IRIS_ENGINE_IDLE_TIMEOUT_MS ──────────────────────────────────────
 
-describe("CREWSWARM_ENGINE_IDLE_TIMEOUT_MS", () => {
+describe("IRIS_ENGINE_IDLE_TIMEOUT_MS", () => {
   it("defaults to 300000 (5 min) when unset", () => {
-    assert.equal(parseMs(undefined, DEFAULTS.CREWSWARM_ENGINE_IDLE_TIMEOUT_MS), 300_000);
+    assert.equal(parseMs(undefined, DEFAULTS.IRIS_ENGINE_IDLE_TIMEOUT_MS), 300_000);
   });
 
   it("parses custom value", () => {
-    assert.equal(parseMs("600000", DEFAULTS.CREWSWARM_ENGINE_IDLE_TIMEOUT_MS), 600_000);
+    assert.equal(parseMs("600000", DEFAULTS.IRIS_ENGINE_IDLE_TIMEOUT_MS), 600_000);
   });
 
   it("is the threshold for killing idle Cursor/Claude processes", () => {
     // If no output for this long, the watchdog fires
     const idleMs = 400_000;
-    const threshold = parseMs("300000", DEFAULTS.CREWSWARM_ENGINE_IDLE_TIMEOUT_MS);
+    const threshold = parseMs("300000", DEFAULTS.IRIS_ENGINE_IDLE_TIMEOUT_MS);
     assert.ok(idleMs > threshold, "process should be killed after idle threshold");
   });
 });
 
-// ─── CREWSWARM_ENGINE_MAX_TOTAL_MS ─────────────────────────────────────────
+// ─── IRIS_ENGINE_MAX_TOTAL_MS ─────────────────────────────────────────
 
-describe("CREWSWARM_ENGINE_MAX_TOTAL_MS", () => {
+describe("IRIS_ENGINE_MAX_TOTAL_MS", () => {
   it("defaults to 45 min (2700000)", () => {
-    assert.equal(parseMs(undefined, DEFAULTS.CREWSWARM_ENGINE_MAX_TOTAL_MS), 45 * 60 * 1000);
+    assert.equal(parseMs(undefined, DEFAULTS.IRIS_ENGINE_MAX_TOTAL_MS), 45 * 60 * 1000);
   });
 
   it("absolute ceiling always >= idle timeout", () => {
-    const idle = parseMs("300000", DEFAULTS.CREWSWARM_ENGINE_IDLE_TIMEOUT_MS);
-    const total = parseMs(undefined, DEFAULTS.CREWSWARM_ENGINE_MAX_TOTAL_MS);
+    const idle = parseMs("300000", DEFAULTS.IRIS_ENGINE_IDLE_TIMEOUT_MS);
+    const total = parseMs(undefined, DEFAULTS.IRIS_ENGINE_MAX_TOTAL_MS);
     assert.ok(total > idle, "MAX_TOTAL must be > idle timeout");
   });
 
   it("custom value overrides default", () => {
-    assert.equal(parseMs("3600000", DEFAULTS.CREWSWARM_ENGINE_MAX_TOTAL_MS), 3_600_000);
+    assert.equal(parseMs("3600000", DEFAULTS.IRIS_ENGINE_MAX_TOTAL_MS), 3_600_000);
   });
 });
 
@@ -172,9 +172,9 @@ describe("PM_AGENT_IDLE_TIMEOUT_MS", () => {
   });
 });
 
-// ─── CREWSWARM_GEMINI_CLI_ENABLED ──────────────────────────────────────────
+// ─── IRIS_GEMINI_CLI_ENABLED ──────────────────────────────────────────
 
-describe("CREWSWARM_GEMINI_CLI_ENABLED", () => {
+describe("IRIS_GEMINI_CLI_ENABLED", () => {
   it("defaults to false", () => {
     assert.equal(parseBool(undefined, false), false);
     assert.equal(parseBool("", false), false);
@@ -193,9 +193,9 @@ describe("CREWSWARM_GEMINI_CLI_ENABLED", () => {
   });
 });
 
-// ─── CREWSWARM_GEMINI_CLI_MODEL ─────────────────────────────────────────────
+// ─── IRIS_GEMINI_CLI_MODEL ─────────────────────────────────────────────
 
-describe("CREWSWARM_GEMINI_CLI_MODEL", () => {
+describe("IRIS_GEMINI_CLI_MODEL", () => {
   it("defaults to 'gemini default' (blank = let CLI choose)", () => {
     const val = parseStr(undefined, "gemini default");
     assert.equal(val, "gemini default");
@@ -207,21 +207,21 @@ describe("CREWSWARM_GEMINI_CLI_MODEL", () => {
   });
 });
 
-// ─── CREWSWARM_DISPATCH_CLAIMED_TIMEOUT_MS ──────────────────────────────────
+// ─── IRIS_DISPATCH_CLAIMED_TIMEOUT_MS ──────────────────────────────────
 
-describe("CREWSWARM_DISPATCH_CLAIMED_TIMEOUT_MS", () => {
+describe("IRIS_DISPATCH_CLAIMED_TIMEOUT_MS", () => {
   it("defaults to 900000 (15 min)", () => {
-    assert.equal(parseMs(undefined, DEFAULTS.CREWSWARM_DISPATCH_CLAIMED_TIMEOUT_MS), 900_000);
+    assert.equal(parseMs(undefined, DEFAULTS.IRIS_DISPATCH_CLAIMED_TIMEOUT_MS), 900_000);
   });
 
-  it("is separate from unclaimed dispatch timeout (CREWSWARM_DISPATCH_TIMEOUT_MS = 120s)", () => {
-    const claimed = parseMs(undefined, DEFAULTS.CREWSWARM_DISPATCH_CLAIMED_TIMEOUT_MS);
+  it("is separate from unclaimed dispatch timeout (IRIS_DISPATCH_TIMEOUT_MS = 120s)", () => {
+    const claimed = parseMs(undefined, DEFAULTS.IRIS_DISPATCH_CLAIMED_TIMEOUT_MS);
     const unclaimed = parseMs(undefined, 120_000);
     assert.ok(claimed > unclaimed, "claimed timeout must be longer — agents may still be working");
   });
 
   it("custom value accepted", () => {
-    assert.equal(parseMs("1800000", DEFAULTS.CREWSWARM_DISPATCH_CLAIMED_TIMEOUT_MS), 1_800_000);
+    assert.equal(parseMs("1800000", DEFAULTS.IRIS_DISPATCH_CLAIMED_TIMEOUT_MS), 1_800_000);
   });
 });
 
@@ -281,32 +281,32 @@ describe("PM_EXTEND_EVERY", () => {
 // ─── PM_CODER_AGENT ────────────────────────────────────────────────────────
 
 describe("PM_CODER_AGENT", () => {
-  it("defaults to crew-coder", () => {
-    assert.equal(parseStr(undefined, "crew-coder"), "crew-coder");
+  it("defaults to iris-coder", () => {
+    assert.equal(parseStr(undefined, "iris-coder"), "iris-coder");
   });
 
   it("overrides the default coder for generic (non-specialist) tasks", () => {
-    const coderAgent = parseStr("crew-mega", "crew-coder");
-    assert.equal(coderAgent, "crew-mega");
+    const coderAgent = parseStr("iris-mega", "iris-coder");
+    assert.equal(coderAgent, "iris-mega");
   });
 
   it("is used for tasks with no specialist keyword match", () => {
     // Actual PM loop uses task.toLowerCase() before keyword matching — mirror that here
-    function selectAgent(task, coderAgent = "crew-coder", specialists = true) {
+    function selectAgent(task, coderAgent = "iris-coder", specialists = true) {
       const t = task.toLowerCase();
       if (specialists) {
-        if (/\bgit\b|pull request|commit/.test(t)) return "crew-github";
-        if (/\bapi\b|backend|database/.test(t)) return "crew-coder-back";
-        if (/\bui\b|frontend|css/.test(t)) return "crew-coder-front";
+        if (/\bgit\b|pull request|commit/.test(t)) return "iris-github";
+        if (/\bapi\b|backend|database/.test(t)) return "iris-coder-back";
+        if (/\bui\b|frontend|css/.test(t)) return "iris-coder-front";
       }
       return coderAgent;
     }
     // generic task — no specialist keyword → should use PM_CODER_AGENT override
-    assert.equal(selectAgent("Write unit tests for utils.js", "crew-mega"), "crew-mega");
+    assert.equal(selectAgent("Write unit tests for utils.js", "iris-mega"), "iris-mega");
     // keyword task — CSS (uppercase) triggers frontend specialist via toLowerCase
-    assert.equal(selectAgent("Fix the CSS navbar", "crew-mega"), "crew-coder-front");
+    assert.equal(selectAgent("Fix the CSS navbar", "iris-mega"), "iris-coder-front");
     // non-specialist keyword task with default coderAgent
-    assert.equal(selectAgent("Refactor the config loader", "crew-coder"), "crew-coder");
+    assert.equal(selectAgent("Refactor the config loader", "iris-coder"), "iris-coder");
   });
 });
 
@@ -314,12 +314,12 @@ describe("PM_CODER_AGENT", () => {
 
 describe("All 12 new env vars have defined defaults", () => {
   const NEW_VARS = [
-    "CREWSWARM_ENGINE_IDLE_TIMEOUT_MS",
-    "CREWSWARM_ENGINE_MAX_TOTAL_MS",
+    "IRIS_ENGINE_IDLE_TIMEOUT_MS",
+    "IRIS_ENGINE_MAX_TOTAL_MS",
     "PM_AGENT_IDLE_TIMEOUT_MS",
-    "CREWSWARM_GEMINI_CLI_ENABLED",
-    "CREWSWARM_GEMINI_CLI_MODEL",
-    "CREWSWARM_DISPATCH_CLAIMED_TIMEOUT_MS",
+    "IRIS_GEMINI_CLI_ENABLED",
+    "IRIS_GEMINI_CLI_MODEL",
+    "IRIS_DISPATCH_CLAIMED_TIMEOUT_MS",
     "PM_USE_SPECIALISTS",
     "PM_SELF_EXTEND",
     "PM_EXTEND_EVERY",
@@ -336,8 +336,8 @@ describe("All 12 new env vars have defined defaults", () => {
 
   it("all numeric defaults are positive numbers", () => {
     const numericVars = [
-      "CREWSWARM_ENGINE_IDLE_TIMEOUT_MS", "CREWSWARM_ENGINE_MAX_TOTAL_MS",
-      "PM_AGENT_IDLE_TIMEOUT_MS", "CREWSWARM_DISPATCH_CLAIMED_TIMEOUT_MS",
+      "IRIS_ENGINE_IDLE_TIMEOUT_MS", "IRIS_ENGINE_MAX_TOTAL_MS",
+      "PM_AGENT_IDLE_TIMEOUT_MS", "IRIS_DISPATCH_CLAIMED_TIMEOUT_MS",
       "PM_EXTEND_EVERY", "PM_MAX_CONCURRENT", "PHASED_TASK_TIMEOUT_MS",
     ];
     for (const v of numericVars) {
@@ -347,7 +347,7 @@ describe("All 12 new env vars have defined defaults", () => {
 
   it("idle timeout < max total timeout (watchdog ordering)", () => {
     assert.ok(
-      DEFAULTS.CREWSWARM_ENGINE_IDLE_TIMEOUT_MS < DEFAULTS.CREWSWARM_ENGINE_MAX_TOTAL_MS,
+      DEFAULTS.IRIS_ENGINE_IDLE_TIMEOUT_MS < DEFAULTS.IRIS_ENGINE_MAX_TOTAL_MS,
       "idle timeout must be less than absolute max"
     );
   });

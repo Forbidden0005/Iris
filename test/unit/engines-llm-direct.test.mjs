@@ -85,7 +85,7 @@ describe("llm-direct — initLlmDirect", () => {
 describe("llm-direct — null config guard", () => {
   it("returns null when loadAgentLLMConfig returns null", async () => {
     initLlmDirect(makeDeps({ loadAgentLLMConfig: () => null }));
-    const result = await callLLMDirect("hello", "crew-coder", null);
+    const result = await callLLMDirect("hello", "iris-coder", null);
     assert.equal(result, null);
   });
 });
@@ -104,7 +104,7 @@ describe("llm-direct — spending cap", () => {
       }),
     }));
     await assert.rejects(
-      () => callLLMDirect("hello", "crew-coder"),
+      () => callLLMDirect("hello", "iris-coder"),
       /SPENDING_CAP_STOP/
     );
   });
@@ -118,7 +118,7 @@ describe("llm-direct — spending cap", () => {
       }),
     }));
     await assert.rejects(
-      () => callLLMDirect("hello", "crew-coder"),
+      () => callLLMDirect("hello", "iris-coder"),
       /SPENDING_CAP_PAUSE/
     );
   });
@@ -139,7 +139,7 @@ describe("llm-direct — spending cap", () => {
       }),
       notifyTelegramSpending: async (msg) => notified.push(msg),
     }));
-    const result = await callLLMDirect("hello", "crew-coder");
+    const result = await callLLMDirect("hello", "iris-coder");
     restoreFetch();
     assert.ok(notified.length > 0, "should have notified Telegram");
     assert.equal(result, "hello response");
@@ -164,7 +164,7 @@ describe("llm-direct — OpenAI-compatible API", () => {
       })
     );
     initLlmDirect(makeDeps());
-    const result = await callLLMDirect("What is the answer?", "crew-coder");
+    const result = await callLLMDirect("What is the answer?", "iris-coder");
     assert.equal(result, "The answer is 42.");
   });
 
@@ -179,7 +179,7 @@ describe("llm-direct — OpenAI-compatible API", () => {
       })
     );
     initLlmDirect(makeDeps());
-    const result = await callLLMDirect("prompt", "crew-coder");
+    const result = await callLLMDirect("prompt", "iris-coder");
     assert.equal(result, "legacy text response");
   });
 
@@ -193,7 +193,7 @@ describe("llm-direct — OpenAI-compatible API", () => {
       });
     });
     initLlmDirect(makeDeps());
-    await callLLMDirect("user prompt", "crew-coder", "You are a helpful assistant.");
+    await callLLMDirect("user prompt", "iris-coder", "You are a helpful assistant.");
     restoreFetch();
     assert.equal(capturedBody.messages[0].role, "system");
     assert.equal(capturedBody.messages[0].content, "You are a helpful assistant.");
@@ -220,7 +220,7 @@ describe("llm-direct — OpenAI-compatible API", () => {
         fallbackModel: null,
       }),
     }));
-    await callLLMDirect("think", "crew-coder");
+    await callLLMDirect("think", "iris-coder");
     restoreFetch();
     assert.ok(!("max_tokens" in capturedBody), "max_tokens should be absent for o1 models");
   });
@@ -244,7 +244,7 @@ describe("llm-direct — OpenAI-compatible API", () => {
         fallbackModel: null,
       }),
     }));
-    await callLLMDirect("think", "crew-coder");
+    await callLLMDirect("think", "iris-coder");
     restoreFetch();
     assert.ok(!("max_tokens" in capturedBody), "max_tokens should be absent for o3 models");
   });
@@ -259,7 +259,7 @@ describe("llm-direct — OpenAI-compatible API", () => {
       });
     });
     initLlmDirect(makeDeps());
-    await callLLMDirect("prompt", "crew-coder");
+    await callLLMDirect("prompt", "iris-coder");
     restoreFetch();
     assert.equal(capturedBody.max_tokens, 8192);
   });
@@ -278,10 +278,10 @@ describe("llm-direct — OpenAI-compatible API", () => {
     initLlmDirect(makeDeps({
       recordTokenUsage: (modelId, usage, agentId) => recorded.push({ modelId, usage, agentId }),
     }));
-    await callLLMDirect("prompt", "crew-qa");
+    await callLLMDirect("prompt", "iris-qa");
     restoreFetch();
     assert.equal(recorded.length, 1);
-    assert.equal(recorded[0].agentId, "crew-qa");
+    assert.equal(recorded[0].agentId, "iris-qa");
   });
 
   it("throws when response is not ok (non-429)", async () => {
@@ -289,7 +289,7 @@ describe("llm-direct — OpenAI-compatible API", () => {
       makeFetchResponse({ ok: false, status: 500, text: "Internal Server Error" })
     );
     initLlmDirect(makeDeps());
-    const result = await callLLMDirect("fail", "crew-coder");
+    const result = await callLLMDirect("fail", "iris-coder");
     restoreFetch();
     // Non-rate-limit errors flow to Groq fallback, which also fails → returns null
     assert.equal(result, null);
@@ -303,7 +303,7 @@ describe("llm-direct — OpenAI-compatible API", () => {
       })
     );
     initLlmDirect(makeDeps());
-    const result = await callLLMDirect("empty", "crew-coder");
+    const result = await callLLMDirect("empty", "iris-coder");
     restoreFetch();
     assert.equal(result, null);
   });
@@ -337,7 +337,7 @@ describe("llm-direct — Gemini native API", () => {
         fallbackModel: null,
       }),
     }));
-    const result = await callLLMDirect("gemini task", "crew-coder");
+    const result = await callLLMDirect("gemini task", "iris-coder");
     assert.equal(result, "gemini response");
     assert.ok(calledUrl.includes("generateContent"), `expected generateContent in URL, got: ${calledUrl}`);
   });
@@ -363,7 +363,7 @@ describe("llm-direct — Gemini native API", () => {
         fallbackModel: null,
       }),
     }));
-    await callLLMDirect("prompt", "crew-coder");
+    await callLLMDirect("prompt", "iris-coder");
     assert.equal(capturedHeaders["x-goog-api-key"], "my-gemini-key");
     assert.ok(!capturedHeaders["authorization"], "should not use authorization header for Gemini");
   });
@@ -389,7 +389,7 @@ describe("llm-direct — Gemini native API", () => {
         fallbackModel: null,
       }),
     }));
-    await callLLMDirect("user content", "crew-coder", "system instructions");
+    await callLLMDirect("user content", "iris-coder", "system instructions");
     restoreFetch();
     const text = capturedBody.contents[0].parts[0].text;
     assert.ok(text.includes("system instructions"), "system prompt should be in Gemini text");
@@ -413,7 +413,7 @@ describe("llm-direct — Gemini native API", () => {
         fallbackModel: null,
       }),
     }));
-    const result = await callLLMDirect("prompt", "crew-coder");
+    const result = await callLLMDirect("prompt", "iris-coder");
     restoreFetch();
     // Empty Gemini → falls through to Groq fallback (not configured) → null
     assert.equal(result, null);
@@ -435,7 +435,7 @@ describe("llm-direct — Gemini native API", () => {
         fallbackModel: null,
       }),
     }));
-    const result = await callLLMDirect("prompt", "crew-coder");
+    const result = await callLLMDirect("prompt", "iris-coder");
     restoreFetch();
     // Rate limit → retry once more (still 429) → Groq fallback → null
     assert.equal(result, null);
@@ -468,7 +468,7 @@ describe("llm-direct — 429 rate limit retry", () => {
       }),
       loadProviderMap: () => ({}),
     }));
-    const result = await callLLMDirect("prompt", "crew-coder");
+    const result = await callLLMDirect("prompt", "iris-coder");
     restoreFetch();
     assert.equal(result, null);
   }, { timeout: 25000 });
@@ -488,7 +488,7 @@ describe("llm-direct — 429 rate limit retry", () => {
         groq: { apiKey: "groq-key", baseUrl: "https://api.groq-test.com/v1" },
       }),
     }));
-    const result = await callLLMDirect("prompt", "crew-coder");
+    const result = await callLLMDirect("prompt", "iris-coder");
     restoreFetch();
     // All calls return 429 → null
     assert.equal(result, null);
@@ -532,7 +532,7 @@ describe("llm-direct — per-agent fallback", () => {
         },
       }),
     }));
-    const result = await callLLMDirect("prompt", "crew-coder");
+    const result = await callLLMDirect("prompt", "iris-coder");
     assert.equal(result, "fallback response");
   });
 
@@ -551,7 +551,7 @@ describe("llm-direct — per-agent fallback", () => {
       }),
       loadProviderMap: () => ({}), // provider not configured
     }));
-    const result = await callLLMDirect("prompt", "crew-coder");
+    const result = await callLLMDirect("prompt", "iris-coder");
     // No configured fallback provider, no Groq → null
     assert.equal(result, null);
   });
@@ -581,7 +581,7 @@ describe("llm-direct — per-agent fallback", () => {
         openai: { baseUrl: "https://api.openai.com/v1", apiKey: "key" },
       }),
     }));
-    await callLLMDirect("prompt", "crew-coder");
+    await callLLMDirect("prompt", "iris-coder");
     restoreFetch();
     // Second call is the fallback
     if (capturedBodies.length >= 2) {
@@ -625,7 +625,7 @@ describe("llm-direct — Groq global fallback", () => {
         groq: { apiKey: "groq-key", baseUrl: "https://api.groq-test.com/v1" },
       }),
     }));
-    const result = await callLLMDirect("prompt", "crew-coder");
+    const result = await callLLMDirect("prompt", "iris-coder");
     assert.equal(result, "groq fallback response");
   });
 
@@ -642,7 +642,7 @@ describe("llm-direct — Groq global fallback", () => {
       }),
       loadProviderMap: () => ({}),
     }));
-    const result = await callLLMDirect("prompt", "crew-coder");
+    const result = await callLLMDirect("prompt", "iris-coder");
     assert.equal(result, null);
   });
 
@@ -672,7 +672,7 @@ describe("llm-direct — Groq global fallback", () => {
         groq: { apiKey: "k", baseUrl: "https://api.groq-test.com/v1" },
       }),
     }));
-    await callLLMDirect("prompt", "crew-coder");
+    await callLLMDirect("prompt", "iris-coder");
     delete process.env.GROQ_FALLBACK_MODEL;
     restoreFetch();
     assert.equal(groqModel, "llama-3.1-8b-instant");
@@ -704,7 +704,7 @@ describe("llm-direct — Groq global fallback", () => {
       }),
       recordTokenUsage: (modelId, usage) => recorded.push({ modelId, usage }),
     }));
-    await callLLMDirect("prompt", "crew-coder");
+    await callLLMDirect("prompt", "iris-coder");
     restoreFetch();
     const GROQ_MODEL = process.env.GROQ_FALLBACK_MODEL || "llama-3.3-70b-versatile";
     assert.ok(recorded.some(r => r.modelId === GROQ_MODEL),
@@ -738,7 +738,7 @@ describe("llm-direct — URL construction", () => {
         fallbackModel: null,
       }),
     }));
-    await callLLMDirect("prompt", "crew-coder");
+    await callLLMDirect("prompt", "iris-coder");
     assert.ok(!calledUrl.includes("//chat"), `double slash in URL: ${calledUrl}`);
     assert.ok(calledUrl.endsWith("/chat/completions"), `unexpected URL: ${calledUrl}`);
   });

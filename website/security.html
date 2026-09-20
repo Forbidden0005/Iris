@@ -6,32 +6,32 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="preconnect" href="https://cdn.simpleicons.org" crossorigin />
   <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin />
-  <title>Security Architecture — Defense-in-Depth for AI Agents | crewswarm</title>
+  <title>Security Architecture — Defense-in-Depth for AI Agents | iris</title>
   <meta name="description"
-    content="crewswarm security guide: Docker isolation, AppArmor, firewall, command allowlist. Learn how we prevent ClawJacked, prompt injection, and filesystem escapes." />
+    content="iris security guide: Docker isolation, AppArmor, firewall, command allowlist. Learn how we prevent ClawJacked, prompt injection, and filesystem escapes." />
   <!-- Open Graph -->
-  <meta property="og:title" content="crewswarm Security — Defense-in-Depth" />
+  <meta property="og:title" content="iris Security — Defense-in-Depth" />
   <meta property="og:description"
     content="5-layer security for AI agents: Docker, AppArmor, firewall, allowlist, read-only FS" />
-  <meta property="og:image" content="https://crewswarm.ai/og-image.png" />
+  <meta property="og:image" content="https://iris.ai/og-image.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
-  <meta property="og:image:alt" content="crewswarm — local-first multi-agent AI orchestration" />
-  <meta property="og:url" content="https://crewswarm.ai/security.html" />
-  <meta property="og:site_name" content="crewswarm" />
+  <meta property="og:image:alt" content="iris — local-first multi-agent AI orchestration" />
+  <meta property="og:url" content="https://iris.ai/security.html" />
+  <meta property="og:site_name" content="iris" />
   <meta property="og:locale" content="en_US" />
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:site" content="@crewswarm" />
-  <meta name="twitter:title" content="crewswarm Security — Defense-in-Depth" />
+  <meta name="twitter:site" content="@iris" />
+  <meta name="twitter:title" content="iris Security — Defense-in-Depth" />
   <meta name="twitter:description" content="Bank-grade security for AI agents. No ClawJacked vulnerability." />
-  <meta name="twitter:image" content="https://crewswarm.ai/og-image.png" />
+  <meta name="twitter:image" content="https://iris.ai/og-image.png" />
   <!-- SEO -->
   <meta name="robots" content="index, follow" />
   <meta name="theme-color" content="#818cf8" />
-  <meta name="author" content="crewswarm" />
-  <link rel="canonical" href="https://crewswarm.ai/security.html" />
-  <link rel="alternate" hreflang="en" href="https://crewswarm.ai/security.html" />
+  <meta name="author" content="iris" />
+  <link rel="canonical" href="https://iris.ai/security.html" />
+  <link rel="alternate" hreflang="en" href="https://iris.ai/security.html" />
   <link rel="icon" type="image/webp" href="favicon.webp?v=4" />
   <link rel="apple-touch-icon" href="favicon.webp?v=4" />
   <!-- JSON-LD structured data -->
@@ -45,13 +45,13 @@
           "@type": "ListItem",
           "position": 1,
           "name": "Home",
-          "item": "https://crewswarm.ai/"
+          "item": "https://iris.ai/"
         },
         {
           "@type": "ListItem",
           "position": 2,
           "name": "Security Architecture",
-          "item": "https://crewswarm.ai/security.html"
+          "item": "https://iris.ai/security.html"
         }
       ]
     },
@@ -59,7 +59,7 @@
       "@context": "https://schema.org",
       "@type": "WebPage",
       "name": "Security Architecture — Defense-in-Depth for AI Agents",
-      "description": "Comprehensive security architecture for crewswarm, detailing a five-layer defense strategy including Docker, AppArmor, explicit firewall rules, command allowlisting, and non-root execution.",
+      "description": "Comprehensive security architecture for iris, detailing a five-layer defense strategy including Docker, AppArmor, explicit firewall rules, command allowlisting, and non-root execution.",
       "about": [
         {"@type": "Thing", "name": "Cybersecurity"},
         {"@type": "Thing", "name": "Application Security"},
@@ -82,13 +82,13 @@
 
 <body>
   <!-- AI Crawler Citeable Summary (GEO/LLM SEO) -->
-  <section id="ai-summary" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;">crewswarm utilizes a five-layer defense-in-depth security architecture to protect against prompt injection, filesystem escapes, and credential exfiltration. The layers include Docker isolation with a read-only root filesystem, AppArmor kernel enforcement, iptables network firewalls blocking cloud metadata, strict command allowlists, and execution under a non-root user (UID 1000) dropping all Linux capabilities.</section>
+  <section id="ai-summary" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;">iris utilizes a five-layer defense-in-depth security architecture to protect against prompt injection, filesystem escapes, and credential exfiltration. The layers include Docker isolation with a read-only root filesystem, AppArmor kernel enforcement, iptables network firewalls blocking cloud metadata, strict command allowlists, and execution under a non-root user (UID 1000) dropping all Linux capabilities.</section>
   <!-- NAV -->
   <nav role="navigation" aria-label="Main navigation">
     <div class="nav-container">
-      <a class="nav-logo" href="index.html" aria-label="crewswarm home">
+      <a class="nav-logo" href="index.html" aria-label="iris home">
         <img class="nav-logo-icon" src="favicon.webp?v=4" alt="" aria-hidden="true" />
-        <span class="nav-logo-wordmark">Crew<span class="nav-logo-hq">Swarm</span></span>
+        <span class="nav-logo-wordmark">Iris<span class="nav-logo-hq">Swarm</span></span>
       </a>
       <ul class="nav-links" id="navLinks" role="menubar">
         <li role="none"><a href="index.html" role="menuitem" class="nav-link-item">Home</a></li>
@@ -288,7 +288,7 @@ iptables -A OUTPUT -d 169.254.169.254/32 -p tcp --dport 80 -j DROP</code></pre>
             <h3>✅ Command Allowlist</h3>
             <p><strong>What it does:</strong> Application-level command validation</p>
             <div class="code-block">
-              <pre><code>// ~/.crewswarm/cmd-allowlist.json
+              <pre><code>// ~/.iris/cmd-allowlist.json
 {
   "allowedCommands": [
     "git status", "git add", "git commit",
@@ -332,7 +332,7 @@ security_opt:
   <section id="comparison" class="section">
     <div class="container">
       <div class="section-header">
-        <h2>How crewswarm Compares</h2>
+        <h2>How iris Compares</h2>
         <p class="section-desc">Security comparison with other AI agent frameworks.</p>
       </div>
 
@@ -343,7 +343,7 @@ security_opt:
               <th>Security Feature</th>
               <th>OpenClaw</th>
               <th>Cursor</th>
-              <th class="highlight">crewswarm</th>
+              <th class="highlight">iris</th>
             </tr>
           </thead>
           <tbody>
@@ -404,7 +404,7 @@ security_opt:
         <p>
           OpenClaw's WebSocket server lacked authentication, allowing attackers to inject malicious tasks.
           In December 2025, an attacker transferred <strong>$450,000 in tokens</strong> via prompt injection.
-          Meta banned OpenClaw from all platforms. <strong>crewswarm has no WebSocket injection vulnerability.</strong>
+          Meta banned OpenClaw from all platforms. <strong>iris has no WebSocket injection vulnerability.</strong>
         </p>
         <p><a href="openclaw-comparison.html">Full comparison →</a></p>
       </div>
@@ -431,7 +431,7 @@ security_opt:
           <input type="checkbox" id="c2" />
           <label for="c2">
             <strong>Load AppArmor profile:</strong>
-            <code>sudo apparmor_parser -r apparmor/crewswarm-restricted.profile</code>
+            <code>sudo apparmor_parser -r apparmor/iris-restricted.profile</code>
           </label>
         </div>
 
@@ -445,7 +445,7 @@ security_opt:
         <div class="checklist-item">
           <input type="checkbox" id="c4" />
           <label for="c4">
-            <strong>Review command allowlist:</strong> <code>~/.crewswarm/cmd-allowlist.json</code> — only allow
+            <strong>Review command allowlist:</strong> <code>~/.iris/cmd-allowlist.json</code> — only allow
             necessary commands
           </label>
         </div>
@@ -453,8 +453,8 @@ security_opt:
         <div class="checklist-item">
           <input type="checkbox" id="c5" />
           <label for="c5">
-            <strong>Enable approval mode:</strong> <code>CREWSWARM_REQUIRE_APPROVAL=true</code> in
-            <code>crewswarm.json</code>
+            <strong>Enable approval mode:</strong> <code>IRIS_REQUIRE_APPROVAL=true</code> in
+            <code>iris.json</code>
           </label>
         </div>
 
@@ -483,7 +483,7 @@ security_opt:
         <div class="checklist-item">
           <input type="checkbox" id="c9" />
           <label for="c9">
-            <strong>Enable audit logging:</strong> Check <code>~/.crewswarm/logs/</code> for suspicious activity
+            <strong>Enable audit logging:</strong> Check <code>~/.iris/logs/</code> for suspicious activity
           </label>
         </div>
 
@@ -520,14 +520,14 @@ security_opt:
             <li><strong>Stop all agents:</strong> <code>npm run stop-all</code></li>
             <li><strong>Kill Docker containers:</strong> <code>docker-compose down</code></li>
             <li><strong>Revoke API keys:</strong> Dashboard → Providers → Regenerate all keys</li>
-            <li><strong>Check logs:</strong> <code>~/.crewswarm/logs/*.jsonl</code> for suspicious activity</li>
+            <li><strong>Check logs:</strong> <code>~/.iris/logs/*.jsonl</code> for suspicious activity</li>
           </ol>
         </div>
 
         <div class="response-card">
           <h3>2. Investigation</h3>
           <ol>
-            <li><strong>Review command history:</strong> Check <code>~/.crewswarm/logs/gateway-bridge.jsonl</code></li>
+            <li><strong>Review command history:</strong> Check <code>~/.iris/logs/gateway-bridge.jsonl</code></li>
             <li><strong>Check file changes:</strong> <code>git diff</code> in project directories</li>
             <li><strong>Audit API calls:</strong> Check provider dashboards for unauthorized usage</li>
             <li><strong>Network traffic:</strong> Review firewall logs (<code>/var/log/iptables.log</code>)</li>
@@ -549,8 +549,8 @@ security_opt:
           <ol>
             <li><strong>File GitHub issue:</strong> <a href="https://github.com/crewswarm/crewswarm/issues/new">New
                 Security Issue</a></li>
-            <li><strong>Email security team:</strong> <code>info@crewswarm.ai</code></li>
-            <li><strong>Provide logs:</strong> Sanitized logs from <code>~/.crewswarm/logs/</code></li>
+            <li><strong>Email security team:</strong> <code>info@iris.ai</code></li>
+            <li><strong>Provide logs:</strong> Sanitized logs from <code>~/.iris/logs/</code></li>
             <li><strong>Timeline:</strong> When did you first notice the issue?</li>
           </ol>
         </div>
@@ -562,10 +562,10 @@ security_opt:
     <footer>
     <div class="container footer-inner">
       <div class="footer-brand">
-        <div class="footer-logo">crewswarm</div>
+        <div class="footer-logo">iris</div>
         <p>Multi-agent AI orchestration.<br />Your models. Your keys. Your machine.</p>
         <p style="margin-top: 1rem; font-size: 0.85rem; opacity: 0.8;">Contact: <a
-            href="mailto:info@crewswarm.ai">info@crewswarm.ai</a></p>
+            href="mailto:info@iris.ai">info@iris.ai</a></p>
       </div>
       <div class="footer-links">
         <div class="footer-col">
@@ -590,14 +590,14 @@ security_opt:
           <div class="footer-col-title">Community</div>
           <a href="https://github.com/crewswarm/crewswarm" target="_blank" rel="noopener">GitHub</a>
           <a href="https://github.com/crewswarm/crewswarm/issues" target="_blank" rel="noopener">Issues</a>
-          <a href="https://twitter.com/crewswarm" target="_blank" rel="noopener">Twitter</a>
+          <a href="https://twitter.com/iris" target="_blank" rel="noopener">Twitter</a>
           <a href="openclaw-comparison.html">Compare (OpenClaw)</a>
         </div>
       </div>
     </div>
     <div class="footer-bottom">
       <div class="container">
-        <span>&copy; 2026 crewswarm. All rights reserved.</span>
+        <span>&copy; 2026 iris. All rights reserved.</span>
       </div>
     </div>
   </footer>

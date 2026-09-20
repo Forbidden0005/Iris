@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { buildDependencySnapshot, assessTestFreshness } from "../../scripts/test-blast-radius.mjs";
 
-const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "crewswarm-test-log-"));
+const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "iris-test-log-"));
 process.env.TEST_RESULTS_DIR = tmpDir;
 
 const {
@@ -25,7 +25,7 @@ const {
 describe("test log helpers", () => {
   const logPath = path.join(tmpDir, "test-log.jsonl");
   const currentRunPath = path.join(tmpDir, ".current-run.json");
-  const configPath = path.join(tmpDir, "crewswarm.json");
+  const configPath = path.join(tmpDir, "iris.json");
 
   beforeEach(() => {
     fs.writeFileSync(currentRunPath, JSON.stringify({ runId: "unit-test-run" }) + "\n");
@@ -73,7 +73,7 @@ describe("test log helpers", () => {
     fs.writeFileSync(configPath, JSON.stringify({
       agents: [
         {
-          id: "crew-coder",
+          id: "iris-coder",
           model: "openai/gpt-5.2",
           useCodex: true,
           useCursorCli: false,
@@ -83,7 +83,7 @@ describe("test log helpers", () => {
         },
       ],
     }, null, 2));
-    const meta = getAgentRuntimeMetadata("crew-coder", configPath);
+    const meta = getAgentRuntimeMetadata("iris-coder", configPath);
     assert.equal(meta.model, "openai/gpt-5.2");
     assert.equal(meta.provider, "openai");
     assert.equal(meta.enabledRoute, "useCodex");
@@ -120,7 +120,7 @@ describe("test log helpers", () => {
   });
 
   it("classifySkip detects service and engine availability skips", () => {
-    const service = classifySkip({ skip_reason: "crew-lead not running on :5010" });
+    const service = classifySkip({ skip_reason: "iris-lead not running on :5010" });
     assert.equal(service.reason_code, "service_down");
 
     const engine = classifySkip({ skip_reason: "Claude Code not available" });

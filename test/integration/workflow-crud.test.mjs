@@ -16,7 +16,7 @@
  *
  * Environment variables:
  *   DASHBOARD_BASE           — override dashboard URL (default http://127.0.0.1:4319)
- *   CREWSWARM_CONFIG_DIR     — set on the running dashboard to redirect pipelines dir
+ *   IRIS_CONFIG_DIR     — set on the running dashboard to redirect pipelines dir
  */
 
 import { describe, it, before, after } from "node:test";
@@ -133,7 +133,7 @@ async function listWorkflowsFromDir(dir) {
 
 before(async () => {
   // Create isolated temp dir for file-system tests.
-  tempStateDir = await mkdtemp(join(tmpdir(), "crewswarm-wf-crud-test-"));
+  tempStateDir = await mkdtemp(join(tmpdir(), "iris-wf-crud-test-"));
   pipelinesDir = join(tempStateDir, "pipelines");
   await mkdir(pipelinesDir, { recursive: true });
 
@@ -160,7 +160,7 @@ describe("workflow file-system contract", () => {
       description: "FS test workflow",
       enabled: false,
       schedule: "0 9 * * 1",
-      stages: [{ agent: "crew-coder", task: "Say hello" }],
+      stages: [{ agent: "iris-coder", task: "Say hello" }],
       updatedAt: new Date().toISOString(),
     };
     const fp = await writeWorkflow(pipelinesDir, "fs-test", wf);
@@ -178,8 +178,8 @@ describe("workflow file-system contract", () => {
       enabled: true,
       schedule: "*/30 * * * *",
       stages: [
-        { agent: "crew-seo", task: "Generate tweet" },
-        { agent: "crew-main", task: "Review tweet" },
+        { agent: "iris-seo", task: "Generate tweet" },
+        { agent: "iris-main", task: "Review tweet" },
       ],
     });
 
@@ -207,7 +207,7 @@ describe("workflow file-system contract", () => {
 
   it("deleting the file removes it from the list", async () => {
     await writeWorkflow(pipelinesDir, "delete-me-fs", {
-      stages: [{ agent: "crew-coder", task: "Do something" }],
+      stages: [{ agent: "iris-coder", task: "Do something" }],
     });
 
     let workflows = await listWorkflowsFromDir(pipelinesDir);
@@ -229,9 +229,9 @@ describe("workflow file-system contract", () => {
   it("stageCount reflects the number of stages written", async () => {
     await writeWorkflow(pipelinesDir, "stage-count-wf", {
       stages: [
-        { agent: "crew-coder", task: "Step 1" },
-        { agent: "crew-qa", task: "Step 2" },
-        { agent: "crew-main", task: "Step 3" },
+        { agent: "iris-coder", task: "Step 1" },
+        { agent: "iris-qa", task: "Step 2" },
+        { agent: "iris-main", task: "Step 3" },
       ],
     });
 
@@ -379,8 +379,8 @@ describe("POST /api/workflows/save → list → item → delete lifecycle", () =
         enabled: false,
         schedule: "0 8 * * *",
         stages: [
-          { agent: "crew-coder", task: "Write integration test" },
-          { agent: "crew-qa", task: "Verify the test passes" },
+          { agent: "iris-coder", task: "Write integration test" },
+          { agent: "iris-qa", task: "Verify the test passes" },
         ],
       },
     });
@@ -421,8 +421,8 @@ describe("POST /api/workflows/save → list → item → delete lifecycle", () =
       "workflow.stages should be an array",
     );
     assert.equal(data.workflow.stages.length, 2, "should have 2 stages");
-    assert.equal(data.workflow.stages[0].agent, "crew-coder");
-    assert.equal(data.workflow.stages[1].agent, "crew-qa");
+    assert.equal(data.workflow.stages[0].agent, "iris-coder");
+    assert.equal(data.workflow.stages[1].agent, "iris-qa");
     assert.equal(typeof data.runState, "object", "runState should be present");
     assert.equal(typeof data.filePath, "string", "filePath should be present");
     assert.ok(typeof data.cronExample === "string", "cronExample should be present");
@@ -489,7 +489,7 @@ describe("POST /api/workflows/save — validation", () => {
     const { status, data } = await api("/api/workflows/save", "POST", {
       name: "invalid name with spaces!",
       workflow: {
-        stages: [{ agent: "crew-coder", task: "Test" }],
+        stages: [{ agent: "iris-coder", task: "Test" }],
       },
     });
     assert.equal(status, 400, `expected 400 for invalid name, got ${status}`);
@@ -504,7 +504,7 @@ describe("POST /api/workflows/save — validation", () => {
       workflow: {
         description: "Bad cron",
         schedule: "@daily",         // not a valid 5-field cron
-        stages: [{ agent: "crew-coder", task: "Do work" }],
+        stages: [{ agent: "iris-coder", task: "Do work" }],
       },
     });
     assert.equal(status, 400, `expected 400 for invalid cron, got ${status}`);
@@ -523,7 +523,7 @@ describe("POST /api/workflows/save — validation", () => {
       name: `bad-cron-fields-${Date.now()}`,
       workflow: {
         schedule: "0 9 *",          // only 3 fields
-        stages: [{ agent: "crew-coder", task: "Do work" }],
+        stages: [{ agent: "iris-coder", task: "Do work" }],
       },
     });
     assert.equal(status, 400, `expected 400 for 3-field cron, got ${status}`);
@@ -540,7 +540,7 @@ describe("POST /api/workflows/save — validation", () => {
         description: "Valid cron",
         enabled: false,
         schedule: "*/15 * * * *",
-        stages: [{ agent: "crew-coder", task: "Scheduled task" }],
+        stages: [{ agent: "iris-coder", task: "Scheduled task" }],
       },
     });
     assert.equal(status, 200, `expected 200 for valid cron, got ${status}: ${JSON.stringify(data)}`);

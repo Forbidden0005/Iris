@@ -1,8 +1,8 @@
-# crewswarm runtime image
+# iris runtime image
 # Builds the frontend and packages all core services into a single image.
-# ~/.crewswarm is always mounted as a volume — never baked in.
+# ~/.iris is always mounted as a volume — never baked in.
 #
-# Build:  docker build -t crewswarm .
+# Build:  docker build -t iris .
 # Run:    docker compose up   (see docker-compose.yml)
 
 # ── Stage 1: build Vite dashboard ────────────────────────────────────────────
@@ -17,7 +17,7 @@ RUN npm run build
 # ── Stage 2: runtime ─────────────────────────────────────────────────────────
 FROM node:22-alpine AS runtime
 
-# System deps (git for crew-github, curl for health checks, build tools for node-pty)
+# System deps (git for iris-github, curl for health checks, build tools for node-pty)
 RUN apk add --no-cache git curl bash python3 make g++
 
 WORKDIR /app
@@ -33,20 +33,20 @@ COPY . .
 RUN rm -rf apps/dashboard/dist
 COPY --from=frontend-builder /app/apps/dashboard/dist ./apps/dashboard/dist
 
-# Build and install crew-cli (makes `crew` command globally available)
-WORKDIR /app/crew-cli
+# Build and install iris-cli (makes `iris` command globally available)
+WORKDIR /app/iris-cli
 RUN npm ci && npm run build && npm link
 
 # Return to app root
 WORKDIR /app
 
-# ~/.crewswarm is always a mounted volume — the image never contains secrets.
+# ~/.iris is always a mounted volume — the image never contains secrets.
 # On first start the app bootstraps the directory if it doesn't exist.
-VOLUME ["/root/.crewswarm"]
+VOLUME ["/root/.iris"]
 
 # Exposed ports
 # 4319 — dashboard
-# 5010 — crew-lead
+# 5010 — iris-lead
 # 18889 — RT message bus
 # 4096 — code engine
 # 5020 — MCP server (optional)

@@ -262,21 +262,21 @@ describe("PM_MAX_CONCURRENT env var", () => {
 
 describe("PM_CODER_AGENT — what it controls", () => {
   // PM_CODER_AGENT overrides the default coding agent used by the PM loop.
-  // Normally tasks without a specialist keyword go to crew-coder.
-  // Set PM_CODER_AGENT=crew-coder-front to force frontend agent for all uncategorised tasks.
+  // Normally tasks without a specialist keyword go to iris-coder.
+  // Set PM_CODER_AGENT=iris-coder-front to force frontend agent for all uncategorised tasks.
 
   function resolveCoderAgent(envVal) {
-    return envVal || "crew-coder";
+    return envVal || "iris-coder";
   }
 
-  it("defaults to crew-coder when unset", () => {
-    assert.equal(resolveCoderAgent(undefined), "crew-coder");
-    assert.equal(resolveCoderAgent(""), "crew-coder");
+  it("defaults to iris-coder when unset", () => {
+    assert.equal(resolveCoderAgent(undefined), "iris-coder");
+    assert.equal(resolveCoderAgent(""), "iris-coder");
   });
 
   it("uses PM_CODER_AGENT override when set", () => {
-    assert.equal(resolveCoderAgent("crew-coder-front"), "crew-coder-front");
-    assert.equal(resolveCoderAgent("crew-mega"), "crew-mega");
+    assert.equal(resolveCoderAgent("iris-coder-front"), "iris-coder-front");
+    assert.equal(resolveCoderAgent("iris-mega"), "iris-mega");
   });
 });
 
@@ -284,38 +284,38 @@ describe("PM_USE_SPECIALISTS — keyword routing", () => {
   // When PM_USE_SPECIALISTS=on, tasks are routed to specialist agents
   // based on keywords found in the task text.
 
-  function routeToSpecialist(task, useSpecialists, coderAgent = "crew-coder") {
+  function routeToSpecialist(task, useSpecialists, coderAgent = "iris-coder") {
     if (!useSpecialists) return coderAgent;
     const t = task.toLowerCase();
-    if (/\bgit\b|github|pr\b|pull request|commit|branch|merge/.test(t)) return "crew-github";
-    if (/\bapi\b|backend|server|database|endpoint|sql|redis|mongo/.test(t)) return "crew-coder-back";
-    if (/\bui\b|frontend|css|html|react|vue|style|design|layout/.test(t)) return "crew-coder-front";
+    if (/\bgit\b|github|pr\b|pull request|commit|branch|merge/.test(t)) return "iris-github";
+    if (/\bapi\b|backend|server|database|endpoint|sql|redis|mongo/.test(t)) return "iris-coder-back";
+    if (/\bui\b|frontend|css|html|react|vue|style|design|layout/.test(t)) return "iris-coder-front";
     return coderAgent;
   }
 
-  it("routes git tasks to crew-github", () => {
-    assert.equal(routeToSpecialist("Create a PR for the changes", true), "crew-github");
-    assert.equal(routeToSpecialist("Commit and push to main branch", true), "crew-github");
+  it("routes git tasks to iris-github", () => {
+    assert.equal(routeToSpecialist("Create a PR for the changes", true), "iris-github");
+    assert.equal(routeToSpecialist("Commit and push to main branch", true), "iris-github");
   });
 
-  it("routes backend tasks to crew-coder-back", () => {
-    assert.equal(routeToSpecialist("Add a REST API endpoint for user login", true), "crew-coder-back");
-    assert.equal(routeToSpecialist("Set up a database schema", true), "crew-coder-back");
+  it("routes backend tasks to iris-coder-back", () => {
+    assert.equal(routeToSpecialist("Add a REST API endpoint for user login", true), "iris-coder-back");
+    assert.equal(routeToSpecialist("Set up a database schema", true), "iris-coder-back");
   });
 
-  it("routes frontend tasks to crew-coder-front", () => {
-    assert.equal(routeToSpecialist("Style the navbar with CSS", true), "crew-coder-front");
-    assert.equal(routeToSpecialist("Build a React component for login", true), "crew-coder-front");
+  it("routes frontend tasks to iris-coder-front", () => {
+    assert.equal(routeToSpecialist("Style the navbar with CSS", true), "iris-coder-front");
+    assert.equal(routeToSpecialist("Build a React component for login", true), "iris-coder-front");
   });
 
   it("falls back to coderAgent for generic tasks", () => {
-    assert.equal(routeToSpecialist("Write unit tests for auth", true), "crew-coder");
-    assert.equal(routeToSpecialist("Write unit tests for auth", true, "crew-mega"), "crew-mega");
+    assert.equal(routeToSpecialist("Write unit tests for auth", true), "iris-coder");
+    assert.equal(routeToSpecialist("Write unit tests for auth", true, "iris-mega"), "iris-mega");
   });
 
   it("skips routing when PM_USE_SPECIALISTS is off", () => {
-    assert.equal(routeToSpecialist("Create a PR for the changes", false), "crew-coder");
-    assert.equal(routeToSpecialist("Style the navbar", false, "crew-coder-front"), "crew-coder-front");
+    assert.equal(routeToSpecialist("Create a PR for the changes", false), "iris-coder");
+    assert.equal(routeToSpecialist("Style the navbar", false, "iris-coder-front"), "iris-coder-front");
   });
 });
 

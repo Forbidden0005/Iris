@@ -95,16 +95,16 @@ export function renderTgContactRows() {
     const currentRoute = _tgSavedUserRouting[String(id)] || '';
     
     const agents = [
-      'crew-lead', 'crew-main', 'crew-coder', 'crew-pm', 'crew-qa', 
-      'crew-fixer', 'crew-security', 'crew-frontend', 'crew-coder-front', 
-      'crew-coder-back', 'crew-github', 'crew-copywriter', 'crew-researcher',
-      'crew-architect', 'crew-seo', 'crew-ml', 'crew-mega', 'crew-loco'
+      'iris-lead', 'iris-main', 'iris-coder', 'iris-pm', 'iris-qa', 
+      'iris-fixer', 'iris-security', 'iris-frontend', 'iris-coder-front', 
+      'iris-coder-back', 'iris-github', 'iris-copywriter', 'iris-researcher',
+      'iris-architect', 'iris-seo', 'iris-ml', 'iris-mega', 'iris-loco'
     ];
     
     // Default option
     const defaultOpt = document.createElement('option');
     defaultOpt.value = '';
-    defaultOpt.textContent = '— default (crew-lead) —';
+    defaultOpt.textContent = '— default (iris-lead) —';
     routeSelect.appendChild(defaultOpt);
     
     // Agent options
@@ -209,8 +209,8 @@ export function renderTgTopicRouting() {
   textarea.id = 'tgTopicRoutingJson';
   textarea.placeholder = `{
   "-100123456789": {
-    "5": "crew-coder",
-    "8": "crew-copywriter"
+    "5": "iris-coder",
+    "8": "iris-copywriter"
   }
 }`;
   textarea.value = Object.keys(_tgSavedTopicRouting).length ? JSON.stringify(_tgSavedTopicRouting, null, 2) : '';
@@ -227,10 +227,10 @@ export function renderTgTopicsList() {
   listDiv.innerHTML = '';
   
   const agents = [
-    'crew-lead', 'crew-main', 'crew-coder', 'crew-pm', 'crew-qa', 
-    'crew-fixer', 'crew-security', 'crew-frontend', 'crew-coder-front', 
-    'crew-coder-back', 'crew-github', 'crew-copywriter', 'crew-researcher',
-    'crew-architect', 'crew-seo', 'crew-ml', 'crew-mega', 'crew-loco'
+    'iris-lead', 'iris-main', 'iris-coder', 'iris-pm', 'iris-qa', 
+    'iris-fixer', 'iris-security', 'iris-frontend', 'iris-coder-front', 
+    'iris-coder-back', 'iris-github', 'iris-copywriter', 'iris-researcher',
+    'iris-architect', 'iris-seo', 'iris-ml', 'iris-mega', 'iris-loco'
   ];
   
   // Group topics by chatId
@@ -413,7 +413,7 @@ export function addTgNewGroup() {
   
   // Add first topic to the new group
   const newTopicId = '1';
-  _tgSavedTopicRouting[groupId][newTopicId] = 'crew-lead';
+  _tgSavedTopicRouting[groupId][newTopicId] = 'iris-lead';
   renderTgTopicsList();
   showNotification(`Added group ${groupId}`);
 }
@@ -428,7 +428,7 @@ export function addTgTopicToGroup(chatId) {
   const existingIds = Object.keys(_tgSavedTopicRouting[chatId]).map(id => parseInt(id, 10)).filter(n => !isNaN(n));
   const newTopicId = existingIds.length > 0 ? String(Math.max(...existingIds) + 1) : '1';
   
-  _tgSavedTopicRouting[chatId][newTopicId] = 'crew-lead';
+  _tgSavedTopicRouting[chatId][newTopicId] = 'iris-lead';
   renderTgTopicsList();
   showNotification(`Added topic ${newTopicId} to group`);
 }
@@ -567,7 +567,7 @@ export async function discoverTgTopics() {
         }
 
         if (!_tgSavedTopicRouting[chatId][threadId]) {
-          _tgSavedTopicRouting[chatId][threadId] = 'crew-lead';
+          _tgSavedTopicRouting[chatId][threadId] = 'iris-lead';
           addedCount++;
         }
       });
@@ -680,7 +680,7 @@ export async function saveTgConfig() {
   _tgSavedUserRouting = userRouting;
   _tgSavedTopicRouting = topicRouting;
   
-  await postJSON('/api/telegram/config', { token, targetAgent: 'crew-lead', allowedChatIds, contactNames, userRouting, topicRouting });
+  await postJSON('/api/telegram/config', { token, targetAgent: 'iris-lead', allowedChatIds, contactNames, userRouting, topicRouting });
   showNotification('Telegram config saved');
   renderTgContactRows();
   renderTgTopicsList();
@@ -688,7 +688,7 @@ export async function saveTgConfig() {
 
 export async function startTgBridge() {
   const token = document.getElementById('tgTokenInput').value.trim();
-  const body = { targetAgent: 'crew-lead' };
+  const body = { targetAgent: 'iris-lead' };
   if (token) body.token = token;
   const r = await postJSON('/api/telegram/start', body);
   if (r && r.error) { showNotification(r.error, true); return; }
@@ -774,10 +774,10 @@ export function renderWaContactRows() {
     const currentRoute = _waSavedUserRouting[num] || _waSavedUserRouting['+' + key] || _waSavedUserRouting[key] || '';
     
     const agents = [
-      'crew-lead', 'crew-main', 'crew-coder', 'crew-pm', 'crew-qa', 
-      'crew-fixer', 'crew-security', 'crew-frontend', 'crew-coder-front', 
-      'crew-coder-back', 'crew-github', 'crew-copywriter', 'crew-researcher',
-      'crew-architect', 'crew-seo', 'crew-ml', 'crew-mega', 'crew-loco'
+      'iris-lead', 'iris-main', 'iris-coder', 'iris-pm', 'iris-qa', 
+      'iris-fixer', 'iris-security', 'iris-frontend', 'iris-coder-front', 
+      'iris-coder-back', 'iris-github', 'iris-copywriter', 'iris-researcher',
+      'iris-architect', 'iris-seo', 'iris-ml', 'iris-mega', 'iris-loco'
     ];
     
     // Default option
@@ -822,7 +822,7 @@ export async function loadWaConfig() {
     _waSavedContactNames = d.contactNames || {};
     _waSavedUserRouting = d.userRouting || {};
     if (n) n.value = (d.allowedNumbers || []).join(', ');
-    if (t) t.value = d.targetAgent || 'crew-lead';
+    if (t) t.value = d.targetAgent || 'iris-lead';
     renderWaContactRows();
   } catch {}
 }
@@ -830,7 +830,7 @@ export async function loadWaConfig() {
 export async function saveWaConfig() {
   const numbersRaw = document.getElementById('waAllowedNumbers').value.trim();
   const allowedNumbers = numbersRaw ? numbersRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
-  const targetAgent = (document.getElementById('waTargetAgent').value.trim()) || 'crew-lead';
+  const targetAgent = (document.getElementById('waTargetAgent').value.trim()) || 'iris-lead';
   const contactNames = {};
   const userRouting = {};
   
@@ -886,7 +886,7 @@ export async function loadWaMessages() {
         '<span style="font-size:18px;">' + (isIn ? '📲' : '🤖') + '</span>' +
         '<div style="flex:1;min-width:0;">' +
           '<div style="font-size:11px;color:var(--text-3);margin-bottom:2px;">' +
-            escHtml(isIn ? ('+' + number) : 'crewswarm') + (time ? ' · ' + time : '') +
+            escHtml(isIn ? ('+' + number) : 'iris') + (time ? ' · ' + time : '') +
           '</div>' +
           '<div style="font-size:13px;word-break:break-word;">' + escHtml((m.text || '').slice(0, 300)) + '</div>' +
         '</div>' +
@@ -909,7 +909,7 @@ export async function loadTgMessages() {
     feed.innerHTML = msgs.slice(-50).reverse().map(m => {
       const isIn = m.direction === 'inbound';
       const time = m.ts ? new Date(m.ts).toLocaleTimeString() : '';
-      const who = isIn ? (m.firstName || m.username || 'User') : 'crewswarm';
+      const who = isIn ? (m.firstName || m.username || 'User') : 'iris';
       const icon = isIn ? '👤' : '⚡';
       return '<div class="card" style="padding:12px;gap:4px;display:flex;flex-direction:column;">' +
         '<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-3);">' +

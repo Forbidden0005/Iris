@@ -1,12 +1,11 @@
 # Iris Foundation
 
-Iris is a new project forked from crewswarm. The starting point is intentional:
-crewswarm already has a working local-first swarm runtime, a lead agent, task
-dispatch, dashboard observability, per-agent engines, and memory primitives.
+Iris is a single front-door assistant identity built on a working local-first
+multi-agent runtime: a lead agent, task dispatch, dashboard observability,
+per-agent engines, and memory primitives.
 
-The first Iris phase is not a broad rename. The first phase is to put a stable
-product frame around the existing runtime so future changes are made for the
-right system.
+The naming is fully Iris-branded end to end — the runtime is internal
+implementation, not a separate product identity to preserve.
 
 ## Product Direction
 
@@ -18,12 +17,12 @@ results, and reports back with clear status.
 
 The user should experience one coherent assistant, not a pile of bots.
 
-## Inherited From crewswarm
+## Inherited From iris
 
-- Lead conversation surface: `crew-lead` is the current orchestrator entrypoint.
+- Lead conversation surface: `iris-lead` is the current orchestrator entrypoint.
 - Agent dispatch: RT-bus task assignment and `@@PIPELINE` wave execution.
 - Specialist agents: built-in roles plus dynamic agent creation.
-- Runtime engines: OpenCode, Cursor CLI, Claude Code, Codex, crew-cli, and direct
+- Runtime engines: OpenCode, Cursor CLI, Claude Code, Codex, iris-cli, and direct
   API execution paths.
 - Permission model: role defaults and per-agent tool allow-lists.
 - Memory layers: AgentMemory, AgentKeeper, project messages, and optional RAG
@@ -45,11 +44,11 @@ we have inspected it against Iris requirements.
 
 ## First Architectural Moves
 
-1. Add an Iris identity layer above existing crewswarm names.
+1. Add an Iris identity layer above existing iris names.
 2. Keep runtime IDs stable until compatibility shims exist.
 3. Define Iris-facing terms for lead, agents, tasks, evidence, memory, and
    review.
-4. Map current crewswarm capabilities to Iris capabilities.
+4. Map current iris capabilities to Iris capabilities.
 5. Add tests around any behavior changed by the identity layer.
 6. Only then rename user-visible dashboard and CLI surfaces.
 
@@ -58,8 +57,8 @@ we have inspected it against Iris requirements.
 - No full repo-wide rename.
 - No replacement of the RT bus.
 - No replacement of existing engine adapters.
-- No deletion of crewswarm compatibility paths.
-- No rewrite of `crew-lead.mjs`, `gateway-bridge.mjs`, or
+- No deletion of iris compatibility paths.
+- No rewrite of `iris-lead.mjs`, `gateway-bridge.mjs`, or
   `scripts/dashboard.mjs`.
 
 ## Current Gaps
@@ -71,27 +70,27 @@ we have inspected it against Iris requirements.
 - Iris needs conflict handling between agents.
 - Iris needs a user-facing review loop before high-impact changes.
 - Iris needs an identity and naming layer that avoids leaking internal
-  `crew-*` concepts into the product experience.
+  `iris-*` concepts into the product experience.
 - Iris needs sharper model-budget controls and run limits per spawned agent.
 
 ## Working Rule
 
 Prefer additive compatibility over replacement. If a change can make Iris clearer
-without breaking crewswarm's runtime contracts, do that first.
+without breaking iris's runtime contracts, do that first.
 
 ## Phase 1 Slice: Identity Layer
 
-The identity layer maps Iris-facing product concepts to the current crewswarm
+The identity layer maps Iris-facing product concepts to the current iris
 runtime contracts.
 
 Acceptance criteria:
 
-- `iris` resolves to the existing `crew-lead` runtime agent.
+- `iris` resolves to the existing `iris-lead` runtime agent.
 - Iris-facing aliases such as `planner`, `builder`, and `qa` resolve to stable
-  `crew-*` IDs.
+  `iris-*` IDs.
 - User-facing labels can say `Iris`, `Planner`, or `Builder` without renaming the
   runtime agents yet.
-- Unknown dynamic `crew-*` agents still get readable labels.
+- Unknown dynamic `iris-*` agents still get readable labels.
 - `/api/agents-config` exposes Iris display metadata while preserving stable
   runtime IDs.
 - Existing dispatch, memory, config, and permissions paths remain untouched.
@@ -105,6 +104,6 @@ they explain routing, commands, config files, or compatibility.
 Acceptance criteria:
 
 - The dashboard title and brand say Iris.
-- Primary assistant bubbles and fallback labels say Iris instead of `crew-lead`.
-- Mention help can still show `@crew-lead` as Iris's current runtime mention.
+- Primary assistant bubbles and fallback labels say Iris instead of `iris-lead`.
+- Mention help can still show `@iris-lead` as Iris's current runtime mention.
 - API routes, storage paths, process names, and runtime IDs remain unchanged.

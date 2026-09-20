@@ -1,6 +1,6 @@
 # Docker Deployment
 
-Run crewswarm on any Linux server with Docker.
+Run iris on any Linux server with Docker.
 
 ## Quick start
 
@@ -12,14 +12,14 @@ Or manually:
 
 ```bash
 git clone https://github.com/crewswarm/crewswarm.git
-cd crewswarm
+cd iris
 docker compose up -d
 ```
 
 ## Pre-built images
 
 ```bash
-docker pull crewswarm/crewswarm:latest
+docker pull iris/iris:latest
 docker pull ghcr.io/crewswarm/crewswarm:latest
 ```
 
@@ -29,9 +29,9 @@ docker pull ghcr.io/crewswarm/crewswarm:latest
 
 | Service | Port |
 |---------|------|
-| crewswarm-core | 4319 (dashboard + crew-lead + agents) |
-| crewswarm-rt-bus | 18889 |
-| crewswarm-mcp | 5020 (optional) |
+| iris-core | 4319 (dashboard + iris-lead + agents) |
+| iris-rt-bus | 18889 |
+| iris-mcp | 5020 (optional) |
 
 ## Configuration
 
@@ -43,7 +43,7 @@ ANTHROPIC_API_KEY=sk-ant-...
 OPENAI_API_KEY=sk-...
 ```
 
-Volumes: `~/.crewswarm` → config, logs, memory; `./projects` → workspace.
+Volumes: `~/.iris` → config, logs, memory; `./projects` → workspace.
 
 ## Full guide
 

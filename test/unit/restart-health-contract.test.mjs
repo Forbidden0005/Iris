@@ -14,9 +14,9 @@ const healthScript = fs.readFileSync(
 );
 
 test("restart-all script polls critical services and exits non-zero on critical failure", () => {
-  assert.match(restartScript, /wait_for_health "http:\/\/127\.0\.0\.1:5010\/health" "crew-lead"/);
+  assert.match(restartScript, /wait_for_health "http:\/\/127\.0\.0\.1:5010\/health" "iris-lead"/);
   assert.match(restartScript, /wait_for_health "http:\/\/127\.0\.0\.1:4319\/" "dashboard"/);
-  assert.match(restartScript, /if \[\[ "\$CREW_LEAD_OK" == "up" \]\] && \{ \[\[ "\$DASHBOARD_OK" == "up" \]\] \|\| \[\[ "\$START_DASH" -eq 0 \]\]; \}; then/);
+  assert.match(restartScript, /if \[\[ "\$IRIS_LEAD_OK" == "up" \]\] && \{ \[\[ "\$DASHBOARD_OK" == "up" \]\] \|\| \[\[ "\$START_DASH" -eq 0 \]\]; \}; then/);
   assert.match(restartScript, /One or more critical services failed to start\./);
   assert.match(restartScript, /exit 1/);
 });
@@ -41,10 +41,10 @@ test("health-check --json --no-services returns structured output under a tempor
   const outDir = path.resolve("test-output");
   fs.mkdirSync(outDir, { recursive: true });
   const tmpHome = fs.mkdtempSync(path.join(outDir, "health-home-"));
-  const cfgDir = path.join(tmpHome, ".crewswarm");
+  const cfgDir = path.join(tmpHome, ".iris");
   fs.mkdirSync(cfgDir, { recursive: true });
   fs.writeFileSync(
-    path.join(cfgDir, "crewswarm.json"),
+    path.join(cfgDir, "iris.json"),
     JSON.stringify({ rt: { authToken: "test-token" }, providers: {} }),
   );
 

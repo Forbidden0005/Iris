@@ -24,9 +24,9 @@ import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const CREWSWARM_DIR = process.env.CREWSWARM_DIR || process.env.OPENCLAW_DIR || __dirname;
-const GATEWAY_BRIDGE_PATH = `${CREWSWARM_DIR}/gateway-bridge.mjs`;
-const LOG_DIR = join(CREWSWARM_DIR, 'orchestrator-logs');
+const IRIS_DIR = process.env.IRIS_DIR || process.env.OPENCLAW_DIR || __dirname;
+const GATEWAY_BRIDGE_PATH = `${IRIS_DIR}/gateway-bridge.mjs`;
+const LOG_DIR = join(IRIS_DIR, 'orchestrator-logs');
 const DISPATCH_LOG = join(LOG_DIR, 'unified-dispatch.jsonl');
 
 // Ensure log directory exists
@@ -41,7 +41,7 @@ if (!existsSync(LOG_DIR)) {
 async function askPMForPlan(requirement) {
   console.log('📋 Step 1: Asking PM to create plan...\n');
   
-  const naturalPrompt = `You are the PM agent for crewswarm. 
+  const naturalPrompt = `You are the PM agent for iris. 
 
 Requirement: "${requirement}"
 
@@ -57,19 +57,19 @@ IMPORTANT - Break into SMALL, FOCUSED tasks (like Cursor does):
 - More smaller tasks beats fewer huge tasks
 
 Available agents:
-- crew-coder: Implements features, writes code
-- crew-qa: Writes tests, validates functionality  
-- crew-fixer: Debugs issues, fixes bugs
+- iris-coder: Implements features, writes code
+- iris-qa: Writes tests, validates functionality  
+- iris-fixer: Debugs issues, fixes bugs
 - security: Security audits, vulnerability checks
 
 Explain your plan naturally. Examples:
-- "crew-coder: create package.json. Then crew-coder: implement CRUD routes. Then crew-qa: write tests. Then crew-qa: run npm test."
-- "First crew-fixer debug the timeout; then security audit the auth flow."
+- "iris-coder: create package.json. Then iris-coder: implement CRUD routes. Then iris-qa: write tests. Then iris-qa: run npm test."
+- "First iris-fixer debug the timeout; then security audit the auth flow."
 - Split QA into: (1) write tests, (2) run tests – as separate tasks.
 
 Be specific. Prefer more small tasks over fewer large ones.`;
 
-  return callAgent('crew-pm', naturalPrompt, true); // Show output
+  return callAgent('iris-pm', naturalPrompt, true); // Show output
 }
 
 //=============================================================================
@@ -93,7 +93,7 @@ Output ONLY valid JSON in this exact format (no markdown, no explanation):
   "summary": "Brief summary of the plan",
   "dispatch": [
     {
-      "agent": "crew-coder",
+      "agent": "iris-coder",
       "task": "Specific task description",
       "acceptance": "How to verify success"
     }
@@ -101,7 +101,7 @@ Output ONLY valid JSON in this exact format (no markdown, no explanation):
 }
 
 Rules:
-- agent must be one of: crew-coder, crew-qa, crew-fixer, security
+- agent must be one of: iris-coder, iris-qa, iris-fixer, security
 - task should be ONE focused action (e.g. "Create package.json" or "Write CRUD tests" – not "create API + write tests + run tests")
 - Split compound tasks into separate dispatch entries
 - acceptance should describe success criteria
@@ -109,7 +109,7 @@ Rules:
 
 JSON:`;
 
-  const response = await callAgent('crew-pm', parserPrompt, false); // Don't show verbose output
+  const response = await callAgent('iris-pm', parserPrompt, false); // Don't show verbose output
   
   // Extract JSON from response (handle markdown code blocks)
   let jsonText = response.trim();
@@ -134,7 +134,7 @@ JSON:`;
     if (plan.dispatch.length === 0) {
       console.log('⚠️  Parser returned empty dispatch. Creating default plan...');
       plan.dispatch = [{
-        agent: 'crew-coder',
+        agent: 'iris-coder',
         task: requirement,
         acceptance: 'Task completed successfully'
       }];
@@ -311,7 +311,7 @@ async function callAgent(agentId, prompt, showOutput = false, useSend = true) {
     const argv = [GATEWAY_BRIDGE_PATH, '--send', agentId, prompt];
     const env = { ...process.env };
     const proc = spawn('node', argv, {
-      cwd: CREWSWARM_DIR,
+      cwd: IRIS_DIR,
       stdio: ['ignore', 'pipe', 'pipe'],
       env,
     });

@@ -62,7 +62,7 @@ async function checkSchema() {
       source: { component: "check-dashboard" },
       data: {
         taskId: "t-check",
-        agentId: "crew-coder",
+        agentId: "iris-coder",
         taskType: "code",
         phase: "completed",
         phaseOrdinal: 4,

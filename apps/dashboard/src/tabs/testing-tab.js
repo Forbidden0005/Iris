@@ -72,8 +72,8 @@ function passRate(passed, failed) {
   return ((passed / ran) * 100).toFixed(0) + "%";
 }
 
-const SUITE_LABELS = { unit: "Unit", integration: "Integration", e2e: "E2E", playwright: "Playwright", "crew-cli": "crew-cli", all: "All", unknown: "Other" };
-const SUITE_COLORS = { unit: "#818cf8", integration: "#34d399", e2e: "#fbbf24", playwright: "#f472b6", "crew-cli": "#10b981", all: "#60a5fa", unknown: "#94a3b8" };
+const SUITE_LABELS = { unit: "Unit", integration: "Integration", e2e: "E2E", playwright: "Playwright", "iris-cli": "iris-cli", all: "All", unknown: "Other" };
+const SUITE_COLORS = { unit: "#818cf8", integration: "#34d399", e2e: "#fbbf24", playwright: "#f472b6", "iris-cli": "#10b981", all: "#60a5fa", unknown: "#94a3b8" };
 
 // ── Stale files ───────────────────────────────────────────────────────────────
 
@@ -109,7 +109,7 @@ async function loadTestingSummary() {
       { key: "integration", label: "Integration", files: fc.integration, tests: tc.integration, cmd: "test:integration", color: SUITE_COLORS.integration },
       { key: "e2e", label: "E2E", files: fc.e2e, tests: tc.e2e, cmd: "test:e2e", color: SUITE_COLORS.e2e },
       { key: "playwright", label: "Playwright", files: fc.playwright, tests: tc.playwright, cmd: "test:playwright", color: "#f472b6" },
-      { key: "crew-cli", label: "crew-cli", files: fc["crew-cli"], tests: tc["crew-cli"], cmd: "test", color: "#10b981" },
+      { key: "iris-cli", label: "iris-cli", files: fc["iris-cli"], tests: tc["iris-cli"], cmd: "test", color: "#10b981" },
     ];
     for (const item of launchItems) {
       const testsLabel = item.tests ? `<span class="test-launch-tests">${item.tests} tests</span>` : "";
@@ -144,7 +144,7 @@ async function loadTestingSummary() {
     // ── Per-suite cards with file-level breakdown and per-file run buttons ──
     html += '<div class="test-section-title">Latest Results by Suite</div>';
     html += '<div class="test-suite-grid">';
-    for (const suiteKey of ["unit", "integration", "e2e", "playwright", "crew-cli", "all"]) {
+    for (const suiteKey of ["unit", "integration", "e2e", "playwright", "iris-cli", "all"]) {
       const s = data.suites?.[suiteKey];
       if (!s || (!s.total && !s.passed && !s.failed)) continue;
       const ran = (s.passed || 0) + (s.failed || 0);
@@ -166,7 +166,7 @@ async function loadTestingSummary() {
         fileRows = '<div class="test-file-list">';
         for (const [filePath, counts] of byFile) {
           const shortFile = filePath.split("/").pop();
-          const relFile = filePath.replace(/^\/.*?CrewSwarm\//, "");
+          const relFile = filePath.replace(/^\/.*?Iris\//, "");
           const isStale = staleFiles.has(relFile) || staleFiles.has(filePath);
           const staleBadge = isStale ? '<span class="test-stale-badge" title="Source changed since last run">⚠️ stale</span>' : "";
           const fileStatusDot = counts.fail > 0 ? "🔴" : "🟢";
@@ -214,7 +214,7 @@ async function loadTestingSummary() {
       html += `<div class="test-section-title">Failures (${allFailures.length})</div>`;
       for (const f of allFailures) {
         const failureId = "fail-" + Math.random().toString(36).slice(2);
-        const relFile = (f.file || "").replace(/^\/.*?CrewSwarm\//, "");
+        const relFile = (f.file || "").replace(/^\/.*?Iris\//, "");
         const rerunCmd = f.rerun_command || "";
         const errorLines = (f.error || "").split("\n").slice(0, 10).join("\n");
         // Playwright screenshot path check

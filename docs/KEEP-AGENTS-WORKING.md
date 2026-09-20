@@ -8,20 +8,20 @@ Operational tips for reliable agent execution.
 npm run restart-all
 ```
 
-Restarts: RT bus → agent bridges → crew-lead → dashboard.
+Restarts: RT bus → agent bridges → iris-lead → dashboard.
 
 ## Restart agents only
 
 ```bash
-node scripts/start-crew.mjs --force
+node scripts/start-iris.mjs --force
 ```
 
-Keeps dashboard and crew-lead running; restarts all gateway bridges.
+Keeps dashboard and iris-lead running; restarts all gateway bridges.
 
 ## Restart single agent
 
 ```bash
-node scripts/start-crew.mjs --restart crew-coder
+node scripts/start-iris.mjs --restart iris-coder
 ```
 
 ## Check health
@@ -35,22 +35,22 @@ Verifies paths, config, and running services.
 ## Logs
 
 ```bash
-tail -f /tmp/crew-lead.log
-tail -f /tmp/opencrew-rt-daemon.log
-tail -f /tmp/bridge-crew-coder.log
+tail -f /tmp/iris-lead.log
+tail -f /tmp/openiris-rt-daemon.log
+tail -f /tmp/bridge-iris-coder.log
 ```
 
 ## Timeouts
 
-If agents hang, increase timeouts in `~/.crewswarm/crewswarm.json` env:
+If agents hang, increase timeouts in `~/.iris/iris.json` env:
 
-- `CREWSWARM_ENGINE_IDLE_TIMEOUT_MS` — engine silence before kill
-- `CREWSWARM_DISPATCH_CLAIMED_TIMEOUT_MS` — claimed task timeout
+- `IRIS_ENGINE_IDLE_TIMEOUT_MS` — engine silence before kill
+- `IRIS_DISPATCH_CLAIMED_TIMEOUT_MS` — claimed task timeout
 
 ## @@KILL when stuck
 
 Type `@@KILL` in chat to SIGTERM all agent bridges. Then restart:
 
 ```bash
-node scripts/start-crew.mjs
+node scripts/start-iris.mjs
 ```

@@ -2,7 +2,7 @@
  * E2E tests for the WhatsApp bridge round-trip.
  *
  * The WhatsApp bridge is already authenticated via QR scan (auth persists
- * in ~/.crewswarm/whatsapp-auth/). No re-scan needed.
+ * in ~/.iris/whatsapp-auth/). No re-scan needed.
  *
  * What is tested:
  *   1. Bridge HTTP API health endpoint (/health) — returns linked number
@@ -10,7 +10,7 @@
  *   3. Bridge process is running (two-process resilience check)
  *   4. Bridge log has recent activity
  *   5. whatsapp-messages.jsonl records outbound messages
- *   6. crew-lead is reachable (required for message forwarding)
+ *   6. iris-lead is reachable (required for message forwarding)
  *
  * SKIP: if bridge is not running on :5015, all tests skip gracefully.
  */
@@ -23,7 +23,7 @@ import { httpRequest, checkServiceUp } from "../helpers/http.mjs";
 
 const WA_HTTP_PORT = parseInt(process.env.WA_HTTP_PORT || "5015", 10);
 const WA_BASE = `http://127.0.0.1:${WA_HTTP_PORT}`;
-const LOGS_DIR = path.join(os.homedir(), ".crewswarm", "logs");
+const LOGS_DIR = path.join(os.homedir(), ".iris", "logs");
 const WA_LOG = path.join(LOGS_DIR, "whatsapp-bridge.jsonl");
 const WA_MSGS = path.join(LOGS_DIR, "whatsapp-messages.jsonl");
 const OWNER_PHONE = process.env.WA_OWNER_PHONE || "+13109050857";
@@ -51,7 +51,7 @@ try {
 
 if (!bridgeReachable) {
   // Check if WhatsApp auth exists — if so, start the bridge
-  const authCreds = path.join(os.homedir(), ".crewswarm", "whatsapp-auth", "creds.json");
+  const authCreds = path.join(os.homedir(), ".iris", "whatsapp-auth", "creds.json");
   if (fs.existsSync(authCreds)) {
     try {
       const { spawn } = await import("node:child_process");
@@ -102,7 +102,7 @@ describe("WhatsApp — outbound message delivery", { skip: SKIP }, () => {
     const ts = Date.now();
     const data = await waPost("/send", {
       phone: OWNER_PHONE,
-      text: `[crewswarm E2E] WA round-trip ping ${ts}`,
+      text: `[iris E2E] WA round-trip ping ${ts}`,
     });
     assert.ok(data.ok, `Send failed: ${JSON.stringify(data)}`);
   });
@@ -110,7 +110,7 @@ describe("WhatsApp — outbound message delivery", { skip: SKIP }, () => {
   it("POST /send returns the correct JID", async () => {
     const data = await waPost("/send", {
       phone: OWNER_PHONE,
-      text: "[crewswarm E2E] JID verification",
+      text: "[iris E2E] JID verification",
     });
     assert.ok(data.ok);
     assert.equal(data.jid, OWNER_JID);
@@ -119,7 +119,7 @@ describe("WhatsApp — outbound message delivery", { skip: SKIP }, () => {
   it("POST /send with raw JID also works", async () => {
     const data = await waPost("/send", {
       jid: OWNER_JID,
-      text: "[crewswarm E2E] raw JID test",
+      text: "[iris E2E] raw JID test",
     });
     assert.ok(data.ok, `Send via raw JID failed: ${JSON.stringify(data)}`);
   });
@@ -160,7 +160,7 @@ describe("WhatsApp — bridge process", () => {
   });
 
   it("whatsapp-auth/ has valid creds.json (session persisted)", () => {
-    const authDir = path.join(os.homedir(), ".crewswarm", "whatsapp-auth");
+    const authDir = path.join(os.homedir(), ".iris", "whatsapp-auth");
     const credsFile = path.join(authDir, "creds.json");
     assert.ok(fs.existsSync(credsFile), "creds.json missing — need to re-authenticate with QR scan");
     const creds = JSON.parse(fs.readFileSync(credsFile, "utf8"));
@@ -217,21 +217,21 @@ describe("WhatsApp — bridge logs", () => {
   });
 });
 
-describe("WhatsApp — crew-lead forwarding path", { skip: SKIP }, () => {
-  it("crew-lead is reachable on :5010 (required for inbound → dispatch)", async () => {
+describe("WhatsApp — iris-lead forwarding path", { skip: SKIP }, () => {
+  it("iris-lead is reachable on :5010 (required for inbound → dispatch)", async () => {
     let ok = false;
     try {
       ok = await checkServiceUp("http://127.0.0.1:5010/health");
     } catch { /* not running */ }
-    if (!ok) return; // crew-lead not up — skip, not fail
+    if (!ok) return; // iris-lead not up — skip, not fail
     assert.ok(ok);
   });
 
-  it("bridge SSE endpoint for agent replies is the crew-lead /events stream", () => {
-    // The bridge listens on crew-lead's SSE stream and forwards replies via sock.sendMessage.
+  it("bridge SSE endpoint for agent replies is the iris-lead /events stream", () => {
+    // The bridge listens on iris-lead's SSE stream and forwards replies via sock.sendMessage.
     // This test validates the expected URL pattern used by listenForAgentReplies().
-    const CREW_LEAD_PORT = parseInt(process.env.CREW_LEAD_PORT || "5010", 10);
-    const expectedEventsUrl = `http://127.0.0.1:${CREW_LEAD_PORT}/events`;
+    const IRIS_LEAD_PORT = parseInt(process.env.IRIS_LEAD_PORT || "5010", 10);
+    const expectedEventsUrl = `http://127.0.0.1:${IRIS_LEAD_PORT}/events`;
     assert.match(expectedEventsUrl, /127\.0\.0\.1:\d+\/events/);
   });
 });

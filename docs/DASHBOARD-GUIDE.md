@@ -1,13 +1,13 @@
 # Dashboard Guide
 
-The crewswarm dashboard runs at `http://localhost:4319`. It is the primary web UI for managing agents, chatting, dispatching tasks, and monitoring the system.
+The iris dashboard runs at `http://localhost:4319`. It is the primary web UI for managing agents, chatting, dispatching tasks, and monitoring the system.
 
 Screenshots of key views are in `website/screenshots/` — see `dashboard-chat.webp`, `dashboard-build.webp`, `dashboard-swarm.webp`, `dashboard-agents.webp`, `dashboard-services.webp`, `dashboard-engines.webp`, `dashboard-settings.webp`, `dashboard-rt-messages.webp`, `dashboard-projects.webp`, `dashboard-workflows.webp`, `dashboard-memory.webp`, and `vibe-ide.webp`.
 
 Start it with:
 
 ```bash
-crewswarm
+iris
 # or from source:
 npm run restart-all
 ```
@@ -30,17 +30,17 @@ The sidebar collapses on narrow screens. Most views update in real time via WebS
 
 ### Chat (`#chat`)
 
-Main conversation with crew-lead. This is where most users spend their time.
+Main conversation with iris-lead. This is where most users spend their time.
 
 **What you can do:**
-- Type a message and crew-lead routes it to the right agent
-- Dispatch agents explicitly: type `dispatch crew-coder to build a REST API` or use the `@@DISPATCH crew-coder "task description"` syntax
+- Type a message and iris-lead routes it to the right agent
+- Dispatch agents explicitly: type `dispatch iris-coder to build a REST API` or use the `@@DISPATCH iris-coder "task description"` syntax
 - Ask questions about your project, request code changes, run builds
 - View streamed agent responses as they execute
 - Use the project selector at the top to set which project directory gets the work
 
 **Tips:**
-- crew-lead decides which agent handles your message. You do not need to pick one manually.
+- iris-lead decides which agent handles your message. You do not need to pick one manually.
 - For multi-step builds, the Build tab is more structured. Chat is better for quick tasks and questions.
 - If an agent seems stuck, type `@@STOP` to halt the current task or `@@KILL` to force-terminate.
 
@@ -49,14 +49,14 @@ Main conversation with crew-lead. This is where most users spend their time.
 Multi-agent chat room where you `@mention` agents directly.
 
 **What you can do:**
-- `@crew-coder fix the auth middleware` -- dispatches directly to crew-coder
-- `@crew-qa run the test suite` -- dispatches to crew-qa
+- `@iris-coder fix the auth middleware` -- dispatches directly to iris-coder
+- `@iris-qa run the test suite` -- dispatches to iris-qa
 - See all agent responses in a shared timeline
 - Multiple agents can work simultaneously
 
 **How it differs from Chat:**
-- Chat goes through crew-lead, which decides the routing. Swarm Chat lets you bypass crew-lead and talk to agents directly.
-- Swarm Chat shows messages from all agents in one stream. Chat is a 1:1 conversation with crew-lead.
+- Chat goes through iris-lead, which decides the routing. Swarm Chat lets you bypass iris-lead and talk to agents directly.
+- Swarm Chat shows messages from all agents in one stream. Chat is a 1:1 conversation with iris-lead.
 - Use Chat for general work. Use Swarm Chat when you want to coordinate multiple agents yourself.
 
 ### Swarm (`#swarm`)
@@ -112,16 +112,16 @@ File browser for your project directory.
 
 ### Services (`#services`)
 
-Service health for all crewswarm processes.
+Service health for all iris processes.
 
 **What you can do:**
-- See status of crew-lead, dashboard, RT daemon, MCP server, bridges
+- See status of iris-lead, dashboard, RT daemon, MCP server, bridges
 - Start, stop, or restart individual services
 - Check uptime and port bindings
 
 **Tips:**
 - Do not restart the dashboard from within the dashboard -- it will fail (race condition). Use `npm run restart-dashboard` from terminal instead.
-- crew-lead must be running for Chat, dispatch, and builds to work.
+- iris-lead must be running for Chat, dispatch, and builds to work.
 - Check here first when something is not responding.
 
 ### Agents (`#agents`)
@@ -137,7 +137,7 @@ Agent configuration -- models, engines, roles, and tool permissions.
 
 **Tips:**
 - Changes take effect on the next task dispatch. Running tasks keep their original config.
-- Tool permissions are configured in `~/.crewswarm/crewswarm.json`. See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for details.
+- Tool permissions are configured in `~/.iris/iris.json`. See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for details.
 
 ### Models (`#models`)
 
@@ -175,7 +175,7 @@ Engine status -- which CLI engines are installed and available.
 - Test engine connectivity
 
 **Tips:**
-- An engine must be installed on your system to appear here. crewswarm does not install engines for you.
+- An engine must be installed on your system to appear here. iris does not install engines for you.
 - See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for engine-specific issues (Cursor keychain, Codex MCP, etc.).
 
 ### Skills (`#skills`)
@@ -190,7 +190,7 @@ Custom skills -- reusable workflows that agents can execute.
 
 **Tips:**
 - Skills appear as both `api` type (executable) and `knowledge` type (reference docs).
-- If the tab shows fewer skills than expected, restart crew-lead.
+- If the tab shows fewer skills than expected, restart iris-lead.
 
 ### Run Skills (`#run-skills`)
 
@@ -220,7 +220,7 @@ See which tools each agent has access to.
 - Debug why an agent cannot perform a specific action
 
 **Tips:**
-- Tool permissions come from role defaults in `lib/tools/executor.mjs` and overrides in `~/.crewswarm/crewswarm.json`.
+- Tool permissions come from role defaults in `lib/tools/executor.mjs` and overrides in `~/.iris/iris.json`.
 
 ### Build (`#build`)
 
@@ -229,12 +229,12 @@ One-click build -- the most structured way to go from requirement to working cod
 **What you can do:**
 1. Type a requirement (e.g., "Build a REST API with auth and tests")
 2. Pick an engine (or leave on auto)
-3. crew-pm generates a build plan with phases and agent assignments
+3. iris-pm generates a build plan with phases and agent assignments
 4. Review the plan, then execute
 5. Agents work in parallel waves -- backend, frontend, tests built simultaneously
 
 **Build workflow in detail:**
-- **Plan phase:** crew-pm breaks the requirement into tasks, assigns agents, orders into waves. The enhance-prompt step refines vague input into a concrete brief.
+- **Plan phase:** iris-pm breaks the requirement into tasks, assigns agents, orders into waves. The enhance-prompt step refines vague input into a concrete brief.
 - **Execute phase:** agents run in parallel per wave, results stream back to the UI. Use "Run Build" for one pass or "Build Until Done" to loop until the roadmap is exhausted.
 - **PM Loop:** reads `ROADMAP.md` and dispatches each item one at a time. Start/stop controls and log output are inline.
 
@@ -255,7 +255,7 @@ Communication bridge configuration for Telegram and WhatsApp.
 - Test message delivery
 
 **Tips:**
-- Messaging bridges let you chat with crew-lead from Telegram or WhatsApp instead of the dashboard.
+- Messaging bridges let you chat with iris-lead from Telegram or WhatsApp instead of the dashboard.
 - See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) if you get duplicate replies.
 
 ### Projects (`#projects`)
@@ -278,7 +278,7 @@ Contact management for messaging bridges.
 
 **What you can do:**
 - Add contacts for Telegram/WhatsApp bridges
-- Manage who can interact with your crewswarm instance via messaging
+- Manage who can interact with your iris instance via messaging
 
 ### Memory (`#memory`)
 
@@ -291,7 +291,7 @@ Shared agent memory -- the knowledge base that persists across sessions.
 - Clear stale entries
 
 **Tips:**
-- Memory is stored as markdown in the `memory/` directory. crew-scribe writes `brain.md` and `session-log.md` automatically.
+- Memory is stored as markdown in the `memory/` directory. iris-scribe writes `brain.md` and `session-log.md` automatically.
 
 ### Workflows (`#workflows`)
 
@@ -315,7 +315,7 @@ Run the full test suite from the dashboard without touching the terminal.
 
 **New features:**
 
-1. **Suite cards** — each suite (unit, integration, e2e, playwright, crew-cli) renders as a card showing file count, test count, pass/fail breakdown, and duration.
+1. **Suite cards** — each suite (unit, integration, e2e, playwright, iris-cli) renders as a card showing file count, test count, pass/fail breakdown, and duration.
 
 2. **Per-file run button** — each file row in the suite breakdown has a run button that triggers `POST /api/tests/run` for that specific file, so you can re-run a single file without executing the full suite.
 
@@ -372,13 +372,13 @@ Edit agent system prompts.
 Type naturally:
 
 ```
-dispatch crew-coder to build a login page with JWT auth
+dispatch iris-coder to build a login page with JWT auth
 ```
 
 Or use the formal syntax:
 
 ```
-@@DISPATCH crew-coder "build a login page with JWT auth"
+@@DISPATCH iris-coder "build a login page with JWT auth"
 ```
 
 ### Stop a running task
@@ -403,5 +403,5 @@ Go to **Agents** tab, change the engine for the target agent, then dispatch a ne
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) -- system diagram, ports, request flow
 - [TROUBLESHOOTING.md](TROUBLESHOOTING.md) -- common issues and fixes
-- [CREW-CLI-GUIDE.md](CREW-CLI-GUIDE.md) -- terminal-first interface
+- [IRIS-CLI-GUIDE.md](IRIS-CLI-GUIDE.md) -- terminal-first interface
 - [ORCHESTRATOR-GUIDE.md](ORCHESTRATOR-GUIDE.md) -- pipeline DSL and wave execution

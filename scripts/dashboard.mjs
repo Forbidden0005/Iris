@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 /**
- * crewswarm Dashboard with Build UI (RT Messages, Send, DLQ, Build).
- * Run from crewswarm repo so the Build button is included.
+ * iris Dashboard with Build UI (RT Messages, Send, DLQ, Build).
+ * Run from iris repo so the Build button is included.
  *
  *   node scripts/dashboard.mjs
  *   → http://127.0.0.1:4319
  *
- * Override port: SWARM_DASH_PORT=4320 node scripts/dashboard.mjs
+ * Override port: IRIS_DASH_PORT=4320 node scripts/dashboard.mjs
  *
  * Single instance: enforced by binding listenPort (see server.on("error") EADDRINUSE).
  * Do not use pgrep here — it false-positives (matches unrelated PIDs / races with `&`).
@@ -64,16 +64,16 @@ import {
   ContactSendSchema,
   validate,
 } from "./dashboard-validation.mjs";
-import { execCrewLeadTools } from "../lib/crew-lead/tools.mjs";
+import { execCrewLeadTools } from "../lib/iris-lead/tools.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const CREWSWARM_DIR =
-  process.env.CREWSWARM_DIR || path.resolve(__dirname, "..");
-// Config dir: ~/.crewswarm is canonical
+const IRIS_DIR =
+  process.env.IRIS_DIR || path.resolve(__dirname, "..");
+// Config dir: ~/.iris is canonical
 const CFG_DIR =
-  process.env.CREWSWARM_CONFIG_DIR || path.join(os.homedir(), ".crewswarm");
+  process.env.IRIS_CONFIG_DIR || path.join(os.homedir(), ".iris");
 // Config filename within CFG_DIR
-const CFG_FILE = path.join(CFG_DIR, "crewswarm.json");
+const CFG_FILE = path.join(CFG_DIR, "iris.json");
 const UI_STATE_FILE = path.join(CFG_DIR, "ui-state.json");
 const PREFERRED_NODE_BIN = (() => {
   const candidates = [
@@ -104,15 +104,15 @@ function writeUiState(nextState = {}) {
   fs.mkdirSync(CFG_DIR, { recursive: true });
   fs.writeFileSync(UI_STATE_FILE, JSON.stringify(nextState, null, 2));
 }
-// Load crewswarm.json env block into process.env on startup (so dashboard reads them)
+// Load iris.json env block into process.env on startup (so dashboard reads them)
 // Credentials are excluded — only operational config vars are applied this way.
 const ENV_CREDENTIAL_KEYS = new Set([
-  "CREWSWARM_RT_AUTH_TOKEN",
-  "CREWSWARM_RT_URL",
+  "IRIS_RT_AUTH_TOKEN",
+  "IRIS_RT_URL",
   "TELEGRAM_BOT_TOKEN",
   "TELEGRAM_TARGET_AGENT",
   "WA_TARGET_AGENT",
-  "CREWSWARM_TOKEN",
+  "IRIS_TOKEN",
 ]);
 try {
   const _startupCfg = JSON.parse(fs.readFileSync(CFG_FILE, "utf8"));
@@ -123,12 +123,12 @@ try {
   }
 } catch { }
 
-// Default 4319 so we don't conflict with crewswarm RT Messages dashboard on 4318
-const listenPort = Number(process.env.SWARM_DASH_PORT || 4319);
-const listenHost = process.env.CREWSWARM_BIND_HOST || "127.0.0.1";
+// Default 4319 so we don't conflict with iris RT Messages dashboard on 4318
+const listenPort = Number(process.env.IRIS_DASH_PORT || 4319);
+const listenHost = process.env.IRIS_BIND_HOST || "127.0.0.1";
 
 // ── Startup Guard: Ensure only one dashboard instance ────────────────────────
-const lockResult = acquireStartupLock("crewswarm-dashboard", {
+const lockResult = acquireStartupLock("iris-dashboard", {
   port: listenPort,
   killStale: true,
 });
@@ -314,10 +314,10 @@ function getEngineRuntimeStatuses() {
     ) || commandExists("agent", [path.join(os.homedir(), ".local", "bin", "agent")]);
   const geminiInstalled = commandExists(process.env.GEMINI_CLI_BIN || "gemini");
   const crewCliInstalled =
-    commandExists("crew", [path.join(CREWSWARM_DIR, "crew-cli", "dist", "index.js")]) ||
-    fs.existsSync(path.join(CREWSWARM_DIR, "crew-cli", "dist", "index.js"));
+    commandExists("iris", [path.join(IRIS_DIR, "iris-cli", "dist", "index.js")]) ||
+    fs.existsSync(path.join(IRIS_DIR, "iris-cli", "dist", "index.js"));
   const opencodeInstalled =
-    commandExists(process.env.CREWSWARM_OPENCODE_BIN || "opencode") ||
+    commandExists(process.env.IRIS_OPENCODE_BIN || "opencode") ||
     fs.existsSync(path.join(os.homedir(), ".opencode", "bin", "opencode"));
   const opencodeRunning =
     (() => {
@@ -334,10 +334,10 @@ function getEngineRuntimeStatuses() {
       kind: "daemon",
       installed: opencodeInstalled,
       enabled:
-        cfgEnv.CREWSWARM_OPENCODE_ENABLED === "on" ||
-        cfgEnv.CREWSWARM_OPENCODE_ENABLED === "1" ||
-        process.env.CREWSWARM_OPENCODE_ENABLED === "on" ||
-        process.env.CREWSWARM_OPENCODE_ENABLED === "1",
+        cfgEnv.IRIS_OPENCODE_ENABLED === "on" ||
+        cfgEnv.IRIS_OPENCODE_ENABLED === "1" ||
+        process.env.IRIS_OPENCODE_ENABLED === "on" ||
+        process.env.IRIS_OPENCODE_ENABLED === "1",
       running: opencodeRunning,
       optionalDaemon: true,
       port: 4096,
@@ -347,7 +347,7 @@ function getEngineRuntimeStatuses() {
       label: "Codex CLI",
       kind: "spawned",
       installed: codexInstalled,
-      enabled: swarmCfg.codex === true || process.env.CREWSWARM_CODEX === "1",
+      enabled: swarmCfg.codex === true || process.env.IRIS_CODEX === "1",
       running: codexInstalled,
     },
     {
@@ -373,27 +373,27 @@ function getEngineRuntimeStatuses() {
       installed: geminiInstalled,
       enabled:
         swarmCfg.geminiCli === true ||
-        process.env.CREWSWARM_GEMINI_CLI_ENABLED === "1",
+        process.env.IRIS_GEMINI_CLI_ENABLED === "1",
       running: geminiInstalled,
     },
     {
-      id: "crew-cli",
-      label: "crew-cli",
+      id: "iris-cli",
+      label: "iris-cli",
       kind: "spawned",
       installed: crewCliInstalled,
       enabled:
         swarmCfg.crewCli === true ||
-        process.env.CREWSWARM_CREW_CLI_ENABLED === "1",
+        process.env.IRIS_CREW_CLI_ENABLED === "1",
       running: crewCliInstalled,
     },
   ];
 }
-const phasedOrchestrator = path.join(CREWSWARM_DIR, "phased-orchestrator.mjs");
-const continuousBuild = path.join(CREWSWARM_DIR, "continuous-build.mjs");
-const pmLoop = path.join(CREWSWARM_DIR, "pm-loop.mjs");
+const phasedOrchestrator = path.join(IRIS_DIR, "phased-orchestrator.mjs");
+const continuousBuild = path.join(IRIS_DIR, "continuous-build.mjs");
+const pmLoop = path.join(IRIS_DIR, "pm-loop.mjs");
 const pmStopFile = path.join(CFG_DIR, "pm-loop.stop");
 const pmLogFile = path.join(CFG_DIR, "pm-loop.jsonl");
-const roadmapFile = path.join(CREWSWARM_DIR, "website", "ROADMAP.md");
+const roadmapFile = path.join(IRIS_DIR, "website", "ROADMAP.md");
 const workflowsDir = path.join(CFG_DIR, "pipelines");
 const workflowLogsDir = path.join(CFG_DIR, "logs", "workflows");
 const user = process.env.OPENCODE_SERVER_USERNAME || "opencode";
@@ -403,14 +403,14 @@ const pass =
   "opencode";
 
 /**
- * RT bearer token for crew-lead HTTP API — must match what crew-lead loads
- * (~/.crewswarm/crewswarm.json, then ~/.crewswarm/config.json).
+ * RT bearer token for iris-lead HTTP API — must match what iris-lead loads
+ * (~/.iris/iris.json, then ~/.iris/config.json).
  */
 function readRtAuthTokenFromUserConfig() {
   const home = os.homedir();
-  for (const name of ["crewswarm.json", "config.json"]) {
+  for (const name of ["iris.json", "config.json"]) {
     try {
-      const p = path.join(home, ".crewswarm", name);
+      const p = path.join(home, ".iris", name);
       const cfg = JSON.parse(fs.readFileSync(p, "utf8"));
       const t = (cfg?.rt?.authToken || "").trim();
       if (t) return t;
@@ -422,7 +422,7 @@ function readRtAuthTokenFromUserConfig() {
 }
 
 function resolveCrewLeadAuthToken() {
-  const e = (process.env.CREWSWARM_RT_AUTH_TOKEN || "").trim();
+  const e = (process.env.IRIS_RT_AUTH_TOKEN || "").trim();
   if (e) return e;
   return readRtAuthTokenFromUserConfig();
 }
@@ -449,8 +449,8 @@ async function safeWriteConfig(cfg, indent = 4) {
   }
 }
 
-// ── crewswarm tool definitions (server-side, also injected into client) ────
-const CREWSWARM_TOOLS = [
+// ── iris tool definitions (server-side, also injected into client) ────
+const IRIS_TOOLS = [
   { id: "write_file", desc: "Write files to disk (@@WRITE_FILE)" },
   { id: "read_file", desc: "Read files from disk (@@READ_FILE)" },
   { id: "mkdir", desc: "Create directories (@@MKDIR)" },
@@ -465,7 +465,7 @@ const CREWSWARM_TOOLS = [
 const ctlPath = (() => {
   const homeBin = path.join(os.homedir(), "bin", "openswitchctl");
   if (fs.existsSync(homeBin)) return homeBin;
-  return path.join(CREWSWARM_DIR, "scripts", "openswitchctl");
+  return path.join(IRIS_DIR, "scripts", "openswitchctl");
 })();
 // Match RT daemon paths so RT Messages tab shows same events (daemon uses SHARED_MEMORY_DIR or ~/.openclaw/workspace/...)
 const memoryBase =
@@ -474,24 +474,24 @@ const memoryBase =
 const rtEventsLog = path.join(
   memoryBase,
   "claw-swarm",
-  "opencrew-rt",
+  "openiris-rt",
   "events.jsonl",
 );
 const rtDoneLog = path.join(
   memoryBase,
   "claw-swarm",
-  "opencrew-rt",
+  "openiris-rt",
   "channels",
   "done.jsonl",
 );
 const rtCommandLog = path.join(
   memoryBase,
   "claw-swarm",
-  "opencrew-rt",
+  "openiris-rt",
   "channels",
   "command.jsonl",
 );
-const dlqDir = path.join(memoryBase, "claw-swarm", "opencrew-rt", "dlq");
+const dlqDir = path.join(memoryBase, "claw-swarm", "openiris-rt", "dlq");
 const phasedDispatchLog = path.join(CFG_DIR, "phased-dispatch.jsonl");
 
 const authHeader = "Basic " + Buffer.from(`${user}:${pass}`).toString("base64");
@@ -760,12 +760,12 @@ async function startWorkflowRun(name, trigger = "manual") {
 
   const { spawn } = await import("node:child_process");
   const scriptPath = path.join(
-    CREWSWARM_DIR,
+    IRIS_DIR,
     "scripts",
     "run-scheduled-pipeline.mjs",
   );
   const proc = spawn("node", [scriptPath, name], {
-    cwd: CREWSWARM_DIR,
+    cwd: IRIS_DIR,
     env: { ...process.env },
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -922,7 +922,7 @@ async function getAgentList() {
       });
   } catch { }
 
-  // 2. All agents defined in crewswarm.json / openclaw.json (online or not) — shown with [offline] indicator handled client-side
+  // 2. All agents defined in iris.json / openclaw.json (online or not) — shown with [offline] indicator handled client-side
   try {
     const cfgPath = CFG_FILE;
     const cfg = JSON.parse(fs.readFileSync(cfgPath, "utf8"));
@@ -1120,7 +1120,7 @@ function resolvePlannerEngine(preferredEngine = null, preferredModel = null) {
 
   const cfg = readSwarmConfigSafe();
   const agents = Array.isArray(cfg?.agents) ? cfg.agents : [];
-  const pm = agents.find((agent) => agent?.id === "crew-pm") || {};
+  const pm = agents.find((agent) => agent?.id === "iris-pm") || {};
 
   if (pm.useClaudeCode) {
     return {
@@ -1130,7 +1130,7 @@ function resolvePlannerEngine(preferredEngine = null, preferredModel = null) {
       // Use the normal direct lane here; the build-planner prompt already forbids edits.
       permissionMode: null,
       sandbox: null,
-      source: "crew-pm",
+      source: "iris-pm",
     };
   }
   if (pm.useCodex) {
@@ -1139,7 +1139,7 @@ function resolvePlannerEngine(preferredEngine = null, preferredModel = null) {
       model: pm.codexModel || null,
       permissionMode: null,
       sandbox: "read-only",
-      source: "crew-pm",
+      source: "iris-pm",
     };
   }
   if (pm.useCursorCli) {
@@ -1148,7 +1148,7 @@ function resolvePlannerEngine(preferredEngine = null, preferredModel = null) {
       model: pm.cursorCliModel || null,
       permissionMode: null,
       sandbox: null,
-      source: "crew-pm",
+      source: "iris-pm",
     };
   }
   if (pm.useGeminiCli) {
@@ -1157,16 +1157,16 @@ function resolvePlannerEngine(preferredEngine = null, preferredModel = null) {
       model: pm.geminiCliModel || null,
       permissionMode: null,
       sandbox: null,
-      source: "crew-pm",
+      source: "iris-pm",
     };
   }
   if (pm.useCrewCLI) {
     return {
-      engine: "crew-cli",
+      engine: "iris-cli",
       model: pm.crewCliModel || null,
       permissionMode: null,
       sandbox: null,
-      source: "crew-pm",
+      source: "iris-pm",
     };
   }
   if (pm.useOpenCode) {
@@ -1175,16 +1175,16 @@ function resolvePlannerEngine(preferredEngine = null, preferredModel = null) {
       model: pm.opencodeModel || null,
       permissionMode: null,
       sandbox: null,
-      source: "crew-pm",
+      source: "iris-pm",
     };
   }
 
   const fallbacks = [
-    commandExists(process.env.CLAUDE_CODE_BIN || "claude") && { engine: "claude", model: process.env.CREWSWARM_CLAUDE_CODE_MODEL || null, permissionMode: null, sandbox: null, source: "fallback" },
-    commandExists(process.env.CODEX_CLI_BIN || "codex") && { engine: "codex", model: process.env.CREWSWARM_CODEX_MODEL || null, permissionMode: null, sandbox: "read-only", source: "fallback" },
-    commandExists(process.env.CURSOR_CLI_BIN || path.join(os.homedir(), ".local", "bin", "agent"), [path.join(os.homedir(), ".local", "bin", "agent")]) && { engine: "cursor", model: process.env.CREWSWARM_CURSOR_MODEL || process.env.CURSOR_DEFAULT_MODEL || null, permissionMode: null, sandbox: null, source: "fallback" },
-    commandExists(process.env.GEMINI_CLI_BIN || "gemini") && { engine: "gemini", model: process.env.CREWSWARM_GEMINI_CLI_MODEL || null, permissionMode: null, sandbox: null, source: "fallback" },
-    commandExists(process.env.CREWSWARM_OPENCODE_BIN || "opencode") && { engine: "opencode", model: process.env.CREWSWARM_OPENCODE_MODEL || null, permissionMode: null, sandbox: null, source: "fallback" },
+    commandExists(process.env.CLAUDE_CODE_BIN || "claude") && { engine: "claude", model: process.env.IRIS_CLAUDE_CODE_MODEL || null, permissionMode: null, sandbox: null, source: "fallback" },
+    commandExists(process.env.CODEX_CLI_BIN || "codex") && { engine: "codex", model: process.env.IRIS_CODEX_MODEL || null, permissionMode: null, sandbox: "read-only", source: "fallback" },
+    commandExists(process.env.CURSOR_CLI_BIN || path.join(os.homedir(), ".local", "bin", "agent"), [path.join(os.homedir(), ".local", "bin", "agent")]) && { engine: "cursor", model: process.env.IRIS_CURSOR_MODEL || process.env.CURSOR_DEFAULT_MODEL || null, permissionMode: null, sandbox: null, source: "fallback" },
+    commandExists(process.env.GEMINI_CLI_BIN || "gemini") && { engine: "gemini", model: process.env.IRIS_GEMINI_CLI_MODEL || null, permissionMode: null, sandbox: null, source: "fallback" },
+    commandExists(process.env.IRIS_OPENCODE_BIN || "opencode") && { engine: "opencode", model: process.env.IRIS_OPENCODE_MODEL || null, permissionMode: null, sandbox: null, source: "fallback" },
   ].filter(Boolean);
 
   return fallbacks[0] || null;
@@ -1192,8 +1192,8 @@ function resolvePlannerEngine(preferredEngine = null, preferredModel = null) {
 
 function buildRequirementPlanningPrompt(userText, projectDir = null) {
   return [
-    "You are the planning stage for CrewSwarm's Build tab.",
-    "Transform the user's rough build idea into a concrete build brief that crew-pm can execute.",
+    "You are the planning stage for Iris's Build tab.",
+    "Transform the user's rough build idea into a concrete build brief that iris-pm can execute.",
     "If repository context is relevant, inspect the workspace before answering. Do not edit files.",
     "",
     "Output format:",
@@ -1236,14 +1236,14 @@ async function collectClaudePlannerTextDirect({ message, projectDir, model = nul
   args.push(
     "--strict-mcp-config",
     "--mcp-config",
-    path.join(os.homedir(), ".crewswarm", "config", "empty-mcp.json"),
+    path.join(os.homedir(), ".iris", "config", "empty-mcp.json"),
     "--",
     message,
   );
   const { stdout, stderr } = await execFileAsync(claudeBin, args, {
     cwd: projectDir || process.cwd(),
     env: process.env,
-    timeout: Number(process.env.CREWSWARM_PLANNER_TIMEOUT_MS || 300000),
+    timeout: Number(process.env.IRIS_PLANNER_TIMEOUT_MS || 300000),
     maxBuffer: 2 * 1024 * 1024,
   });
   const trimmed = String(stdout || "").trim();
@@ -1266,7 +1266,7 @@ async function collectPassthroughText({
     return collectClaudePlannerTextDirect({ message, projectDir, model });
   }
   const token = getRtAuthToken();
-  const crewLeadPort = process.env.CREW_LEAD_PORT || "5010";
+  const crewLeadPort = process.env.IRIS_LEAD_PORT || "5010";
   let upstream;
   try {
     upstream = await fetch(`http://127.0.0.1:${crewLeadPort}/api/engine-passthrough`, {
@@ -1356,7 +1356,7 @@ async function getPhasedProgress(limit = 80) {
 // apps/dashboard/dist/ has not been built yet.
 const html = `<!doctype html>
 <html>
-<head><meta charset="utf-8"><title>crewswarm</title></head>
+<head><meta charset="utf-8"><title>iris</title></head>
 <body style="font-family:system-ui;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#0a0a12;color:#e5e7eb;">
 <div style="text-align:center;max-width:480px;padding:40px;">
   <div style="font-size:48px;margin-bottom:16px;">🚧</div>
@@ -1482,12 +1482,12 @@ function serveStatic(req, res, filePath) {
 }
 
 /**
- * Make an HTTP request to crew-lead using http.request with agent:false.
+ * Make an HTTP request to iris-lead using http.request with agent:false.
  * This bypasses Node 25's undici connection pool used by fetch(), which gets
  * blocked when Chrome SSE EventSource connections saturate the pool.
  */
 function crewLeadRequest(path, { method = "GET", body = null, timeout = 10000, port } = {}) {
-  const crewPort = port || process.env.CREW_LEAD_PORT || "5010";
+  const crewPort = port || process.env.IRIS_LEAD_PORT || "5010";
   return new Promise((resolve, reject) => {
     const options = {
       hostname: "127.0.0.1",
@@ -1507,7 +1507,7 @@ function crewLeadRequest(path, { method = "GET", body = null, timeout = 10000, p
       });
     });
     req.on("error", (err) => reject(err));
-    req.on("timeout", () => { req.destroy(); reject(new Error("crew-lead request timeout")); });
+    req.on("timeout", () => { req.destroy(); reject(new Error("iris-lead request timeout")); });
     if (body) req.write(typeof body === "string" ? body : JSON.stringify(body));
     req.end();
   });
@@ -1568,8 +1568,8 @@ const server = http.createServer(async (req, res) => {
       res.end(html);
       return;
     }
-    if (url.pathname === "/crew-chat.html") {
-      const chatFile = path.join(CREWSWARM_DIR, "crew-chat.html");
+    if (url.pathname === "/iris-chat.html") {
+      const chatFile = path.join(IRIS_DIR, "iris-chat.html");
       try {
         const chatHtml = await fs.promises.readFile(chatFile, "utf8");
         res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
@@ -1598,7 +1598,7 @@ const server = http.createServer(async (req, res) => {
     }
     // ── Test results API ─────────────────────────────────────────────────────
     if (url.pathname === "/api/tests/summary" && req.method === "GET") {
-      const resultsDir = path.join(CREWSWARM_DIR, "test-results");
+      const resultsDir = path.join(IRIS_DIR, "test-results");
       const runsDir = path.join(resultsDir, "runs");
       try {
         const allRuns = (await fs.promises.readdir(runsDir)).filter(d => /^\d{4}-/.test(d)).sort().reverse();
@@ -1633,7 +1633,7 @@ const server = http.createServer(async (req, res) => {
               return "unit";
             }
             if (cmd.includes("test:all")) return "all";
-            if (cmd.includes("crew-cli") || cmd.includes("--prefix crew-cli")) return "crew-cli";
+            if (cmd.includes("iris-cli") || cmd.includes("--prefix iris-cli")) return "iris-cli";
             const fileCount = (cmd.match(/\.test\.mjs/g) || []).length;
             if (fileCount > 100) return "all";
             if (fileCount > 15) return "unit";
@@ -1675,14 +1675,14 @@ const server = http.createServer(async (req, res) => {
           try { skips = JSON.parse(await fs.promises.readFile(skipFile, "utf8")); } catch {}
           data.failures = failures.map(f => ({
             name: f.name || f.testId || "",
-            file: (f.file_fingerprint?.relative_file || f.file || "").replace(CREWSWARM_DIR + "/", ""),
+            file: (f.file_fingerprint?.relative_file || f.file || "").replace(IRIS_DIR + "/", ""),
             error: typeof f.error === "string" ? f.error : (f.error?.message || f.error?.failureType || JSON.stringify(f.error || "").slice(0, 300)),
             classification: f.classification || "unknown",
             rerun_command: f.rerun_command || f.selector?.command || "",
           }));
           data.skips = skips.map(s => ({
             name: s.name || s.testId || "",
-            file: (s.file_fingerprint?.relative_file || s.file || "").replace(CREWSWARM_DIR + "/", ""),
+            file: (s.file_fingerprint?.relative_file || s.file || "").replace(IRIS_DIR + "/", ""),
           }));
           return data;
         }
@@ -1704,17 +1704,17 @@ const server = http.createServer(async (req, res) => {
           try { suites[suite] = await readRunData(runId); } catch { /* skip broken runs */ }
         }
         // Count test files on disk for reference
-        const testFileDir = path.join(CREWSWARM_DIR, "test");
-        const testsE2eDir = path.join(CREWSWARM_DIR, "tests", "e2e");
-        const crewCliTestDir = path.join(CREWSWARM_DIR, "crew-cli", "tests");
-        const crewCliTestDir2 = path.join(CREWSWARM_DIR, "crew-cli", "test");
+        const testFileDir = path.join(IRIS_DIR, "test");
+        const testsE2eDir = path.join(IRIS_DIR, "tests", "e2e");
+        const crewCliTestDir = path.join(IRIS_DIR, "iris-cli", "tests");
+        const crewCliTestDir2 = path.join(IRIS_DIR, "iris-cli", "test");
         let unitFiles = 0, intFiles = 0, e2eFiles = 0, playwrightFiles = 0, crewCliFiles = 0, rootFiles = 0;
         try { unitFiles = (await fs.promises.readdir(path.join(testFileDir, "unit"))).filter(f => f.endsWith(".test.mjs")).length; } catch {}
         try { intFiles = (await fs.promises.readdir(path.join(testFileDir, "integration"))).filter(f => f.endsWith(".test.mjs")).length; } catch {}
         try { e2eFiles = (await fs.promises.readdir(path.join(testFileDir, "e2e"))).filter(f => f.endsWith(".test.mjs")).length; } catch {}
         try { playwrightFiles = (await fs.promises.readdir(testsE2eDir)).filter(f => f.endsWith(".spec.js")).length; } catch {}
         try { rootFiles = (await fs.promises.readdir(testFileDir)).filter(f => f.match(/\.test\./)).length; } catch {}
-        // crew-cli: tests/unit/*.test.js + tests/*.test.js + test/*.test.ts
+        // iris-cli: tests/unit/*.test.js + tests/*.test.js + test/*.test.ts
         try {
           const unitDir = path.join(crewCliTestDir, "unit");
           crewCliFiles += (await fs.promises.readdir(unitDir)).filter(f => f.match(/\.test\./)).length;
@@ -1765,14 +1765,14 @@ const server = http.createServer(async (req, res) => {
           integration: intTests,
           e2e: e2eTests,
           playwright: pwTests,
-          "crew-cli": cliTests1 + cliTests2,
+          "iris-cli": cliTests1 + cliTests2,
           root: rootTests,
         };
         res.writeHead(200, { "content-type": "application/json" });
         res.end(JSON.stringify({
           latest,
           suites,
-          fileCounts: { unit: unitFiles, integration: intFiles, e2e: e2eFiles, playwright: playwrightFiles, "crew-cli": crewCliFiles, root: rootFiles, total: unitFiles + intFiles + e2eFiles + playwrightFiles + crewCliFiles + rootFiles },
+          fileCounts: { unit: unitFiles, integration: intFiles, e2e: e2eFiles, playwright: playwrightFiles, "iris-cli": crewCliFiles, root: rootFiles, total: unitFiles + intFiles + e2eFiles + playwrightFiles + crewCliFiles + rootFiles },
           testCounts,
         }));
       } catch (e) {
@@ -1782,7 +1782,7 @@ const server = http.createServer(async (req, res) => {
       return;
     }
     if (url.pathname === "/api/tests/history" && req.method === "GET") {
-      const resultsDir = path.join(CREWSWARM_DIR, "test-results");
+      const resultsDir = path.join(IRIS_DIR, "test-results");
       const runsDir = path.join(resultsDir, "runs");
       try {
         const dirs = (await fs.promises.readdir(runsDir)).filter(d => /^\d{4}-/.test(d)).sort().reverse().slice(0, 40);
@@ -1814,7 +1814,7 @@ const server = http.createServer(async (req, res) => {
               else if (cmd.includes("test/e2e/") || cmd.includes("test:e2e")) entry.suite = "e2e";
               else if (cmd.includes("test/integration/")) entry.suite = "integration";
               else if (cmd.includes("test:all")) entry.suite = "all";
-              else if (cmd.includes("crew-cli") || cmd.includes("--prefix crew-cli")) entry.suite = "crew-cli";
+              else if (cmd.includes("iris-cli") || cmd.includes("--prefix iris-cli")) entry.suite = "iris-cli";
               else if (cmd.includes("test/unit/") && !cmd.includes("test/integration/")) entry.suite = "unit";
               else { const fc = (cmd.match(/\.test\.mjs/g) || []).length; entry.suite = fc > 100 ? "all" : fc > 15 ? "unit" : "unknown"; }
             } catch {
@@ -1841,7 +1841,7 @@ const server = http.createServer(async (req, res) => {
       return;
     }
     if (url.pathname === "/api/tests/run-detail" && req.method === "GET") {
-      const resultsDir = path.join(CREWSWARM_DIR, "test-results");
+      const resultsDir = path.join(IRIS_DIR, "test-results");
       const runsDir = path.join(resultsDir, "runs");
       const runId = url.searchParams.get("runId");
       if (!runId) { res.writeHead(400, { "content-type": "application/json" }); res.end(JSON.stringify({ error: "Missing runId" })); return; }
@@ -1879,13 +1879,13 @@ const server = http.createServer(async (req, res) => {
             let err = f.error;
             if (typeof err === "object" && err !== null) err = err.message || err.failureType || JSON.stringify(err).slice(0, 300);
             return {
-              name: f.name || f.testId || "", file: (f.file_fingerprint?.relative_file || f.file || "").replace(CREWSWARM_DIR + "/", ""),
+              name: f.name || f.testId || "", file: (f.file_fingerprint?.relative_file || f.file || "").replace(IRIS_DIR + "/", ""),
               error: String(err || ""),
               rerun_command: f.rerun_command || f.selector?.command || "",
             };
           }),
           skips: skips.map(s => ({
-            name: s.name || s.testId || "", file: (s.file_fingerprint?.relative_file || s.file || "").replace(CREWSWARM_DIR + "/", ""),
+            name: s.name || s.testId || "", file: (s.file_fingerprint?.relative_file || s.file || "").replace(IRIS_DIR + "/", ""),
           })),
         }));
       } catch (e) {
@@ -1912,21 +1912,21 @@ const server = http.createServer(async (req, res) => {
           return;
         }
         const { spawn } = await import("node:child_process");
-        const progressFile = path.join(CREWSWARM_DIR, "test-results", ".test-progress.json");
-        const outputFile = path.join(CREWSWARM_DIR, "test-results", ".test-output.log");
+        const progressFile = path.join(IRIS_DIR, "test-results", ".test-progress.json");
+        const outputFile = path.join(IRIS_DIR, "test-results", ".test-output.log");
         // Count total files for this suite so progress can show X/Y
         let files_total = 0;
         try {
-          const testFileDir = path.join(CREWSWARM_DIR, "test");
-          const testsE2eDir = path.join(CREWSWARM_DIR, "tests", "e2e");
-          const crewCliTestDir = path.join(CREWSWARM_DIR, "crew-cli", "tests");
-          const crewCliTestDir2 = path.join(CREWSWARM_DIR, "crew-cli", "test");
+          const testFileDir = path.join(IRIS_DIR, "test");
+          const testsE2eDir = path.join(IRIS_DIR, "tests", "e2e");
+          const crewCliTestDir = path.join(IRIS_DIR, "iris-cli", "tests");
+          const crewCliTestDir2 = path.join(IRIS_DIR, "iris-cli", "test");
           const suiteKey = suite.replace("test:", "");
           if (suiteKey === "unit") files_total = (await fs.promises.readdir(path.join(testFileDir, "unit"))).filter(f => f.endsWith(".test.mjs")).length;
           else if (suiteKey === "integration") files_total = (await fs.promises.readdir(path.join(testFileDir, "integration"))).filter(f => f.endsWith(".test.mjs")).length;
           else if (suiteKey === "e2e") files_total = (await fs.promises.readdir(path.join(testFileDir, "e2e"))).filter(f => f.endsWith(".test.mjs")).length;
           else if (suiteKey === "playwright") files_total = (await fs.promises.readdir(testsE2eDir)).filter(f => f.endsWith(".spec.js")).length;
-          else if (suite === "test") { // crew-cli
+          else if (suite === "test") { // iris-cli
             const count = async (d) => { try { return (await fs.promises.readdir(d)).filter(f => f.match(/\.test\./)).length; } catch { return 0; } };
             files_total = await count(path.join(crewCliTestDir, "unit")) + await count(crewCliTestDir) + await count(crewCliTestDir2);
           } else if (suiteKey === "all") {
@@ -1943,7 +1943,7 @@ const server = http.createServer(async (req, res) => {
         // Write initial progress
         await fs.promises.writeFile(progressFile, JSON.stringify({ suite, running: true, pid: 0, started: Date.now(), passed: 0, failed: 0, skipped: 0, files_done: 0, files_total, current_file: singleFile || "" }));
         // Clean up any stale progress from a previous interrupted run
-        const staleProgress = path.join(CREWSWARM_DIR, "test-results", ".test-progress.json");
+        const staleProgress = path.join(IRIS_DIR, "test-results", ".test-progress.json");
         try {
           const prev = JSON.parse(fs.readFileSync(staleProgress, "utf8"));
           if (prev.running && prev.pid) {
@@ -1954,10 +1954,10 @@ const server = http.createServer(async (req, res) => {
         const outFd = fs.openSync(outputFile, "w");
         if (singleFile) {
           // Single-file run: use node --test directly on the file
-          const absFile = path.isAbsolute(singleFile) ? singleFile : path.join(CREWSWARM_DIR, singleFile);
-          child = spawn("node", ["--test", "--test-reporter=./scripts/test-reporter.mjs", absFile], { cwd: CREWSWARM_DIR, stdio: ["ignore", outFd, outFd], detached: true });
+          const absFile = path.isAbsolute(singleFile) ? singleFile : path.join(IRIS_DIR, singleFile);
+          child = spawn("node", ["--test", "--test-reporter=./scripts/test-reporter.mjs", absFile], { cwd: IRIS_DIR, stdio: ["ignore", outFd, outFd], detached: true });
         } else {
-          child = spawn("npm", ["run", suite], { cwd: CREWSWARM_DIR, stdio: ["ignore", outFd, outFd], detached: true });
+          child = spawn("npm", ["run", suite], { cwd: IRIS_DIR, stdio: ["ignore", outFd, outFd], detached: true });
         }
         child.unref();
         fs.closeSync(outFd);
@@ -2001,7 +2001,7 @@ const server = http.createServer(async (req, res) => {
       return;
     }
     if (url.pathname === "/api/tests/stop" && req.method === "POST") {
-      const progressFile = path.join(CREWSWARM_DIR, "test-results", ".test-progress.json");
+      const progressFile = path.join(IRIS_DIR, "test-results", ".test-progress.json");
       try {
         const data = JSON.parse(await fs.promises.readFile(progressFile, "utf8"));
         if (data.running && data.pid) {
@@ -2025,7 +2025,7 @@ const server = http.createServer(async (req, res) => {
       return;
     }
     if (url.pathname === "/api/tests/progress" && req.method === "GET") {
-      const progressFile = path.join(CREWSWARM_DIR, "test-results", ".test-progress.json");
+      const progressFile = path.join(IRIS_DIR, "test-results", ".test-progress.json");
       try {
         const data = JSON.parse(await fs.promises.readFile(progressFile, "utf8"));
         res.writeHead(200, { "content-type": "application/json" });
@@ -2039,7 +2039,7 @@ const server = http.createServer(async (req, res) => {
 
     // ── GET /api/tests/stale — files changed since last test run ────────────
     if (url.pathname === "/api/tests/stale" && req.method === "GET") {
-      const resultsDir = path.join(CREWSWARM_DIR, "test-results");
+      const resultsDir = path.join(IRIS_DIR, "test-results");
       const logPath = path.join(resultsDir, "test-log.jsonl");
       try {
         // Read last-run fingerprints from test-log.jsonl
@@ -2063,7 +2063,7 @@ const server = http.createServer(async (req, res) => {
             const currentMtime = stat.mtime.toISOString();
             if (currentMtime > fp.mtime) {
               stale.push({
-                file: filePath.replace(CREWSWARM_DIR + "/", ""),
+                file: filePath.replace(IRIS_DIR + "/", ""),
                 lastRun: fp.mtime,
                 lastModified: currentMtime,
               });
@@ -2081,7 +2081,7 @@ const server = http.createServer(async (req, res) => {
 
     // ── GET /api/tests/stream — SSE stream of running test output ───────────
     if (url.pathname === "/api/tests/stream" && req.method === "GET") {
-      const outputFile = path.join(CREWSWARM_DIR, "test-results", ".test-output.log");
+      const outputFile = path.join(IRIS_DIR, "test-results", ".test-output.log");
       res.writeHead(200, {
         "content-type": "text/event-stream",
         "cache-control": "no-cache",
@@ -2111,7 +2111,7 @@ const server = http.createServer(async (req, res) => {
             res.write("data: " + JSON.stringify({ text }) + "\n\n");
           }
           // Check if done
-          const progressFile = path.join(CREWSWARM_DIR, "test-results", ".test-progress.json");
+          const progressFile = path.join(IRIS_DIR, "test-results", ".test-progress.json");
           try {
             const prog = JSON.parse(await fs.promises.readFile(progressFile, "utf8"));
             if (!prog.running && prog.finished) {
@@ -2132,8 +2132,8 @@ const server = http.createServer(async (req, res) => {
       if (!relPath) { res.writeHead(400); res.end("Missing path"); return; }
       // Security: only allow paths within test-results/
       const safePath = path.normalize(relPath).replace(/^(\.\.(\/|\\|$))+/, "");
-      const absPath = path.join(CREWSWARM_DIR, "test-results", safePath);
-      if (!absPath.startsWith(path.join(CREWSWARM_DIR, "test-results"))) {
+      const absPath = path.join(IRIS_DIR, "test-results", safePath);
+      if (!absPath.startsWith(path.join(IRIS_DIR, "test-results"))) {
         res.writeHead(403); res.end("Forbidden"); return;
       }
       try {
@@ -2152,10 +2152,10 @@ const server = http.createServer(async (req, res) => {
     // ── GET /api/tests/coverage-map — source files vs test coverage ──────────
     if (url.pathname === "/api/tests/coverage-map" && req.method === "GET") {
       try {
-        const libDir = path.join(CREWSWARM_DIR, "lib");
-        const crewCliSrcDir = path.join(CREWSWARM_DIR, "crew-cli", "src");
-        const unitTestDir = path.join(CREWSWARM_DIR, "test", "unit");
-        const crewCliTestDir = path.join(CREWSWARM_DIR, "crew-cli", "tests", "unit");
+        const libDir = path.join(IRIS_DIR, "lib");
+        const crewCliSrcDir = path.join(IRIS_DIR, "iris-cli", "src");
+        const unitTestDir = path.join(IRIS_DIR, "test", "unit");
+        const crewCliTestDir = path.join(IRIS_DIR, "iris-cli", "tests", "unit");
 
         // Collect test file basenames (strip extension)
         const testBases = new Set();
@@ -2164,7 +2164,7 @@ const server = http.createServer(async (req, res) => {
             for (const ent of await fs.promises.readdir(dir, { withFileTypes: true })) {
               if (ent.isDirectory()) { await collectTestBases(path.join(dir, ent.name)); continue; }
               if (ent.name.match(/\.test\.(mjs|js|ts)$/)) {
-                // e.g. crew-judge.test.mjs -> crew-judge
+                // e.g. iris-judge.test.mjs -> iris-judge
                 testBases.add(ent.name.replace(/\.test\.(mjs|js|ts)$/, ""));
               }
             }
@@ -2193,7 +2193,7 @@ const server = http.createServer(async (req, res) => {
           } catch {}
         }
         await scanSourceDir(libDir, "lib");
-        await scanSourceDir(crewCliSrcDir, "crew-cli/src");
+        await scanSourceDir(crewCliSrcDir, "iris-cli/src");
 
         res.writeHead(200, { "content-type": "application/json" });
         res.end(JSON.stringify({ covered, uncovered, totalCovered: covered.length, totalUncovered: uncovered.length }));
@@ -2227,7 +2227,7 @@ const server = http.createServer(async (req, res) => {
 
       const hasApiKeys = configuredProviders.length > 0;
 
-      // Check crew-lead health (uses http.request, not fetch — avoids undici pool saturation from SSE)
+      // Check iris-lead health (uses http.request, not fetch — avoids undici pool saturation from SSE)
       let crewLeadUp = false;
       try {
         const { ok } = await crewLeadRequest("/health", { timeout: 2000 });
@@ -2251,7 +2251,7 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    // /api/health handled by crew-lead proxy below (line ~8423)
+    // /api/health handled by iris-lead proxy below (line ~8423)
     if (url.pathname === "/api/sessions") {
       res.writeHead(200, { "content-type": "application/json" });
       res.end(JSON.stringify(await proxyJSON("/session")));
@@ -2296,7 +2296,7 @@ const server = http.createServer(async (req, res) => {
         codex: "/api/codex-sessions",
         claude: "/api/claude-sessions",
         gemini: "/api/gemini-sessions",
-        "crew-cli": "/api/crew-cli-sessions",
+        "iris-cli": "/api/iris-cli-sessions",
       };
       const endpoint = endpointMap[engine] || endpointMap.opencode;
       const qs = new URLSearchParams();
@@ -2481,9 +2481,9 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    if (url.pathname === "/api/crew-cli-sessions") {
+    if (url.pathname === "/api/iris-cli-sessions") {
       const limit = Math.min(Number(url.searchParams.get("limit") || "20"), 50);
-      const sessionsBase = path.join(process.cwd(), ".crew", "sessions");
+      const sessionsBase = path.join(process.cwd(), ".iris", "sessions");
       const sessions = [];
       if (await exists(sessionsBase)) {
         const engines = await fs.promises.readdir(sessionsBase);
@@ -2582,7 +2582,7 @@ const server = http.createServer(async (req, res) => {
         try {
           const sessionFile = path.join(
             os.homedir(),
-            ".crewswarm",
+            ".iris",
             "passthrough-sessions.json",
           );
           let sessions = {};
@@ -2607,7 +2607,7 @@ const server = http.createServer(async (req, res) => {
         try {
           const sessionFile = path.join(
             os.homedir(),
-            ".crewswarm",
+            ".iris",
             "passthrough-sessions.json",
           );
           let sessions = {};
@@ -2634,7 +2634,7 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === "/api/token-usage") {
       const usageFile = path.join(
         os.homedir(),
-        ".crewswarm",
+        ".iris",
         "token-usage.json",
       );
       let usage = { calls: 0, prompt: 0, completion: 0, byModel: {} };
@@ -2646,19 +2646,19 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    // ── Cmd allowlist (proxied to crew-lead) ─────────────────────────────────
+    // ── Cmd allowlist (proxied to iris-lead) ─────────────────────────────────
     if (url.pathname === "/api/cmd-allowlist") {
-      const CREW_LEAD = "http://127.0.0.1:5010";
+      const IRIS_LEAD = "http://127.0.0.1:5010";
       try {
         if (req.method === "GET") {
-          const r = await fetch(`${CREW_LEAD}/allowlist-cmd`);
+          const r = await fetch(`${IRIS_LEAD}/allowlist-cmd`);
           const d = await r.json();
           res.writeHead(200, { "content-type": "application/json" });
           res.end(JSON.stringify(d));
         } else if (req.method === "POST") {
           let body = "";
           for await (const c of req) body += c;
-          const r = await fetch(`${CREW_LEAD}/allowlist-cmd`, {
+          const r = await fetch(`${IRIS_LEAD}/allowlist-cmd`, {
             method: "POST",
             headers: { "content-type": "application/json" },
             body,
@@ -2669,7 +2669,7 @@ const server = http.createServer(async (req, res) => {
         } else if (req.method === "DELETE") {
           let body = "";
           for await (const c of req) body += c;
-          const r = await fetch(`${CREW_LEAD}/allowlist-cmd`, {
+          const r = await fetch(`${IRIS_LEAD}/allowlist-cmd`, {
             method: "DELETE",
             headers: { "content-type": "application/json" },
             body,
@@ -2690,10 +2690,10 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === "/api/cmd-approve" && req.method === "POST") {
       let body = "";
       for await (const chunk of req) body += chunk;
-      const CREW_LEAD_PORT = process.env.CREW_LEAD_PORT || "5010";
+      const IRIS_LEAD_PORT = process.env.IRIS_LEAD_PORT || "5010";
       try {
         const r = await fetch(
-          `http://127.0.0.1:${CREW_LEAD_PORT}/approve-cmd`,
+          `http://127.0.0.1:${IRIS_LEAD_PORT}/approve-cmd`,
           {
             method: "POST",
             headers: { "content-type": "application/json" },
@@ -2713,9 +2713,9 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === "/api/cmd-reject" && req.method === "POST") {
       let body = "";
       for await (const chunk of req) body += chunk;
-      const CREW_LEAD_PORT = process.env.CREW_LEAD_PORT || "5010";
+      const IRIS_LEAD_PORT = process.env.IRIS_LEAD_PORT || "5010";
       try {
-        const r = await fetch(`http://127.0.0.1:${CREW_LEAD_PORT}/reject-cmd`, {
+        const r = await fetch(`http://127.0.0.1:${IRIS_LEAD_PORT}/reject-cmd`, {
           method: "POST",
           headers: { "content-type": "application/json" },
           body,
@@ -2731,9 +2731,9 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    // ── Telegram sessions (reads crew-lead chat-history for telegram-* sessions) ──
+    // ── Telegram sessions (reads iris-lead chat-history for telegram-* sessions) ──
     if (url.pathname === "/api/telegram-sessions") {
-      const histDir = path.join(os.homedir(), ".crewswarm", "chat-history");
+      const histDir = path.join(os.homedir(), ".iris", "chat-history");
       const sessions = [];
       try {
         const files = (await fs.promises.readdir(histDir))
@@ -2790,40 +2790,40 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === "/api/env-advanced" && req.method === "GET") {
       const vars = [
         // Engine — OpenCode
-        "CREWSWARM_OPENCODE_ENABLED",
-        "CREWSWARM_OPENCODE_MODEL",
-        "CREWSWARM_OPENCODE_TIMEOUT_MS",
-        "CREWSWARM_OPENCODE_AGENT",
+        "IRIS_OPENCODE_ENABLED",
+        "IRIS_OPENCODE_MODEL",
+        "IRIS_OPENCODE_TIMEOUT_MS",
+        "IRIS_OPENCODE_AGENT",
         // Engine — Claude Code & Cursor
-        "CREWSWARM_CLAUDE_CODE_MODEL",
-        "CREWSWARM_CURSOR_MODEL",
-        // Engine — Codex & crew-cli
-        "CREWSWARM_CODEX_MODEL",
-        "CREWSWARM_CREW_CLI_MODEL",
+        "IRIS_CLAUDE_CODE_MODEL",
+        "IRIS_CURSOR_MODEL",
+        // Engine — Codex & iris-cli
+        "IRIS_CODEX_MODEL",
+        "IRIS_CREW_CLI_MODEL",
         // Engine — Gemini CLI
-        "CREWSWARM_GEMINI_CLI_ENABLED",
-        "CREWSWARM_GEMINI_CLI_MODEL",
+        "IRIS_GEMINI_CLI_ENABLED",
+        "IRIS_GEMINI_CLI_MODEL",
         // Engine — Docker Sandbox
-        "CREWSWARM_DOCKER_SANDBOX",
-        "CREWSWARM_DOCKER_SANDBOX_NAME",
-        "CREWSWARM_DOCKER_SANDBOX_INNER_ENGINE",
-        "CREWSWARM_DOCKER_SANDBOX_TIMEOUT_MS",
+        "IRIS_DOCKER_SANDBOX",
+        "IRIS_DOCKER_SANDBOX_NAME",
+        "IRIS_DOCKER_SANDBOX_INNER_ENGINE",
+        "IRIS_DOCKER_SANDBOX_TIMEOUT_MS",
         // Engine Loop & Dispatch
-        "CREWSWARM_ENGINE_LOOP",
-        "CREWSWARM_ENGINE_LOOP_MAX_ROUNDS",
-        "CREWSWARM_ENGINE_IDLE_TIMEOUT_MS",
-        "CREWSWARM_ENGINE_MAX_TOTAL_MS",
-        "CREWSWARM_DISPATCH_TIMEOUT_MS",
-        "CREWSWARM_DISPATCH_CLAIMED_TIMEOUT_MS",
-        "CREWSWARM_RT_AGENT",
+        "IRIS_ENGINE_LOOP",
+        "IRIS_ENGINE_LOOP_MAX_ROUNDS",
+        "IRIS_ENGINE_IDLE_TIMEOUT_MS",
+        "IRIS_ENGINE_MAX_TOTAL_MS",
+        "IRIS_DISPATCH_TIMEOUT_MS",
+        "IRIS_DISPATCH_CLAIMED_TIMEOUT_MS",
+        "IRIS_RT_AGENT",
         // Ports
-        "CREW_LEAD_PORT",
-        "SWARM_DASH_PORT",
+        "IRIS_LEAD_PORT",
+        "IRIS_DASH_PORT",
         "WA_HTTP_PORT",
         // Background Consciousness
-        "CREWSWARM_BG_CONSCIOUSNESS",
-        "CREWSWARM_BG_CONSCIOUSNESS_INTERVAL_MS",
-        "CREWSWARM_BG_CONSCIOUSNESS_MODEL",
+        "IRIS_BG_CONSCIOUSNESS",
+        "IRIS_BG_CONSCIOUSNESS_INTERVAL_MS",
+        "IRIS_BG_CONSCIOUSNESS_MODEL",
         // Messaging
         "TELEGRAM_ALLOWED_USERNAMES",
         "WA_ALLOWED_NUMBERS",
@@ -2842,7 +2842,7 @@ const server = http.createServer(async (req, res) => {
         "PM_AGENT_IDLE_TIMEOUT_MS",
         "PHASED_TASK_TIMEOUT_MS",
       ];
-      // Read from crewswarm.json env block first, fall back to process.env
+      // Read from iris.json env block first, fall back to process.env
       // Credential keys are never exposed here
       let cfgEnv = {};
       try {
@@ -2870,7 +2870,7 @@ const server = http.createServer(async (req, res) => {
       } catch {
         updates = {};
       }
-      const cfgPath = path.join(os.homedir(), ".crewswarm", "crewswarm.json");
+      const cfgPath = path.join(os.homedir(), ".iris", "iris.json");
       try {
         const raw = await (async () => {
           try {
@@ -3032,7 +3032,7 @@ const server = http.createServer(async (req, res) => {
 
         // Return success with WhatsApp number
         const whatsappNumber =
-          process.env.CREWSWARM_WHATSAPP_NUMBER || "+1234567890";
+          process.env.IRIS_WHATSAPP_NUMBER || "+1234567890";
         res.writeHead(200, { "content-type": "application/json" });
         res.end(
           JSON.stringify({
@@ -3102,7 +3102,7 @@ const server = http.createServer(async (req, res) => {
           const agentPrompts = JSON.parse(
             await fs.promises.readFile(agentPromptsPath, "utf8"),
           );
-          const bareId = agentId.replace(/^crew-/, "");
+          const bareId = agentId.replace(/^iris-/, "");
           systemPrompt =
             agentPrompts[agentId] || agentPrompts[bareId] || systemPrompt;
         } catch { }
@@ -3347,7 +3347,7 @@ const server = http.createServer(async (req, res) => {
       const { text, projectId, engine: requestedEngine, model: requestedModel } = vr.data;
       try {
         // Default to cwd for planner context — engines need repo access to produce aware briefs.
-        // Claude/Cursor/Codex use --add-dir for safe read access; crew-cli uses --project.
+        // Claude/Cursor/Codex use --add-dir for safe read access; iris-cli uses --project.
         // Fall back to temp dir only if no project context is available.
         let projectDir = process.cwd();
         if (projectId) {
@@ -3370,7 +3370,7 @@ const server = http.createServer(async (req, res) => {
           model: planner.model,
           permissionMode: planner.permissionMode,
           sandbox: planner.sandbox,
-          forceL2: planner.engine === "crew-cli",
+          forceL2: planner.engine === "iris-cli",
         });
 
         res.writeHead(200, { "content-type": "application/json" });
@@ -3434,7 +3434,7 @@ const server = http.createServer(async (req, res) => {
           const proj = reg[projectId];
           if (proj) {
             projectEnv = {
-              CREWSWARM_OUTPUT_DIR: proj.outputDir,
+              IRIS_OUTPUT_DIR: proj.outputDir,
               PM_ROADMAP_FILE: proj.roadmapFile,
               PM_PROJECT_ID: projectId,
               ...(proj.featuresDoc
@@ -3450,23 +3450,23 @@ const server = http.createServer(async (req, res) => {
           "phased-orchestrator.mjs not found at " + phasedOrchestrator,
         );
       const proc = spawn(PREFERRED_NODE_BIN, [phasedOrchestrator, "--all", requirement], {
-        cwd: CREWSWARM_DIR,
+        cwd: IRIS_DIR,
         stdio: "ignore",
         detached: true,
         env: {
           ...process.env,
-          CREWSWARM_DIR,
+          IRIS_DIR,
           ...projectEnv,
           PHASED_TASK_TIMEOUT_MS:
             process.env.PHASED_TASK_TIMEOUT_MS || "300000",
-          CREWSWARM_RT_SEND_TIMEOUT_MS:
-            process.env.CREWSWARM_RT_SEND_TIMEOUT_MS || "300000",
+          IRIS_RT_SEND_TIMEOUT_MS:
+            process.env.IRIS_RT_SEND_TIMEOUT_MS || "300000",
         },
       });
       proc.unref();
       // Track PID for stop functionality
       const pidFile = path.join(
-        CREWSWARM_DIR,
+        IRIS_DIR,
         "orchestrator-logs",
         projectId ? "phased-" + projectId + ".pid" : "phased-orchestrator.pid",
       );
@@ -3484,7 +3484,7 @@ const server = http.createServer(async (req, res) => {
       for await (const chunk of req) body += chunk;
       const { projectId } = JSON.parse(body || "{}");
       const pidFile = path.join(
-        CREWSWARM_DIR,
+        IRIS_DIR,
         "orchestrator-logs",
         projectId ? "phased-" + projectId + ".pid" : "phased-orchestrator.pid",
       );
@@ -3529,7 +3529,7 @@ const server = http.createServer(async (req, res) => {
           const proj = reg[projectId];
           if (proj) {
             projectEnv = {
-              CREWSWARM_OUTPUT_DIR: proj.outputDir,
+              IRIS_OUTPUT_DIR: proj.outputDir,
               PM_ROADMAP_FILE: proj.roadmapFile,
               PM_PROJECT_ID: projectId,
               ...(proj.featuresDoc
@@ -3543,22 +3543,22 @@ const server = http.createServer(async (req, res) => {
       if (!(await exists(continuousBuild)))
         throw new Error("continuous-build.mjs not found at " + continuousBuild);
       const proc = spawn(PREFERRED_NODE_BIN, [continuousBuild, requirement], {
-        cwd: CREWSWARM_DIR,
+        cwd: IRIS_DIR,
         stdio: "ignore",
         detached: true,
         env: {
           ...process.env,
-          CREWSWARM_DIR,
+          IRIS_DIR,
           ...projectEnv,
           PHASED_TASK_TIMEOUT_MS:
             process.env.PHASED_TASK_TIMEOUT_MS || "300000",
-          CREWSWARM_RT_SEND_TIMEOUT_MS:
-            process.env.CREWSWARM_RT_SEND_TIMEOUT_MS || "300000",
+          IRIS_RT_SEND_TIMEOUT_MS:
+            process.env.IRIS_RT_SEND_TIMEOUT_MS || "300000",
         },
       });
       proc.unref();
       const pidFile = path.join(
-        CREWSWARM_DIR,
+        IRIS_DIR,
         "orchestrator-logs",
         projectId ? "continuous-" + projectId + ".pid" : "continuous-build.pid",
       );
@@ -3583,7 +3583,7 @@ const server = http.createServer(async (req, res) => {
       for await (const chunk of req) body += chunk;
       const { projectId } = JSON.parse(body || "{}");
       const pidFile = path.join(
-        CREWSWARM_DIR,
+        IRIS_DIR,
         "orchestrator-logs",
         projectId ? "continuous-" + projectId + ".pid" : "continuous-build.pid",
       );
@@ -3603,7 +3603,7 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === "/api/continuous-build/log" && req.method === "GET") {
       const { readFile } = await import("node:fs/promises");
       const logPath = path.join(
-        CREWSWARM_DIR,
+        IRIS_DIR,
         "orchestrator-logs",
         "continuous-build.jsonl",
       );
@@ -3640,15 +3640,15 @@ const server = http.createServer(async (req, res) => {
             description: "Define project scope and research context",
             agents: [
               {
-                id: "crew-pm",
+                id: "iris-pm",
                 task: "[SCOPE] Project: {{projectName}} at {{projectPath}}. User brief: {{userBrief}}. Use @@SKILL problem-statement {} to run a problem framing canvas, then write an initial scope doc covering: who the user is, what problem is solved, proposed features/sections, rough IA, key decisions. @@WRITE_FILE {{projectPath}}/scope-draft.md",
               },
               {
-                id: "crew-copywriter",
+                id: "iris-copywriter",
                 task: "[RESEARCH] Project: {{projectName}} at {{projectPath}}. User request: {{userRequest}}. Research the topic, brainstorm content angles, develop initial content strategy and section ideas. Use @@WEB_SEARCH if helpful. Reply with your findings and recommendations.",
               },
               {
-                id: "crew-main",
+                id: "iris-main",
                 task: "[RESEARCH] Project: {{projectName}} at {{projectPath}}. User request: {{userRequest}}. Explore similar projects/pages, identify best practices and patterns. Reply with competitive landscape and recommendations.",
               },
             ],
@@ -3660,23 +3660,23 @@ const server = http.createServer(async (req, res) => {
               "Specialists provide architecture, design, security input",
             agents: [
               {
-                id: "crew-architect",
+                id: "iris-architect",
                 task: "[CONSULT] Review the scope from wave 1. Provide: system architecture (mermaid diagram if applicable), tech stack with versions, file/directory structure, data models/schema, API contracts, deployment strategy. Be specific and technical.",
               },
               {
-                id: "crew-coder-front",
+                id: "iris-coder-front",
                 task: "[CONSULT] Review the scope and content research from wave 1. Provide: component breakdown, file structure, tech stack, responsive strategy for this project.",
               },
               {
-                id: "crew-frontend",
+                id: "iris-frontend",
                 task: "[CONSULT] Review the scope from wave 1. Provide: design system proposal (color tokens, typography, spacing, animation strategy, theme approach) for this project.",
               },
               {
-                id: "crew-qa",
+                id: "iris-qa",
                 task: "[CONSULT] Review the scope from wave 1. Provide: test strategy, acceptance criteria per feature, performance budgets, a11y requirements.",
               },
               {
-                id: "crew-security",
+                id: "iris-security",
                 task: "[CONSULT] Review the scope from wave 1. Provide: security considerations (CSP, CORS, dependencies, auth if needed).",
               },
             ],
@@ -3687,8 +3687,8 @@ const server = http.createServer(async (req, res) => {
             description: "PM synthesizes all input into planning documents",
             agents: [
               {
-                id: "crew-pm",
-                task: "Compile ALL specialist input from previous waves. Use @@SKILL roadmap-planning {} to structure the output. Write THREE files: (1) {{projectPath}}/PDD.md (product design doc: persona, problem, success metrics, constraints, non-goals, technical decisions), (2) {{projectPath}}/TECH-SPEC.md (technical specification: architecture diagram from crew-architect, tech stack, data models, API contracts, file structure, deployment, security), (3) {{projectPath}}/ROADMAP.md (phased tasks with agents, file paths, acceptance criteria). @@WRITE_FILE all three files. Do NOT dispatch build tasks — present for user approval.",
+                id: "iris-pm",
+                task: "Compile ALL specialist input from previous waves. Use @@SKILL roadmap-planning {} to structure the output. Write THREE files: (1) {{projectPath}}/PDD.md (product design doc: persona, problem, success metrics, constraints, non-goals, technical decisions), (2) {{projectPath}}/TECH-SPEC.md (technical specification: architecture diagram from iris-architect, tech stack, data models, API contracts, file structure, deployment, security), (3) {{projectPath}}/ROADMAP.md (phased tasks with agents, file paths, acceptance criteria). @@WRITE_FILE all three files. Do NOT dispatch build tasks — present for user approval.",
               },
             ],
           },
@@ -3707,9 +3707,9 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === "/api/waves/config" && req.method === "GET") {
       const { readFile: rf } = await import("node:fs/promises");
       const wavesConfigPath = path.join(
-        CREWSWARM_DIR,
+        IRIS_DIR,
         "lib",
-        "crew-lead",
+        "iris-lead",
         "waves-config.json",
       );
 
@@ -3748,9 +3748,9 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === "/api/waves/config" && req.method === "POST") {
       const { writeFile: wf } = await import("node:fs/promises");
       const wavesConfigPath = path.join(
-        CREWSWARM_DIR,
+        IRIS_DIR,
         "lib",
-        "crew-lead",
+        "iris-lead",
         "waves-config.json",
       );
 
@@ -3773,9 +3773,9 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === "/api/waves/config/reset" && req.method === "POST") {
       const { readFile: rf, writeFile: wf } = await import("node:fs/promises");
       const wavesConfigPath = path.join(
-        CREWSWARM_DIR,
+        IRIS_DIR,
         "lib",
-        "crew-lead",
+        "iris-lead",
         "waves-config.json",
       );
       const wavesConfigBackup = wavesConfigPath + ".default";
@@ -3839,7 +3839,7 @@ const server = http.createServer(async (req, res) => {
             runState,
             filePath: item.filePath,
             updatedAt: item.mtime,
-            cronExample: `*/15 * * * * cd ${CREWSWARM_DIR} && node scripts/run-scheduled-pipeline.mjs ${name} >> ~/.crewswarm/logs/cron.log 2>&1`,
+            cronExample: `*/15 * * * * cd ${IRIS_DIR} && node scripts/run-scheduled-pipeline.mjs ${name} >> ~/.iris/logs/cron.log 2>&1`,
           }),
         );
       } catch (e) {
@@ -4021,7 +4021,7 @@ const server = http.createServer(async (req, res) => {
       }
       // Enrich each project with live roadmap stats and running status.
       // Ensure every project has an id (registry is keyed by id; stored entries may omit it).
-      const logsDir2 = path.join(CREWSWARM_DIR, "orchestrator-logs");
+      const logsDir2 = path.join(IRIS_DIR, "orchestrator-logs");
       const enriched = await Promise.all(
         Object.entries(projects).map(async ([keyId, p]) => {
           const id = p.id || keyId;
@@ -4167,7 +4167,7 @@ const server = http.createServer(async (req, res) => {
         projects = JSON.parse(await rf(registryFile, "utf8").catch(() => "{}"));
       if (!projects[projectId])
         throw new Error("Project not found: " + projectId);
-      const logsDir = path.join(CREWSWARM_DIR, "orchestrator-logs");
+      const logsDir = path.join(IRIS_DIR, "orchestrator-logs");
       const pidPath = path.join(logsDir, `pm-loop-${projectId}.pid`);
       const stopPath = path.join(logsDir, `pm-loop-${projectId}.stop`);
       const logPath = path.join(logsDir, `pm-loop-${projectId}.jsonl`);
@@ -4241,7 +4241,7 @@ const server = http.createServer(async (req, res) => {
       const statusProjectId = url.searchParams.get("projectId") || "";
       const suffix = statusProjectId ? `-${statusProjectId}` : "";
       const pidPath = path.join(
-        CREWSWARM_DIR,
+        IRIS_DIR,
         "orchestrator-logs",
         `pm-loop${suffix}.pid`,
       );
@@ -4305,12 +4305,12 @@ const server = http.createServer(async (req, res) => {
       // Per-project PID file (supports multiple simultaneous projects)
       const pidSuffix = projectId ? `-${projectId}` : "";
       const pidFile = path.join(
-        CREWSWARM_DIR,
+        IRIS_DIR,
         "orchestrator-logs",
         `pm-loop${pidSuffix}.pid`,
       );
       const stopFilePath = path.join(
-        CREWSWARM_DIR,
+        IRIS_DIR,
         "orchestrator-logs",
         `pm-loop${pidSuffix}.stop`,
       );
@@ -4341,29 +4341,29 @@ const server = http.createServer(async (req, res) => {
           await fs.promises.unlink(stopFilePath);
         } catch { }
       }
-      const logsDir = path.join(CREWSWARM_DIR, "orchestrator-logs");
+      const logsDir = path.join(IRIS_DIR, "orchestrator-logs");
       if (!(await exists(logsDir))) await fs.promises.mkdir(logsDir, { recursive: true });
       // Load RT token so pm-loop and its child gateway-bridge --send can authenticate with the RT daemon
-      let rtToken = process.env.CREWSWARM_RT_AUTH_TOKEN || "";
+      let rtToken = process.env.IRIS_RT_AUTH_TOKEN || "";
       if (!rtToken) {
         const home = os.homedir();
         for (const p of [
-          path.join(CFG_DIR, "crewswarm.json"),
-          path.join(home, ".crewswarm", "crewswarm.json"),
-          path.join(CFG_DIR, "crewswarm.json"),
-          path.join(home, ".crewswarm", "crewswarm.json"),
+          path.join(CFG_DIR, "iris.json"),
+          path.join(home, ".iris", "iris.json"),
+          path.join(CFG_DIR, "iris.json"),
+          path.join(home, ".iris", "iris.json"),
           path.join(home, ".openclaw", "openclaw.json"),
         ]) {
           try {
             const c = JSON.parse(await rf(p, "utf8"));
-            rtToken = c?.rt?.authToken || c?.env?.CREWSWARM_RT_AUTH_TOKEN || "";
+            rtToken = c?.rt?.authToken || c?.env?.IRIS_RT_AUTH_TOKEN || "";
             if (rtToken) break;
           } catch { }
         }
       }
       if (!rtToken) {
         console.warn(
-          "[pm-loop/start] No CREWSWARM_RT_AUTH_TOKEN found in env or ~/.crewswarm/crewswarm.json (rt.authToken) — dispatches will fail with 'invalid realtime token'.",
+          "[pm-loop/start] No IRIS_RT_AUTH_TOKEN found in env or ~/.iris/iris.json (rt.authToken) — dispatches will fail with 'invalid realtime token'.",
         );
       }
       const spawnArgs = [
@@ -4373,15 +4373,15 @@ const server = http.createServer(async (req, res) => {
       ];
       const spawnEnv = {
         ...process.env,
-        CREWSWARM_DIR,
-        ...(rtToken ? { CREWSWARM_RT_AUTH_TOKEN: rtToken } : {}),
+        IRIS_DIR,
+        ...(rtToken ? { IRIS_RT_AUTH_TOKEN: rtToken } : {}),
         PHASED_TASK_TIMEOUT_MS: process.env.PHASED_TASK_TIMEOUT_MS || "300000",
-        CREWSWARM_RT_SEND_TIMEOUT_MS:
-          process.env.CREWSWARM_RT_SEND_TIMEOUT_MS || "300000",
-        CREWSWARM_RT_SEND_SENDER: "orchestrator",
-        CREWSWARM_RT_BROADCAST_SENDER: "orchestrator",
+        IRIS_RT_SEND_TIMEOUT_MS:
+          process.env.IRIS_RT_SEND_TIMEOUT_MS || "300000",
+        IRIS_RT_SEND_SENDER: "orchestrator",
+        IRIS_RT_BROADCAST_SENDER: "orchestrator",
         ...(projectId ? { PM_PROJECT_ID: projectId } : {}),
-        ...(projectDir ? { CREWSWARM_OUTPUT_DIR: projectDir } : {}),
+        ...(projectDir ? { IRIS_OUTPUT_DIR: projectDir } : {}),
         ...(projectRoadmap ? { PM_ROADMAP_FILE: projectRoadmap } : {}),
         ...(projectFeaturesDoc ? { PM_FEATURES_DOC: projectFeaturesDoc } : {}),
         ...(pmOptions.useQA === false ? { PM_USE_QA: "0" } : {}),
@@ -4416,7 +4416,7 @@ const server = http.createServer(async (req, res) => {
       spawnEnv.PM_CORRELATION_ID = correlationId;
 
       const proc = spawn("node", spawnArgs, {
-        cwd: CREWSWARM_DIR,
+        cwd: IRIS_DIR,
         stdio: "ignore",
         detached: true,
         env: spawnEnv,
@@ -4434,7 +4434,7 @@ const server = http.createServer(async (req, res) => {
       let body = "";
       for await (const chunk of req) body += chunk;
       const { projectId } = JSON.parse(body || "{}");
-      const logsDir = path.join(CREWSWARM_DIR, "orchestrator-logs");
+      const logsDir = path.join(IRIS_DIR, "orchestrator-logs");
       if (!(await exists(logsDir))) await fs.promises.mkdir(logsDir, { recursive: true });
       // Write project-specific stop file if projectId provided
       const suffix = projectId ? `-${projectId}` : "";
@@ -4547,7 +4547,7 @@ const server = http.createServer(async (req, res) => {
         { id: "gemini-cli",  bin: "gemini" },
         { id: "cursor",      bin: "cursor" },
       ];
-      const engines = { "crew-cli": true }; // always available (part of this repo)
+      const engines = { "iris-cli": true }; // always available (part of this repo)
       const searchDirs = [
         "/usr/local/bin",
         "/opt/homebrew/bin",
@@ -4575,14 +4575,14 @@ const server = http.createServer(async (req, res) => {
     }
     // ── Settings: RT Bus token ─────────────────────────────────────────────
     if (url.pathname === "/api/settings/rt-token" && req.method === "GET") {
-      const csConfigPath = path.join(os.homedir(), ".crewswarm", "crewswarm.json");
+      const csConfigPath = path.join(os.homedir(), ".iris", "iris.json");
       let token = "";
       try {
         token =
           JSON.parse(await fs.promises.readFile(csConfigPath, "utf8"))?.rt?.authToken ||
           "";
       } catch { }
-      if (!token) token = process.env.CREWSWARM_RT_AUTH_TOKEN || "";
+      if (!token) token = process.env.IRIS_RT_AUTH_TOKEN || "";
       res.writeHead(200, { "content-type": "application/json" });
       res.end(JSON.stringify({ token: token ? "SET" : "" }));
       return;
@@ -4591,8 +4591,8 @@ const server = http.createServer(async (req, res) => {
       let body = "";
       for await (const chunk of req) body += chunk;
       const { token } = JSON.parse(body);
-      const csDir = path.join(os.homedir(), ".crewswarm");
-      const csConfigPath = path.join(csDir, "crewswarm.json");
+      const csDir = path.join(os.homedir(), ".iris");
+      const csConfigPath = path.join(csDir, "iris.json");
       await fs.promises.mkdir(csDir, { recursive: true });
       let cfg = {};
       try {
@@ -4606,7 +4606,7 @@ const server = http.createServer(async (req, res) => {
     }
     // ── Settings: Config lock/unlock ────────────────────────────────────────
     if (url.pathname === "/api/config/lock-status" && req.method === "GET") {
-      const cfgPath = path.join(os.homedir(), ".crewswarm", "crewswarm.json");
+      const cfgPath = path.join(os.homedir(), ".iris", "iris.json");
       let locked = false;
       try {
         const { exec: _lockExec } = await import("node:child_process");
@@ -4630,7 +4630,7 @@ const server = http.createServer(async (req, res) => {
       return;
     }
     if (url.pathname === "/api/config/lock" && req.method === "POST") {
-      const cfgPath = path.join(os.homedir(), ".crewswarm", "crewswarm.json");
+      const cfgPath = path.join(os.homedir(), ".iris", "iris.json");
       try {
         const { exec: _chflagsExec } = await import("node:child_process");
         const { promisify: _chflagsPromisify } = await import("node:util");
@@ -4644,7 +4644,7 @@ const server = http.createServer(async (req, res) => {
       return;
     }
     if (url.pathname === "/api/config/unlock" && req.method === "POST") {
-      const cfgPath = path.join(os.homedir(), ".crewswarm", "crewswarm.json");
+      const cfgPath = path.join(os.homedir(), ".iris", "iris.json");
       try {
         const { exec: _chflagsExec2 } = await import("node:child_process");
         const { promisify: _chflagsPromisify2 } = await import("node:util");
@@ -4662,15 +4662,15 @@ const server = http.createServer(async (req, res) => {
       url.pathname === "/api/settings/opencode-project" &&
       req.method === "GET"
     ) {
-      const cfgPath = path.join(os.homedir(), ".crewswarm", "crewswarm.json");
-      let dir = process.env.CREWSWARM_OPENCODE_PROJECT || "";
+      const cfgPath = path.join(os.homedir(), ".iris", "iris.json");
+      let dir = process.env.IRIS_OPENCODE_PROJECT || "";
       let fallbackModel =
-        process.env.CREWSWARM_OPENCODE_FALLBACK_MODEL ||
+        process.env.IRIS_OPENCODE_FALLBACK_MODEL ||
         "groq/moonshotai/kimi-k2-instruct-0905";
       let opencodeModel =
-        process.env.CREWSWARM_OPENCODE_MODEL ||
+        process.env.IRIS_OPENCODE_MODEL ||
         "groq/moonshotai/kimi-k2-instruct-0905";
-      let crewLeadModel = process.env.CREWSWARM_CREW_LEAD_MODEL || "";
+      let crewLeadModel = process.env.IRIS_CREW_LEAD_MODEL || "";
       try {
         const c = JSON.parse(await fs.promises.readFile(cfgPath, "utf8"));
         if (c.opencodeProject) dir = c.opencodeProject;
@@ -4701,8 +4701,8 @@ const server = http.createServer(async (req, res) => {
           dir = path.normalize(dir);
         }
       }
-      const cfgDir = path.join(os.homedir(), ".crewswarm");
-      const cfgPath = path.join(cfgDir, "crewswarm.json");
+      const cfgDir = path.join(os.homedir(), ".iris");
+      const cfgPath = path.join(cfgDir, "iris.json");
       await fs.promises.mkdir(cfgDir, { recursive: true });
       let cfg = {};
       try {
@@ -4711,7 +4711,7 @@ const server = http.createServer(async (req, res) => {
       if (dir !== undefined) {
         if (dir) cfg.opencodeProject = dir;
         else delete cfg.opencodeProject;
-        process.env.CREWSWARM_OPENCODE_PROJECT = dir || "";
+        process.env.IRIS_OPENCODE_PROJECT = dir || "";
       }
       if (fallbackModel !== undefined) {
         if (fallbackModel && String(fallbackModel).trim())
@@ -4721,10 +4721,10 @@ const server = http.createServer(async (req, res) => {
       if (opencodeModel !== undefined) {
         if (opencodeModel && String(opencodeModel).trim()) {
           cfg.opencodeModel = String(opencodeModel).trim();
-          process.env.CREWSWARM_OPENCODE_MODEL = cfg.opencodeModel;
+          process.env.IRIS_OPENCODE_MODEL = cfg.opencodeModel;
         } else {
           delete cfg.opencodeModel;
-          delete process.env.CREWSWARM_OPENCODE_MODEL;
+          delete process.env.IRIS_OPENCODE_MODEL;
         }
       }
       if (crewLeadModel !== undefined) {
@@ -4750,7 +4750,7 @@ const server = http.createServer(async (req, res) => {
       );
       return;
     }
-    // ── Built-in providers (crewswarm standalone config) ─────────────────
+    // ── Built-in providers (iris standalone config) ─────────────────
     const BUILTIN_URLS = {
       groq: "https://api.groq.com/openai/v1",
       fireworks: "https://api.fireworks.ai/inference/v1",
@@ -4769,9 +4769,9 @@ const server = http.createServer(async (req, res) => {
       openrouter: "https://openrouter.ai/api/v1",
       "openai-local": "http://127.0.0.1:8000/v1",
     };
-    const csDir = path.join(os.homedir(), ".crewswarm");
-    const csConfig = path.join(csDir, "crewswarm.json");
-    const csSwarmConfig = path.join(csDir, "crewswarm.json");
+    const csDir = path.join(os.homedir(), ".iris");
+    const csConfig = path.join(csDir, "iris.json");
+    const csSwarmConfig = path.join(csDir, "iris.json");
     const ocConfig = path.join(os.homedir(), ".openclaw", "openclaw.json");
     async function readCSConfig() {
       try {
@@ -4879,7 +4879,7 @@ const server = http.createServer(async (req, res) => {
         }
         // Quick test call
         if (providerId === "anthropic-oauth") {
-          const { computeVersionSuffix, buildBillingBlock, signBody } = await import("../crew-cli/dist/engine.mjs").catch(() => ({}));
+          const { computeVersionSuffix, buildBillingBlock, signBody } = await import("../iris-cli/dist/engine.mjs").catch(() => ({}));
           let responseText, testModel = model || "claude-sonnet-4-6";
           {
             const xxhash = (await import("xxhash-wasm")).default;
@@ -4897,7 +4897,7 @@ const server = http.createServer(async (req, res) => {
             const bodyObj = {
               model: testModel, max_tokens: 50,
               ...(supportsThinking ? { thinking: { type: "adaptive" } } : {}),
-              metadata: { user_id: "user_crewswarm_test" },
+              metadata: { user_id: "user_iris_test" },
               system: [{ type: "text", text: billingText }],
               messages: [{ role: "user", content: msg }],
             };
@@ -5075,10 +5075,10 @@ const server = http.createServer(async (req, res) => {
       let body = "";
       for await (const chunk of req) body += chunk;
       let { providerId, apiKey } = JSON.parse(body);
-      // OpenAI (local)/ChatMock ignores key; use placeholder so crew-lead has a truthy apiKey
+      // OpenAI (local)/ChatMock ignores key; use placeholder so iris-lead has a truthy apiKey
       if (providerId === "openai-local" && !(apiKey && apiKey.trim()))
         apiKey = "key";
-      // Write to ~/.crewswarm/crewswarm.json
+      // Write to ~/.iris/iris.json
       const cfg = await readCSSwarmConfig();
       if (!cfg.providers) cfg.providers = {};
       cfg.providers[providerId] = {
@@ -5209,7 +5209,7 @@ const server = http.createServer(async (req, res) => {
       }
       return;
     }
-    // ── Proxy /api/settings/bg-consciousness → crew-lead:5010 ────────────────
+    // ── Proxy /api/settings/bg-consciousness → iris-lead:5010 ────────────────
     if (url.pathname === "/api/settings/bg-consciousness") {
       try {
         const rawBody =
@@ -5240,13 +5240,13 @@ const server = http.createServer(async (req, res) => {
         res.end(
           JSON.stringify({
             ok: false,
-            error: "crew-lead unreachable: " + e.message,
+            error: "iris-lead unreachable: " + e.message,
           }),
         );
       }
       return;
     }
-    // ── Proxy /api/settings/cursor-waves → crew-lead:5010 ───────────────────
+    // ── Proxy /api/settings/cursor-waves → iris-lead:5010 ───────────────────
     if (url.pathname === "/api/settings/cursor-waves") {
       try {
         const rawBody =
@@ -5277,13 +5277,13 @@ const server = http.createServer(async (req, res) => {
         res.end(
           JSON.stringify({
             ok: false,
-            error: "crew-lead unreachable: " + e.message,
+            error: "iris-lead unreachable: " + e.message,
           }),
         );
       }
       return;
     }
-    // ── Proxy /api/settings/claude-code → crew-lead:5010 ────────────────────
+    // ── Proxy /api/settings/claude-code → iris-lead:5010 ────────────────────
     if (url.pathname === "/api/settings/claude-code") {
       try {
         const rawBody =
@@ -5314,13 +5314,13 @@ const server = http.createServer(async (req, res) => {
         res.end(
           JSON.stringify({
             ok: false,
-            error: "crew-lead unreachable: " + e.message,
+            error: "iris-lead unreachable: " + e.message,
           }),
         );
       }
       return;
     }
-    // ── Proxy /api/settings/tmux-bridge → crew-lead:5010 ─────────────────────
+    // ── Proxy /api/settings/tmux-bridge → iris-lead:5010 ─────────────────────
     if (url.pathname === "/api/settings/tmux-bridge") {
       try {
         const rawBody =
@@ -5337,7 +5337,7 @@ const server = http.createServer(async (req, res) => {
         res.end(typeof data === "string" ? data : JSON.stringify(data));
       } catch (e) {
         res.writeHead(200, { "content-type": "application/json" });
-        res.end(JSON.stringify({ ok: false, error: "crew-lead unreachable: " + e.message }));
+        res.end(JSON.stringify({ ok: false, error: "iris-lead unreachable: " + e.message }));
       }
       return;
     }
@@ -5349,7 +5349,7 @@ const server = http.createServer(async (req, res) => {
         try {
           const cfg = JSON.parse(await readFile(cfgPath, "utf8"));
           const enabled =
-            cfg.codex === true || process.env.CREWSWARM_CODEX === "1";
+            cfg.codex === true || process.env.IRIS_CODEX === "1";
           const installed = commandExists(process.env.CODEX_CLI_BIN || "codex");
           res.writeHead(200, { "content-type": "application/json" });
           res.end(JSON.stringify({ enabled, installed }));
@@ -5371,7 +5371,7 @@ const server = http.createServer(async (req, res) => {
           res.end(JSON.stringify({ error: writeErr.message }));
           return;
         }
-        process.env.CREWSWARM_CODEX = enabled ? "1" : "0";
+        process.env.IRIS_CODEX = enabled ? "1" : "0";
         res.writeHead(200, { "content-type": "application/json" });
         res.end(JSON.stringify({ ok: true, enabled: cfg.codex }));
         return;
@@ -5386,7 +5386,7 @@ const server = http.createServer(async (req, res) => {
           const cfg = JSON.parse(await readFile(cfgPath, "utf8"));
           const enabled =
             cfg.geminiCli === true ||
-            process.env.CREWSWARM_GEMINI_CLI_ENABLED === "1";
+            process.env.IRIS_GEMINI_CLI_ENABLED === "1";
           const installed = commandExists(process.env.GEMINI_CLI_BIN || "gemini");
           res.writeHead(200, { "content-type": "application/json" });
           res.end(JSON.stringify({ enabled, installed }));
@@ -5408,14 +5408,14 @@ const server = http.createServer(async (req, res) => {
           res.end(JSON.stringify({ error: writeErr.message }));
           return;
         }
-        process.env.CREWSWARM_GEMINI_CLI_ENABLED = enabled ? "1" : "0";
+        process.env.IRIS_GEMINI_CLI_ENABLED = enabled ? "1" : "0";
         res.writeHead(200, { "content-type": "application/json" });
         res.end(JSON.stringify({ ok: true, enabled: cfg.geminiCli }));
         return;
       }
     }
-    // ── Crew CLI executor toggle ─────────────────────────────────────────────────
-    if (url.pathname === "/api/settings/crew-cli") {
+    // ── Iris CLI executor toggle ─────────────────────────────────────────────────
+    if (url.pathname === "/api/settings/iris-cli") {
       const { readFile, writeFile } = await import("node:fs/promises");
       const cfgPath = CFG_FILE;
       if (req.method === "GET") {
@@ -5423,10 +5423,10 @@ const server = http.createServer(async (req, res) => {
           const cfg = JSON.parse(await readFile(cfgPath, "utf8"));
           const enabled =
             cfg.crewCli === true ||
-            process.env.CREWSWARM_CREW_CLI_ENABLED === "1";
+            process.env.IRIS_CREW_CLI_ENABLED === "1";
           const installed =
-            commandExists("crew") ||
-            await exists(path.join(CREWSWARM_DIR, "crew-cli", "dist", "index.js"));
+            commandExists("iris") ||
+            await exists(path.join(IRIS_DIR, "iris-cli", "dist", "index.js"));
           res.writeHead(200, { "content-type": "application/json" });
           res.end(JSON.stringify({ enabled, installed }));
         } catch {
@@ -5447,26 +5447,26 @@ const server = http.createServer(async (req, res) => {
           res.end(JSON.stringify({ error: writeErr.message }));
           return;
         }
-        process.env.CREWSWARM_CREW_CLI_ENABLED = enabled ? "1" : "0";
+        process.env.IRIS_CREW_CLI_ENABLED = enabled ? "1" : "0";
         res.writeHead(200, { "content-type": "application/json" });
         res.end(JSON.stringify({ ok: true, enabled: cfg.crewCli }));
         return;
       }
     }
-    // ── Crew CLI tier models (L1/L2/L3) — persisted to crewswarm.json env ─────────
+    // ── Iris CLI tier models (L1/L2/L3) — persisted to iris.json env ─────────
     if (url.pathname === "/api/settings/cli-models") {
       const { readFile } = await import("node:fs/promises");
       const CLI_MODEL_KEYS = [
-        "CREW_CHAT_MODEL",
-        "CREW_ROUTER_MODEL",
-        "CREW_REASONING_MODEL",
-        "CREW_L2A_MODEL",
-        "CREW_L2B_MODEL",
-        "CREW_EXECUTION_MODEL",
-        "CREW_QA_MODEL",
-        "CREW_JSON_REPAIR_MODEL",
-        "CREW_MAX_PARALLEL_WORKERS",
-        "CREW_L2_EXTRA_VALIDATORS",
+        "IRIS_CHAT_MODEL",
+        "IRIS_ROUTER_MODEL",
+        "IRIS_REASONING_MODEL",
+        "IRIS_L2A_MODEL",
+        "IRIS_L2B_MODEL",
+        "IRIS_EXECUTION_MODEL",
+        "IRIS_QA_MODEL",
+        "IRIS_JSON_REPAIR_MODEL",
+        "IRIS_MAX_PARALLEL_WORKERS",
+        "IRIS_L2_EXTRA_VALIDATORS",
       ];
       if (req.method === "GET") {
         try {
@@ -5544,12 +5544,12 @@ const server = http.createServer(async (req, res) => {
           const cfg = JSON.parse(await readFile(cfgPath, "utf8"));
           const env = cfg.env || {};
           const enabled =
-            env.CREWSWARM_OPENCODE_ENABLED === "on" ||
-            env.CREWSWARM_OPENCODE_ENABLED === "1" ||
-            process.env.CREWSWARM_OPENCODE_ENABLED === "on" ||
-            process.env.CREWSWARM_OPENCODE_ENABLED === "1";
+            env.IRIS_OPENCODE_ENABLED === "on" ||
+            env.IRIS_OPENCODE_ENABLED === "1" ||
+            process.env.IRIS_OPENCODE_ENABLED === "on" ||
+            process.env.IRIS_OPENCODE_ENABLED === "1";
           const installed =
-            commandExists(process.env.CREWSWARM_OPENCODE_BIN || "opencode") ||
+            commandExists(process.env.IRIS_OPENCODE_BIN || "opencode") ||
             await exists(path.join(os.homedir(), ".opencode", "bin", "opencode"));
           res.writeHead(200, { "content-type": "application/json" });
           res.end(JSON.stringify({ enabled, installed }));
@@ -5565,14 +5565,14 @@ const server = http.createServer(async (req, res) => {
         const { enabled } = JSON.parse(body || "{}");
         const cfg = JSON.parse(await readFile(cfgPath, "utf8"));
         if (!cfg.env) cfg.env = {};
-        cfg.env.CREWSWARM_OPENCODE_ENABLED = enabled ? "on" : "off";
+        cfg.env.IRIS_OPENCODE_ENABLED = enabled ? "on" : "off";
         const writeErr = await safeWriteConfig(cfg);
         if (writeErr) {
           res.writeHead(writeErr.status, { "content-type": "application/json" });
           res.end(JSON.stringify({ error: writeErr.message }));
           return;
         }
-        process.env.CREWSWARM_OPENCODE_ENABLED = enabled ? "on" : "off";
+        process.env.IRIS_OPENCODE_ENABLED = enabled ? "on" : "off";
         res.writeHead(200, { "content-type": "application/json" });
         res.end(JSON.stringify({ ok: true, enabled }));
         return;
@@ -5645,7 +5645,7 @@ const server = http.createServer(async (req, res) => {
           res.end(JSON.stringify({ error: writeErr.message }));
           return;
         }
-        process.env.CREWSWARM_AUTONOMOUS_MENTIONS =
+        process.env.IRIS_AUTONOMOUS_MENTIONS =
           enabled === false ? "off" : "on";
         res.writeHead(200, { "content-type": "application/json" });
         res.end(
@@ -5688,7 +5688,7 @@ const server = http.createServer(async (req, res) => {
           res.end(JSON.stringify({ error: writeErr.message }));
           return;
         }
-        // Also set in process.env so it takes effect without crew-lead restart
+        // Also set in process.env so it takes effect without iris-lead restart
         process.env.PASSTHROUGH_NOTIFY = safe;
         res.writeHead(200, { "content-type": "application/json" });
         res.end(JSON.stringify({ ok: true, value: safe }));
@@ -5847,7 +5847,7 @@ const server = http.createServer(async (req, res) => {
         return;
       }
     }
-    // ── Proxy /api/engine-passthrough → crew-lead:5010 (SSE streaming) ─────────
+    // ── Proxy /api/engine-passthrough → iris-lead:5010 (SSE streaming) ─────────
     if (url.pathname === "/api/engine-passthrough" && req.method === "POST") {
       try {
         const rawBody = await (async () => {
@@ -5909,7 +5909,7 @@ const server = http.createServer(async (req, res) => {
       }
       return;
     }
-    // ── Proxy /api/settings/global-fallback → crew-lead:5010 ─────────────────
+    // ── Proxy /api/settings/global-fallback → iris-lead:5010 ─────────────────
     if (url.pathname === "/api/settings/global-fallback") {
       try {
         const rawBody =
@@ -5940,7 +5940,7 @@ const server = http.createServer(async (req, res) => {
         res.end(
           JSON.stringify({
             ok: false,
-            error: "crew-lead unreachable: " + e.message,
+            error: "iris-lead unreachable: " + e.message,
           }),
         );
       }
@@ -5963,8 +5963,8 @@ const server = http.createServer(async (req, res) => {
       res.end(JSON.stringify({ ok: true, installed }));
       return;
     }
-    // ── crew-lead chat API ────────────────────────────────────────────────────
-    if (url.pathname === "/api/crew-lead/status" && req.method === "GET") {
+    // ── iris-lead chat API ────────────────────────────────────────────────────
+    if (url.pathname === "/api/iris-lead/status" && req.method === "GET") {
       try {
         let online = false;
         try {
@@ -5973,7 +5973,7 @@ const server = http.createServer(async (req, res) => {
         } catch { }
         if (!online) {
           const { execSync: es } = await import("node:child_process");
-          es("pgrep -f 'crew-lead.mjs'", {
+          es("pgrep -f 'iris-lead.mjs'", {
             encoding: "utf8",
             timeout: 2000,
             stdio: "pipe",
@@ -5989,12 +5989,12 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    // ── Models API (list available models for crewchat dropdown) ─────────────
+    // ── Models API (list available models for irischat dropdown) ─────────────
     if (url.pathname === "/api/models" && req.method === "GET") {
       try {
         const csSwarm = JSON.parse(
           await fs.promises.readFile(
-            path.join(os.homedir(), ".crewswarm", "crewswarm.json"),
+            path.join(os.homedir(), ".iris", "iris.json"),
             "utf8",
           ),
         );
@@ -6079,7 +6079,7 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    // ── CLI Chat API (crewchat CLI mode passthrough) ──────────────────────
+    // ── CLI Chat API (irischat CLI mode passthrough) ──────────────────────
     if (url.pathname === "/api/cli/chat" && req.method === "POST") {
       let body = "";
       for await (const chunk of req) body += chunk;
@@ -6094,7 +6094,7 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
-        const crewLeadPort = process.env.CREW_LEAD_PORT || "5010";
+        const crewLeadPort = process.env.IRIS_LEAD_PORT || "5010";
         const clAuthToken = resolveCrewLeadAuthToken();
 
         let projectDir = null;
@@ -6134,7 +6134,7 @@ const server = http.createServer(async (req, res) => {
           res.end(
             JSON.stringify({
               ok: false,
-              error: txt || `crew-lead passthrough failed (${clRes.status})`,
+              error: txt || `iris-lead passthrough failed (${clRes.status})`,
             }),
           );
           return;
@@ -6204,7 +6204,7 @@ const server = http.createServer(async (req, res) => {
         // Load agent config
         const csSwarm = JSON.parse(
           await fs.promises.readFile(
-            path.join(os.homedir(), ".crewswarm", "crewswarm.json"),
+            path.join(os.homedir(), ".iris", "iris.json"),
             "utf8",
           ),
         );
@@ -6238,13 +6238,13 @@ const server = http.createServer(async (req, res) => {
         // Load system prompt
         const promptPath = path.join(
           os.homedir(),
-          ".crewswarm",
+          ".iris",
           "agent-prompts.json",
         );
         let systemPrompt = `You are ${agentId}.`;
         try {
           const prompts = JSON.parse(await fs.promises.readFile(promptPath, "utf8"));
-          const bareId = agentId.replace(/^crew-/, "");
+          const bareId = agentId.replace(/^iris-/, "");
           systemPrompt = prompts[agentId] || prompts[bareId] || systemPrompt;
         } catch { }
 
@@ -6319,11 +6319,11 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    // ── Chat Agent API (crewchat direct agent chat) ──────────────────────────
+    // ── Chat Agent API (irischat direct agent chat) ──────────────────────────
     if (url.pathname === "/api/chat-agent" && req.method === "POST") {
       let body = "";
       for await (const chunk of req) body += chunk;
-      const crewLeadPort = process.env.CREW_LEAD_PORT || "5010";
+      const crewLeadPort = process.env.IRIS_LEAD_PORT || "5010";
 
       const clAuthToken = resolveCrewLeadAuthToken();
 
@@ -6360,23 +6360,23 @@ const server = http.createServer(async (req, res) => {
         res.end(
           JSON.stringify({
             ok: false,
-            error: "crew-lead unreachable: " + (e?.message || String(e)),
+            error: "iris-lead unreachable: " + (e?.message || String(e)),
           }),
         );
       }
       return;
     }
 
-    // ── Dispatch API (crewchat agent direct mode) ─────────────────────────────
+    // ── Dispatch API (irischat agent direct mode) ─────────────────────────────
     if (url.pathname === "/api/dispatch" && req.method === "POST") {
       let body = "";
       for await (const chunk of req) body += chunk;
-      const crewLeadPort = process.env.CREW_LEAD_PORT || "5010";
+      const crewLeadPort = process.env.IRIS_LEAD_PORT || "5010";
 
       const clAuthToken = resolveCrewLeadAuthToken();
 
       try {
-        // Forward to crew-lead's /api/dispatch endpoint (not /dispatch!)
+        // Forward to iris-lead's /api/dispatch endpoint (not /dispatch!)
         const clRes = await fetch(
           `http://127.0.0.1:${crewLeadPort}/api/dispatch`,
           {
@@ -6409,7 +6409,7 @@ const server = http.createServer(async (req, res) => {
         res.end(
           JSON.stringify({
             ok: false,
-            error: "crew-lead unreachable: " + (e?.message || String(e)),
+            error: "iris-lead unreachable: " + (e?.message || String(e)),
           }),
         );
       }
@@ -6438,7 +6438,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (url.pathname === "/api/transcribe-audio" && req.method === "POST") {
-      // Expects multipart/form-data with audio file (crewchat: m4a, Dashboard: webm)
+      // Expects multipart/form-data with audio file (irischat: m4a, Dashboard: webm)
       // Per Groq docs: https://console.groq.com/docs/speech-to-text — file, model required
       const sendJson = (status, body) => {
         if (res.headersSent) return;
@@ -6448,7 +6448,7 @@ const server = http.createServer(async (req, res) => {
       try {
         const busboy = await import("busboy");
         const chunks = [];
-        let mimeType = "audio/m4a"; // crewchat default
+        let mimeType = "audio/m4a"; // irischat default
         let resolved = false;
         const resolveOnce = () => {
           if (resolved) return;
@@ -6494,9 +6494,9 @@ const server = http.createServer(async (req, res) => {
     async function proxyCrewLeadChat({
       rawBody,
       projectIdFromQuery = null,
-      defaultMode = "crew-lead",
+      defaultMode = "iris-lead",
     }) {
-      const crewLeadPort = process.env.CREW_LEAD_PORT || "5010";
+      const crewLeadPort = process.env.IRIS_LEAD_PORT || "5010";
       let parsed = {};
       try {
         parsed = JSON.parse(rawBody || "{}");
@@ -6698,7 +6698,7 @@ const server = http.createServer(async (req, res) => {
             // JSON path (Dashboard frontend)
             const agentCT = String(upstream.headers.get("content-type") || "");
             if (agentCT.includes("text/event-stream") && upstream.body) {
-              // crew-lead returned SSE but caller wanted JSON — extract final reply
+              // iris-lead returned SSE but caller wanted JSON — extract final reply
               const rawSSE = await upstream.text().catch(() => "");
               let reply = "";
               for (const line of rawSSE.split("\n")) {
@@ -6730,14 +6730,14 @@ const server = http.createServer(async (req, res) => {
           res.end(
             JSON.stringify({
               ok: false,
-              error: "crew-lead unreachable: " + (e?.message || String(e)),
+              error: "iris-lead unreachable: " + (e?.message || String(e)),
             }),
           );
           return true;
         }
       }
 
-      // crew-lead mode — SSE if caller accepts it, JSON otherwise
+      // iris-lead mode — SSE if caller accepts it, JSON otherwise
       const wantSSE = String(req.headers.accept || "").includes("text/event-stream");
       const chatEndpoint = wantSSE ? "/chat/stream" : "/chat";
       try {
@@ -6766,7 +6766,7 @@ const server = http.createServer(async (req, res) => {
           res.end(
             JSON.stringify({
               ok: false,
-              error: `crew-lead ${wantSSE ? "stream" : "chat"} failed: ${txt || upstream?.status}`,
+              error: `iris-lead ${wantSSE ? "stream" : "chat"} failed: ${txt || upstream?.status}`,
             }),
           );
           return true;
@@ -6798,7 +6798,7 @@ const server = http.createServer(async (req, res) => {
           // JSON path (Dashboard frontend)
           const upstreamCT = String(upstream.headers.get("content-type") || "");
           if (upstreamCT.includes("text/event-stream") && upstream.body) {
-            // crew-lead returned SSE but caller wanted JSON — extract final reply
+            // iris-lead returned SSE but caller wanted JSON — extract final reply
             const rawSSE = await upstream.text().catch(() => "");
             let reply = "";
             for (const line of rawSSE.split("\n")) {
@@ -6832,7 +6832,7 @@ const server = http.createServer(async (req, res) => {
         res.end(
           JSON.stringify({
             ok: false,
-            error: "crew-lead unreachable: " + (e?.message || String(e)),
+            error: "iris-lead unreachable: " + (e?.message || String(e)),
           }),
         );
       }
@@ -7019,7 +7019,7 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    if (url.pathname === "/api/crew-lead/chat" && req.method === "POST") {
+    if (url.pathname === "/api/iris-lead/chat" && req.method === "POST") {
       let body = "";
       for await (const chunk of req) body += chunk;
       await proxyCrewLeadChat({
@@ -7028,10 +7028,10 @@ const server = http.createServer(async (req, res) => {
       });
       return;
     }
-    if (url.pathname === "/api/crew-lead/clear" && req.method === "POST") {
+    if (url.pathname === "/api/iris-lead/clear" && req.method === "POST") {
       let body = "";
       for await (const chunk of req) body += chunk;
-      const crewLeadPort = process.env.CREW_LEAD_PORT || "5010";
+      const crewLeadPort = process.env.IRIS_LEAD_PORT || "5010";
       const clAuthToken2 = resolveCrewLeadAuthToken();
       const clRes = await fetch(`http://127.0.0.1:${crewLeadPort}/clear`, {
         method: "POST",
@@ -7046,8 +7046,8 @@ const server = http.createServer(async (req, res) => {
       res.end(JSON.stringify({ ok: true }));
       return;
     }
-    if (url.pathname === "/api/crew-lead/events" && req.method === "GET") {
-      const crewLeadPort = process.env.CREW_LEAD_PORT || "5010";
+    if (url.pathname === "/api/iris-lead/events" && req.method === "GET") {
+      const crewLeadPort = process.env.IRIS_LEAD_PORT || "5010";
       res.writeHead(200, {
         "content-type": "text/event-stream",
         "cache-control": "no-cache",
@@ -7055,7 +7055,7 @@ const server = http.createServer(async (req, res) => {
         "access-control-allow-origin": "*",
       });
       res.write("retry: 3000\n\n");
-      // Proxy SSE from crew-lead
+      // Proxy SSE from iris-lead
       const upstream = await fetch(`http://127.0.0.1:${crewLeadPort}/events`, {
         signal: req.socket.destroyed ? AbortSignal.abort() : undefined,
       }).catch(() => null);
@@ -7079,13 +7079,13 @@ const server = http.createServer(async (req, res) => {
       })();
       return;
     }
-    if (url.pathname === "/api/crew-lead/history" && req.method === "GET") {
-      const crewLeadPort = process.env.CREW_LEAD_PORT || "5010";
+    if (url.pathname === "/api/iris-lead/history" && req.method === "GET") {
+      const crewLeadPort = process.env.IRIS_LEAD_PORT || "5010";
       const sessionId = url.searchParams.get("sessionId") || "owner";
       const projectId = url.searchParams.get("projectId");
 
       console.log(
-        "[dashboard] /api/crew-lead/history - sessionId:",
+        "[dashboard] /api/iris-lead/history - sessionId:",
         sessionId,
         "projectId:",
         projectId || "(none)",
@@ -7093,13 +7093,13 @@ const server = http.createServer(async (req, res) => {
 
       const token = resolveCrewLeadAuthToken();
 
-      // Build crew-lead URL with both sessionId and projectId
-      let clUrl = `http://127.0.0.1:${crewLeadPort}/api/crew-lead/history?sessionId=${encodeURIComponent(sessionId)}`;
+      // Build iris-lead URL with both sessionId and projectId
+      let clUrl = `http://127.0.0.1:${crewLeadPort}/api/iris-lead/history?sessionId=${encodeURIComponent(sessionId)}`;
       if (projectId) {
         clUrl += `&projectId=${encodeURIComponent(projectId)}`;
       }
 
-      console.log("[dashboard] Forwarding to crew-lead:", clUrl);
+      console.log("[dashboard] Forwarding to iris-lead:", clUrl);
 
       const clRes = await fetch(clUrl, {
         headers: { Authorization: `Bearer ${token}` },
@@ -7107,7 +7107,7 @@ const server = http.createServer(async (req, res) => {
       }).catch(() => null);
       if (!clRes || !clRes.ok) {
         console.log(
-          "[dashboard] crew-lead request failed, status:",
+          "[dashboard] iris-lead request failed, status:",
           clRes?.status || "timeout",
         );
         res.writeHead(200, { "content-type": "application/json" });
@@ -7131,18 +7131,18 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    // Proxy /api/crew-lead/project-messages to crew-lead
+    // Proxy /api/iris-lead/project-messages to iris-lead
     if (
-      url.pathname === "/api/crew-lead/project-messages" &&
+      url.pathname === "/api/iris-lead/project-messages" &&
       req.method === "GET"
     ) {
-      const crewLeadPort = process.env.CREW_LEAD_PORT || "5010";
+      const crewLeadPort = process.env.IRIS_LEAD_PORT || "5010";
       const projectId = url.searchParams.get("projectId");
       const limit = url.searchParams.get("limit") || "100";
       const source = url.searchParams.get("source");
 
       console.log(
-        "[dashboard] /api/crew-lead/project-messages - projectId:",
+        "[dashboard] /api/iris-lead/project-messages - projectId:",
         projectId,
         "limit:",
         limit,
@@ -7156,13 +7156,13 @@ const server = http.createServer(async (req, res) => {
 
       const token = resolveCrewLeadAuthToken();
 
-      // Build crew-lead URL
-      let clUrl = `http://127.0.0.1:${crewLeadPort}/api/crew-lead/project-messages?projectId=${encodeURIComponent(projectId)}&limit=${encodeURIComponent(limit)}`;
+      // Build iris-lead URL
+      let clUrl = `http://127.0.0.1:${crewLeadPort}/api/iris-lead/project-messages?projectId=${encodeURIComponent(projectId)}&limit=${encodeURIComponent(limit)}`;
       if (source) {
         clUrl += `&source=${encodeURIComponent(source)}`;
       }
 
-      console.log("[dashboard] Forwarding to crew-lead:", clUrl);
+      console.log("[dashboard] Forwarding to iris-lead:", clUrl);
 
       const clRes = await fetch(clUrl, {
         headers: { Authorization: `Bearer ${token}` },
@@ -7172,15 +7172,15 @@ const server = http.createServer(async (req, res) => {
       if (!clRes || !clRes.ok) {
         const status = clRes?.status || "timeout";
         console.error(
-          "[dashboard] crew-lead /project-messages failed:",
+          "[dashboard] iris-lead /project-messages failed:",
           status,
-          "- crew-lead may be down",
+          "- iris-lead may be down",
         );
         res.writeHead(503, { "content-type": "application/json" });
         res.end(
           JSON.stringify({
             ok: false,
-            error: `crew-lead unavailable (${status})`,
+            error: `iris-lead unavailable (${status})`,
             messages: [],
           }),
         );
@@ -7206,12 +7206,12 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (
-      url.pathname === "/api/crew-lead/confirm-project" &&
+      url.pathname === "/api/iris-lead/confirm-project" &&
       req.method === "POST"
     ) {
       let body = "";
       for await (const chunk of req) body += chunk;
-      const crewLeadPort = process.env.CREW_LEAD_PORT || "5010";
+      const crewLeadPort = process.env.IRIS_LEAD_PORT || "5010";
       const clRes = await fetch(
         `http://127.0.0.1:${crewLeadPort}/confirm-project`,
         {
@@ -7227,12 +7227,12 @@ const server = http.createServer(async (req, res) => {
       return;
     }
     if (
-      url.pathname === "/api/crew-lead/discard-project" &&
+      url.pathname === "/api/iris-lead/discard-project" &&
       req.method === "POST"
     ) {
       let body = "";
       for await (const chunk of req) body += chunk;
-      const crewLeadPort = process.env.CREW_LEAD_PORT || "5010";
+      const crewLeadPort = process.env.IRIS_LEAD_PORT || "5010";
       await fetch(`http://127.0.0.1:${crewLeadPort}/discard-project`, {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -7334,7 +7334,7 @@ const server = http.createServer(async (req, res) => {
         res.end(JSON.stringify({ error: writeErr.message }));
         return;
       }
-      // Sync to ~/.crewswarm/crewswarm.json
+      // Sync to ~/.iris/iris.json
       try {
         const cs = readCSConfig();
         if (!cs.providers) cs.providers = {};
@@ -7839,7 +7839,7 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === "/api/search-tools" && req.method === "GET") {
       const csTools = path.join(
         os.homedir(),
-        ".crewswarm",
+        ".iris",
         "search-tools.json",
       );
       const ocTools = path.join(os.homedir(), ".openclaw", "search-tools.json");
@@ -7884,7 +7884,7 @@ const server = http.createServer(async (req, res) => {
       const { toolId, key } = JSON.parse(body);
       const csTools = path.join(
         os.homedir(),
-        ".crewswarm",
+        ".iris",
         "search-tools.json",
       );
       const ocTools = path.join(os.homedir(), ".openclaw", "search-tools.json");
@@ -7945,7 +7945,7 @@ const server = http.createServer(async (req, res) => {
       const { toolId } = JSON.parse(body);
       const csTools = path.join(
         os.homedir(),
-        ".crewswarm",
+        ".iris",
         "search-tools.json",
       );
       const ocTools = path.join(os.homedir(), ".openclaw", "search-tools.json");
@@ -8119,32 +8119,32 @@ ORDER BY day DESC, cost DESC;`;
       }
       return;
     }
-    // ── crew-cli cost stats ──────────────────────────────────────────────────
-    if (url.pathname === "/api/crew-cli-stats" && req.method === "GET") {
+    // ── iris-cli cost stats ──────────────────────────────────────────────────
+    if (url.pathname === "/api/iris-cli-stats" && req.method === "GET") {
       const days = Number(url.searchParams.get("days") || "14");
       const cutoff = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
       try {
-        // Scan known project directories for .crew/cost.json files
+        // Scan known project directories for .iris/cost.json files
         const searchDirs = new Set();
         // 1. opencodeProject from config
         try {
-          const cfg = JSON.parse(fs.readFileSync(path.join(os.homedir(), ".crewswarm", "crewswarm.json"), "utf8"));
+          const cfg = JSON.parse(fs.readFileSync(path.join(os.homedir(), ".iris", "iris.json"), "utf8"));
           if (cfg.opencodeProject) searchDirs.add(cfg.opencodeProject.replace(/\/+$/, ""));
         } catch {}
         // 2. Registered projects
         try {
-          const projFile = path.join(os.homedir(), ".crewswarm", "projects.json");
+          const projFile = path.join(os.homedir(), ".iris", "projects.json");
           const projs = JSON.parse(fs.readFileSync(projFile, "utf8"));
           for (const p of (projs.projects || projs || [])) {
             if (p.outputDir) searchDirs.add(p.outputDir.replace(/\/+$/, ""));
           }
         } catch {}
-        // 3. Home .crew dir
+        // 3. Home .iris dir
         searchDirs.add(os.homedir());
 
         const allEntries = [];
         for (const dir of searchDirs) {
-          const costFile = path.join(dir, ".crew", "cost.json");
+          const costFile = path.join(dir, ".iris", "cost.json");
           try {
             const raw = JSON.parse(fs.readFileSync(costFile, "utf8"));
             for (const entry of (raw.entries || [])) {
@@ -8359,7 +8359,7 @@ ORDER BY day DESC, cost DESC;`;
       const nowMs = Date.now();
       const byCanonicalId = new Map();
       rawList.forEach((a) => {
-        const canonicalId = a.id === "orchestrator" ? "crew-orchestrator" : a.id;
+        const canonicalId = a.id === "orchestrator" ? "iris-orchestrator" : a.id;
         const heartbeatKey = normalizeRtAgentId(canonicalId);
         const lastSeen =
           agentHeartbeats.get(canonicalId) ||
@@ -8384,10 +8384,10 @@ ORDER BY day DESC, cost DESC;`;
           theme: a.identity?.theme || "",
           systemPrompt:
             agentPrompts[canonicalId] ||
-            agentPrompts[canonicalId.replace(/^crew-/, "")] ||
+            agentPrompts[canonicalId.replace(/^iris-/, "")] ||
             "",
           toolProfile: a.tools?.profile || "default",
-          alsoAllow: a.tools?.crewswarmAllow || a.tools?.alsoAllow || [],
+          alsoAllow: a.tools?.irisAllow || a.tools?.alsoAllow || [],
           workspace: a.workspace || "",
           useOpenCode: a.useOpenCode,
           opencodeModel: a.opencodeModel || "",
@@ -8411,19 +8411,19 @@ ORDER BY day DESC, cost DESC;`;
           ageSec,
         });
         const prev = byCanonicalId.get(canonicalId);
-        // Prefer the canonical crew-* config if both alias and canonical exist.
+        // Prefer the canonical iris-* config if both alias and canonical exist.
         if (!prev || a.id === canonicalId) byCanonicalId.set(canonicalId, entry);
       });
       const agentList = [...byCanonicalId.values()];
-      // Always show crew-lead in Agents so user can set his model (crew-lead.mjs reads from this config)
-      if (!agentList.some((a) => a.id === "crew-lead")) {
+      // Always show iris-lead in Agents so user can set his model (iris-lead.mjs reads from this config)
+      if (!agentList.some((a) => a.id === "iris-lead")) {
         agentList.push(toIrisAgentView({
-          id: "crew-lead",
+          id: "iris-lead",
           model: "groq/llama-3.3-70b-versatile",
-          name: "Crew Lead",
+          name: "Iris Lead",
           emoji: "🦊",
           theme: "",
-          systemPrompt: agentPrompts["crew-lead"] || "",
+          systemPrompt: agentPrompts["iris-lead"] || "",
           toolProfile: "default",
           alsoAllow: ["dispatch"],
           workspace: "",
@@ -8432,17 +8432,17 @@ ORDER BY day DESC, cost DESC;`;
           ageSec: null,
         }));
       }
-      // Always show crew-orchestrator in Agents — PM loop uses this model
-      // for routing/expanding (or falls back to crew-pm).
-      if (!agentList.some((a) => a.id === "crew-orchestrator")) {
+      // Always show iris-orchestrator in Agents — PM loop uses this model
+      // for routing/expanding (or falls back to iris-pm).
+      if (!agentList.some((a) => a.id === "iris-orchestrator")) {
         agentList.push(toIrisAgentView({
-          id: "crew-orchestrator",
+          id: "iris-orchestrator",
           model: "",
           name: "Orchestrator (PM Loop)",
           emoji: "🧠",
           theme: "",
           systemPrompt:
-            agentPrompts["crew-orchestrator"] ||
+            agentPrompts["iris-orchestrator"] ||
             agentPrompts["orchestrator"] ||
             "",
           toolProfile: "default",
@@ -8531,19 +8531,19 @@ ORDER BY day DESC, cost DESC;`;
       const {
         getMemoryStats,
         getKeeperStats,
-        CREW_MEMORY_DIR,
+        IRIS_MEMORY_DIR,
         isSharedMemoryAvailable,
       } = await import("../lib/memory/shared-adapter.mjs");
 
       try {
-        const agentMemoryStats = isSharedMemoryAvailable() ? getMemoryStats("crew-lead") : null;
+        const agentMemoryStats = isSharedMemoryAvailable() ? getMemoryStats("iris-lead") : null;
         const keeperStats = isSharedMemoryAvailable() ? await getKeeperStats(process.cwd()) : null;
 
         res.end(
           JSON.stringify({
             agentMemory: agentMemoryStats || {},
             agentKeeper: keeperStats || {},
-            storageDir: CREW_MEMORY_DIR,
+            storageDir: IRIS_MEMORY_DIR,
             available: isSharedMemoryAvailable(),
           }),
         );
@@ -8581,7 +8581,7 @@ ORDER BY day DESC, cost DESC;`;
     if (url.pathname === "/api/memory/migrate" && req.method === "POST") {
       const { migrateBrainToMemory } =
         await import("../lib/memory/shared-adapter.mjs");
-      const brainPath = path.join(CREWSWARM_DIR, "memory", "brain.md");
+      const brainPath = path.join(IRIS_DIR, "memory", "brain.md");
 
       if (!await exists(brainPath)) {
         res.statusCode = 404;
@@ -8590,7 +8590,7 @@ ORDER BY day DESC, cost DESC;`;
       }
 
       try {
-        const result = await migrateBrainToMemory(brainPath, "crew-lead");
+        const result = await migrateBrainToMemory(brainPath, "iris-lead");
         res.end(JSON.stringify(result));
       } catch (err) {
         res.statusCode = 500;
@@ -8662,40 +8662,40 @@ ORDER BY day DESC, cost DESC;`;
           ? cfg.agents.list
           : [];
       let agent = list.find((a) => a.id === agentId);
-      if (!agent && agentId === "crew-lead") {
+      if (!agent && agentId === "iris-lead") {
         if (!Array.isArray(cfg.agents))
           cfg.agents =
             cfg.agents?.list != null ? { list: cfg.agents.list } : [];
         const arr = Array.isArray(cfg.agents) ? cfg.agents : cfg.agents.list;
         if (!arr)
           throw new Error(
-            "Cannot determine agents list structure in crewswarm.json",
+            "Cannot determine agents list structure in iris.json",
           );
         agent = {
-          id: "crew-lead",
+          id: "iris-lead",
           model: "groq/llama-3.3-70b-versatile",
-          identity: { name: "Crew Lead", emoji: "🦊" },
+          identity: { name: "Iris Lead", emoji: "🦊" },
           tools: { profile: "default", alsoAllow: ["dispatch"] },
         };
         arr.push(agent);
         list = arr;
       }
       const resolvedAgentId =
-        agentId === "orchestrator" ? "crew-orchestrator" : agentId;
+        agentId === "orchestrator" ? "iris-orchestrator" : agentId;
       if (!agent) {
         agent = list.find((a) => a.id === resolvedAgentId);
       }
-      if (!agent && resolvedAgentId === "crew-orchestrator") {
+      if (!agent && resolvedAgentId === "iris-orchestrator") {
         if (!Array.isArray(cfg.agents))
           cfg.agents =
             cfg.agents?.list != null ? { list: cfg.agents.list } : [];
         const arr = Array.isArray(cfg.agents) ? cfg.agents : cfg.agents.list;
         if (!arr)
           throw new Error(
-            "Cannot determine agents list structure in crewswarm.json",
+            "Cannot determine agents list structure in iris.json",
           );
         agent = {
-          id: "crew-orchestrator",
+          id: "iris-orchestrator",
           model: "",
           identity: { name: "Orchestrator (PM Loop)", emoji: "🧠" },
           tools: { profile: "default", alsoAllow: ["read_file", "dispatch"] },
@@ -8725,9 +8725,9 @@ ORDER BY day DESC, cost DESC;`;
       }
       if (alsoAllow !== undefined) {
         if (!agent.tools) agent.tools = {};
-        agent.tools.crewswarmAllow = alsoAllow;
+        agent.tools.irisAllow = alsoAllow;
         agent.tools.alsoAllow = alsoAllow;
-        agent.tools.profile = "crewswarm";
+        agent.tools.profile = "iris";
       }
       if (useOpenCode !== undefined) agent.useOpenCode = useOpenCode;
       if (opencodeModel !== undefined)
@@ -8763,7 +8763,7 @@ ORDER BY day DESC, cost DESC;`;
       // Create timestamped backup before writing
       const backupPath = path.join(
         CFG_DIR,
-        `crewswarm.json.backup.${Date.now()}`,
+        `iris.json.backup.${Date.now()}`,
       );
       await writeFile(backupPath, await readFile(cfgPath, "utf8"), "utf8");
 
@@ -8772,7 +8772,7 @@ ORDER BY day DESC, cost DESC;`;
       try {
         const files = await readdir(CFG_DIR);
         const backups = files
-          .filter((f) => f.startsWith("crewswarm.json.backup."))
+          .filter((f) => f.startsWith("iris.json.backup."))
           .sort()
           .reverse();
         for (const old of backups.slice(10)) {
@@ -8786,7 +8786,7 @@ ORDER BY day DESC, cost DESC;`;
         res.end(JSON.stringify({ error: writeErr.message }));
         return;
       }
-      // System prompts live in agent-prompts.json, not crewswarm.json
+      // System prompts live in agent-prompts.json, not iris.json
       if (systemPrompt !== undefined) {
         const prompts = JSON.parse(
           await readFile(promptsPath, "utf8").catch(() => "{}"),
@@ -8825,10 +8825,10 @@ ORDER BY day DESC, cost DESC;`;
       } = vr.data;
       const rawId = String(id || "");
       const normalizedId =
-        rawId && !rawId.startsWith("crew-")
+        rawId && !rawId.startsWith("iris-")
           ? rawId === "orchestrator"
-            ? "crew-orchestrator"
-            : `crew-${rawId}`
+            ? "iris-orchestrator"
+            : `iris-${rawId}`
           : rawId;
       if (!normalizedId || !model) throw new Error("id and model required");
       const cfgPath = CFG_FILE;
@@ -8841,21 +8841,21 @@ ORDER BY day DESC, cost DESC;`;
           : null;
       if (!list)
         throw new Error(
-          "Cannot determine agents list structure in crewswarm.json",
+          "Cannot determine agents list structure in iris.json",
         );
       if (list.find((a) => a.id === normalizedId))
         throw new Error("Agent ID already exists: " + normalizedId);
       const defaultWorkspace = list[0]?.workspace || process.cwd();
       // Role-based tool defaults used when no explicit alsoAllow provided
       const ROLE_DEFAULTS = {
-        "crew-qa": ["read_file"],
-        "crew-github": ["read_file", "run_cmd", "git"],
-        "crew-pm": ["read_file", "dispatch"],
-        "crew-lead": ["dispatch"],
-        "crew-telegram": ["telegram", "read_file"],
-        "crew-security": ["read_file", "run_cmd"],
-        "crew-copywriter": ["write_file", "read_file"],
-        "crew-main": ["read_file", "write_file", "run_cmd", "dispatch"],
+        "iris-qa": ["read_file"],
+        "iris-github": ["read_file", "run_cmd", "git"],
+        "iris-pm": ["read_file", "dispatch"],
+        "iris-lead": ["dispatch"],
+        "iris-telegram": ["telegram", "read_file"],
+        "iris-security": ["read_file", "run_cmd"],
+        "iris-copywriter": ["write_file", "read_file"],
+        "iris-main": ["read_file", "write_file", "run_cmd", "dispatch"],
       };
       const defaultTools = reqAlsoAllow?.length
         ? reqAlsoAllow
@@ -8873,7 +8873,7 @@ ORDER BY day DESC, cost DESC;`;
           emoji: emoji || "🤖",
           theme: theme || "",
         },
-        tools: { profile: "crewswarm", alsoAllow: defaultTools },
+        tools: { profile: "iris", alsoAllow: defaultTools },
         workspace: defaultWorkspace,
       });
       const writeErr = await safeWriteConfig(cfg);
@@ -8887,7 +8887,7 @@ ORDER BY day DESC, cost DESC;`;
         systemPrompt ||
         "You are " +
         (name || normalizedId) +
-        ". You are a coding specialist in the crewswarm crew. Always read files before editing. Never replace entire files — only patch.";
+        ". You are a coding specialist in the iris iris. Always read files before editing. Never replace entire files — only patch.";
       const prompts = JSON.parse(
         await readFile(promptsPath, "utf8").catch(() => "{}"),
       );
@@ -8986,12 +8986,12 @@ ORDER BY day DESC, cost DESC;`;
       }
       const { agentId } = vr.data;
       const { execFile } = await import("node:child_process");
-      const bridgePath = path.join(CREWSWARM_DIR, "gateway-bridge.mjs");
+      const bridgePath = path.join(IRIS_DIR, "gateway-bridge.mjs");
       // 1. Reset the agent session via gateway-bridge --reset-session
       execFile(
         "node",
         [bridgePath, "--reset-session", agentId],
-        { cwd: CREWSWARM_DIR, timeout: 15000 },
+        { cwd: IRIS_DIR, timeout: 15000 },
         () => { },
       );
       // 2. After reset, re-inject shared memory as first message so agent has context
@@ -9006,7 +9006,7 @@ ORDER BY day DESC, cost DESC;`;
             agentId +
             ". Read memory/current-state.md and memory/agent-handoff.md to restore context. Confirm with a one-line status.",
           ],
-          { cwd: CREWSWARM_DIR, timeout: 15000 },
+          { cwd: IRIS_DIR, timeout: 15000 },
           () => { },
         );
       }, 2000);
@@ -9015,17 +9015,17 @@ ORDER BY day DESC, cost DESC;`;
       return;
     }
 
-    if (url.pathname === "/api/crew/start" && req.method === "POST") {
+    if (url.pathname === "/api/iris/start" && req.method === "POST") {
       const { spawn: spawnProc } = await import("node:child_process");
-      const crewScript = path.join(CREWSWARM_DIR, "scripts", "start-crew.mjs");
+      const crewScript = path.join(IRIS_DIR, "scripts", "start-iris.mjs");
       if (!(await exists(crewScript)))
         throw new Error(
-          "start-crew.mjs not found — is the dashboard running from the crewswarm repo?",
+          "start-iris.mjs not found — is the dashboard running from the iris repo?",
         );
       const result = await new Promise((resolve, reject) => {
         const proc = spawnProc("node", [crewScript, "--force"], {
-          cwd: CREWSWARM_DIR,
-          env: { ...process.env, CREWSWARM_DIR },
+          cwd: IRIS_DIR,
+          env: { ...process.env, IRIS_DIR },
           stdio: ["ignore", "pipe", "pipe"],
         });
         let out = "";
@@ -9132,11 +9132,11 @@ ORDER BY day DESC, cost DESC;`;
     }
 
     // ── Agent Prompts API ─────────────────────────────────────────────────────
-    // GET /api/prompts — read all agent prompts from ~/.crewswarm/agent-prompts.json
+    // GET /api/prompts — read all agent prompts from ~/.iris/agent-prompts.json
     if (url.pathname === "/api/prompts" && req.method === "GET") {
       const promptsFile = path.join(
         os.homedir(),
-        ".crewswarm",
+        ".iris",
         "agent-prompts.json",
       );
       try {
@@ -9156,8 +9156,8 @@ ORDER BY day DESC, cost DESC;`;
         } catch { }
 
         const shouldCanonicalize = (key, allKeys) => {
-          if (!key || key.startsWith("crew-")) return false;
-          const candidate = `crew-${key}`;
+          if (!key || key.startsWith("iris-")) return false;
+          const candidate = `iris-${key}`;
           return allKeys.has(candidate) || agents.includes(candidate);
         };
 
@@ -9166,7 +9166,7 @@ ORDER BY day DESC, cost DESC;`;
         const prompts = {};
         for (const key of keys) {
           const canonical = shouldCanonicalize(key, keySet)
-            ? `crew-${key}`
+            ? `iris-${key}`
             : key;
           const next = promptsRaw[key];
           const prev = prompts[canonical];
@@ -9187,7 +9187,7 @@ ORDER BY day DESC, cost DESC;`;
     }
 
     // POST /api/prompts — update a single agent's prompt
-    // Body: { agent: "crew-coder", prompt: "You are..." }
+    // Body: { agent: "iris-coder", prompt: "You are..." }
     if (url.pathname === "/api/prompts" && req.method === "POST") {
       let body = "";
       for await (const chunk of req) body += chunk;
@@ -9203,7 +9203,7 @@ ORDER BY day DESC, cost DESC;`;
 
       const promptsFile = path.join(
         os.homedir(),
-        ".crewswarm",
+        ".iris",
         "agent-prompts.json",
       );
       try {
@@ -9228,7 +9228,7 @@ ORDER BY day DESC, cost DESC;`;
         // Update canonical key and remove obvious legacy alias
         prompts[canonicalAgent] = prompt;
         if (
-          canonicalAgent.startsWith("crew-") &&
+          canonicalAgent.startsWith("iris-") &&
           prompts[canonicalAgent.slice(5)] !== undefined
         ) {
           delete prompts[canonicalAgent.slice(5)];
@@ -9342,18 +9342,18 @@ ORDER BY day DESC, cost DESC;`;
     // ── Telegram Bridge API ────────────────────────────────────────────────────
     const TG_CONFIG_PATH = path.join(
       os.homedir(),
-      ".crewswarm",
+      ".iris",
       "telegram-bridge.json",
     );
     const TG_PID_PATH = path.join(
       os.homedir(),
-      ".crewswarm",
+      ".iris",
       "logs",
       "telegram-bridge.pid",
     );
     const TG_MSG_PATH = path.join(
       os.homedir(),
-      ".crewswarm",
+      ".iris",
       "logs",
       "telegram-messages.jsonl",
     );
@@ -9391,7 +9391,7 @@ ORDER BY day DESC, cost DESC;`;
       res.end(
         JSON.stringify({
           token: cfg.token || "",
-          targetAgent: cfg.targetAgent || "crew-main",
+          targetAgent: cfg.targetAgent || "iris-main",
           allowedChatIds: cfg.allowedChatIds || [],
           contactNames: cfg.contactNames || {},
           userRouting: cfg.userRouting || {},
@@ -9436,11 +9436,11 @@ ORDER BY day DESC, cost DESC;`;
         return;
       }
       const { spawn: spawnBridge } = await import("node:child_process");
-      const bridgePath = path.join(CREWSWARM_DIR, "telegram-bridge.mjs");
+      const bridgePath = path.join(IRIS_DIR, "telegram-bridge.mjs");
       const env = {
         ...process.env,
         TELEGRAM_BOT_TOKEN: cfg.token,
-        TELEGRAM_TARGET_AGENT: cfg.targetAgent || "crew-main",
+        TELEGRAM_TARGET_AGENT: cfg.targetAgent || "iris-main",
       };
       const proc = spawnBridge("node", [bridgePath], {
         env,
@@ -9491,7 +9491,7 @@ ORDER BY day DESC, cost DESC;`;
       try {
         const TG_LOG_PATH = path.join(
           os.homedir(),
-          ".crewswarm",
+          ".iris",
           "logs",
           "telegram-bridge.jsonl",
         );
@@ -9530,22 +9530,22 @@ ORDER BY day DESC, cost DESC;`;
     // ── WhatsApp API ──────────────────────────────────────────────────────────
     const WA_CONFIG_PATH = path.join(
       os.homedir(),
-      ".crewswarm",
+      ".iris",
       "whatsapp-bridge.json",
     );
     const WA_PID_PATH = path.join(
       os.homedir(),
-      ".crewswarm",
+      ".iris",
       "logs",
       "whatsapp-bridge.pid",
     );
     const WA_MSG_PATH = path.join(
       os.homedir(),
-      ".crewswarm",
+      ".iris",
       "logs",
       "whatsapp-messages.jsonl",
     );
-    const WA_AUTH_DIR = path.join(os.homedir(), ".crewswarm", "whatsapp-auth");
+    const WA_AUTH_DIR = path.join(os.homedir(), ".iris", "whatsapp-auth");
 
     async function loadWaCfg() {
       try {
@@ -9589,7 +9589,7 @@ ORDER BY day DESC, cost DESC;`;
       res.end(
         JSON.stringify({
           allowedNumbers: cfg.allowedNumbers || [],
-          targetAgent: cfg.targetAgent || "crew-lead",
+          targetAgent: cfg.targetAgent || "iris-lead",
           contactNames: cfg.contactNames || {},
           userRouting: cfg.userRouting || {},
         }),
@@ -9606,12 +9606,12 @@ ORDER BY day DESC, cost DESC;`;
         WA_CONFIG_PATH,
         JSON.stringify({ ...existing, ...body }, null, 2),
       );
-      // Also write WA_ALLOWED_NUMBERS into crewswarm.json env block so the bridge picks it up
+      // Also write WA_ALLOWED_NUMBERS into iris.json env block so the bridge picks it up
       try {
         const swarmPath = path.join(
           os.homedir(),
-          ".crewswarm",
-          "crewswarm.json",
+          ".iris",
+          "iris.json",
         );
         const swarm = JSON.parse(await fs.promises.readFile(swarmPath, "utf8"));
         swarm.env = swarm.env || {};
@@ -9637,14 +9637,14 @@ ORDER BY day DESC, cost DESC;`;
       try {
         swarm = JSON.parse(
           await fs.promises.readFile(
-            path.join(os.homedir(), ".crewswarm", "crewswarm.json"),
+            path.join(os.homedir(), ".iris", "iris.json"),
             "utf8",
           ),
         );
       } catch { }
       const waEnv = swarm.env || {};
       const { spawn: spawnBridge } = await import("node:child_process");
-      const bridgePath = path.join(CREWSWARM_DIR, "whatsapp-bridge.mjs");
+      const bridgePath = path.join(IRIS_DIR, "whatsapp-bridge.mjs");
       const waLogPath = path.join("/tmp", "whatsapp-bridge.log");
       const env = {
         ...process.env,
@@ -9659,7 +9659,7 @@ ORDER BY day DESC, cost DESC;`;
         env,
         detached: true,
         stdio: ["ignore", fs.openSync(waLogPath, "a"), fs.openSync(waLogPath, "a")],
-        cwd: CREWSWARM_DIR,
+        cwd: IRIS_DIR,
       });
       proc.unref();
       await new Promise((r) => setTimeout(r, 1500));
@@ -9846,7 +9846,7 @@ ORDER BY day DESC, cost DESC;`;
           if (tgChatId) {
             const TG_CONFIG_PATH = path.join(
               os.homedir(),
-              ".crewswarm",
+              ".iris",
               "telegram-bridge.json",
             );
             const tgCfg = JSON.parse(await fs.promises.readFile(TG_CONFIG_PATH, "utf8"));
@@ -9991,13 +9991,13 @@ ORDER BY day DESC, cost DESC;`;
           return false;
         }
 
-        const crewLeadPort = Number(process.env.CREW_LEAD_PORT || 5010);
+        const crewLeadPort = Number(process.env.IRIS_LEAD_PORT || 5010);
         const tgPid = await pidRunning(
-          path.join(os.homedir(), ".crewswarm", "logs", "telegram-bridge.pid"),
+          path.join(os.homedir(), ".iris", "logs", "telegram-bridge.pid"),
         );
         const waPid =
           (await pidRunning(
-            path.join(os.homedir(), ".crewswarm", "logs", "whatsapp-bridge.pid"),
+            path.join(os.homedir(), ".iris", "logs", "whatsapp-bridge.pid"),
           )) || findPid("whatsapp-bridge\\.mjs");
 
         // Fire network checks in parallel — all process lookups are instant (ps snapshot)
@@ -10018,8 +10018,8 @@ ORDER BY day DESC, cost DESC;`;
         ]);
 
         // All PID lookups are instant — pure JS regex against ps snapshot
-        const rtPid = findPid("opencrew-rt-daemon");
-        const crewLeadPid = findPid("crew-lead\\.mjs");
+        const rtPid = findPid("openiris-rt-daemon");
+        const crewLeadPid = findPid("iris-lead\\.mjs");
         const gwPid = findPid("openclaw-gateway");
         const ocPid = findPid("\\.opencode serve") || findPid("opencode serve") || findPid("bin/\\.opencode");
         const mcpPid = findPid("mcp-server\\.mjs");
@@ -10034,9 +10034,9 @@ ORDER BY day DESC, cost DESC;`;
           [path.join(os.homedir(), ".local", "bin", "agent")],
         )) || (await commandExistsFast("agent", [path.join(os.homedir(), ".local", "bin", "agent")]));
         const geminiInstalled = await commandExistsFast(process.env.GEMINI_CLI_BIN || "gemini");
-        const crewCliInstalled = (await commandExistsFast("crew", [
-          path.join(CREWSWARM_DIR, "crew-cli", "dist", "index.js"),
-        ])) || (await exists(path.join(CREWSWARM_DIR, "crew-cli", "dist", "index.js")));
+        const crewCliInstalled = (await commandExistsFast("iris", [
+          path.join(IRIS_DIR, "iris-cli", "dist", "index.js"),
+        ])) || (await exists(path.join(IRIS_DIR, "iris-cli", "dist", "index.js")));
         const oclawPaired =
           (await exists(
             path.join(os.homedir(), ".openclaw", "devices", "paired.json"),
@@ -10048,27 +10048,27 @@ ORDER BY day DESC, cost DESC;`;
         try {
           swarmCfg = JSON.parse(
             await fs.promises.readFile(
-              path.join(os.homedir(), ".crewswarm", "crewswarm.json"),
+              path.join(os.homedir(), ".iris", "iris.json"),
               "utf8",
             ),
           );
         } catch {}
         const cfgEnv = swarmCfg?.env || {};
         const codexEnabled =
-          swarmCfg.codex === true || process.env.CREWSWARM_CODEX === "1";
+          swarmCfg.codex === true || process.env.IRIS_CODEX === "1";
         const claudeEnabled = swarmCfg.claudeCode === true;
         const cursorEnabled = swarmCfg.cursorWaves === true;
         const geminiEnabled =
           swarmCfg.geminiCli === true ||
-          process.env.CREWSWARM_GEMINI_CLI_ENABLED === "1";
+          process.env.IRIS_GEMINI_CLI_ENABLED === "1";
         const crewCliEnabled =
           swarmCfg.crewCli === true ||
-          process.env.CREWSWARM_CREW_CLI_ENABLED === "1";
+          process.env.IRIS_CREW_CLI_ENABLED === "1";
         const opencodeEnabled =
-          cfgEnv.CREWSWARM_OPENCODE_ENABLED === "on" ||
-          cfgEnv.CREWSWARM_OPENCODE_ENABLED === "1" ||
-          process.env.CREWSWARM_OPENCODE_ENABLED === "on" ||
-          process.env.CREWSWARM_OPENCODE_ENABLED === "1";
+          cfgEnv.IRIS_OPENCODE_ENABLED === "on" ||
+          cfgEnv.IRIS_OPENCODE_ENABLED === "1" ||
+          process.env.IRIS_OPENCODE_ENABLED === "on" ||
+          process.env.IRIS_OPENCODE_ENABLED === "1";
 
         // Agent count: ask RT bus which agents are actually connected (most reliable source)
         let agentsOnline = 0;
@@ -10079,7 +10079,7 @@ ORDER BY day DESC, cost DESC;`;
           const rtStatus = await rtStatusRes.json();
           const raw = (rtStatus.agents || []).filter(Boolean);
           rtAgentList = raw.filter(
-            (a) => String(a).toLowerCase() !== "crew-lead",
+            (a) => String(a).toLowerCase() !== "iris-lead",
           );
           agentsOnline = rtAgentList.length;
           agentPids = findAllPids("gateway-bridge\\.mjs --rt-daemon");
@@ -10090,14 +10090,14 @@ ORDER BY day DESC, cost DESC;`;
           try {
             rtAgentList = (swarmCfg.agents || [])
               .map((a) => a.id)
-              .filter((id) => id && String(id).toLowerCase() !== "crew-lead");
+              .filter((id) => id && String(id).toLowerCase() !== "iris-lead");
           } catch { }
         }
-        // Total: count configured agents (minus crew-lead); never show X/Y with X > Y
+        // Total: count configured agents (minus iris-lead); never show X/Y with X > Y
         let agentsTotal = 0;
         try {
           agentsTotal = (swarmCfg.agents || []).filter(
-            (a) => a.id && String(a.id).toLowerCase() !== "crew-lead",
+            (a) => a.id && String(a.id).toLowerCase() !== "iris-lead",
           ).length;
         } catch { }
         if (agentsTotal === 0) agentsTotal = 14;
@@ -10108,7 +10108,7 @@ ORDER BY day DESC, cost DESC;`;
           {
             id: "rt-bus",
             label: "RT Message Bus",
-            description: "opencrew-rt-daemon — agent communication backbone",
+            description: "openiris-rt-daemon — agent communication backbone",
             port: 18889,
             running: rtUp,
             canRestart: true,
@@ -10130,9 +10130,9 @@ ORDER BY day DESC, cost DESC;`;
                 : agentPids[0] || null,
           },
           {
-            id: "crew-lead",
-            label: "crew-lead",
-            description: "Chat commander — dashboard chat, crewchat, Telegram",
+            id: "iris-lead",
+            label: "iris-lead",
+            description: "Chat commander — dashboard chat, irischat, Telegram",
             port: crewLeadPort,
             running: crewLeadUp,
             canRestart: true,
@@ -10141,7 +10141,7 @@ ORDER BY day DESC, cost DESC;`;
           {
             id: "telegram",
             label: "Telegram Bridge",
-            description: "@crewswarm_bot → crew-main",
+            description: "@iris_bot → iris-main",
             port: null,
             running: tgPid !== null,
             canRestart: true,
@@ -10227,11 +10227,11 @@ ORDER BY day DESC, cost DESC;`;
               : "● missing",
           },
           {
-            id: "cli-crew",
-            label: "crew-cli Runtime",
+            id: "cli-iris",
+            label: "iris-cli Runtime",
             description: crewCliInstalled
-              ? `Per-task crew-cli runner${crewCliEnabled ? " — globally enabled" : ""}`
-              : "crew-cli build/binary not found",
+              ? `Per-task iris-cli runner${crewCliEnabled ? " — globally enabled" : ""}`
+              : "iris-cli build/binary not found",
             port: null,
             running: crewCliInstalled,
             canRestart: false,
@@ -10263,7 +10263,7 @@ ORDER BY day DESC, cost DESC;`;
             id: "studio",
             label: "Vibe UI",
             description: studioUp
-              ? "Monaco editor + agent chat — Cursor-like IDE for crewswarm"
+              ? "Monaco editor + agent chat — Cursor-like IDE for iris"
               : "Run: npm run vibe:start (port 3333)",
             port: 3333,
             running: studioUp,
@@ -10290,7 +10290,7 @@ ORDER BY day DESC, cost DESC;`;
               ? oclawPaired
                 ? "App paired ✓ — legacy plugin communicating via port 18789"
                 : "Listening on port 18789 — legacy only"
-              : "Optional legacy service (port 18789). Only needed if using the OpenClaw desktop app. crewswarm works fully without it.",
+              : "Optional legacy service (port 18789). Only needed if using the OpenClaw desktop app. iris works fully without it.",
             port: 18789,
             running: gwUp,
             optional: true,
@@ -10329,7 +10329,7 @@ ORDER BY day DESC, cost DESC;`;
           {
             id: "rt-bus",
             label: "RT Message Bus",
-            description: "opencrew-rt-daemon",
+            description: "openiris-rt-daemon",
             port: 18889,
             running: false,
             canRestart: true,
@@ -10345,8 +10345,8 @@ ORDER BY day DESC, cost DESC;`;
             pid: null,
           },
           {
-            id: "crew-lead",
-            label: "crew-lead",
+            id: "iris-lead",
+            label: "iris-lead",
             description: "Chat commander",
             port: 5010,
             running: false,
@@ -10356,7 +10356,7 @@ ORDER BY day DESC, cost DESC;`;
           {
             id: "telegram",
             label: "Telegram Bridge",
-            description: "@crewswarm_bot",
+            description: "@iris_bot",
             port: null,
             running: false,
             canRestart: true,
@@ -10413,9 +10413,9 @@ ORDER BY day DESC, cost DESC;`;
             statusText: "● unknown",
           },
           {
-            id: "cli-crew",
-            label: "crew-cli Runtime",
-            description: "Per-task crew-cli runner",
+            id: "cli-iris",
+            label: "iris-cli Runtime",
+            description: "Per-task iris-cli runner",
             port: null,
             running: false,
             canRestart: false,
@@ -10484,12 +10484,12 @@ ORDER BY day DESC, cost DESC;`;
 
       try {
         const restartScript = path.join(
-          CREWSWARM_DIR,
+          IRIS_DIR,
           "scripts",
           "restart-service.sh",
         );
         const output = execFileSync("bash", [restartScript, id], {
-          cwd: CREWSWARM_DIR,
+          cwd: IRIS_DIR,
           env: process.env,
           encoding: "utf8",
           timeout: 30000,
@@ -10527,7 +10527,7 @@ ORDER BY day DESC, cost DESC;`;
             (await fs.promises.readFile(
               path.join(
                 os.homedir(),
-                ".crewswarm",
+                ".iris",
                 "logs",
                 "telegram-bridge.pid",
               ),
@@ -10543,7 +10543,7 @@ ORDER BY day DESC, cost DESC;`;
             (await fs.promises.readFile(
               path.join(
                 os.homedir(),
-                ".crewswarm",
+                ".iris",
                 "logs",
                 "whatsapp-bridge.pid",
               ),
@@ -10553,13 +10553,13 @@ ORDER BY day DESC, cost DESC;`;
           );
           if (pid) process.kill(pid, "SIGTERM");
         } catch { }
-      } else if (id === "crew-lead") {
+      } else if (id === "iris-lead") {
         // Use PID file for reliable killing (prevents collateral dashboard deaths)
         const pidFile = path.join(
           os.homedir(),
-          ".crewswarm",
+          ".iris",
           "logs",
-          "crew-lead.pid",
+          "iris-lead.pid",
         );
         let killed = false;
 
@@ -10573,7 +10573,7 @@ ORDER BY day DESC, cost DESC;`;
                 await new Promise((r) => setTimeout(r, 500));
                 killed = true;
                 console.log(
-                  `[dashboard] Stopped crew-lead via PID file (pid ${pid})`,
+                  `[dashboard] Stopped iris-lead via PID file (pid ${pid})`,
                 );
               } catch (e) {
                 // Process doesn't exist, clean up stale PID file
@@ -10589,20 +10589,20 @@ ORDER BY day DESC, cost DESC;`;
         if (!killed) {
           try {
             execSync(
-              `pgrep -f "^node.*crew-lead\\.mjs$" | xargs kill -9 2>/dev/null`,
+              `pgrep -f "^node.*iris-lead\\.mjs$" | xargs kill -9 2>/dev/null`,
               { stdio: "ignore", shell: true },
             );
             console.log(
-              `[dashboard] Stopped crew-lead via pattern match (fallback)`,
+              `[dashboard] Stopped iris-lead via pattern match (fallback)`,
             );
           } catch { }
         }
 
-        // NOTE: We do NOT kill by port here - that can kill dashboard's connection to crew-lead
+        // NOTE: We do NOT kill by port here - that can kill dashboard's connection to iris-lead
         // and cause dashboard to crash. PID file method is reliable enough.
       } else if (id === "rt-bus") {
         try {
-          execSync(`pkill -f "opencrew-rt-daemon"`, { stdio: "ignore" });
+          execSync(`pkill -f "openiris-rt-daemon"`, { stdio: "ignore" });
         } catch { }
       } else if (id === "openclaw-gateway") {
         try {
@@ -10674,10 +10674,10 @@ ORDER BY day DESC, cost DESC;`;
       return;
     }
 
-    // ── Skills + Spending proxy → crew-lead:5010 ──────────────────────────────
-    // These routes read the auth token and proxy to the crew-lead HTTP API so
+    // ── Skills + Spending proxy → iris-lead:5010 ──────────────────────────────
+    // These routes read the auth token and proxy to the iris-lead HTTP API so
     // the browser doesn't need to know the token.
-    const CREW_LEAD_URL = "http://127.0.0.1:5010";
+    const IRIS_LEAD_URL = "http://127.0.0.1:5010";
     function getCLToken() {
       return resolveCrewLeadAuthToken();
     }
@@ -10693,17 +10693,17 @@ ORDER BY day DESC, cost DESC;`;
       };
       if (body) opts.body = body;
       try {
-        const r = await fetch(CREW_LEAD_URL + path_, opts);
+        const r = await fetch(IRIS_LEAD_URL + path_, opts);
         const text = await r.text();
         return { status: r.status, body: text };
       } catch (err) {
-        // crew-lead is down or unreachable - return 503 instead of crashing
+        // iris-lead is down or unreachable - return 503 instead of crashing
         return {
           status: 503,
           body: JSON.stringify({
-            error: "crew-lead unreachable",
+            error: "iris-lead unreachable",
             detail: String(err?.message || err),
-            hint: "Start crew-lead: npm run restart-all",
+            hint: "Start iris-lead: npm run restart-all",
           }),
         };
       }
@@ -10932,7 +10932,7 @@ ORDER BY day DESC, cost DESC;`;
           "..",
           "engines",
         );
-        const userDir = path.join(os.homedir(), ".crewswarm", "engines");
+        const userDir = path.join(os.homedir(), ".iris", "engines");
         const enginesMap = {};
         for (const dir of [bundledDir, userDir]) {
           if (!await exists(dir)) continue;
@@ -10950,7 +10950,7 @@ ORDER BY day DESC, cost DESC;`;
           }
         }
         // Load env vars to check enabled status
-        const configPath = path.join(os.homedir(), ".crewswarm", "crewswarm.json");
+        const configPath = path.join(os.homedir(), ".iris", "iris.json");
         let envVars = {};
         try {
           const cfg = JSON.parse(await fs.promises.readFile(configPath, "utf8"));
@@ -11013,7 +11013,7 @@ ORDER BY day DESC, cost DESC;`;
         const eng = await resp.json();
         if (!eng.id || !eng.label)
           throw new Error("Engine descriptor must have id and label");
-        const engDir = path.join(os.homedir(), ".crewswarm", "engines");
+        const engDir = path.join(os.homedir(), ".iris", "engines");
         if (!await exists(engDir)) await fs.promises.mkdir(engDir, { recursive: true });
         const outPath = path.join(engDir, `${eng.id}.json`);
         if (!outPath.startsWith(engDir)) throw new Error("Invalid engine id");
@@ -11035,7 +11035,7 @@ ORDER BY day DESC, cost DESC;`;
         if (!engineId) throw new Error("engineId required");
 
         const bundledDir = path.join(path.dirname(new URL(import.meta.url).pathname), "..", "engines");
-        const userDir = path.join(os.homedir(), ".crewswarm", "engines");
+        const userDir = path.join(os.homedir(), ".iris", "engines");
 
         let engineDef = null;
         for (const dir of [bundledDir, userDir]) {
@@ -11051,7 +11051,7 @@ ORDER BY day DESC, cost DESC;`;
         }
 
         const envVarName = engineDef.envToggle;
-        const configPath = path.join(os.homedir(), ".crewswarm", "crewswarm.json");
+        const configPath = path.join(os.homedir(), ".iris", "iris.json");
         const cfg = JSON.parse(await fs.promises.readFile(configPath, "utf8"));
 
         if (!cfg.env) cfg.env = {};
@@ -11070,7 +11070,7 @@ ORDER BY day DESC, cost DESC;`;
 
     if (url.pathname.startsWith("/api/engines/") && req.method === "DELETE") {
       const id = url.pathname.split("/").pop();
-      const engDir = path.join(os.homedir(), ".crewswarm", "engines");
+      const engDir = path.join(os.homedir(), ".iris", "engines");
       const target = path.join(engDir, `${id}.json`);
       if (!target.startsWith(engDir)) {
         res.writeHead(400);
@@ -11228,10 +11228,10 @@ ORDER BY day DESC, cost DESC;`;
         delete skill._importedName;
         delete skill.name;
 
-        // Save to ~/.crewswarm/skills/<name>.json
+        // Save to ~/.iris/skills/<name>.json
         const skillsDir = path.join(
           process.env.HOME || "/tmp",
-          ".crewswarm",
+          ".iris",
           "skills",
         );
         if (!await exists(skillsDir))
@@ -11328,7 +11328,7 @@ if (process.argv.includes("--print-html")) {
   });
   server.listen(listenPort, listenHost, () => {
     console.log(
-      `crewswarm Dashboard (with Build) at http://${listenHost}:${listenPort}`,
+      `iris Dashboard (with Build) at http://${listenHost}:${listenPort}`,
     );
   });
 }

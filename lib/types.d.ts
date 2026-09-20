@@ -1,12 +1,12 @@
 /**
- * Core type definitions for CrewSwarm Orchestration.
+ * Core type definitions for Iris Orchestration.
  * Includes data structures representing waves, RT envelopes, and task objects.
  */
 
 /**
  * Represents a single task assignment in a pipeline wave.
  * @typedef {Object} TaskAssignment
- * @property {string} agent - The ID of the agent assigned to the task (e.g., 'crew-coder').
+ * @property {string} agent - The ID of the agent assigned to the task (e.g., 'iris-coder').
  * @property {string} task - The natural language instruction for the agent.
  */
 

@@ -1,7 +1,7 @@
 /**
  * Integration tests for LLM direct calls.
- * Tests lib/crew-lead/llm-caller.mjs (callLLM, _callLLMOnce) — the importable LLM logic
- * used by crew-lead. callLLMDirect in lib/engines/llm-direct.mjs has similar behavior
+ * Tests lib/iris-lead/llm-caller.mjs (callLLM, _callLLMOnce) — the importable LLM logic
+ * used by iris-lead. callLLMDirect in lib/engines/llm-direct.mjs has similar behavior
  * but requires gateway-bridge deps; llm-caller is the canonical testable implementation.
  *
  * Mocks fetch to avoid real API calls.
@@ -15,7 +15,7 @@ import {
   initLlmCaller,
   callLLM,
   _callLLMOnce,
-} from "../../lib/crew-lead/llm-caller.mjs";
+} from "../../lib/iris-lead/llm-caller.mjs";
 
 const origFetch = globalThis.fetch;
 let fetchCalls = [];
@@ -236,7 +236,7 @@ describe("Token tracking", () => {
   after(restoreFetch);
 
   test("_callLLMOnce records usage when response includes usage", async () => {
-    const tokenUsagePath = path.join(os.homedir(), ".crewswarm", "token-usage.json");
+    const tokenUsagePath = path.join(os.homedir(), ".iris", "token-usage.json");
     let beforeCalls = 0;
     try {
       beforeCalls = JSON.parse(fs.readFileSync(tokenUsagePath, "utf8")).calls || 0;

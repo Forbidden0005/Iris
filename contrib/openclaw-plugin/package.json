@@ -1,19 +1,19 @@
 {
-  "name": "crewswarm-openclaw-plugin",
+  "name": "iris-openclaw-plugin",
   "version": "1.0.0",
-  "description": "OpenClaw plugin — dispatch tasks to a local CrewSwarm multi-agent crew",
-  "keywords": ["openclaw", "crewswarm", "multi-agent", "ai", "orchestration"],
-  "homepage": "https://github.com/CrewSwarm/CrewSwarm",
-  "bugs": "https://github.com/CrewSwarm/CrewSwarm/issues",
+  "description": "OpenClaw plugin — dispatch tasks to a local Iris multi-agent iris",
+  "keywords": ["openclaw", "iris", "multi-agent", "ai", "orchestration"],
+  "homepage": "https://github.com/Iris/Iris",
+  "bugs": "https://github.com/Iris/Iris/issues",
   "repository": {
     "type": "git",
-    "url": "https://github.com/CrewSwarm/CrewSwarm.git",
+    "url": "https://github.com/Iris/Iris.git",
     "directory": "contrib/openclaw-plugin"
   },
   "license": "MIT",
   "openclaw": {
     "extensions": ["./index.ts"],
-    "skills": ["./skills/crewswarm"]
+    "skills": ["./skills/iris"]
   },
   "files": [
     "index.ts",

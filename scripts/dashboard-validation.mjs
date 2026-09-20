@@ -22,7 +22,7 @@ export const UpdateAgentConfigSchema = z.object({
   name: z.string().max(100).optional(),
   emoji: z.string().max(10).optional(),
   theme: z.string().max(200).optional(),
-  toolProfile: z.enum(['crewswarm', 'basic', 'custom']).optional(),
+  toolProfile: z.enum(['iris', 'basic', 'custom']).optional(),
   alsoAllow: z.array(z.string()).optional(),
   useOpenCode: z.boolean().optional(),
   opencodeModel: z.string().optional(),
@@ -91,7 +91,7 @@ export const StartBuildSchema = z.object({
 export const EnhancePromptSchema = z.object({
   text: z.string().min(1).max(10000),
   projectId: ProjectIdSchema.optional(),
-  engine: z.enum(['claude', 'codex', 'cursor', 'gemini', 'gemini-cli', 'opencode', 'crew-cli']).optional(),
+  engine: z.enum(['claude', 'codex', 'cursor', 'gemini', 'gemini-cli', 'opencode', 'iris-cli']).optional(),
   model: z.string().max(200).optional(),
 });
 
@@ -149,7 +149,7 @@ export const ServiceActionSchema = z.object({
   id: z.enum([
     'rt-bus',
     'agents',
-    'crew-lead',
+    'iris-lead',
     'telegram',
     'whatsapp',
     'opencode',

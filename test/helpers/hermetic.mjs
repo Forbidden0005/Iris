@@ -1,6 +1,6 @@
 /**
  * Test helper for hermetic testing.
- * Sets CREWSWARM_TEST_MODE=true to isolate tests from real ~/.crewswarm state.
+ * Sets IRIS_TEST_MODE=true to isolate tests from real ~/.iris state.
  * 
  * Usage:
  *   import { setupHermeticTest } from "../../test/helpers/hermetic.mjs";
@@ -12,13 +12,13 @@ import { randomBytes } from "crypto";
 
 /**
  * Enable hermetic test mode.
- * This redirects all crewswarm config/state paths to temporary directories.
+ * This redirects all iris config/state paths to temporary directories.
  * Call this in your test's before() hook BEFORE any imports that use paths.
  * 
  * NOTE: This must be called at the top level before importing modules that use paths.
  */
 export function setupHermeticTest() {
-  process.env.CREWSWARM_TEST_MODE = "true";
+  process.env.IRIS_TEST_MODE = "true";
 }
 
 /**
@@ -26,7 +26,7 @@ export function setupHermeticTest() {
  * Call this in your test's after() hook if you need to restore normal behavior.
  */
 export function teardownHermeticTest() {
-  delete process.env.CREWSWARM_TEST_MODE;
+  delete process.env.IRIS_TEST_MODE;
 }
 
 /**

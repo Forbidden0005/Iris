@@ -6,7 +6,7 @@
     "runtime": ["cursor", "cursor-cli"],
     "payloadKey": "useCursorCli",
     "agentConfigKey": "useCursorCli",
-    "envVar": "CREWSWARM_CURSOR_ENABLED",
+    "envVar": "IRIS_CURSOR_ENABLED",
     "specialLogic": "orchestrator-waves"
   },
   "bin": "cursor",
@@ -17,16 +17,16 @@
   "color": "#818cf8",
   "icon": "cursor",
   "agentConfigKey": "useCursorCli",
-  "envToggle": "CREWSWARM_CURSOR_ENABLED",
+  "envToggle": "IRIS_CURSOR_ENABLED",
   "authNote": "Uses your Cursor IDE login — no separate API key needed.",
-  "modelEnvVar": "CREWSWARM_CURSOR_MODEL",
+  "modelEnvVar": "IRIS_CURSOR_MODEL",
   "modelKey": "cursorModel",
   "defaultModel": "composer-2-fast",
-  "bestFor": ["crew-main", "crew-architect", "crew-orchestrator"],
+  "bestFor": ["iris-main", "iris-architect", "iris-orchestrator"],
   "traits": [
-    "Parallel waves via crew-orchestrator subagent",
+    "Parallel waves via iris-orchestrator subagent",
     "Isolated context windows — no cross-agent bleed",
-    "Default CLI model: composer-2-fast (Composer 2); override with cursorCliModel or CREWSWARM_CURSOR_MODEL",
+    "Default CLI model: composer-2-fast (Composer 2); override with cursorCliModel or IRIS_CURSOR_MODEL",
     "Also supports Cursor CLI ids: composer-2, sonnet-4.5, gpt-5.2, gemini-3-flash, etc. (see agent --list-models)",
     "Requires Cursor IDE installed + agent CLI login"
   ],
@@ -36,5 +36,5 @@
   },
   "outputMode": "streaming",
   "timeoutMs": 300000,
-  "timeoutEnv": "CREWSWARM_CURSOR_TIMEOUT_MS"
+  "timeoutEnv": "IRIS_CURSOR_TIMEOUT_MS"
 }

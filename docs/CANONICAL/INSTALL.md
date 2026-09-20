@@ -8,9 +8,9 @@ Use this as the canonical setup path.
 
 `install.sh` handles:
 - Node dependency install
-- `~/.crewswarm/` bootstrap
+- `~/.iris/` bootstrap
 - default config and RT token generation
-- optional `crewchat` build on macOS
+- optional `irischat` build on macOS
 - optional SwiftBar plugin install
 - optional Telegram setup
 - optional WhatsApp setup
@@ -33,12 +33,12 @@ Use these defaults:
 ## Most Users: npm Install
 
 ```bash
-npm install -g crewswarm
-crewswarm
+npm install -g iris
+iris
 ```
 
 This is the best path when you want to:
-- evaluate crewswarm quickly
+- evaluate iris quickly
 - run it locally on your machine
 - avoid cloning the repo unless you actually need the source
 
@@ -54,7 +54,7 @@ Cloned repo:
 
 ```bash
 git clone https://github.com/crewswarm/crewswarm
-cd crewswarm
+cd iris
 bash install.sh
 ```
 
@@ -76,23 +76,23 @@ Use this when you want:
 For non-interactive setup:
 
 ```bash
-CREWSWARM_SETUP_MCP=1 \
-CREWSWARM_START_NOW=1 \
+IRIS_SETUP_MCP=1 \
+IRIS_START_NOW=1 \
 bash install.sh --non-interactive
 ```
 
 Useful env flags:
 
-- `CREWSWARM_BUILD_CREWCHAT=1`
-- `CREWSWARM_SETUP_TELEGRAM=1`
+- `IRIS_BUILD_CREWCHAT=1`
+- `IRIS_SETUP_TELEGRAM=1`
 - `TELEGRAM_BOT_TOKEN=...`
-- `CREWSWARM_SETUP_WHATSAPP=1`
-- `CREWSWARM_WHATSAPP_NUMBER=14155552671`
-- `CREWSWARM_WHATSAPP_NAME=Jeff`
-- `CREWSWARM_ENABLE_AUTONOMOUS=1`
-- `CREWSWARM_AUTONOMOUS_MINUTES=15`
-- `CREWSWARM_SETUP_MCP=1`
-- `CREWSWARM_START_NOW=1`
+- `IRIS_SETUP_WHATSAPP=1`
+- `IRIS_WHATSAPP_NUMBER=14155552671`
+- `IRIS_WHATSAPP_NAME=Jeff`
+- `IRIS_ENABLE_AUTONOMOUS=1`
+- `IRIS_AUTONOMOUS_MINUTES=15`
+- `IRIS_SETUP_MCP=1`
+- `IRIS_START_NOW=1`
 
 This is the best path for:
 - Cursor cloning the repo and wiring MCP automatically
@@ -111,7 +111,7 @@ Or:
 
 ```bash
 git clone https://github.com/crewswarm/crewswarm
-cd crewswarm
+cd iris
 docker compose up -d
 ```
 
@@ -134,11 +134,11 @@ bash scripts/smoke-surfaces.sh
 3. Open the main surfaces:
 - Dashboard: `http://127.0.0.1:4319`
 - Vibe: `http://127.0.0.1:3333`
-- crewchat: `/Applications/crewchat.app`
+- irischat: `/Applications/irischat.app`
 
 ## Deployment Reality
 
-crewswarm can build and operate projects locally, and Codex can absolutely use it to generate deployable code.
+iris can build and operate projects locally, and Codex can absolutely use it to generate deployable code.
 
 But deployment itself is still project-specific:
 - static site
@@ -147,7 +147,7 @@ But deployment itself is still project-specific:
 - Fly / Railway / VPS / custom infra
 
 So the current public claim should be:
-- install and run crewswarm with one file: yes
+- install and run iris with one file: yes
 - wire it into Cursor/Codex: yes
 - automatically deploy every generated app with one universal command: no
 
@@ -155,8 +155,8 @@ So the current public claim should be:
 
 For most users:
 
-1. run `npm install -g crewswarm`
-2. start with `crewswarm`
+1. run `npm install -g iris`
+2. start with `iris`
 3. add at least one provider key in Dashboard → Providers
 4. use Dashboard for setup
 5. use Vibe for project work

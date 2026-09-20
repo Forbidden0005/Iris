@@ -159,8 +159,8 @@ describe('computeContextMatch', () => {
 
   it('same agentId adds 0.3', () => {
     const score = computeContextMatch(
-      { agentId: 'crew-coder' },
-      { agentId: 'crew-coder' }
+      { agentId: 'iris-coder' },
+      { agentId: 'iris-coder' }
     );
     assert.equal(score, 0.3);
   });
@@ -208,7 +208,7 @@ describe('scoreMemory', () => {
       timestamp: daysAgo(5, NOW),
       accessCount: 10,
       projectId: 'proj-1',
-      agentId: 'crew-coder'
+      agentId: 'iris-coder'
     };
     const score = scoreMemory(mem, 'OAuth token', { projectId: 'proj-1' }, { nowMs: NOW });
     assert.ok(typeof score === 'number');
@@ -221,12 +221,12 @@ describe('scoreMemory', () => {
       timestamp: daysAgo(1, NOW),
       accessCount: 50,
       projectId: 'proj-x',
-      agentId: 'crew-coder'
+      agentId: 'iris-coder'
     };
     const score = scoreMemory(
       mem,
       'OAuth authentication token',
-      { projectId: 'proj-x', agentId: 'crew-coder' },
+      { projectId: 'proj-x', agentId: 'iris-coder' },
       { nowMs: NOW }
     );
     assert.ok(score > 0.5, `expected > 0.5, got ${score}`);
@@ -330,14 +330,14 @@ describe('rankMemories', () => {
       timestamp: daysAgo(2, NOW),
       accessCount: 30,
       projectId: 'proj-api',
-      agentId: 'crew-backend'
+      agentId: 'iris-backend'
     };
     const worst = {
       content: 'irrelevant historical note from a different team',
       timestamp: daysAgo(180, NOW),
       accessCount: 0,
       projectId: 'proj-other',
-      agentId: 'crew-frontend'
+      agentId: 'iris-frontend'
     };
     const middle = {
       content: 'token bucket algorithm overview',
@@ -349,7 +349,7 @@ describe('rankMemories', () => {
     const ranked = rankMemories(
       [worst, middle, best],
       'API rate limiting token',
-      { projectId: 'proj-api', agentId: 'crew-backend' },
+      { projectId: 'proj-api', agentId: 'iris-backend' },
       10,
       { nowMs: NOW }
     );

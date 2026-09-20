@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 
 const jsonMode = process.argv.includes("--json");
-const configPath = path.join(os.homedir(), ".crewswarm", "crewswarm.json");
+const configPath = path.join(os.homedir(), ".iris", "iris.json");
 
 function readConfig() {
   try {
@@ -29,10 +29,10 @@ const activeProviders = Object.entries(providers)
 const interestingAgents = agents
   .filter((agent) => {
     return (
-      agent.id === "crew-main" ||
-      agent.id === "crew-coder" ||
-      agent.id === "crew-qa" ||
-      agent.id === "crew-pm" ||
+      agent.id === "iris-main" ||
+      agent.id === "iris-coder" ||
+      agent.id === "iris-qa" ||
+      agent.id === "iris-pm" ||
       agent.useClaudeCode ||
       agent.useCodex ||
       agent.useGeminiCli ||
@@ -48,7 +48,7 @@ const interestingAgents = agents
       agent.useClaudeCode ? "claude-code" :
       agent.useCodex ? "codex" :
       agent.useGeminiCli ? "gemini-cli" :
-      agent.useCrewCLI ? "crew-cli" :
+      agent.useCrewCLI ? "iris-cli" :
       agent.useCursorCli ? "cursor" :
       agent.useOpenCode ? "opencode" :
       "direct",
@@ -65,9 +65,9 @@ const payload = {
     "4. Record which routes fail closed vs. fail over successfully.",
   ],
   sampleTasks: [
-    'crew-main: "say: PROVIDER_FAILOVER_OK"',
-    'crew-coder: "Create test-output/provider-fallback.txt with one line: PROVIDER_FALLBACK_OK"',
-    'crew-qa: "Summarize which provider/model you are using in one line"',
+    'iris-main: "say: PROVIDER_FAILOVER_OK"',
+    'iris-coder: "Create test-output/provider-fallback.txt with one line: PROVIDER_FALLBACK_OK"',
+    'iris-qa: "Summarize which provider/model you are using in one line"',
   ],
 };
 
@@ -76,7 +76,7 @@ if (jsonMode) {
   process.exit(0);
 }
 
-console.log("CrewSwarm live provider/failover matrix");
+console.log("Iris live provider/failover matrix");
 console.log("");
 console.log(`Config: ${configPath}`);
 console.log("");

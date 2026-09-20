@@ -1,6 +1,6 @@
 /**
- * Load/stress tests for crewswarm services.
- * Verifies that dashboard and crew-lead survive concurrent load without crashing.
+ * Load/stress tests for iris services.
+ * Verifies that dashboard and iris-lead survive concurrent load without crashing.
  *
  * Run: node --test test/e2e/load-stress.test.mjs
  */
@@ -12,7 +12,7 @@ import path from "node:path";
 import os from "node:os";
 import { checkServiceUp, httpRequest } from "../helpers/http.mjs";
 
-const CREW_LEAD_URL = "http://127.0.0.1:5010";
+const IRIS_LEAD_URL = "http://127.0.0.1:5010";
 const DASHBOARD_URL = "http://127.0.0.1:4319";
 
 let authToken = "";
@@ -20,26 +20,26 @@ let crewLeadUp = false;
 let dashboardUp = false;
 
 function getAuthToken() {
-  // Check config.json first (crew-lead system config), fallback to crewswarm.json
-  for (const file of ["config.json", "crewswarm.json"]) {
+  // Check config.json first (iris-lead system config), fallback to iris.json
+  for (const file of ["config.json", "iris.json"]) {
     try {
-      const cfg = JSON.parse(fs.readFileSync(path.join(os.homedir(), ".crewswarm", file), "utf8"));
-      const token = cfg?.rt?.authToken || cfg?.env?.CREWSWARM_RT_AUTH_TOKEN || "";
+      const cfg = JSON.parse(fs.readFileSync(path.join(os.homedir(), ".iris", file), "utf8"));
+      const token = cfg?.rt?.authToken || cfg?.env?.IRIS_RT_AUTH_TOKEN || "";
       if (token) return token;
     } catch {}
   }
-  return process.env.CREWSWARM_RT_AUTH_TOKEN || "";
+  return process.env.IRIS_RT_AUTH_TOKEN || "";
 }
 
 before(async () => {
   authToken = getAuthToken();
   [crewLeadUp, dashboardUp] = await Promise.all([
-    checkServiceUp(`${CREW_LEAD_URL}/health`),
+    checkServiceUp(`${IRIS_LEAD_URL}/health`),
     checkServiceUp(`${DASHBOARD_URL}/api/health`),
   ]);
   if (!crewLeadUp || !dashboardUp) {
     console.log(
-      `⚠️  Services not fully running (crew-lead: ${crewLeadUp}, dashboard: ${dashboardUp}) — skipping load tests`
+      `⚠️  Services not fully running (iris-lead: ${crewLeadUp}, dashboard: ${dashboardUp}) — skipping load tests`
     );
   }
 });
@@ -55,16 +55,16 @@ function skipIfDown(t) {
 function authHeaders() {
   const h = { "content-type": "application/json" };
   if (authToken) h["authorization"] = `Bearer ${authToken}`;
-  // Also try reading token from env or config.json (crew-lead may use a different source)
+  // Also try reading token from env or config.json (iris-lead may use a different source)
   if (!authToken) {
     try {
-      const cfgPath = path.join(os.homedir(), ".crewswarm", "config.json");
+      const cfgPath = path.join(os.homedir(), ".iris", "config.json");
       const cfg = JSON.parse(fs.readFileSync(cfgPath, "utf8"));
-      const envToken = cfg?.env?.CREWSWARM_RT_AUTH_TOKEN || "";
+      const envToken = cfg?.env?.IRIS_RT_AUTH_TOKEN || "";
       if (envToken) h["authorization"] = `Bearer ${envToken}`;
     } catch {}
-    if (!h["authorization"] && process.env.CREWSWARM_RT_AUTH_TOKEN) {
-      h["authorization"] = `Bearer ${process.env.CREWSWARM_RT_AUTH_TOKEN}`;
+    if (!h["authorization"] && process.env.IRIS_RT_AUTH_TOKEN) {
+      h["authorization"] = `Bearer ${process.env.IRIS_RT_AUTH_TOKEN}`;
     }
   }
   return h;
@@ -94,12 +94,12 @@ describe("Load and stress tests", { concurrency: 1 }, () => {
     assert.equal(successes.length, 20, `expected all 200s, got ${successes.length}/20`);
   });
 
-  // 2. Crew-lead concurrent requests
-  test("crew-lead handles 20 concurrent GET /health requests", { timeout: 30000 }, async (t) => {
+  // 2. Iris-lead concurrent requests
+  test("iris-lead handles 20 concurrent GET /health requests", { timeout: 30000 }, async (t) => {
     if (skipIfDown(t)) return;
 
     const requests = Array.from({ length: 20 }, () =>
-      httpRequest(`${CREW_LEAD_URL}/health`, { timeout: 15000 })
+      httpRequest(`${IRIS_LEAD_URL}/health`, { timeout: 15000 })
     );
     const results = await Promise.all(requests);
 
@@ -147,12 +147,12 @@ describe("Load and stress tests", { concurrency: 1 }, () => {
   });
 
   // 4. Rapid sequential dispatch
-  test("5 rapid sequential dispatches to crew-seo all return taskIds", { timeout: 30000 }, async (t) => {
+  test("5 rapid sequential dispatches to iris-seo all return taskIds", { timeout: 30000 }, async (t) => {
     if (skipIfDown(t)) return;
 
     const words = ["ALPHA", "BRAVO", "CHARLIE", "DELTA", "ECHO"];
     const requests = words.map((word) => {
-      return httpRequest(`${CREW_LEAD_URL}/chat`, {
+      return httpRequest(`${IRIS_LEAD_URL}/chat`, {
         method: "POST",
         headers: authHeaders(),
         body: { message: `say the word ${word}`, sessionId: `e2e-load-${Date.now()}` },
@@ -215,9 +215,9 @@ describe("Load and stress tests", { concurrency: 1 }, () => {
 
     // Open 3 SSE connections
     const connections = await Promise.all([
-      openSSE(`${DASHBOARD_URL}/api/crew-lead/events`),
-      openSSE(`${DASHBOARD_URL}/api/crew-lead/events`),
-      openSSE(`${DASHBOARD_URL}/api/crew-lead/events`),
+      openSSE(`${DASHBOARD_URL}/api/iris-lead/events`),
+      openSSE(`${DASHBOARD_URL}/api/iris-lead/events`),
+      openSSE(`${DASHBOARD_URL}/api/iris-lead/events`),
     ]);
 
     // Verify at least some connected (SSE endpoint might return various status codes)
@@ -257,7 +257,7 @@ describe("Load and stress tests", { concurrency: 1 }, () => {
 
     // Start a request that we will abort — use a chat endpoint which takes time
     const abortPromise = new Promise((resolve) => {
-      const parsedUrl = new URL(`${DASHBOARD_URL}/api/crew-lead/chat`);
+      const parsedUrl = new URL(`${DASHBOARD_URL}/api/iris-lead/chat`);
       const postBody = JSON.stringify({
         message: "count slowly from 1 to 100",
         sessionId: `e2e-abort-${Date.now()}`,
@@ -322,14 +322,14 @@ describe("Load and stress tests", { concurrency: 1 }, () => {
     assert.equal(dashResult.status, 200, "dashboard health should return 200");
     assert.ok(dashDuration < 500, `dashboard response took ${dashDuration}ms, expected <500ms`);
 
-    // Check crew-lead health with timing
+    // Check iris-lead health with timing
     const leadStart = Date.now();
-    const leadResult = await httpRequest(`${CREW_LEAD_URL}/health`, {
+    const leadResult = await httpRequest(`${IRIS_LEAD_URL}/health`, {
       timeout: 10000,
     });
     const leadDuration = Date.now() - leadStart;
 
-    assert.equal(leadResult.status, 200, "crew-lead health should return 200");
-    assert.ok(leadDuration < 500, `crew-lead response took ${leadDuration}ms, expected <500ms`);
+    assert.equal(leadResult.status, 200, "iris-lead health should return 200");
+    assert.ok(leadDuration < 500, `iris-lead response took ${leadDuration}ms, expected <500ms`);
   });
 });

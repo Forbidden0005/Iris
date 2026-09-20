@@ -1,5 +1,5 @@
 /**
- * Unit tests for background consciousness loop (lib/crew-lead/background.mjs).
+ * Unit tests for background consciousness loop (lib/iris-lead/background.mjs).
  *
  * The module uses internal module-level state injected via initBackground().
  * We test the observable behavior: timer/interval logic, LLM gating,
@@ -100,21 +100,21 @@ describe("getBgConsciousnessLLM", () => {
 describe("parseDispatches", () => {
   it("extracts a single @@DISPATCH", () => {
     const content = `Here is a follow-up:
-@@DISPATCH {"agent":"crew-coder","task":"Fix the login bug in auth.js"}`;
+@@DISPATCH {"agent":"iris-coder","task":"Fix the login bug in auth.js"}`;
     const dispatches = parseDispatches(content);
     assert.equal(dispatches.length, 1);
-    assert.equal(dispatches[0].agent, "crew-coder");
+    assert.equal(dispatches[0].agent, "iris-coder");
     assert.match(dispatches[0].task, /Fix the login/);
   });
 
   it("extracts multiple @@DISPATCH blocks", () => {
     const content = `Two things:
-@@DISPATCH {"agent":"crew-coder","task":"Task A"}
-@@DISPATCH {"agent":"crew-qa","task":"Task B"}`;
+@@DISPATCH {"agent":"iris-coder","task":"Task A"}
+@@DISPATCH {"agent":"iris-qa","task":"Task B"}`;
     const dispatches = parseDispatches(content);
     assert.equal(dispatches.length, 2);
-    assert.equal(dispatches[0].agent, "crew-coder");
-    assert.equal(dispatches[1].agent, "crew-qa");
+    assert.equal(dispatches[0].agent, "iris-coder");
+    assert.equal(dispatches[1].agent, "iris-qa");
   });
 
   it("ignores malformed JSON in @@DISPATCH", () => {
@@ -137,13 +137,13 @@ describe("parseDispatches", () => {
 
 describe("parseBrainLines", () => {
   it("extracts a single @@BRAIN entry", () => {
-    const lines = parseBrainLines("@@BRAIN crew-main: User needs to review auth changes");
+    const lines = parseBrainLines("@@BRAIN iris-main: User needs to review auth changes");
     assert.equal(lines.length, 1);
     assert.match(lines[0], /User needs to review/);
   });
 
   it("extracts multiple @@BRAIN entries", () => {
-    const content = "@@BRAIN crew-main: Fact A\nSome reply text\n@@BRAIN crew-main: Fact B";
+    const content = "@@BRAIN iris-main: Fact A\nSome reply text\n@@BRAIN iris-main: Fact B";
     const lines = parseBrainLines(content);
     assert.equal(lines.length, 2);
     assert.match(lines[0], /Fact A/);
@@ -283,61 +283,61 @@ describe("background loop — agent timeout tracking", () => {
 
   it("accumulates timeout counts correctly", () => {
     const tracker = buildTimeoutTracker();
-    tracker.record("crew-coder");
-    tracker.record("crew-coder");
-    tracker.record("crew-qa");
-    assert.equal(tracker.getCounts().get("crew-coder"), 2);
-    assert.equal(tracker.getCounts().get("crew-qa"), 1);
+    tracker.record("iris-coder");
+    tracker.record("iris-coder");
+    tracker.record("iris-qa");
+    assert.equal(tracker.getCounts().get("iris-coder"), 2);
+    assert.equal(tracker.getCounts().get("iris-qa"), 1);
   });
 
   it("flags agents with 3+ timeouts", () => {
     const tracker = buildTimeoutTracker();
-    for (let i = 0; i < 3; i++) tracker.record("crew-coder-front");
+    for (let i = 0; i < 3; i++) tracker.record("iris-coder-front");
     const problematic = [...tracker.getCounts().entries()].filter(([, n]) => n >= 3);
     assert.equal(problematic.length, 1);
-    assert.equal(problematic[0][0], "crew-coder-front");
+    assert.equal(problematic[0][0], "iris-coder-front");
   });
 
   it("counts are per-agent (different agents don't interfere)", () => {
     const tracker = buildTimeoutTracker();
-    tracker.record("crew-a");
-    tracker.record("crew-b");
-    tracker.record("crew-a");
-    assert.equal(tracker.getCounts().get("crew-a"), 2);
-    assert.equal(tracker.getCounts().get("crew-b"), 1);
+    tracker.record("iris-a");
+    tracker.record("iris-b");
+    tracker.record("iris-a");
+    assert.equal(tracker.getCounts().get("iris-a"), 2);
+    assert.equal(tracker.getCounts().get("iris-b"), 1);
   });
 });
 
 describe("getRateLimitFallback (static map)", () => {
   const FALLBACK = {
-    "crew-coder-back": "crew-coder",
-    "crew-coder-front": "crew-coder",
-    "crew-coder": "crew-main",
-    "crew-frontend": "crew-coder",
-    "crew-pm": "crew-main",
-    "crew-qa": "crew-main",
-    "crew-copywriter": "crew-main",
-    "crew-security": "crew-main",
+    "iris-coder-back": "iris-coder",
+    "iris-coder-front": "iris-coder",
+    "iris-coder": "iris-main",
+    "iris-frontend": "iris-coder",
+    "iris-pm": "iris-main",
+    "iris-qa": "iris-main",
+    "iris-copywriter": "iris-main",
+    "iris-security": "iris-main",
   };
 
   function getRateLimitFallback(agentId) {
-    return FALLBACK[agentId] ?? "crew-main";
+    return FALLBACK[agentId] ?? "iris-main";
   }
 
-  it("returns crew-coder for crew-coder-front", () => {
-    assert.equal(getRateLimitFallback("crew-coder-front"), "crew-coder");
+  it("returns iris-coder for iris-coder-front", () => {
+    assert.equal(getRateLimitFallback("iris-coder-front"), "iris-coder");
   });
 
-  it("returns crew-main for crew-pm", () => {
-    assert.equal(getRateLimitFallback("crew-pm"), "crew-main");
+  it("returns iris-main for iris-pm", () => {
+    assert.equal(getRateLimitFallback("iris-pm"), "iris-main");
   });
 
-  it("returns crew-main as default for unknown agents", () => {
-    assert.equal(getRateLimitFallback("crew-unknown-x"), "crew-main");
+  it("returns iris-main as default for unknown agents", () => {
+    assert.equal(getRateLimitFallback("iris-unknown-x"), "iris-main");
   });
 
   it("covers all expected fallback keys", () => {
-    const expected = ["crew-coder-back","crew-coder-front","crew-coder","crew-frontend","crew-pm","crew-qa","crew-copywriter","crew-security"];
+    const expected = ["iris-coder-back","iris-coder-front","iris-coder","iris-frontend","iris-pm","iris-qa","iris-copywriter","iris-security"];
     for (const id of expected) {
       assert.ok(getRateLimitFallback(id), `Missing fallback for ${id}`);
     }
@@ -345,11 +345,11 @@ describe("getRateLimitFallback (static map)", () => {
 });
 
 describe("process-status.md path (bg consciousness)", () => {
-  it("process-status.md lives in ~/.crewswarm/", async () => {
+  it("process-status.md lives in ~/.iris/", async () => {
     const { homedir } = await import("node:os");
     const { join } = await import("node:path");
-    const statusPath = join(homedir(), ".crewswarm", "process-status.md");
-    assert.ok(statusPath.endsWith(".crewswarm/process-status.md"));
+    const statusPath = join(homedir(), ".iris", "process-status.md");
+    assert.ok(statusPath.endsWith(".iris/process-status.md"));
   });
 });
 
@@ -357,25 +357,25 @@ describe("process-status.md path (bg consciousness)", () => {
 
 describe("recordAgentTimeout (exported)", () => {
   it("records timeouts and updates _agentTimeoutCounts", async () => {
-    const bg = await import("../../lib/crew-lead/background.mjs");
+    const bg = await import("../../lib/iris-lead/background.mjs");
     // Clear any existing state
     bg._agentTimeoutCounts.clear();
-    bg.recordAgentTimeout("crew-test-agent");
-    bg.recordAgentTimeout("crew-test-agent");
-    bg.recordAgentTimeout("crew-test-other");
-    assert.equal(bg._agentTimeoutCounts.get("crew-test-agent"), 2);
-    assert.equal(bg._agentTimeoutCounts.get("crew-test-other"), 1);
+    bg.recordAgentTimeout("iris-test-agent");
+    bg.recordAgentTimeout("iris-test-agent");
+    bg.recordAgentTimeout("iris-test-other");
+    assert.equal(bg._agentTimeoutCounts.get("iris-test-agent"), 2);
+    assert.equal(bg._agentTimeoutCounts.get("iris-test-other"), 1);
   });
 });
 
 describe("RATE_LIMIT_PATTERN (exported)", () => {
   it("matches 429 status codes", async () => {
-    const bg = await import("../../lib/crew-lead/background.mjs");
+    const bg = await import("../../lib/iris-lead/background.mjs");
     assert.ok(bg.RATE_LIMIT_PATTERN.test("Error 429: Too many requests"));
   });
 
   it("matches rate limit phrases", async () => {
-    const bg = await import("../../lib/crew-lead/background.mjs");
+    const bg = await import("../../lib/iris-lead/background.mjs");
     assert.ok(bg.RATE_LIMIT_PATTERN.test("rate limit exceeded"));
     assert.ok(bg.RATE_LIMIT_PATTERN.test("throttled by provider"));
     assert.ok(bg.RATE_LIMIT_PATTERN.test("quota exceeded for model"));
@@ -385,7 +385,7 @@ describe("RATE_LIMIT_PATTERN (exported)", () => {
   });
 
   it("does not match normal error messages", async () => {
-    const bg = await import("../../lib/crew-lead/background.mjs");
+    const bg = await import("../../lib/iris-lead/background.mjs");
     assert.equal(bg.RATE_LIMIT_PATTERN.test("connection refused"), false);
     assert.equal(bg.RATE_LIMIT_PATTERN.test("syntax error in file"), false);
     assert.equal(bg.RATE_LIMIT_PATTERN.test("timeout after 30s"), false);
@@ -394,7 +394,7 @@ describe("RATE_LIMIT_PATTERN (exported)", () => {
 
 describe("initBackground (exported)", () => {
   it("accepts configuration without throwing", async () => {
-    const bg = await import("../../lib/crew-lead/background.mjs");
+    const bg = await import("../../lib/iris-lead/background.mjs");
     assert.doesNotThrow(() => {
       bg.initBackground({
         broadcastSSE: () => {},
@@ -410,14 +410,14 @@ describe("initBackground (exported)", () => {
 
 describe("getRateLimitFallback (exported)", () => {
   it("returns expected fallback for known agents", async () => {
-    const bg = await import("../../lib/crew-lead/background.mjs");
-    assert.equal(bg.getRateLimitFallback("crew-coder-back"), "crew-coder");
-    assert.equal(bg.getRateLimitFallback("crew-coder"), "crew-main");
-    assert.equal(bg.getRateLimitFallback("crew-qa"), "crew-main");
+    const bg = await import("../../lib/iris-lead/background.mjs");
+    assert.equal(bg.getRateLimitFallback("iris-coder-back"), "iris-coder");
+    assert.equal(bg.getRateLimitFallback("iris-coder"), "iris-main");
+    assert.equal(bg.getRateLimitFallback("iris-qa"), "iris-main");
   });
 
-  it("returns crew-main for completely unknown agents", async () => {
-    const bg = await import("../../lib/crew-lead/background.mjs");
-    assert.equal(bg.getRateLimitFallback("crew-nonexistent-xyz"), "crew-main");
+  it("returns iris-main for completely unknown agents", async () => {
+    const bg = await import("../../lib/iris-lead/background.mjs");
+    assert.equal(bg.getRateLimitFallback("iris-nonexistent-xyz"), "iris-main");
   });
 });

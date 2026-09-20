@@ -4,7 +4,7 @@ import puppeteer from "puppeteer-core";
 import { checkServiceUp } from "../helpers/http.mjs";
 
 const DASHBOARD_URL = process.env.DASHBOARD_URL || "http://127.0.0.1:4319";
-const CREW_LEAD_URL = process.env.CREW_LEAD_URL || "http://127.0.0.1:5010";
+const IRIS_LEAD_URL = process.env.IRIS_LEAD_URL || "http://127.0.0.1:5010";
 
 let browser = null;
 let page = null;
@@ -12,7 +12,7 @@ let servicesUp = false;
 
 function skipIfDown(t) {
   if (!servicesUp) {
-    t.skip("Requires dashboard :4319 and crew-lead :5010");
+    t.skip("Requires dashboard :4319 and iris-lead :5010");
     return true;
   }
   return false;
@@ -49,7 +49,7 @@ describe("Dashboard chat tabs", { timeout: 60000 }, () => {
   before(async () => {
     const [dashUp, crewLeadUp] = await Promise.all([
       checkServiceUp(`${DASHBOARD_URL}/api/env`),
-      checkServiceUp(`${CREW_LEAD_URL}/health`),
+      checkServiceUp(`${IRIS_LEAD_URL}/health`),
     ]);
     servicesUp = dashUp && crewLeadUp;
     if (!servicesUp) return;

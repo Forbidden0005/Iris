@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * crewswarm Vibe local server
+ * iris Vibe local server
  *
  * Standalone local mode owns:
  * - project persistence
@@ -35,9 +35,9 @@ const terminalSessions = new Map();
 const cliResumeSessions = new Map();
 const PTY_HOST = path.join(__dirname, "scripts", "studio-pty-host.py");
 const DEFAULT_PROJECT_ID = "studio-local";
-const CREWSWARM_CFG_DIR = path.join(os.homedir(), ".crewswarm");
-const SHARED_PROJECTS_FILE = path.join(CREWSWARM_CFG_DIR, "projects.json");
-const UI_STATE_FILE = path.join(CREWSWARM_CFG_DIR, "ui-state.json");
+const IRIS_CFG_DIR = path.join(os.homedir(), ".iris");
+const SHARED_PROJECTS_FILE = path.join(IRIS_CFG_DIR, "projects.json");
+const UI_STATE_FILE = path.join(IRIS_CFG_DIR, "ui-state.json");
 const DEFAULT_PROJECT = {
   id: DEFAULT_PROJECT_ID,
   name: "Vibe Workspace",
@@ -98,7 +98,7 @@ export function readProjects() {
 
 export function writeProjects(projects) {
   ensureDataDirs();
-  fs.mkdirSync(CREWSWARM_CFG_DIR, { recursive: true });
+  fs.mkdirSync(IRIS_CFG_DIR, { recursive: true });
   let existing = {};
   try {
     existing = JSON.parse(fs.readFileSync(SHARED_PROJECTS_FILE, "utf8"));
@@ -127,7 +127,7 @@ function readUiState() {
 
 function writeUiState(nextState = {}) {
   ensureDataDirs();
-  fs.mkdirSync(CREWSWARM_CFG_DIR, { recursive: true });
+  fs.mkdirSync(IRIS_CFG_DIR, { recursive: true });
   fs.writeFileSync(UI_STATE_FILE, JSON.stringify(nextState, null, 2));
 }
 
@@ -376,16 +376,16 @@ function projectMessageFile(projectId) {
 }
 
 function loadCrewswarmRtToken() {
-  const envToken = (process.env.CREWSWARM_RT_AUTH_TOKEN || "").trim();
+  const envToken = (process.env.IRIS_RT_AUTH_TOKEN || "").trim();
   if (envToken) return envToken;
   for (const file of [
-    path.join(process.env.HOME || "", ".crewswarm", "crewswarm.json"),
-    path.join(process.env.HOME || "", ".crewswarm", "config.json"),
+    path.join(process.env.HOME || "", ".iris", "iris.json"),
+    path.join(process.env.HOME || "", ".iris", "config.json"),
   ]) {
     try {
       const parsed = JSON.parse(fs.readFileSync(file, "utf8"));
       const token =
-        parsed?.rt?.authToken || parsed?.env?.CREWSWARM_RT_AUTH_TOKEN || "";
+        parsed?.rt?.authToken || parsed?.env?.IRIS_RT_AUTH_TOKEN || "";
       if (token) return token;
     } catch {
       // Ignore unreadable local config files.
@@ -530,10 +530,10 @@ function getCursorCommand() {
   return resolveCursorLaunchSpec(configuredBinary);
 }
 
-/** Same defaults as crew-lead / gateway `runCursorCliTask` (not the IDE `cursor` opener). */
+/** Same defaults as iris-lead / gateway `runCursorCliTask` (not the IDE `cursor` opener). */
 function resolveStudioCursorModel(bodyModel) {
   const cursorDefault =
-    process.env.CREWSWARM_CURSOR_MODEL ||
+    process.env.IRIS_CURSOR_MODEL ||
     process.env.CURSOR_DEFAULT_MODEL ||
     "composer-2-fast";
   let m =
@@ -753,7 +753,7 @@ function createCodexStreamRelay(onChunk) {
 
 function createCrewCliStreamRelay(onChunk) {
   // Buffer ALL output — don't stream anything until we can extract the response.
-  // crew-cli emits logs + a JSON envelope; we only want the response field.
+  // iris-cli emits logs + a JSON envelope; we only want the response field.
   let rawOutput = "";
 
   return {
@@ -797,7 +797,7 @@ function createCrewCliStreamRelay(onChunk) {
       }
 
       // Fallback: send raw output (stripped of common log prefixes)
-      const fallback = summarizeCliFailure("crew-cli", cleaned);
+      const fallback = summarizeCliFailure("iris-cli", cleaned);
       onChunk?.(fallback);
       return fallback;
     },
@@ -945,7 +945,7 @@ function createCliRelay(engine, onChunk, onDone) {
   if (engine === "gemini") {
     return createGeminiStreamRelay(onChunk, onDone);
   }
-  if (engine === "crew-cli") {
+  if (engine === "iris-cli") {
     return createCrewCliStreamRelay(onChunk);
   }
   return createDefaultCliRelay(onChunk);
@@ -1069,13 +1069,13 @@ export function closeTerminalSession(sessionId) {
   return true;
 }
 
-const SUPPORTED_ENGINES = ["codex", "claude", "cursor", "gemini", "opencode", "crew-cli"];
+const SUPPORTED_ENGINES = ["codex", "claude", "cursor", "gemini", "opencode", "iris-cli"];
 
 export function getCliCommand(engine, projectDir, message, modelOverride, resumeSession) {
   switch (engine) {
     case "codex": {
       const binary = process.env.STUDIO_CODEX_BIN || "codex";
-      const model = modelOverride || process.env.CREWSWARM_CODEX_MODEL || "";
+      const model = modelOverride || process.env.IRIS_CODEX_MODEL || "";
       const prefixArgs = (process.env.STUDIO_CODEX_BIN_ARGS || "")
         .split(" ")
         .map((value) => value.trim())
@@ -1108,7 +1108,7 @@ export function getCliCommand(engine, projectDir, message, modelOverride, resume
       // Claude Code uses OAuth — no API key needed
       {
         const args = ["-p", "--setting-sources", "user", "--output-format", "stream-json", "--verbose", "--permission-mode", "auto"];
-        const model = modelOverride || process.env.CREWSWARM_CLAUDE_CODE_MODEL || "";
+        const model = modelOverride || process.env.IRIS_CLAUDE_CODE_MODEL || "";
         // Add workspace directory context
         if (projectDir) args.push("--add-dir", projectDir);
         if (model) args.push("--model", model);
@@ -1152,7 +1152,7 @@ export function getCliCommand(engine, projectDir, message, modelOverride, resume
     case "gemini":
       {
         const args = ["-p", message, "--output-format", "stream-json", "--yolo"];
-        const model = modelOverride || process.env.CREWSWARM_GEMINI_CLI_MODEL || "";
+        const model = modelOverride || process.env.IRIS_GEMINI_CLI_MODEL || "";
         if (model) args.push("-m", model);
         // Add workspace directory to allow file operations in projectDir (gemini uses --include-directories)
         if (projectDir) args.push("--include-directories", projectDir);
@@ -1167,10 +1167,10 @@ export function getCliCommand(engine, projectDir, message, modelOverride, resume
       }
     case "opencode":
       {
-        let model = modelOverride || process.env.OPENCODE_MODEL || process.env.CREWSWARM_OPENCODE_MODEL || "";
+        let model = modelOverride || process.env.OPENCODE_MODEL || process.env.IRIS_OPENCODE_MODEL || "";
         if (!model) {
           try {
-            const cfgPath = path.join(os.homedir(), ".crewswarm", "crewswarm.json");
+            const cfgPath = path.join(os.homedir(), ".iris", "iris.json");
             const cfg = JSON.parse(fs.readFileSync(cfgPath, "utf8"));
             model = cfg.opencodeModel || "";
           } catch {}
@@ -1188,11 +1188,11 @@ export function getCliCommand(engine, projectDir, message, modelOverride, resume
           stripEnv: ["OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GEMINI_API_KEY"],
         };
       }
-    case "crew-cli": {
-      const crewBin = path.join(__dirname, "..", "..", "crew-cli", "bin", "crew.js");
-      const model = modelOverride || process.env.CREWSWARM_CREW_CLI_MODEL || "";
+    case "iris-cli": {
+      const crewBin = path.join(__dirname, "..", "..", "iris-cli", "bin", "iris.js");
+      const model = modelOverride || process.env.IRIS_CREW_CLI_MODEL || "";
       const crewArgs = [crewBin, "chat", message, "--apply", "--json", ...(projectDir ? ["--project", projectDir] : []), ...(model ? ["--model", model] : [])];
-      // Resume: crew-cli supports --session for conversation continuity
+      // Resume: iris-cli supports --session for conversation continuity
       if (resumeSession?.sessionId) crewArgs.push("--session", resumeSession.sessionId);
       return {
         command: "node",
@@ -1392,7 +1392,7 @@ function handleCliChatLocally(req, res, body) {
           const { execSync } = await import("node:child_process");
           const sinceUnix = Math.floor(since / 1000);
           const changedFiles = execSync(
-            `find "${projectDir}" -maxdepth 5 -type f -newermt "@${sinceUnix}" ! -path "*/node_modules/*" ! -path "*/.git/*" ! -path "*/.crew/*" 2>/dev/null | head -20`,
+            `find "${projectDir}" -maxdepth 5 -type f -newermt "@${sinceUnix}" ! -path "*/node_modules/*" ! -path "*/.git/*" ! -path "*/.iris/*" 2>/dev/null | head -20`,
             { encoding: "utf8", timeout: 3000 }
           ).trim().split("\n").filter(Boolean);
           for (const filePath of changedFiles) {
@@ -1446,7 +1446,7 @@ async function handleCliChatViaCrewLead(req, res, body) {
   const token = loadCrewswarmRtToken();
 
   if (!token) {
-    throw new Error("CrewSwarm RT auth token unavailable");
+    throw new Error("Iris RT auth token unavailable");
   }
 
   const upstream = await fetch("http://127.0.0.1:5010/api/engine-passthrough", {
@@ -1471,7 +1471,7 @@ async function handleCliChatViaCrewLead(req, res, body) {
 
   if (!upstream.ok || !upstream.body) {
     const text = await upstream.text().catch(() => "");
-    throw new Error(text || `crew-lead passthrough failed (${upstream.status})`);
+    throw new Error(text || `iris-lead passthrough failed (${upstream.status})`);
   }
 
   appendProjectMessage(projectId, {
@@ -1554,22 +1554,22 @@ async function handleCliChatViaCrewLead(req, res, body) {
 function handleCliChat(req, res, body) {
   handleCliChatViaCrewLead(req, res, body).catch((error) => {
     if (!res.headersSent && !res.writableEnded) {
-      console.warn(`[studio] crew-lead passthrough unavailable, falling back local: ${error.message}`);
+      console.warn(`[studio] iris-lead passthrough unavailable, falling back local: ${error.message}`);
       handleCliChatLocally(req, res, body);
       return;
     }
-    console.warn(`[studio] crew-lead stream failed after response start: ${error.message}`);
+    console.warn(`[studio] iris-lead stream failed after response start: ${error.message}`);
     if (!res.writableEnded) {
-      sendSseEvent(res, { type: "trace", text: `crew-lead stream interrupted: ${error.message}` });
+      sendSseEvent(res, { type: "trace", text: `iris-lead stream interrupted: ${error.message}` });
       sendSseEvent(res, { type: "done", exitCode: 1 });
       res.end();
     }
   });
 }
 
-/** Dashboard HTTP API (crew-lead proxy, agents list, token). Override if dashboard is not on :4319. */
+/** Dashboard HTTP API (iris-lead proxy, agents list, token). Override if dashboard is not on :4319. */
 const DASHBOARD_PROXY_TARGET = String(
-  process.env.CREWSWARM_DASHBOARD_URL || "http://127.0.0.1:4319",
+  process.env.IRIS_DASHBOARD_URL || "http://127.0.0.1:4319",
 ).replace(/\/$/, "");
 
 async function readRequestBuffer(req) {
@@ -2042,6 +2042,6 @@ if (process.env.STUDIO_DISABLE_LISTEN !== "1") {
     const address = server.address();
     const boundPort =
       address && typeof address === "object" ? address.port : PORT;
-    console.log(`🐝 crewswarm Vibe running at http://127.0.0.1:${boundPort}`);
+    console.log(`🐝 iris Vibe running at http://127.0.0.1:${boundPort}`);
   });
 }

@@ -10,46 +10,46 @@ import {
 } from "../../lib/chat/mention-routing-intent.mjs";
 
 test("treats casual single-agent mentions as direct chat", () => {
-  const result = classifySharedChatMention("@crew-researcher what's good?");
+  const result = classifySharedChatMention("@iris-researcher what's good?");
   assert.equal(result.mode, "direct");
-  assert.equal(result.targetAgent, "crew-researcher");
+  assert.equal(result.targetAgent, "iris-researcher");
   assert.equal(result.directMessage, "what's good?");
 });
 
 test("treats explicit work phrasing as dispatch intent", () => {
   const result = classifySharedChatMention(
-    "@crew-researcher research pricing for Cursor",
+    "@iris-researcher research pricing for Cursor",
   );
   assert.equal(result.mode, "dispatch");
-  assert.equal(result.targetAgent, "crew-researcher");
+  assert.equal(result.targetAgent, "iris-researcher");
 });
 
 test("requires a specific work order before auto-dispatching", () => {
-  assert.equal(hasExplicitWorkIntent("@crew-coder-back get on it"), false);
-  assert.equal(hasSpecificWorkOrder("@crew-coder-back get on it"), false);
+  assert.equal(hasExplicitWorkIntent("@iris-coder-back get on it"), false);
+  assert.equal(hasSpecificWorkOrder("@iris-coder-back get on it"), false);
 
-  const result = classifySharedChatMention("@crew-coder-back get on it");
+  const result = classifySharedChatMention("@iris-coder-back get on it");
   assert.equal(result.mode, "direct");
-  assert.equal(result.targetAgent, "crew-coder-back");
+  assert.equal(result.targetAgent, "iris-coder-back");
 });
 
-test("treats a note to crew-lead as direct chat", () => {
+test("treats a note to iris-lead as direct chat", () => {
   const result = classifySharedChatMention(
-    "@crew-lead note this for later: browser automation needs exact work orders",
+    "@iris-lead note this for later: browser automation needs exact work orders",
   );
   assert.equal(result.mode, "direct");
-  assert.equal(result.targetAgent, "crew-lead");
+  assert.equal(result.targetAgent, "iris-lead");
 });
 
 test("treats handoff phrasing as direct chat for a single mentioned agent", () => {
   const result = classifySharedChatMention(
-    "@crew-researcher ask crew-pm to review your findings",
+    "@iris-researcher ask iris-pm to review your findings",
   );
   assert.equal(result.mode, "direct");
-  assert.equal(result.targetAgent, "crew-researcher");
+  assert.equal(result.targetAgent, "iris-researcher");
   assert.equal(
     hasExplicitHandoffChatIntent(
-      "@crew-researcher ask crew-pm to review your findings",
+      "@iris-researcher ask iris-pm to review your findings",
     ),
     true,
   );
@@ -57,24 +57,24 @@ test("treats handoff phrasing as direct chat for a single mentioned agent", () =
 
 test("keeps strong execution requests as dispatch even if they include a later send-to phrase", () => {
   const result = classifySharedChatMention(
-    "@crew-researcher research OpenClaw and then send your findings to crew-pm",
+    "@iris-researcher research OpenClaw and then send your findings to iris-pm",
   );
   assert.equal(result.mode, "dispatch");
 });
 
 test("treats send findings to another agent as direct chat", () => {
   const result = classifySharedChatMention(
-    "@crew-researcher send your findings to crew-pm",
+    "@iris-researcher send your findings to iris-pm",
   );
   assert.equal(result.mode, "direct");
 });
 
 test("treats speculative kickoff questions as direct chat, not dispatch", () => {
   const result = classifySharedChatMention(
-    "Next? @crew-main kick off browser automation phase?",
+    "Next? @iris-main kick off browser automation phase?",
   );
   assert.equal(result.mode, "direct");
-  assert.equal(result.targetAgent, "crew-main");
+  assert.equal(result.targetAgent, "iris-main");
 });
 
 test("treats single CLI mentions as direct chat", () => {
@@ -93,21 +93,21 @@ test("treats explicit single CLI work orders as dispatch", () => {
   assert.equal(result.targetParticipant?.kind, "cli");
 });
 
-test("expands @crew-all into a direct fanout broadcast", () => {
-  const result = classifySharedChatMention("@crew-all hi team");
+test("expands @iris-all into a direct fanout broadcast", () => {
+  const result = classifySharedChatMention("@iris-all hi team");
   assert.equal(result.mode, "direct_multi");
   assert.ok(result.targetParticipants.length > 2);
-  assert.ok(result.targetParticipants.some((participant) => participant.id === "crew-main"));
+  assert.ok(result.targetParticipants.some((participant) => participant.id === "iris-main"));
   assert.ok(result.targetParticipants.every((participant) => participant.kind === "agent"));
 });
 
 test("does not classify multiple mentions as direct chat", () => {
-  const result = classifySharedChatMention("@crew-pm and @crew-coder check this");
+  const result = classifySharedChatMention("@iris-pm and @iris-coder check this");
   assert.equal(result.mode, "direct_multi");
-  assert.deepEqual(result.targetAgents, ["crew-pm", "crew-coder"]);
+  assert.deepEqual(result.targetAgents, ["iris-pm", "iris-coder"]);
 });
 
 test("strips mention handles before intent detection", () => {
-  assert.equal(stripMentionHandles("@crew-coder hi there"), "hi there");
-  assert.equal(hasExplicitWorkIntent("@crew-coder hi there"), false);
+  assert.equal(stripMentionHandles("@iris-coder hi there"), "hi there");
+  assert.equal(hasExplicitWorkIntent("@iris-coder hi there"), false);
 });

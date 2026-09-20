@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 
 const TEST_DIR = path.join(os.tmpdir(), `iris-dispatch-evidence-bridge-test-${process.pid}`);
-process.env.CREWSWARM_STATE_DIR = TEST_DIR;
+process.env.IRIS_STATE_DIR = TEST_DIR;
 
 import { resetPaths } from "../../lib/runtime/paths.mjs";
 import { clearIrisPlans, createIrisPlan, addIrisPlanTask, loadIrisPlan } from "../../lib/iris/plans.mjs";
@@ -28,7 +28,7 @@ describe("attachEvidenceFromDispatchCompletion", () => {
     const evidence = attachEvidenceFromDispatchCompletion(
       "plan-completion-pass",
       task.id,
-      { taskKey: "hash:abc123", status: "done", owner: "crew-coder", attempt: 1 },
+      { taskKey: "hash:abc123", status: "done", owner: "iris-coder", attempt: 1 },
       { now: Date.parse("2026-09-14T17:00:00.000Z") },
     );
 
@@ -36,7 +36,7 @@ describe("attachEvidenceFromDispatchCompletion", () => {
     assert.equal(evidence.taskId, task.id);
     assert.equal(evidence.data.passed, true);
     assert.equal(evidence.data.command, "hash:abc123");
-    assert.equal(evidence.source.owner, "crew-coder");
+    assert.equal(evidence.source.owner, "iris-coder");
     assert.equal(evidence.source.attempt, 1);
     assert.equal(evidence.metadata.generated, true);
 
@@ -51,7 +51,7 @@ describe("attachEvidenceFromDispatchCompletion", () => {
     const evidence = attachEvidenceFromDispatchCompletion("plan-completion-fail", task.id, {
       taskKey: "hash:def456",
       status: "failed",
-      owner: "crew-coder",
+      owner: "iris-coder",
       attempt: 2,
       error: "Timeout waiting for response",
     });

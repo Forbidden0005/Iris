@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Restart a named CrewSwarm service using the canonical service-control path.
+# Restart a named Iris service using the canonical service-control path.
 # This is the shared entrypoint used by SwiftBar and the dashboard API.
 
 set -euo pipefail
@@ -7,14 +7,14 @@ set -euo pipefail
 SERVICE_ID="${1:-}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-CREWSWARM_DIR="${CREWSWARM_DIR:-${OPENCLAW_DIR:-$REPO_ROOT}}"
+IRIS_DIR="${IRIS_DIR:-${OPENCLAW_DIR:-$REPO_ROOT}}"
 PATH="/usr/local/bin:/opt/homebrew/bin:$HOME/.local/bin:$HOME/bin:/usr/bin:/bin:${PATH:-}"
 export PATH
-RESOLVE_NODE_BIN="$CREWSWARM_DIR/scripts/resolve-node-bin.sh"
+RESOLVE_NODE_BIN="$IRIS_DIR/scripts/resolve-node-bin.sh"
 
 if [[ -z "$SERVICE_ID" ]]; then
   echo "Usage: $0 <service-id>"
-  echo "Valid IDs: rt-bus, agents, telegram, whatsapp, crew-lead, opencode, mcp, studio, studio-watch, dashboard, openclaw-gateway"
+  echo "Valid IDs: rt-bus, agents, telegram, whatsapp, iris-lead, opencode, mcp, studio, studio-watch, dashboard, openclaw-gateway"
   exit 1
 fi
 
@@ -82,17 +82,17 @@ _start_detached() {
 _rt_token() {
   local home="$HOME"
   local token
-  token="$(_config_value "$home/.crewswarm/crewswarm.json" "rt.authToken")"
+  token="$(_config_value "$home/.iris/iris.json" "rt.authToken")"
   if [[ -n "$token" ]]; then
     printf "%s" "$token"
     return 0
   fi
-  token="$(_config_value "$home/.crewswarm/crewswarm.json" "env.CREWSWARM_RT_AUTH_TOKEN")"
+  token="$(_config_value "$home/.iris/iris.json" "env.IRIS_RT_AUTH_TOKEN")"
   if [[ -n "$token" ]]; then
     printf "%s" "$token"
     return 0
   fi
-  token="$(_config_value "$home/.openclaw/openclaw.json" "env.CREWSWARM_RT_AUTH_TOKEN")"
+  token="$(_config_value "$home/.openclaw/openclaw.json" "env.IRIS_RT_AUTH_TOKEN")"
   printf "%s" "$token"
 }
 
@@ -104,10 +104,10 @@ _allowed_agents() {
     const agentSet = new Set([
       "main","admin","build","coder","researcher","architect","reviewer","qa","fixer","pm","orchestrator",
       "openclaw","openclaw-main","opencode-pm","opencode-qa","opencode-fixer","opencode-coder","opencode-coder-2",
-      "security","crew-lead"
+      "security","iris-lead"
     ]);
     for (const file of [
-      path.join(os.homedir(), ".crewswarm", "crewswarm.json"),
+      path.join(os.homedir(), ".iris", "iris.json"),
       path.join(os.homedir(), ".openclaw", "openclaw.json")
     ]) {
       try {
@@ -116,8 +116,8 @@ _allowed_agents() {
         for (const agent of list) {
           const rawId = String(agent.id || "").trim();
           if (!rawId) continue;
-          const bareId = rawId.replace(/^crew-/, "");
-          const rtId = rawId.startsWith("crew-") ? rawId : `crew-${bareId}`;
+          const bareId = rawId.replace(/^iris-/, "");
+          const rtId = rawId.startsWith("iris-") ? rawId : `iris-${bareId}`;
           agentSet.add(rtId);
           agentSet.add(bareId);
         }
@@ -129,42 +129,42 @@ _allowed_agents() {
 
 case "$SERVICE_ID" in
   dashboard)
-    exec bash "$CREWSWARM_DIR/scripts/restart-dashboard.sh"
+    exec bash "$IRIS_DIR/scripts/restart-dashboard.sh"
     ;;
-  crew-lead)
-    exec bash "$CREWSWARM_DIR/scripts/restart-crew-lead.sh"
+  iris-lead)
+    exec bash "$IRIS_DIR/scripts/restart-iris-lead.sh"
     ;;
   rt-bus)
     (
       flock -n 9 || { echo "⚠️ rt-bus restart already in progress — skipping duplicate"; exit 0; }
-      pkill -f "opencrew-rt-daemon" 2>/dev/null || true
+      pkill -f "openiris-rt-daemon" 2>/dev/null || true
       _wait_for_port_free 18889 12 || true
-      _start_detached /tmp/opencrew-rt-daemon.log \
+      _start_detached /tmp/openiris-rt-daemon.log \
         env \
         NODE_DISABLE_COMPILE_CACHE=1 \
-        CREWSWARM_RT_AUTH_TOKEN="$(_rt_token)" \
+        IRIS_RT_AUTH_TOKEN="$(_rt_token)" \
         OPENCLAW_ALLOWED_AGENTS="$(_allowed_agents)" \
-        "$NODE_BIN" "$CREWSWARM_DIR/scripts/opencrew-rt-daemon.mjs"
+        "$NODE_BIN" "$IRIS_DIR/scripts/openiris-rt-daemon.mjs"
       echo "✅ rt-bus restart requested"
-    ) 9>/tmp/crewswarm-rt-bus-restart.lock
+    ) 9>/tmp/iris-rt-bus-restart.lock
     ;;
   agents)
     pkill -f "gateway-bridge.mjs --rt-daemon" 2>/dev/null || true
     find /tmp -maxdepth 1 -name "bridge-*.pid" -delete 2>/dev/null || true
     sleep 1
-    _start_detached /tmp/start-crew.log \
+    _start_detached /tmp/start-iris.log \
       env \
       NODE_DISABLE_COMPILE_CACHE=1 \
-      CREWSWARM_DIR="$CREWSWARM_DIR" \
+      IRIS_DIR="$IRIS_DIR" \
       SKIP_CREW_LEAD=1 \
-      "$NODE_BIN" "$CREWSWARM_DIR/scripts/start-crew.mjs" --force
+      "$NODE_BIN" "$IRIS_DIR/scripts/start-iris.mjs" --force
     echo "✅ agents restart requested"
     ;;
   telegram)
-    launchctl stop com.crewswarm.telegram 2>/dev/null || true
-    TG_TOKEN="${TELEGRAM_BOT_TOKEN:-$(_config_value "$HOME/.crewswarm/telegram-bridge.json" "token")}"
+    launchctl stop com.iris.telegram 2>/dev/null || true
+    TG_TOKEN="${TELEGRAM_BOT_TOKEN:-$(_config_value "$HOME/.iris/telegram-bridge.json" "token")}"
     if [[ -z "$TG_TOKEN" ]]; then
-      echo "❌ Telegram not configured — set TELEGRAM_BOT_TOKEN or ~/.crewswarm/telegram-bridge.json"
+      echo "❌ Telegram not configured — set TELEGRAM_BOT_TOKEN or ~/.iris/telegram-bridge.json"
       exit 1
     fi
     pkill -f "telegram-bridge.mjs" 2>/dev/null || true
@@ -173,21 +173,21 @@ case "$SERVICE_ID" in
       env \
       NODE_DISABLE_COMPILE_CACHE=1 \
       TELEGRAM_BOT_TOKEN="$TG_TOKEN" \
-      TELEGRAM_TARGET_AGENT="$(_config_value "$HOME/.crewswarm/telegram-bridge.json" "targetAgent")" \
-      CREWSWARM_RT_AUTH_TOKEN="$(_rt_token)" \
-      "$NODE_BIN" "$CREWSWARM_DIR/telegram-bridge.mjs"
+      TELEGRAM_TARGET_AGENT="$(_config_value "$HOME/.iris/telegram-bridge.json" "targetAgent")" \
+      IRIS_RT_AUTH_TOKEN="$(_rt_token)" \
+      "$NODE_BIN" "$IRIS_DIR/telegram-bridge.mjs"
     echo "✅ telegram restart requested"
     ;;
   whatsapp)
     # Skip launchd — EAGAIN errors under launchd sandboxing; use nohup instead
     pkill -f "whatsapp-bridge.mjs" 2>/dev/null || true
     sleep 1
-    _start_detached "$HOME/.crewswarm/logs/whatsapp-bridge-stdout.log" \
+    _start_detached "$HOME/.iris/logs/whatsapp-bridge-stdout.log" \
       env \
       NODE_DISABLE_COMPILE_CACHE=1 \
-      WA_ALLOWED_NUMBERS="$(_config_value "$HOME/.crewswarm/crewswarm.json" "env.WA_ALLOWED_NUMBERS")" \
-      CREWSWARM_RT_AUTH_TOKEN="$(_rt_token)" \
-      "$NODE_BIN" "$CREWSWARM_DIR/whatsapp-bridge.mjs"
+      WA_ALLOWED_NUMBERS="$(_config_value "$HOME/.iris/iris.json" "env.WA_ALLOWED_NUMBERS")" \
+      IRIS_RT_AUTH_TOKEN="$(_rt_token)" \
+      "$NODE_BIN" "$IRIS_DIR/whatsapp-bridge.mjs"
     echo "✅ whatsapp restart requested"
     ;;
   opencode)
@@ -213,13 +213,13 @@ case "$SERVICE_ID" in
     pkill -f "mcp-server.mjs" 2>/dev/null || true
     lsof -ti :5020 2>/dev/null | xargs kill -9 2>/dev/null || true
     sleep 1
-    _start_detached /tmp/crewswarm-mcp.log \
+    _start_detached /tmp/iris-mcp.log \
       env NODE_DISABLE_COMPILE_CACHE=1 \
-      "$NODE_BIN" "$CREWSWARM_DIR/scripts/mcp-server.mjs"
+      "$NODE_BIN" "$IRIS_DIR/scripts/mcp-server.mjs"
     echo "✅ mcp restart requested"
     ;;
   studio)
-    if _launchctl_restart "com.crewswarm.studio"; then
+    if _launchctl_restart "com.iris.studio"; then
       echo "✅ studio restart requested via launchd"
       exit 0
     fi
@@ -231,11 +231,11 @@ case "$SERVICE_ID" in
     _start_detached /tmp/studio.log \
       env \
       NODE_DISABLE_COMPILE_CACHE=1 \
-      "$NODE_BIN" "$CREWSWARM_DIR/apps/vibe/server.mjs"
+      "$NODE_BIN" "$IRIS_DIR/apps/vibe/server.mjs"
     echo "✅ studio restart requested"
     ;;
   studio-watch)
-    if _launchctl_restart "com.crewswarm.studio-watch"; then
+    if _launchctl_restart "com.iris.studio-watch"; then
       echo "✅ studio-watch restart requested via launchd"
       exit 0
     fi
@@ -245,21 +245,21 @@ case "$SERVICE_ID" in
     _start_detached /tmp/studio-watch.log \
       env \
       NODE_DISABLE_COMPILE_CACHE=1 \
-      "$NODE_BIN" "$CREWSWARM_DIR/apps/vibe/watch-server.mjs"
+      "$NODE_BIN" "$IRIS_DIR/apps/vibe/watch-server.mjs"
     echo "✅ studio-watch restart requested"
     ;;
   rt|rt-daemon)
-    if _launchctl_restart "com.crewswarm.rt-daemon"; then
+    if _launchctl_restart "com.iris.rt-daemon"; then
       echo "✅ rt-daemon restart requested via launchd"
       exit 0
     fi
-    pkill -f "opencrew-rt-daemon.mjs" 2>/dev/null || true
+    pkill -f "openiris-rt-daemon.mjs" 2>/dev/null || true
     lsof -ti :18889 2>/dev/null | xargs kill -9 2>/dev/null || true
     sleep 1
     _start_detached /tmp/rt-daemon.log \
       env \
       NODE_DISABLE_COMPILE_CACHE=1 \
-      "$NODE_BIN" "$CREWSWARM_DIR/scripts/opencrew-rt-daemon.mjs"
+      "$NODE_BIN" "$IRIS_DIR/scripts/openiris-rt-daemon.mjs"
     echo "✅ rt-daemon restart requested"
     ;;
   openclaw-gateway)

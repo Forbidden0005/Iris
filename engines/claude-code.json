@@ -6,7 +6,7 @@
     "runtime": ["claude", "claude-code"],
     "payloadKey": "useClaudeCode",
     "agentConfigKey": "useClaudeCode",
-    "envVar": "CREWSWARM_CLAUDE_CODE"
+    "envVar": "IRIS_CLAUDE_CODE"
   },
   "bin": "claude",
   "binAlternate": "~/.local/bin/claude",
@@ -16,12 +16,12 @@
   "color": "#d4a853",
   "icon": "claude",
   "agentConfigKey": "useClaudeCode",
-  "envToggle": "CREWSWARM_CLAUDE_CODE",
+  "envToggle": "IRIS_CLAUDE_CODE",
   "requiresAuth": true,
   "authNote": "Uses OAuth — run `claude` once to authenticate. No API key needed. Set ANTHROPIC_API_KEY only if you prefer API-key mode.",
-  "modelEnvVar": "CREWSWARM_CLAUDE_CODE_MODEL",
+  "modelEnvVar": "IRIS_CLAUDE_CODE_MODEL",
   "modelFlag": "--model",
-  "bestFor": ["crew-coder", "crew-fixer", "crew-coder-back"],
+  "bestFor": ["iris-coder", "iris-fixer", "iris-coder-back"],
   "traits": [
     "Full workspace context at every call",
     "Native Anthropic tool use (no @@TOOL parsing)",

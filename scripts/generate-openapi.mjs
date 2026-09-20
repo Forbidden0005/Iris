@@ -7,7 +7,7 @@
  *   - Pattern B: req.method === "METHOD" && url.pathname === "/path"
  *   - Pattern C: url.pathname === "/path"  (method inferred from context)
  *   - Pattern D: parsedUrl.pathname === "/path" && req.method === "METHOD"  (Vibe server)
- *   - Pattern E: req.method === 'METHOD' && path === '/path'  (crew-cli server.ts)
+ *   - Pattern E: req.method === 'METHOD' && path === '/path'  (iris-cli server.ts)
  *
  * Manual entries in dashboardEndpoints / crewLeadEndpoints act as overrides for
  * tag assignment. Scanned routes that match a manual entry use that tag; newly
@@ -25,23 +25,23 @@ const rootDir = path.resolve(__dirname, "..");
 // Shared spec skeleton
 // ---------------------------------------------------------------------------
 
-const oldSpecPath = path.join(rootDir, "crew-cli/docs/openapi.unified.v1.json");
+const oldSpecPath = path.join(rootDir, "iris-cli/docs/openapi.unified.v1.json");
 const oldSpec = JSON.parse(fs.readFileSync(oldSpecPath, "utf8"));
 
 const spec = {
   openapi: "3.1.0",
   info: {
-    title: "crewswarm Complete API",
+    title: "iris Complete API",
     version: "2.0.0",
     description:
-      "Complete API specification for crewswarm Dashboard (port 4319), crew-lead (port 5010), Vibe Studio (port 4320), and crew-cli (variable port). " +
+      "Complete API specification for iris Dashboard (port 4319), iris-lead (port 5010), Vibe Studio (port 4320), and iris-cli (variable port). " +
       "Includes all agent orchestration, messaging integrations, memory management, and system control endpoints.",
   },
   servers: [
     { url: "http://127.0.0.1:4319", description: "Dashboard API (primary web interface)" },
-    { url: "http://127.0.0.1:5010", description: "crew-lead API (orchestration and chat)" },
+    { url: "http://127.0.0.1:5010", description: "iris-lead API (orchestration and chat)" },
     { url: "http://127.0.0.1:4320", description: "Vibe Studio API (editor and sessions)" },
-    { url: "http://127.0.0.1:4321", description: "crew-cli API (agent router and tasks)" },
+    { url: "http://127.0.0.1:4321", description: "iris-cli API (agent router and tasks)" },
   ],
   tags: [
     { name: "Core",       description: "Essential system endpoints" },
@@ -67,7 +67,7 @@ const spec = {
     { name: "Studio",     description: "Vibe Studio editor and session management" },
     { name: "RAG",        description: "Retrieval-augmented generation and indexing" },
     { name: "MCP",        description: "Model Context Protocol endpoints" },
-    { name: "V1",         description: "crew-cli v1 API (tasks, sandbox, traces)" },
+    { name: "V1",         description: "iris-cli v1 API (tasks, sandbox, traces)" },
   ],
   paths: {},
   components: oldSpec.components,
@@ -89,14 +89,14 @@ const dashboardOverrides = {
   "/api/agents-config/delete":           { post: "Agents" },
   "/api/agents-config/reset-session":    { post: "Agents" },
   "/api/agents/reset-session":           { post: "Agents" },
-  "/api/crew-lead/chat":                 { post: "Chat" },
-  "/api/crew-lead/history":              { get: "Chat" },
-  "/api/crew-lead/clear":                { post: "Chat" },
-  "/api/crew-lead/status":               { get: "Chat" },
-  "/api/crew-lead/events":               { get: "Chat" },
-  "/api/crew-lead/confirm-project":      { post: "Projects" },
-  "/api/crew-lead/discard-project":      { post: "Projects" },
-  "/api/crew-lead/project-messages":     { get: "Projects" },
+  "/api/iris-lead/chat":                 { post: "Chat" },
+  "/api/iris-lead/history":              { get: "Chat" },
+  "/api/iris-lead/clear":                { post: "Chat" },
+  "/api/iris-lead/status":               { get: "Chat" },
+  "/api/iris-lead/events":               { get: "Chat" },
+  "/api/iris-lead/confirm-project":      { post: "Projects" },
+  "/api/iris-lead/discard-project":      { post: "Projects" },
+  "/api/iris-lead/project-messages":     { get: "Projects" },
   "/api/dispatch":                       { post: "Dispatch" },
   "/api/projects":                       { get: "Projects", post: "Projects" },
   "/api/projects/update":                { post: "Projects" },
@@ -152,7 +152,7 @@ const dashboardOverrides = {
   "/api/settings/claude-code":           { get: "Settings", post: "Settings" },
   "/api/settings/codex":                 { get: "Settings", post: "Settings" },
   "/api/settings/gemini-cli":            { get: "Settings", post: "Settings" },
-  "/api/settings/crew-cli":              { get: "Settings", post: "Settings" },
+  "/api/settings/iris-cli":              { get: "Settings", post: "Settings" },
   "/api/settings/global-fallback":       { get: "Settings", post: "Settings" },
   "/api/settings/global-oc-loop":        { get: "Settings", post: "Settings" },
   "/api/settings/global-rules":          { get: "Settings", post: "Settings" },
@@ -173,7 +173,7 @@ const dashboardOverrides = {
   "/api/services/status":                { get: "Services" },
   "/api/services/restart":               { post: "Services" },
   "/api/services/stop":                  { post: "Services" },
-  "/api/crew/start":                     { post: "Services" },
+  "/api/iris/start":                     { post: "Services" },
   "/api/engines":                        { get: "Engines" },
   "/api/engines/import":                 { post: "Engines" },
   "/api/engines/toggle":                 { post: "Engines" },
@@ -185,7 +185,7 @@ const dashboardOverrides = {
   "/api/engine-sessions":                { get: "Engines" },
   "/api/codex-sessions":                 { get: "Engines" },
   "/api/gemini-sessions":                { get: "Engines" },
-  "/api/crew-cli-sessions":              { get: "Engines" },
+  "/api/iris-cli-sessions":              { get: "Engines" },
   "/api/first-run-engines":              { get: "Engines" },
   "/api/analyze-image":                  { post: "Multimodal" },
   "/api/transcribe-audio":               { post: "Multimodal" },
@@ -260,14 +260,14 @@ const crewLeadOverrides = {
   "/api/skills":                         { get: "Skills", post: "Skills" },
   "/api/skills/approve":                 { post: "Skills" },
   "/api/skills/reject":                  { post: "Skills" },
-  "/api/crew-lead/history":              { get: "Chat" },
-  "/api/crew-lead/project-messages":     { get: "Projects" },
-  "/api/crew-lead/search-project-messages": { get: "Projects" },
-  "/api/crew-lead/export-project-messages": { get: "Projects" },
-  "/api/crew-lead/message-threads":      { get: "Projects" },
-  "/api/crew-lead/search-messages-semantic": { get: "Projects" },
-  "/api/crew-lead/index-project-messages": { post: "Projects" },
-  "/api/crew-lead/message-index-stats":  { get: "Projects" },
+  "/api/iris-lead/history":              { get: "Chat" },
+  "/api/iris-lead/project-messages":     { get: "Projects" },
+  "/api/iris-lead/search-project-messages": { get: "Projects" },
+  "/api/iris-lead/export-project-messages": { get: "Projects" },
+  "/api/iris-lead/message-threads":      { get: "Projects" },
+  "/api/iris-lead/search-messages-semantic": { get: "Projects" },
+  "/api/iris-lead/index-project-messages": { post: "Projects" },
+  "/api/iris-lead/message-index-stats":  { get: "Projects" },
   "/api/engine-passthrough":             { post: "Engines" },
   "/api/engine-passthrough/clear-session": { post: "Engines" },
   "/api/opencode-event":                 { post: "Engines" },
@@ -275,7 +275,7 @@ const crewLeadOverrides = {
   "/api/claude-sessions":                { get: "Engines" },
   "/api/codex-sessions":                 { get: "Engines" },
   "/api/gemini-sessions":                { get: "Engines" },
-  "/api/crew-cli-sessions":              { get: "Engines" },
+  "/api/iris-cli-sessions":              { get: "Engines" },
   "/api/passthrough-sessions":           { get: "Engines", delete: "Engines" },
   "/api/services/health":                { get: "Services" },
   "/api/services/restart-opencode":      { post: "Services" },
@@ -287,7 +287,7 @@ const crewLeadOverrides = {
   "/api/settings/autonomous-mentions":   { get: "Settings", post: "Settings" },
   "/api/settings/codex":                 { get: "Settings", post: "Settings" },
   "/api/settings/gemini-cli":            { get: "Settings", post: "Settings" },
-  "/api/settings/crew-cli":              { get: "Settings", post: "Settings" },
+  "/api/settings/iris-cli":              { get: "Settings", post: "Settings" },
   "/api/settings/opencode":              { get: "Settings", post: "Settings" },
   "/api/settings/global-oc-loop":        { get: "Settings", post: "Settings" },
   "/api/settings/passthrough-notify":    { get: "Settings", post: "Settings" },
@@ -371,7 +371,7 @@ function inferTag(routePath) {
   if (routePath.startsWith("/api/phased"))          return "Build";
   if (routePath.startsWith("/api/providers"))       return "Providers";
   if (routePath.startsWith("/api/models"))          return "Providers";
-  if (routePath.startsWith("/api/crew-lead"))       return "Chat";
+  if (routePath.startsWith("/api/iris-lead"))       return "Chat";
   if (routePath.startsWith("/api/dispatch"))        return "Dispatch";
   if (routePath.startsWith("/api/classify"))        return "Dispatch";
   if (routePath.startsWith("/api/pipeline"))        return "Dispatch";
@@ -383,7 +383,7 @@ function inferTag(routePath) {
   if (routePath.startsWith("/api/passthrough"))     return "Engines";
   if (routePath.startsWith("/api/codex"))           return "Engines";
   if (routePath.startsWith("/api/gemini"))          return "Engines";
-  if (routePath.startsWith("/api/crew-cli"))        return "Engines";
+  if (routePath.startsWith("/api/iris-cli"))        return "Engines";
   if (routePath.startsWith("/api/analyze"))         return "Multimodal";
   if (routePath.startsWith("/api/transcribe"))      return "Multimodal";
   if (routePath.startsWith("/api/spending"))        return "Telemetry";
@@ -414,8 +414,8 @@ function inferTag(routePath) {
  *   A) url.pathname === "/path" && req.method === "METHOD"
  *   B) req.method === "METHOD" && url.pathname === "/path"
  *   C) parsedUrl.pathname === "/path" && req.method === "METHOD"  (Vibe)
- *   D) req.method === 'METHOD' && path === '/path'  (crew-cli TS)
- *   E) req.method === "METHOD" && path === "/path"  (crew-cli TS alternate)
+ *   D) req.method === 'METHOD' && path === '/path'  (iris-cli TS)
+ *   E) req.method === "METHOD" && path === "/path"  (iris-cli TS alternate)
  *   F) Standalone pathname match without explicit method (multi-method blocks)
  */
 function scanSourceFile(filePath) {
@@ -430,7 +430,7 @@ function scanSourceFile(filePath) {
      p === "/history" || p === "/clear" || p === "/events" ||
      p === "/confirm-project" || p === "/discard-project" ||
      p === "/approve-cmd" || p === "/reject-cmd" || p === "/allowlist-cmd" ||
-     p === "/crew-chat.html" || p === "/signup" || p === "/signup.html") &&
+     p === "/iris-chat.html" || p === "/signup" || p === "/signup.html") &&
     !SKIP_EXTENSIONS.test(p);
 
   function addRoute(rPath, method) {
@@ -449,7 +449,7 @@ function scanSourceFile(filePath) {
   const patB = /req\.method\s*===\s*["'](GET|POST|DELETE|PUT|PATCH)["']\s*&&\s*(?:url|parsedUrl)\.pathname\s*===\s*["']([^"']+)["']/g;
   while ((m = patB.exec(source)) !== null) addRoute(m[2], m[1]);
 
-  // Pattern D/E: crew-cli style  req.method === 'METHOD' && path === '/path'
+  // Pattern D/E: iris-cli style  req.method === 'METHOD' && path === '/path'
   const patD = /req\.method\s*===\s*['"]?(GET|POST|DELETE|PUT|PATCH)['"]?\s*&&\s*path\s*===\s*['"]([^'"]+)['"]/g;
   while ((m = patD.exec(source)) !== null) addRoute(m[2], m[1]);
 
@@ -466,7 +466,7 @@ function scanSourceFile(filePath) {
     }
   }
 
-  // Pattern G: crew-cli — plain path === '/...' blocks (standalone, no method adjacent)
+  // Pattern G: iris-cli — plain path === '/...' blocks (standalone, no method adjacent)
   const patG = /\bpath\s*===\s*['"]([^'"]+)['"]/g;
   while ((m = patG.exec(source)) !== null) {
     if (isRoutePath(m[1]) && !routes.has(m[1])) {
@@ -603,8 +603,8 @@ const sources = [
     overrides: dashboardOverrides,
   },
   {
-    label: "crew-lead (lib/crew-lead/http-server.mjs)",
-    file: path.join(rootDir, "lib/crew-lead/http-server.mjs"),
+    label: "iris-lead (lib/iris-lead/http-server.mjs)",
+    file: path.join(rootDir, "lib/iris-lead/http-server.mjs"),
     overrides: crewLeadOverrides,
   },
   {
@@ -613,8 +613,8 @@ const sources = [
     overrides: vibeOverrides,
   },
   {
-    label: "crew-cli (crew-cli/src/interface/server.ts)",
-    file: path.join(rootDir, "crew-cli/src/interface/server.ts"),
+    label: "iris-cli (iris-cli/src/interface/server.ts)",
+    file: path.join(rootDir, "iris-cli/src/interface/server.ts"),
     overrides: crewCliOverrides,
   },
 ];
@@ -679,7 +679,7 @@ for (const src of sources) {
 // Write output
 // ---------------------------------------------------------------------------
 
-const outputPath = path.join(rootDir, "crew-cli/docs/openapi.complete.v2.json");
+const outputPath = path.join(rootDir, "iris-cli/docs/openapi.complete.v2.json");
 fs.writeFileSync(outputPath, JSON.stringify(spec, null, 2), "utf8");
 
 // ---------------------------------------------------------------------------
@@ -693,7 +693,7 @@ const totalOps     = Object.values(spec.paths).reduce(
 );
 
 console.log("");
-console.log("crewswarm OpenAPI generator — dynamic scan + manual override merge");
+console.log("iris OpenAPI generator — dynamic scan + manual override merge");
 console.log("=".repeat(68));
 console.log("");
 console.log("Source files scanned:");

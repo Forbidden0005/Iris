@@ -26,7 +26,7 @@ website/dist
 .gitignore
 
 # Local config and secrets — always mounted as a volume at runtime
-~/.crewswarm
+~/.iris
 
 # Dev/local files
 .cursor

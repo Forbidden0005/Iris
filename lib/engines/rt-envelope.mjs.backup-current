@@ -25,8 +25,8 @@ export async function handleRealtimeEnvelope(envelope, client, bridge) {
   const correlationId = envelope?.id || undefined;
 
   const {
-    CREWSWARM_RT_AGENT,
-    CREWSWARM_RT_COMMAND_TYPES,
+    IRIS_RT_AGENT,
+    IRIS_RT_COMMAND_TYPES,
     pendingCmdApprovals,
     resolveSpawnTargets,
     spawnAgentDaemon,
@@ -64,13 +64,13 @@ export async function handleRealtimeEnvelope(envelope, client, bridge) {
     validateCodingArtifacts,
     isCodingTask,
     shouldRetryTaskFailure,
-    CREWSWARM_RT_DISPATCH_LEASE_MS,
-    CREWSWARM_RT_DISPATCH_HEARTBEAT_MS,
-    CREWSWARM_RT_DISPATCH_MAX_RETRIES,
-    CREWSWARM_RT_DISPATCH_MAX_RETRIES_CODING,
-    CREWSWARM_RT_DISPATCH_RETRY_BACKOFF_MS,
-    CREWSWARM_OPENCODE_AGENT,
-    CREWSWARM_OPENCODE_MODEL,
+    IRIS_RT_DISPATCH_LEASE_MS,
+    IRIS_RT_DISPATCH_HEARTBEAT_MS,
+    IRIS_RT_DISPATCH_MAX_RETRIES,
+    IRIS_RT_DISPATCH_MAX_RETRIES_CODING,
+    IRIS_RT_DISPATCH_RETRY_BACKOFF_MS,
+    IRIS_OPENCODE_AGENT,
+    IRIS_OPENCODE_MODEL,
     OPENCODE_FREE_MODEL_CHAIN,
     RT_TO_GATEWAY_AGENT_MAP,
     SHARED_MEMORY_DIR,
@@ -79,17 +79,17 @@ export async function handleRealtimeEnvelope(envelope, client, bridge) {
   } = _deps;
 
   // Per-agent routing: skip tasks not addressed to us (unless broadcast)
-  if (to !== "broadcast" && to !== CREWSWARM_RT_AGENT) {
-    client.ack({ messageId: envelope.id, status: "skipped", note: `not for us (to=${to}, we=${CREWSWARM_RT_AGENT})` });
+  if (to !== "broadcast" && to !== IRIS_RT_AGENT) {
+    client.ack({ messageId: envelope.id, status: "skipped", note: `not for us (to=${to}, we=${IRIS_RT_AGENT})` });
     return;
   }
 
-  if (!CREWSWARM_RT_COMMAND_TYPES.has(incomingType)) {
+  if (!IRIS_RT_COMMAND_TYPES.has(incomingType)) {
     client.ack({ messageId: envelope.id, status: "skipped", note: `unsupported type ${incomingType}` });
     return;
   }
 
-  // ── cmd approval resolution (from crew-lead via RT bus) ───────────────────
+  // ── cmd approval resolution (from iris-lead via RT bus) ───────────────────
   if (incomingType === "cmd.approved" || incomingType === "cmd.rejected") {
     const approvalId = payload?.approvalId;
     if (approvalId && pendingCmdApprovals.has(approvalId)) {
@@ -97,7 +97,7 @@ export async function handleRealtimeEnvelope(envelope, client, bridge) {
       clearTimeout(pending.timer);
       pendingCmdApprovals.delete(approvalId);
       pending.resolve(incomingType === "cmd.approved");
-      console.log(`[${CREWSWARM_RT_AGENT}] cmd ${incomingType === "cmd.approved" ? "✅ approved" : "⛔ rejected"}: ${approvalId}`);
+      console.log(`[${IRIS_RT_AGENT}] cmd ${incomingType === "cmd.approved" ? "✅ approved" : "⛔ rejected"}: ${approvalId}`);
     }
     try { client.ack({ messageId: envelope.id, status: "done", note: `cmd ${incomingType}` }); } catch {}
     return;
@@ -115,7 +115,7 @@ export async function handleRealtimeEnvelope(envelope, client, bridge) {
       correlationId,
       priority: "high",
       payload: {
-        source: CREWSWARM_RT_AGENT,
+        source: IRIS_RT_AGENT,
         incomingType,
         action: "spawn_agent",
         results,
@@ -136,7 +136,7 @@ export async function handleRealtimeEnvelope(envelope, client, bridge) {
       correlationId,
       priority: "medium",
       payload: {
-        source: CREWSWARM_RT_AGENT,
+        source: IRIS_RT_AGENT,
         incomingType,
         action: "collect_status",
         status,
@@ -155,7 +155,7 @@ export async function handleRealtimeEnvelope(envelope, client, bridge) {
       correlationId,
       priority: "medium",
       payload: {
-        source: CREWSWARM_RT_AGENT,
+        source: IRIS_RT_AGENT,
         action,
         note: "Legacy bridge supports run_task and collect_status command actions",
       },
@@ -188,7 +188,7 @@ export async function handleRealtimeEnvelope(envelope, client, bridge) {
         source: incomingType,
         incomingType,
         from,
-        leaseMs: CREWSWARM_RT_DISPATCH_LEASE_MS,
+        leaseMs: IRIS_RT_DISPATCH_LEASE_MS,
       });
     } catch (err) {
       telemetry("dispatch_claim_error", {
@@ -222,7 +222,7 @@ export async function handleRealtimeEnvelope(envelope, client, bridge) {
           correlationId,
           priority: "medium",
           payload: {
-            source: CREWSWARM_RT_AGENT,
+            source: IRIS_RT_AGENT,
             incomingType,
             reply: dispatchClaim.doneRecord.reply,
             duplicate: true,
@@ -240,7 +240,7 @@ export async function handleRealtimeEnvelope(envelope, client, bridge) {
       const renewed = renewTaskLease({
         key: dispatchKey,
         claimId: dispatchClaim.claimId,
-        leaseMs: CREWSWARM_RT_DISPATCH_LEASE_MS,
+        leaseMs: IRIS_RT_DISPATCH_LEASE_MS,
       });
       if (!renewed) {
         telemetry("dispatch_lease_lost", {
@@ -250,7 +250,7 @@ export async function handleRealtimeEnvelope(envelope, client, bridge) {
           claimId: dispatchClaim?.claimId,
         });
       }
-    }, CREWSWARM_RT_DISPATCH_HEARTBEAT_MS);
+    }, IRIS_RT_DISPATCH_HEARTBEAT_MS);
 
     telemetry("dispatch_claim_acquired", {
       key: dispatchKey,
@@ -261,7 +261,7 @@ export async function handleRealtimeEnvelope(envelope, client, bridge) {
     });
   }
 
-  client.ack({ messageId: envelope.id, status: "received", note: `crewswarm accepted ${incomingType}` });
+  client.ack({ messageId: envelope.id, status: "received", note: `iris accepted ${incomingType}` });
   client.publish({
     channel: "status",
     type: "task.in_progress",
@@ -270,7 +270,7 @@ export async function handleRealtimeEnvelope(envelope, client, bridge) {
     correlationId,
     priority: "high",
     payload: {
-      source: CREWSWARM_RT_AGENT,
+      source: IRIS_RT_AGENT,
       note: `Processing ${incomingType}`,
       action,
       idempotencyKey: dispatchKey,
@@ -280,7 +280,7 @@ export async function handleRealtimeEnvelope(envelope, client, bridge) {
 
   try {
     const taskProjectDir = payload?.projectDir || getOpencodeProjectDir() || null;
-    const { finalPrompt, sharedMemory } = buildTaskPrompt(prompt, `Realtime task from ${from} (${incomingType})`, CREWSWARM_RT_AGENT, { projectDir: taskProjectDir });
+    const { finalPrompt, sharedMemory } = buildTaskPrompt(prompt, `Realtime task from ${from} (${incomingType})`, IRIS_RT_AGENT, { projectDir: taskProjectDir });
     if (sharedMemory.loadFailed || finalPrompt === "MEMORY_LOAD_FAILED") {
       throw new Error("MEMORY_LOAD_FAILED");
     }
@@ -291,15 +291,15 @@ export async function handleRealtimeEnvelope(envelope, client, bridge) {
     
     if (selectedEngine) {
       progress(`Routing to ${selectedEngine.label || selectedEngine.id} (priority ${selectedEngine.priority})...`);
-      telemetry(`realtime_route_${selectedEngine.id}`, { taskId, incomingType, from, agent: CREWSWARM_RT_AGENT });
+      telemetry(`realtime_route_${selectedEngine.id}`, { taskId, incomingType, from, agent: IRIS_RT_AGENT });
     } else {
       // Fall back to OpenCode or direct LLM if no engine matches
       progress(`No engine matched — falling back to OpenCode or direct LLM`);
-      telemetry("realtime_route_fallback", { taskId, incomingType, from, agent: CREWSWARM_RT_AGENT });
+      telemetry("realtime_route_fallback", { taskId, incomingType, from, agent: IRIS_RT_AGENT });
     }
     
     // Emit working indicator for ALL tasks
-    client?.publish({ channel: "events", type: "agent_working", to: "broadcast", payload: { agent: CREWSWARM_RT_AGENT, ts: Date.now() } });
+    client?.publish({ channel: "events", type: "agent_working", to: "broadcast", payload: { agent: IRIS_RT_AGENT, ts: Date.now() } });
 
     let reply;
     let ocAgentId = null;
@@ -348,8 +348,8 @@ export async function handleRealtimeEnvelope(envelope, client, bridge) {
     if (selectedEngine && selectedEngine.run) {
       projectDir = payload?.projectDir || getOpencodeProjectDir() || process.cwd();
       projectDir = String(projectDir).replace(/[.,;!?]+$/, "");
-      const enginePrompt = await buildMiniTaskForOpenCode(prompt, CREWSWARM_RT_AGENT, projectDir);
-      const agentCfg = getAgentOpenCodeConfig(CREWSWARM_RT_AGENT);
+      const enginePrompt = await buildMiniTaskForOpenCode(prompt, IRIS_RT_AGENT, projectDir);
+      const agentCfg = getAgentOpenCodeConfig(IRIS_RT_AGENT);
       modelUsed = payload?.model || agentCfg.model || 'unknown';
       
       try {
@@ -357,13 +357,13 @@ export async function handleRealtimeEnvelope(envelope, client, bridge) {
         if (agentCfg.loop && (selectedEngine.id === 'cursor' || selectedEngine.id === 'claude-code')) {
           progress(`${selectedEngine.label} loop mode: LLM ↔ Engine until DONE…`);
           try {
-            reply = await runOuroborosStyleLoop(prompt, CREWSWARM_RT_AGENT, projectDir, payload, progress, selectedEngine.id);
+            reply = await runOuroborosStyleLoop(prompt, IRIS_RT_AGENT, projectDir, payload, progress, selectedEngine.id);
           } catch (e) {
             progress(`${selectedEngine.label} loop failed: ${e?.message?.slice(0, 80)} — falling back to single shot`);
-            reply = await selectedEngine.run(enginePrompt, { ...payload, agentId: CREWSWARM_RT_AGENT, projectDir });
+            reply = await selectedEngine.run(enginePrompt, { ...payload, agentId: IRIS_RT_AGENT, projectDir });
           }
         } else {
-          reply = await selectedEngine.run(enginePrompt, { ...payload, agentId: CREWSWARM_RT_AGENT, projectDir });
+          reply = await selectedEngine.run(enginePrompt, { ...payload, agentId: IRIS_RT_AGENT, projectDir });
         }
       } catch (e) {
         const msg = e?.message ?? String(e);
@@ -375,7 +375,7 @@ export async function handleRealtimeEnvelope(envelope, client, bridge) {
         } else {
           progress(`${selectedEngine.label} failed: ${msg.slice(0, 120)} — falling back to direct LLM`);
           telemetry(`${selectedEngine.id}_fallback`, { taskId, error: msg });
-          reply = await callLLMDirect(finalPrompt, CREWSWARM_RT_AGENT, null);
+          reply = await callLLMDirect(finalPrompt, IRIS_RT_AGENT, null);
         }
       }
     } else {
@@ -387,24 +387,24 @@ export async function handleRealtimeEnvelope(envelope, client, bridge) {
         if (fromTask) projectDir = fromTask;
       }
       projectDir = projectDir || process.cwd();
-      const ocAgentCfg = getAgentOpenCodeConfig(CREWSWARM_RT_AGENT);
-      modelUsed = payload?.model || ocAgentCfg.model || CREWSWARM_OPENCODE_MODEL;
+      const ocAgentCfg = getAgentOpenCodeConfig(IRIS_RT_AGENT);
+      modelUsed = payload?.model || ocAgentCfg.model || IRIS_OPENCODE_MODEL;
       let opencodeErr;
 
       if (ocAgentCfg.loop) {
         // Ouroboros-style: LLM decomposes → OpenCode executes each step → repeat until DONE
         progress("OpenCode loop mode: LLM ↔ OpenCode until DONE...");
         try {
-          reply = await runOuroborosStyleLoop(prompt, CREWSWARM_RT_AGENT, projectDir, payload, progress, "opencode");
+          reply = await runOuroborosStyleLoop(prompt, IRIS_RT_AGENT, projectDir, payload, progress, "opencode");
         } catch (e) {
           opencodeErr = e;
           progress(`OpenCode loop failed: ${e?.message?.slice(0, 80)} — falling back to single shot`);
-          const ocPrompt = await buildMiniTaskForOpenCode(prompt, CREWSWARM_RT_AGENT, projectDir);
+          const ocPrompt = await buildMiniTaskForOpenCode(prompt, IRIS_RT_AGENT, projectDir);
           reply = await runOpenCodeTask(ocPrompt, payload);
         }
       } else {
         // Single-shot: mini task only (now includes shared memory context)
-        const ocPrompt = await buildMiniTaskForOpenCode(prompt, CREWSWARM_RT_AGENT, projectDir);
+        const ocPrompt = await buildMiniTaskForOpenCode(prompt, IRIS_RT_AGENT, projectDir);
         try {
           reply = await runOpenCodeTask(ocPrompt, payload);
         } catch (e) {
@@ -415,8 +415,8 @@ export async function handleRealtimeEnvelope(envelope, client, bridge) {
         if (isRateLimit || isTimeout) {
           // Build rotation chain: free models first, then configured fallback, deduplicated
           // Track ALL tried models (primary + each fallback attempt) to avoid re-trying failed ones
-          const primaryModel = String(payload?.model || CREWSWARM_OPENCODE_MODEL);
-          const configFallback = getAgentOpenCodeConfig(CREWSWARM_RT_AGENT).fallbackModel;
+          const primaryModel = String(payload?.model || IRIS_OPENCODE_MODEL);
+          const configFallback = getAgentOpenCodeConfig(IRIS_RT_AGENT).fallbackModel;
           const triedModels = new Set([primaryModel]);
           // Per-agent opencodeFallbackModel goes FIRST, then global free chain as safety net
           const chain = [...(configFallback ? [configFallback] : []), ...OPENCODE_FREE_MODEL_CHAIN]
@@ -442,16 +442,16 @@ export async function handleRealtimeEnvelope(envelope, client, bridge) {
         if (!reply && bridge?.kind === "gateway") {
           telemetry("realtime_opencode_fallback", { taskId, incomingType, error: opencodeErr?.message || msg });
           progress(`OpenCode failed, falling back to legacy gateway: ${(opencodeErr?.message || msg).slice(0, 120)}`);
-          const gatewayAgentId = RT_TO_GATEWAY_AGENT_MAP[CREWSWARM_RT_AGENT] || "main";
+          const gatewayAgentId = RT_TO_GATEWAY_AGENT_MAP[IRIS_RT_AGENT] || "main";
           reply = await bridge.chat(finalPrompt, gatewayAgentId, { idempotencyKey: dispatchKey });
         } else if (!reply) {
-          // Try direct LLM call (uses agent's configured model/provider from crewswarm.json)
+          // Try direct LLM call (uses agent's configured model/provider from iris.json)
           engineUsed = "direct-llm";
-          const ocAgentId = RT_TO_GATEWAY_AGENT_MAP[CREWSWARM_RT_AGENT] || "main";
+          const ocAgentId = RT_TO_GATEWAY_AGENT_MAP[IRIS_RT_AGENT] || "main";
           const agentSysPrompt = loadAgentPrompts()[ocAgentId] || null;
-          const agentCfg = getAgentOpenCodeConfig(CREWSWARM_RT_AGENT);
+          const agentCfg = getAgentOpenCodeConfig(IRIS_RT_AGENT);
           modelUsed = agentCfg?.model || 'unknown';
-          progress(`Trying direct LLM for ${CREWSWARM_RT_AGENT} (mapped: ${ocAgentId})...`);
+          progress(`Trying direct LLM for ${IRIS_RT_AGENT} (mapped: ${ocAgentId})...`);
           reply = await callLLMDirect(finalPrompt, ocAgentId, agentSysPrompt);
           
           if (!reply) {
@@ -471,10 +471,10 @@ export async function handleRealtimeEnvelope(envelope, client, bridge) {
     reply = stripThink(reply);
 
     // Execute any tool calls — suppress @@WRITE_FILE if searches are pending in the same reply
-    const toolResults = await executeToolCalls(reply, CREWSWARM_RT_AGENT, { suppressWriteIfSearchPending: true });
+    const toolResults = await executeToolCalls(reply, IRIS_RT_AGENT, { suppressWriteIfSearchPending: true });
     if (toolResults.length > 0) {
       reply = reply + "\n\n---\n**Tool execution results:**\n" + toolResults.join("\n");
-      telemetry("agent_tools_executed", { taskId, agent: CREWSWARM_RT_AGENT, count: toolResults.length });
+      telemetry("agent_tools_executed", { taskId, agent: IRIS_RT_AGENT, count: toolResults.length });
 
       // Do a follow-up LLM call whenever:
       // (a) searches ran (agent needs to see results before writing), OR
@@ -491,7 +491,7 @@ export async function handleRealtimeEnvelope(envelope, client, bridge) {
             : null;
           if (!followUpReply) followUpReply = await bridge.chat(followUpPrompt, ocAgentId || "main", { idempotencyKey: dispatchKey + "-followup" });
           followUpReply = stripThink(followUpReply);
-          const followUpTools = await executeToolCalls(followUpReply, CREWSWARM_RT_AGENT);
+          const followUpTools = await executeToolCalls(followUpReply, IRIS_RT_AGENT);
           reply = reply + "\n\n" + followUpReply;
           if (followUpTools.length > 0) {
             reply = reply + "\n\n---\n**Follow-up tool results:**\n" + followUpTools.join("\n");
@@ -524,7 +524,7 @@ export async function handleRealtimeEnvelope(envelope, client, bridge) {
       client.publish({
         channel: "issues",
         type: "task.artifact_missing",
-        to: CREWSWARM_RT_AGENT, // Send feedback to self for learning
+        to: IRIS_RT_AGENT, // Send feedback to self for learning
         taskId,
         correlationId,
         priority: "high",
@@ -569,30 +569,30 @@ export async function handleRealtimeEnvelope(envelope, client, bridge) {
         if (!entry) continue;
         try {
           if (projectDir) {
-            const projectMemDir = path.join(projectDir, ".crewswarm");
+            const projectMemDir = path.join(projectDir, ".iris");
             fs.mkdirSync(projectMemDir, { recursive: true });
             const projectBrainPath = path.join(projectMemDir, "brain.md");
             if (!fs.existsSync(projectBrainPath)) {
               fs.writeFileSync(projectBrainPath, "# Project Brain\n\nAccumulated knowledge for this project.\n", "utf8");
             }
-            fs.appendFileSync(projectBrainPath, `\n## [${date}] ${CREWSWARM_RT_AGENT}: ${entry}\n`, "utf8");
+            fs.appendFileSync(projectBrainPath, `\n## [${date}] ${IRIS_RT_AGENT}: ${entry}\n`, "utf8");
           } else {
             const lessonsPath = path.join(SHARED_MEMORY_DIR, "lessons.md");
-            fs.appendFileSync(lessonsPath, `\n## [${date}] ${CREWSWARM_RT_AGENT}: ${entry}\n`, "utf8");
+            fs.appendFileSync(lessonsPath, `\n## [${date}] ${IRIS_RT_AGENT}: ${entry}\n`, "utf8");
           }
-          console.log(`[bridge:${CREWSWARM_RT_AGENT}] @@LESSON → ${projectDir ? path.basename(projectDir) + "/.crewswarm/brain.md" : "lessons.md"}: ${entry.slice(0, 80)}`);
+          console.log(`[bridge:${IRIS_RT_AGENT}] @@LESSON → ${projectDir ? path.basename(projectDir) + "/.iris/brain.md" : "lessons.md"}: ${entry.slice(0, 80)}`);
         } catch (e) {
-          console.warn(`[bridge:${CREWSWARM_RT_AGENT}] @@LESSON write failed: ${e.message}`);
+          console.warn(`[bridge:${IRIS_RT_AGENT}] @@LESSON write failed: ${e.message}`);
         }
       }
     }
 
     // Parse and execute @@DISPATCH commands from coordinator agents only.
-    // Canonical format: @@DISPATCH {"agent":"crew-coder","task":"..."}
+    // Canonical format: @@DISPATCH {"agent":"iris-coder","task":"..."}
     // Legacy format also supported: @@DISPATCH:agent-id|task description
     // Non-coordinator agents are blocked from dispatching to prevent loops.
     const COORDINATOR_AGENTS = new Set(COORDINATOR_AGENT_IDS);
-    const rawDispatches = COORDINATOR_AGENTS.has(CREWSWARM_RT_AGENT)
+    const rawDispatches = COORDINATOR_AGENTS.has(IRIS_RT_AGENT)
       ? (() => {
           const results = [];
           // Canonical JSON format
@@ -612,7 +612,7 @@ export async function handleRealtimeEnvelope(envelope, client, bridge) {
     if (rawDispatches.length > 0) {
       for (const { targetAgent, taskText } of rawDispatches) {
         // Block self-dispatch and empty targets
-        if (!targetAgent || !taskText || targetAgent === CREWSWARM_RT_AGENT) continue;
+        if (!targetAgent || !taskText || targetAgent === IRIS_RT_AGENT) continue;
         try {
           // For audit/QA tasks, inject file contents so the agent can actually read them
           let enrichedTask = taskText;
@@ -645,14 +645,14 @@ export async function handleRealtimeEnvelope(envelope, client, bridge) {
             payload: {
               action: "run_task",
               prompt: enrichedTask,
-              dispatchedBy: CREWSWARM_RT_AGENT,
+              dispatchedBy: IRIS_RT_AGENT,
               parentTaskId: taskId,
             },
           });
-          telemetry("crew_dispatch_forwarded", { from: CREWSWARM_RT_AGENT, to: targetAgent, taskId: dispatchTaskId });
+          telemetry("crew_dispatch_forwarded", { from: IRIS_RT_AGENT, to: targetAgent, taskId: dispatchTaskId });
           progress(`Dispatched task to ${targetAgent}: ${taskText.slice(0, 60)}`);
         } catch (dispErr) {
-          console.error(`[bridge] CREW_DISPATCH to ${targetAgent} failed:`, dispErr?.message);
+          console.error(`[bridge] IRIS_DISPATCH to ${targetAgent} failed:`, dispErr?.message);
         }
       }
     }
@@ -665,7 +665,7 @@ export async function handleRealtimeEnvelope(envelope, client, bridge) {
       correlationId,
       priority: "high",
       payload: {
-        source: CREWSWARM_RT_AGENT,
+        source: IRIS_RT_AGENT,
         reply,
         incomingType,
         idempotencyKey: dispatchKey,
@@ -680,7 +680,7 @@ export async function handleRealtimeEnvelope(envelope, client, bridge) {
           source: 'agent',
           role: 'assistant',
           content: reply,
-          agent: CREWSWARM_RT_AGENT,
+          agent: IRIS_RT_AGENT,
           metadata: {
             taskId,
             engineUsed,
@@ -701,7 +701,7 @@ export async function handleRealtimeEnvelope(envelope, client, bridge) {
         tier: 'worker',
         task: prompt,
         result: reply,
-        agent: CREWSWARM_RT_AGENT,
+        agent: IRIS_RT_AGENT,
         model: modelUsed || 'unknown',
         metadata: {
           engineUsed,
@@ -710,16 +710,16 @@ export async function handleRealtimeEnvelope(envelope, client, bridge) {
           timestamp: new Date().toISOString()
         }
       }).catch(err => {
-        console.warn(`[${CREWSWARM_RT_AGENT}] Failed to record task memory: ${err.message}`);
+        console.warn(`[${IRIS_RT_AGENT}] Failed to record task memory: ${err.message}`);
       });
     }
     
-    client?.publish({ channel: "events", type: "agent_idle", to: "broadcast", payload: { agent: CREWSWARM_RT_AGENT, ts: Date.now() } });
+    client?.publish({ channel: "events", type: "agent_idle", to: "broadcast", payload: { agent: IRIS_RT_AGENT, ts: Date.now() } });
     client.ack({ messageId: envelope.id, status: "done", note: "task completed" });
   } catch (err) {
     const message = err?.message ?? String(err);
     const isCoding = isCodingTask(incomingType, prompt, payload);
-    const maxRetries = isCoding ? CREWSWARM_RT_DISPATCH_MAX_RETRIES_CODING : CREWSWARM_RT_DISPATCH_MAX_RETRIES;
+    const maxRetries = isCoding ? IRIS_RT_DISPATCH_MAX_RETRIES_CODING : IRIS_RT_DISPATCH_MAX_RETRIES;
     const shouldRetry = dispatchGuardEnabled
       && dispatchClaim?.acquired
       && shouldRetryTaskFailure(err)
@@ -727,7 +727,7 @@ export async function handleRealtimeEnvelope(envelope, client, bridge) {
 
     if (shouldRetry) {
       const retryAttempt = dispatchAttempt + 1;
-      const retryAfterMs = CREWSWARM_RT_DISPATCH_RETRY_BACKOFF_MS * (2 ** dispatchAttempt);
+      const retryAfterMs = IRIS_RT_DISPATCH_RETRY_BACKOFF_MS * (2 ** dispatchAttempt);
       telemetry("dispatch_retry_scheduled", {
         key: dispatchKey,
         taskId,
@@ -744,7 +744,7 @@ export async function handleRealtimeEnvelope(envelope, client, bridge) {
         correlationId,
         priority: "high",
         payload: {
-          source: CREWSWARM_RT_AGENT,
+          source: IRIS_RT_AGENT,
           incomingType,
           attempt: retryAttempt,
           retryAfterMs,
@@ -758,7 +758,7 @@ export async function handleRealtimeEnvelope(envelope, client, bridge) {
           client.publish({
             channel: "command",
             type: incomingType,
-            to: CREWSWARM_RT_AGENT,  // Retry to SELF, not broadcast (prevents 7x amplification)
+            to: IRIS_RT_AGENT,  // Retry to SELF, not broadcast (prevents 7x amplification)
             taskId,
             priority: "high",
             payload: {
@@ -791,7 +791,7 @@ export async function handleRealtimeEnvelope(envelope, client, bridge) {
         taskId,
         incomingType,
         from,
-        agent: CREWSWARM_RT_AGENT,
+        agent: IRIS_RT_AGENT,
         attempt: dispatchAttempt,
         error: message,
         prompt: String(prompt).slice(0, 2000),
@@ -806,15 +806,15 @@ export async function handleRealtimeEnvelope(envelope, client, bridge) {
         telemetry("dlq_write_error", { key: dispatchKey, error: dlqErr?.message });
       }
 
-      // ── Auto-escalate to crew-fixer when coding agents exhaust retries ─────
+      // ── Auto-escalate to iris-fixer when coding agents exhaust retries ─────
       const ESCALATABLE_AGENTS = new Set([
-        "crew-coder", "crew-coder-front", "crew-coder-back", "crew-frontend", "crew-copywriter",
+        "iris-coder", "iris-coder-front", "iris-coder-back", "iris-frontend", "iris-copywriter",
       ]);
-      const isSelf = CREWSWARM_RT_AGENT === "crew-fixer"; // prevent fixer→fixer loop
-      if (ESCALATABLE_AGENTS.has(CREWSWARM_RT_AGENT) && !isSelf) {
+      const isSelf = IRIS_RT_AGENT === "iris-fixer"; // prevent fixer→fixer loop
+      if (ESCALATABLE_AGENTS.has(IRIS_RT_AGENT) && !isSelf) {
         const fixerTaskId = `fixer-escalation-${Date.now()}`;
         const fixerPrompt =
-          `⚠️ Auto-escalation from ${CREWSWARM_RT_AGENT} (failed after ${dispatchAttempt + 1} attempts).\n\n` +
+          `⚠️ Auto-escalation from ${IRIS_RT_AGENT} (failed after ${dispatchAttempt + 1} attempts).\n\n` +
           `**Original task:**\n${String(prompt).slice(0, 1500)}\n\n` +
           `**Error:**\n${message.slice(0, 500)}\n\n` +
           `Use @@READ_FILE to inspect any relevant files, identify the root cause, and fix it.`;
@@ -822,15 +822,15 @@ export async function handleRealtimeEnvelope(envelope, client, bridge) {
           client.publish({
             channel: "command",
             type: "command.run_task",
-            to: "crew-fixer",
+            to: "iris-fixer",
             taskId: fixerTaskId,
             priority: "high",
-            payload: { action: "run_task", prompt: fixerPrompt, escalatedFrom: CREWSWARM_RT_AGENT, parentTaskId: taskId },
+            payload: { action: "run_task", prompt: fixerPrompt, escalatedFrom: IRIS_RT_AGENT, parentTaskId: taskId },
           });
-          telemetry("task_escalated_to_fixer", { fromAgent: CREWSWARM_RT_AGENT, taskId, fixerTaskId });
-          console.log(`[${CREWSWARM_RT_AGENT}] ⬆️ Escalated failed task to crew-fixer (${fixerTaskId})`);
+          telemetry("task_escalated_to_fixer", { fromAgent: IRIS_RT_AGENT, taskId, fixerTaskId });
+          console.log(`[${IRIS_RT_AGENT}] ⬆️ Escalated failed task to iris-fixer (${fixerTaskId})`);
         } catch (escErr) {
-          console.error(`[${CREWSWARM_RT_AGENT}] Escalation to crew-fixer failed:`, escErr?.message);
+          console.error(`[${IRIS_RT_AGENT}] Escalation to iris-fixer failed:`, escErr?.message);
         }
       }
       // ─────────────────────────────────────────────────────────────────────────
@@ -844,7 +844,7 @@ export async function handleRealtimeEnvelope(envelope, client, bridge) {
       correlationId,
       priority: "high",
       payload: {
-        source: CREWSWARM_RT_AGENT,
+        source: IRIS_RT_AGENT,
         error: message,
         idempotencyKey: dispatchKey,
         attempt: dispatchAttempt,

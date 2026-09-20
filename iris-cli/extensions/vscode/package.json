@@ -1,0 +1,120 @@
+{
+  "name": "iris",
+  "displayName": "iris",
+  "description": "iris: Multi-agent AI coding assistant with chat-based code generation and QA loop",
+  "version": "0.1.0",
+  "publisher": "iris",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other",
+    "Programming Languages",
+    "Snippets"
+  ],
+  "activationEvents": [
+    "onCommand:iris.openChat",
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "iris.openChat",
+        "title": "iris: Open Chat",
+        "category": "iris"
+      },
+      {
+        "command": "iris.askCrew",
+        "title": "iris: Ask Iris",
+        "category": "iris"
+      },
+      {
+        "command": "iris.refreshConnection",
+        "title": "iris: Refresh Connection",
+        "category": "iris"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "iris.askCrew",
+          "when": "editorHasSelection",
+          "group": "iris"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "iris.openChat",
+          "group": "navigation"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "iris.openChat",
+        "key": "ctrl+shift+c",
+        "mac": "cmd+shift+c",
+        "when": "editorTextFocus"
+      }
+    ],
+    "configuration": {
+      "title": "iris",
+      "properties": {
+        "iris.apiUrl": {
+          "type": "string",
+          "default": "http://127.0.0.1:4319/v1",
+          "description": "iris API base URL (use /v1 endpoint for iris backend)"
+        },
+        "iris.authToken": {
+          "type": "string",
+          "default": "",
+          "description": "Authentication token for iris API (optional)"
+        },
+        "iris.mode": {
+          "type": "string",
+          "enum": ["connected", "standalone"],
+          "default": "connected",
+          "description": "Runtime mode: connected (full iris) or standalone"
+        },
+        "iris.sessionId": {
+          "type": "string",
+          "default": "vscode-extension",
+          "description": "Session identifier for tracking conversations"
+        },
+        "iris.enableTelemetry": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable telemetry and usage analytics"
+        },
+        "iris.timeout": {
+          "type": "number",
+          "default": 30000,
+          "description": "API request timeout in milliseconds"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "npm run compile && npx @vscode/test-electron ./test/test-runner.js"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/glob": "^8.1.0",
+    "@types/mocha": "^10.0.6",
+    "@types/node": "18.x",
+    "eslint": "^8.57.0",
+    "@typescript-eslint/eslint-plugin": "^6.20.0",
+    "@typescript-eslint/parser": "^6.20.0",
+    "glob": "^10.3.12",
+    "mocha": "^10.4.0",
+    "typescript": "^5.4.5",
+    "@vscode/test-electron": "^2.3.8"
+  }
+}

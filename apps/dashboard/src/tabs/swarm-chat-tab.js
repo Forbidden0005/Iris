@@ -26,7 +26,7 @@ function getPendingSwarmResponder(message = "") {
   const mentionId = mentions[0];
   const agent =
     swarmMentionAgents.find((entry) => entry.id === mentionId) ||
-    swarmMentionAgents.find((entry) => entry.id === `crew-${mentionId}`);
+    swarmMentionAgents.find((entry) => entry.id === `iris-${mentionId}`);
   if (!agent) {
     return {
       id: mentionId,
@@ -236,7 +236,7 @@ async function renderSwarmMentionAutocomplete() {
       hint.style.display = "block";
       hint.textContent =
         agent.id === IRIS_PRIMARY_RUNTIME_ID
-          ? "Mention target: @crew-lead, Iris's current runtime ID. Use this for notes or routing guidance."
+          ? "Mention target: @iris-lead, Iris's current runtime ID. Use this for notes or routing guidance."
           : `Mention target: @${agent.id}. Use a specific work order if you want execution.`;
     };
     menu.appendChild(row);
@@ -245,7 +245,7 @@ async function renderSwarmMentionAutocomplete() {
   hint.style.display = "block";
   hint.textContent = prefix
     ? `Matching participants for @${prefix}`
-    : "Type a participant, e.g. @crew-lead for Iris or @crew-coder with a specific work order.";
+    : "Type a participant, e.g. @iris-lead for Iris or @iris-coder with a specific work order.";
 }
 
 export async function showSwarmChat() {
@@ -285,7 +285,7 @@ async function loadSwarmAutonomy() {
   }
   if (input) {
     input.placeholder = enabled
-      ? "Talk in-channel. Use @crew-lead for Iris, @crew-* for specialists, or @codex/@cursor/@claude/@opencode/@gemini/@crew-cli to route work."
+      ? "Talk in-channel. Use @iris-lead for Iris, @iris-* for specialists, or @codex/@cursor/@claude/@opencode/@gemini/@iris-cli to route work."
       : "Autonomy is off. @mentions are informational until you turn routing back on.";
   }
 }
@@ -346,7 +346,7 @@ async function loadSwarmHistory() {
 
   try {
     const response = await getJSON(
-      `/api/crew-lead/project-messages?projectId=${encodeURIComponent(projectId)}&limit=300&excludeDirect=true`,
+      `/api/iris-lead/project-messages?projectId=${encodeURIComponent(projectId)}&limit=300&excludeDirect=true`,
     );
     const messages = response.messages || [];
     currentSwarmMessages = messages;
@@ -473,7 +473,7 @@ export function handleSwarmSSEEvent(event) {
   const assistantAgent =
     event.role === "assistant"
       ? event.agent ||
-        (event.source === "agent" || event.source === "cli" ? null : "crew-lead")
+        (event.source === "agent" || event.source === "cli" ? null : "iris-lead")
       : null;
 
   const message = {
@@ -617,7 +617,7 @@ async function sendSwarmMessage() {
       !document.getElementById("swarm-streaming-wrapper")
     ) {
       removeSwarmTyping();
-      const replyAgent = response.agent || response.routedTo || "crew-lead";
+      const replyAgent = response.agent || response.routedTo || "iris-lead";
       const replyAgentName =
         response.agentName ||
         pendingSwarmResponder?.name ||
@@ -659,7 +659,7 @@ async function sendSwarmMessage() {
       source: "system",
       role: "assistant",
       content: `Failed to send: ${error.message}`,
-      agent: "crew-lead",
+      agent: "iris-lead",
       metadata: {
         agentName: "system",
         agentEmoji: "🛰",

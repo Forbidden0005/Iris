@@ -1,19 +1,19 @@
 # Iris Capability Map
 
-This document maps the Iris product direction to the crewswarm runtime that Iris currently inherits. It is a planning artifact, not a rewrite mandate.
+This document maps the Iris product direction to the iris runtime that Iris currently inherits. It is a planning artifact, not a rewrite mandate.
 
 ## Working Principle
 
 Iris should become clearer by adding product-facing concepts above the existing runtime contracts before replacing anything below them.
 
-Do not rename or remove `crew-*` runtime IDs, RT bus routes, engine adapters, or existing dashboard APIs until compatibility shims and tests exist.
+Do not rename or remove `iris-*` runtime IDs, RT bus routes, engine adapters, or existing dashboard APIs until compatibility shims and tests exist.
 
 ## Current Runtime Primitives
 
 | Iris concept | Current primitive | Current state |
 |---|---|---|
-| Iris lead assistant | `crew-lead` runtime agent | Working, exposed through the chat/dashboard surface |
-| Specialist agents | Built-in `crew-*` agents plus dynamic agent configs | Working, but product labels are still being layered on top |
+| Iris lead assistant | `iris-lead` runtime agent | Working, exposed through the chat/dashboard surface |
+| Specialist agents | Built-in `iris-*` agents plus dynamic agent configs | Working, but product labels are still being layered on top |
 | Dispatch | RT bus task assignment, `@@DISPATCH`, `@@PIPELINE`, wave dispatcher | Working, but not represented as durable user-facing plan state |
 | Conversation | Project/general message history and chat bubbles | Working, but not enough for audit/review workflows |
 | Evidence | Task completions, produced files, messages, logs | Exists across systems, but not normalized into an Iris evidence model |
@@ -162,7 +162,7 @@ Acceptance criteria:
 
 - Chat can show the active plan summary.
 - User can inspect tasks and evidence without reading raw RT logs.
-- Internal `crew-*` IDs are shown only as runtime metadata.
+- Internal `iris-*` IDs are shown only as runtime metadata.
 
 ### Slice 6: Review Packet
 
@@ -257,7 +257,7 @@ Current implementation:
 
 - `lib/iris/chat-plan-bridge.mjs` — `looksLikeCoordinationRequest(text)` is
   a deterministic, regex-based heuristic (no LLM call), styled after
-  `lib/crew-lead/intent.mjs`'s `parseServiceIntent`. Deliberately
+  `lib/iris-lead/intent.mjs`'s `parseServiceIntent`. Deliberately
   over-inclusive: a false positive just creates an extra cheap, inert,
   inspectable draft plan; a false negative silently loses the point of
   this slice, which is the worse failure mode.
@@ -266,9 +266,9 @@ Current implementation:
   existing `createIrisPlan` — always `status: "draft"`, never further
   along, with `metadata: { source: "chat", detected }` so a generated plan
   is distinguishable from a manually created one.
-- **This is the first slice to touch crew-lead runtime code**, done only
-  after explicit sign-off (Tyler: "Claude take crew-lead wiring"). The
-  actual edit in `lib/crew-lead/chat-handler.mjs` is one import line and a
+- **This is the first slice to touch iris-lead runtime code**, done only
+  after explicit sign-off (Tyler: "Claude take iris-lead wiring"). The
+  actual edit in `lib/iris-lead/chat-handler.mjs` is one import line and a
   4-line `try/catch` call at the top of `handleChat`, right after
   `sharedThreadId` is computed and before any existing branch. It cannot
   alter `handleChat`'s existing control flow, return value, or shared

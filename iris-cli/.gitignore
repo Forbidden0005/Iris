@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.iris/
+coverage/
+*.log
+.DS_Store
+.env
+.env.*
+*.bak
+*.backup
+*.broken

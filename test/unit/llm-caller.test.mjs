@@ -1,5 +1,5 @@
 /**
- * Unit tests for lib/crew-lead/llm-caller.mjs
+ * Unit tests for lib/iris-lead/llm-caller.mjs
  *
  * Tests exported functions: initLlmCaller, patchMessagesWithActiveModel,
  * trimMessagesForFallback. Skips _callLLMOnce and callLLM (network).
@@ -14,7 +14,7 @@ import {
   normalizeExternalModelId,
   patchMessagesWithActiveModel,
   trimMessagesForFallback,
-} from "../../lib/crew-lead/llm-caller.mjs";
+} from "../../lib/iris-lead/llm-caller.mjs";
 
 // ---------------------------------------------------------------------------
 // initLlmCaller
@@ -71,7 +71,7 @@ describe("normalizeExternalModelId", () => {
 
 describe("patchMessagesWithActiveModel", () => {
   const base = [
-    { role: "system", content: "You are crew-lead." },
+    { role: "system", content: "You are iris-lead." },
     { role: "user", content: "Hello" },
     { role: "assistant", content: "Hi there" },
   ];
@@ -87,7 +87,7 @@ describe("patchMessagesWithActiveModel", () => {
     assert.ok(patched[0].content.includes("groq/llama-3.3-70b"));
     assert.ok(patched[0].content.includes("rate limit"));
     // Original system prompt is still present after the note
-    assert.ok(patched[0].content.includes("You are crew-lead."));
+    assert.ok(patched[0].content.includes("You are iris-lead."));
   });
 
   it("does not mutate the original messages array", () => {
@@ -110,7 +110,7 @@ describe("patchMessagesWithActiveModel", () => {
   it("patches health snapshot in user messages to show fallback model", () => {
     const msgs = [
       { role: "system", content: "system prompt" },
-      { role: "user", content: "crew-lead: anthropic/claude-sonnet-4 | status" },
+      { role: "user", content: "iris-lead: anthropic/claude-sonnet-4 | status" },
     ];
     const patched = patchMessagesWithActiveModel(
       msgs,
@@ -156,7 +156,7 @@ describe("trimMessagesForFallback", () => {
   it("preserves memory injection messages", () => {
     const msgs = [
       { role: "system", content: "sys" },
-      { role: "user", content: "[Shared memory — crew context]" },
+      { role: "user", content: "[Shared memory — iris context]" },
       { role: "user", content: "[Project memory — roadmap]" },
       { role: "user", content: "msg1" },
       { role: "user", content: "msg2" },

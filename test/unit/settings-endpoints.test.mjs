@@ -10,8 +10,8 @@ import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 
-const TEST_CFG_DIR = path.join(os.tmpdir(), `.crewswarm-test-${process.pid}`);
-const TEST_CFG_PATH = path.join(TEST_CFG_DIR, "crewswarm.json");
+const TEST_CFG_DIR = path.join(os.tmpdir(), `.iris-test-${process.pid}`);
+const TEST_CFG_PATH = path.join(TEST_CFG_DIR, "iris.json");
 
 function readCfg() {
   try { return JSON.parse(fs.readFileSync(TEST_CFG_PATH, "utf8")); } catch { return {}; }
@@ -146,12 +146,12 @@ describe("settings config persistence", () => {
 describe("loadTmuxBridgeEnabled", () => {
   it("reads from env var", async () => {
     const { loadTmuxBridgeEnabled } = await import("../../lib/runtime/config.mjs");
-    const old = process.env.CREWSWARM_TMUX_BRIDGE;
-    process.env.CREWSWARM_TMUX_BRIDGE = "1";
+    const old = process.env.IRIS_TMUX_BRIDGE;
+    process.env.IRIS_TMUX_BRIDGE = "1";
     assert.equal(loadTmuxBridgeEnabled(), true);
-    process.env.CREWSWARM_TMUX_BRIDGE = "0";
+    process.env.IRIS_TMUX_BRIDGE = "0";
     assert.equal(loadTmuxBridgeEnabled(), false);
-    if (old !== undefined) process.env.CREWSWARM_TMUX_BRIDGE = old;
-    else delete process.env.CREWSWARM_TMUX_BRIDGE;
+    if (old !== undefined) process.env.IRIS_TMUX_BRIDGE = old;
+    else delete process.env.IRIS_TMUX_BRIDGE;
   });
 });

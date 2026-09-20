@@ -71,72 +71,72 @@ describe('policy-manager — getApprovalLevel', () => {
   beforeEach(() => reloadApprovalPolicies());
 
   it('returns "auto" for git commands', () => {
-    const level = getApprovalLevel('@@RUN_CMD', 'git', 'crew-coder');
+    const level = getApprovalLevel('@@RUN_CMD', 'git', 'iris-coder');
     assert.equal(level, 'auto');
   });
 
   it('returns "auto" for ls commands', () => {
-    const level = getApprovalLevel('@@RUN_CMD', 'ls', 'crew-coder');
+    const level = getApprovalLevel('@@RUN_CMD', 'ls', 'iris-coder');
     assert.equal(level, 'auto');
   });
 
   it('returns "admin" for rm -rf commands', () => {
-    const level = getApprovalLevel('@@RUN_CMD', 'rm -rf', 'crew-coder');
+    const level = getApprovalLevel('@@RUN_CMD', 'rm -rf', 'iris-coder');
     assert.equal(level, 'admin');
   });
 
   it('returns "admin" for "rm -rf /tmp/foo" via prefix match', () => {
-    const level = getApprovalLevel('@@RUN_CMD', 'rm -rf /tmp/foo', 'crew-coder');
+    const level = getApprovalLevel('@@RUN_CMD', 'rm -rf /tmp/foo', 'iris-coder');
     assert.equal(level, 'admin');
   });
 
   it('returns "admin" for docker commands', () => {
-    const level = getApprovalLevel('@@RUN_CMD', 'docker', 'crew-coder');
+    const level = getApprovalLevel('@@RUN_CMD', 'docker', 'iris-coder');
     assert.equal(level, 'admin');
   });
 
   it('returns "user" as default for unknown RUN_CMD commands', () => {
-    const level = getApprovalLevel('@@RUN_CMD', 'curl https://example.com', 'crew-coder');
+    const level = getApprovalLevel('@@RUN_CMD', 'curl https://example.com', 'iris-coder');
     assert.equal(level, 'user');
   });
 
-  it('returns "auto" for dispatching crew-coder', () => {
-    const level = getApprovalLevel('@@DISPATCH', 'crew-coder', 'crew-lead');
+  it('returns "auto" for dispatching iris-coder', () => {
+    const level = getApprovalLevel('@@DISPATCH', 'iris-coder', 'iris-lead');
     assert.equal(level, 'auto');
   });
 
-  it('returns "user" for dispatching crew-github', () => {
-    const level = getApprovalLevel('@@DISPATCH', 'crew-github', 'crew-lead');
+  it('returns "user" for dispatching iris-github', () => {
+    const level = getApprovalLevel('@@DISPATCH', 'iris-github', 'iris-lead');
     assert.equal(level, 'user');
   });
 
   it('returns "auto" as default for @@DISPATCH of unknown agents', () => {
-    const level = getApprovalLevel('@@DISPATCH', 'crew-unknown', 'crew-lead');
+    const level = getApprovalLevel('@@DISPATCH', 'iris-unknown', 'iris-lead');
     assert.equal(level, 'auto');
   });
 
   it('returns "auto" for @@WRITE_FILE (default)', () => {
-    const level = getApprovalLevel('@@WRITE_FILE', 'anything.txt', 'crew-coder');
+    const level = getApprovalLevel('@@WRITE_FILE', 'anything.txt', 'iris-coder');
     assert.equal(level, 'auto');
   });
 
   it('returns "auto" for @@READ_FILE (default)', () => {
-    const level = getApprovalLevel('@@READ_FILE', 'anything.txt', 'crew-coder');
+    const level = getApprovalLevel('@@READ_FILE', 'anything.txt', 'iris-coder');
     assert.equal(level, 'auto');
   });
 
   it('returns "user" for unknown tool types (fallback)', () => {
-    const level = getApprovalLevel('@@UNKNOWN_TOOL', 'anything', 'crew-coder');
+    const level = getApprovalLevel('@@UNKNOWN_TOOL', 'anything', 'iris-coder');
     assert.equal(level, 'user');
   });
 
   it('returns "user" for @@SKILL twitter.post', () => {
-    const level = getApprovalLevel('@@SKILL', 'twitter.post', 'crew-coder');
+    const level = getApprovalLevel('@@SKILL', 'twitter.post', 'iris-coder');
     assert.equal(level, 'user');
   });
 
   it('returns "admin" for @@SKILL fly.deploy', () => {
-    const level = getApprovalLevel('@@SKILL', 'fly.deploy', 'crew-coder');
+    const level = getApprovalLevel('@@SKILL', 'fly.deploy', 'iris-coder');
     assert.equal(level, 'admin');
   });
 });
@@ -147,14 +147,14 @@ describe('policy-manager — admin bypass', () => {
   it('admin user always gets "auto" regardless of tool', () => {
     // Add an admin user
     addAdminUser('admin-jeff');
-    const level = getApprovalLevel('@@RUN_CMD', 'rm -rf /', 'crew-coder', 'admin-jeff');
+    const level = getApprovalLevel('@@RUN_CMD', 'rm -rf /', 'iris-coder', 'admin-jeff');
     assert.equal(level, 'auto');
     // Clean up
     removeAdminUser('admin-jeff');
   });
 
   it('non-admin user does not get bypassed', () => {
-    const level = getApprovalLevel('@@RUN_CMD', 'rm -rf /', 'crew-coder', 'regular-user');
+    const level = getApprovalLevel('@@RUN_CMD', 'rm -rf /', 'iris-coder', 'regular-user');
     assert.equal(level, 'admin');
   });
 });

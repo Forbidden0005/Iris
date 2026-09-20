@@ -1,20 +1,20 @@
 #!/usr/bin/env node
 /**
- * scripts/start.mjs — CrewSwarm first-run entry point
+ * scripts/start.mjs — Iris first-run entry point
  *
- * This is the script behind `npm start` / `npx crewswarm`.  It validates the
+ * This is the script behind `npm start` / `npx iris`.  It validates the
  * environment before handing off to the real stack so that a brand-new user
  * who clones the repo and types `npm start` gets clear, actionable guidance
  * rather than a stack trace.
  *
  * Checks performed (in order):
  *   1. Node.js version >= 20
- *   2. ~/.crewswarm/crewswarm.json exists (created by install.sh)
- *   3. ~/.crewswarm/config.json exists (created by install.sh)
+ *   2. ~/.iris/iris.json exists (created by install.sh)
+ *   3. ~/.iris/config.json exists (created by install.sh)
  *   4. At least one provider with an apiKey is configured
  *
  * On success:
- *   1. Spawns start-crew.mjs in the background (RT bus + crew-lead + bridges)
+ *   1. Spawns start-iris.mjs in the background (RT bus + iris-lead + bridges)
  *   2. Waits 3 seconds for services to come up
  *   3. Starts dashboard in the foreground (the process the user sees)
  *
@@ -51,7 +51,7 @@ function divider() { console.log(bold("─".repeat(60))); }
 // ── Header ───────────────────────────────────────────────────────────────────
 console.log("");
 divider();
-console.log(bold("  CrewSwarm — starting up"));
+console.log(bold("  Iris — starting up"));
 divider();
 console.log("");
 
@@ -66,9 +66,9 @@ if (nodeMajor < 20) {
 success(`Node.js v${process.versions.node}`);
 
 // ── 2. Config directory ───────────────────────────────────────────────────────
-const CREWSWARM_DIR = path.join(os.homedir(), ".crewswarm");
-const SWARM_CFG     = path.join(CREWSWARM_DIR, "crewswarm.json");
-const SYS_CFG       = path.join(CREWSWARM_DIR, "config.json");
+const IRIS_DIR = path.join(os.homedir(), ".iris");
+const SWARM_CFG     = path.join(IRIS_DIR, "iris.json");
+const SYS_CFG       = path.join(IRIS_DIR, "config.json");
 const INSTALL_SH    = path.join(ROOT, "install.sh");
 
 function tryReadJSON(p) {
@@ -78,22 +78,22 @@ function tryReadJSON(p) {
 // Bootstrap config directory + minimal config if missing — the dashboard's
 // setup wizard will guide the user through API key entry on first visit.
 let firstRun = false;
-if (!fs.existsSync(CREWSWARM_DIR)) {
-  fs.mkdirSync(CREWSWARM_DIR, { recursive: true });
-  info(`Created config directory: ${CREWSWARM_DIR}`);
+if (!fs.existsSync(IRIS_DIR)) {
+  fs.mkdirSync(IRIS_DIR, { recursive: true });
+  info(`Created config directory: ${IRIS_DIR}`);
   firstRun = true;
 }
 
-// ── 3. crewswarm.json ─────────────────────────────────────────────────────────
+// ── 3. iris.json ─────────────────────────────────────────────────────────
 if (!fs.existsSync(SWARM_CFG)) {
   const defaultConfig = {
     agents: [
-      { id: "crew-lead",   model: "groq/llama-3.3-70b-versatile" },
-      { id: "crew-main",   model: "groq/llama-3.3-70b-versatile" },
-      { id: "crew-coder",  model: "groq/llama-3.3-70b-versatile" },
-      { id: "crew-qa",     model: "groq/llama-3.3-70b-versatile" },
-      { id: "crew-fixer",  model: "groq/llama-3.3-70b-versatile" },
-      { id: "crew-pm",     model: "groq/llama-3.3-70b-versatile" }
+      { id: "iris-lead",   model: "groq/llama-3.3-70b-versatile" },
+      { id: "iris-main",   model: "groq/llama-3.3-70b-versatile" },
+      { id: "iris-coder",  model: "groq/llama-3.3-70b-versatile" },
+      { id: "iris-qa",     model: "groq/llama-3.3-70b-versatile" },
+      { id: "iris-fixer",  model: "groq/llama-3.3-70b-versatile" },
+      { id: "iris-pm",     model: "groq/llama-3.3-70b-versatile" }
     ],
     providers: {}
   };
@@ -108,7 +108,7 @@ if (!swarm) {
     `Check it is valid JSON, or re-run:\n\n  bash ${INSTALL_SH}`
   );
 }
-success(`crewswarm.json found${firstRun ? " (first run — setup wizard will launch)" : ""}`);
+success(`iris.json found${firstRun ? " (first run — setup wizard will launch)" : ""}`);
 
 // ── 4. config.json ───────────────────────────────────────────────────────────
 if (!fs.existsSync(SYS_CFG)) {
@@ -125,8 +125,8 @@ if (!fs.existsSync(SYS_CFG)) {
 }
 
 // ── Bootstrap supporting files if missing ────────────────────────────────────
-const CMD_ALLOWLIST = path.join(CREWSWARM_DIR, "cmd-allowlist.json");
-const AGENT_PROMPTS = path.join(CREWSWARM_DIR, "agent-prompts.json");
+const CMD_ALLOWLIST = path.join(IRIS_DIR, "cmd-allowlist.json");
+const AGENT_PROMPTS = path.join(IRIS_DIR, "agent-prompts.json");
 if (!fs.existsSync(CMD_ALLOWLIST)) {
   fs.writeFileSync(CMD_ALLOWLIST, '["npm *","node *","npx *","git *"]');
 }
@@ -158,13 +158,13 @@ info(`${agents.length} agent(s) defined`);
 // ── 7. Start full stack ───────────────────────────────────────────────────────
 console.log("");
 divider();
-info("All checks passed — starting full CrewSwarm stack");
+info("All checks passed — starting full Iris stack");
 divider();
 console.log("");
 
-// Step 1: Spawn start-crew.mjs in the background (RT bus + crew-lead + bridges)
-info("Launching RT bus, crew-lead, and gateway bridges…");
-const crewScript = path.join(ROOT, "scripts", "start-crew.mjs");
+// Step 1: Spawn start-iris.mjs in the background (RT bus + iris-lead + bridges)
+info("Launching RT bus, iris-lead, and gateway bridges…");
+const crewScript = path.join(ROOT, "scripts", "start-iris.mjs");
 const crewProc = spawn(process.execPath, [crewScript], {
   cwd: ROOT,
   stdio: "inherit",
@@ -172,11 +172,11 @@ const crewProc = spawn(process.execPath, [crewScript], {
   env: process.env,
 });
 
-// Wait for start-crew.mjs to finish its synchronous setup (it exits after spawning daemons)
+// Wait for start-iris.mjs to finish its synchronous setup (it exits after spawning daemons)
 await new Promise((resolve) => {
   crewProc.on("exit", resolve);
   crewProc.on("error", (err) => {
-    warn(`start-crew.mjs exited with error: ${err.message}`);
+    warn(`start-iris.mjs exited with error: ${err.message}`);
     resolve();
   });
 });

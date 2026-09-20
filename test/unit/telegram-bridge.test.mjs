@@ -105,7 +105,7 @@ const DEFAULT_STATE = {
   mode: "chat",
   engine: "cursor",
   model: null,
-  agent: "crew-main",
+  agent: "iris-main",
   projectId: null,
   lastPrompt: "",
   lastEngine: "",
@@ -126,7 +126,7 @@ function makeStateStore() {
 }
 
 // Topic-based routing logic (pure, without file I/O)
-const TARGET_DEFAULT = "crew-lead";
+const TARGET_DEFAULT = "iris-lead";
 
 function getTargetAgentFromConfig(topicRouting, userRouting, chatId, threadId = null) {
   if (topicRouting[String(chatId)]) {
@@ -157,7 +157,7 @@ const ENGINE_COMMANDS = {
   "/cursor": "cursor",
   "/opencode": "opencode",
   "/codex": "codex",
-  "/crew": "crew-cli",
+  "/iris": "iris-cli",
   "/gemini": "gemini"
 };
 
@@ -166,14 +166,14 @@ const ENGINE_LABELS = {
   "cursor": "🖱 Cursor CLI",
   "opencode": "⚡ OpenCode",
   "codex": "🟣 Codex CLI",
-  "crew-cli": "🐝 Crew CLI",
+  "iris-cli": "🐝 Iris CLI",
   "gemini": "✨ Gemini CLI"
 };
 
 function mainReplyKeyboard() {
   return {
     keyboard: [
-      [{ text: "Chat crew-main" }, { text: "Direct engine" }, { text: "Projects" }],
+      [{ text: "Chat iris-main" }, { text: "Direct engine" }, { text: "Projects" }],
       [{ text: "Set engine" }, { text: "Models" }, { text: "Voice" }],
       [{ text: "Status" }, { text: "Help" }]
     ],
@@ -193,7 +193,7 @@ function modeInline() {
 function errorInline() {
   return {
     inline_keyboard: [
-      [{ text: "Retry", callback_data: "retry:last" }, { text: "Fallback crew-main", callback_data: "fallback:main" }],
+      [{ text: "Retry", callback_data: "retry:last" }, { text: "Fallback iris-main", callback_data: "fallback:main" }],
       [{ text: "Set engine", callback_data: "open:engine" }, { text: "Set mode", callback_data: "open:mode" }]
     ]
   };
@@ -203,7 +203,7 @@ function errorInline() {
 function resolveButtonAlias(text) {
   const lower = text.toLowerCase().trim();
   const buttonAliases = new Map([
-    ["chat crew-main", "/home"],
+    ["chat iris-main", "/home"],
     ["direct engine", "/engine"],
     ["set engine", "/engine"],
     ["projects", "/projects"],
@@ -281,7 +281,7 @@ describe("telegram-bridge — splitMessage", () => {
 
 describe("telegram-bridge — dedupeKey", () => {
   it("strips leading status prefix", () => {
-    const text = "✅ *crew-pm* finished:\nThe roadmap is ready.\n\nReply to follow up or ask anything.";
+    const text = "✅ *iris-pm* finished:\nThe roadmap is ready.\n\nReply to follow up or ask anything.";
     const key = dedupeKey(text);
     assert.ok(!key.startsWith("✅"));
     assert.ok(key.startsWith("The roadmap"));
@@ -513,7 +513,7 @@ describe("telegram-bridge — state machine (getState/setState)", () => {
     const st = getState(999);
     assert.equal(st.mode, "chat");
     assert.equal(st.engine, "cursor");
-    assert.equal(st.agent, "crew-main");
+    assert.equal(st.agent, "iris-main");
     assert.equal(st.model, null);
   });
 
@@ -557,40 +557,40 @@ describe("telegram-bridge — getTargetAgent routing", () => {
   });
 
   it("uses topic routing for group+thread combo", () => {
-    const topicRouting = { "456": { "10": "crew-pm" } };
+    const topicRouting = { "456": { "10": "iris-pm" } };
     const agent = getTargetAgentFromConfig(topicRouting, {}, 456, 10);
-    assert.equal(agent, "crew-pm");
+    assert.equal(agent, "iris-pm");
   });
 
   it("falls back to 'main' key for main group chat (no threadId)", () => {
-    const topicRouting = { "456": { "main": "crew-coder" } };
+    const topicRouting = { "456": { "main": "iris-coder" } };
     const agent = getTargetAgentFromConfig(topicRouting, {}, 456, null);
-    assert.equal(agent, "crew-coder");
+    assert.equal(agent, "iris-coder");
   });
 
   it("falls back to '0' key for main group chat when no 'main' key", () => {
-    const topicRouting = { "456": { "0": "crew-lead-alt" } };
+    const topicRouting = { "456": { "0": "iris-lead-alt" } };
     const agent = getTargetAgentFromConfig(topicRouting, {}, 456, null);
-    assert.equal(agent, "crew-lead-alt");
+    assert.equal(agent, "iris-lead-alt");
   });
 
   it("checks flat format 'chatId:threadId' key", () => {
-    const topicRouting = { "123:55": "crew-special" };
+    const topicRouting = { "123:55": "iris-special" };
     const agent = getTargetAgentFromConfig(topicRouting, {}, 123, 55);
-    assert.equal(agent, "crew-special");
+    assert.equal(agent, "iris-special");
   });
 
   it("uses user routing as fallback over TARGET_DEFAULT", () => {
-    const userRouting = { "789": "crew-loco" };
+    const userRouting = { "789": "iris-loco" };
     const agent = getTargetAgentFromConfig({}, userRouting, 789);
-    assert.equal(agent, "crew-loco");
+    assert.equal(agent, "iris-loco");
   });
 
   it("topic routing takes precedence over user routing", () => {
-    const topicRouting = { "789": { "20": "crew-pm" } };
-    const userRouting = { "789": "crew-loco" };
+    const topicRouting = { "789": { "20": "iris-pm" } };
+    const userRouting = { "789": "iris-loco" };
     const agent = getTargetAgentFromConfig(topicRouting, userRouting, 789, 20);
-    assert.equal(agent, "crew-pm");
+    assert.equal(agent, "iris-pm");
   });
 });
 
@@ -663,8 +663,8 @@ describe("telegram-bridge — keyboard builders", () => {
 });
 
 describe("telegram-bridge — button alias resolution", () => {
-  it('maps "chat crew-main" to /home', () => {
-    assert.equal(resolveButtonAlias("Chat crew-main"), "/home");
+  it('maps "chat iris-main" to /home', () => {
+    assert.equal(resolveButtonAlias("Chat iris-main"), "/home");
   });
 
   it('maps "direct engine" to /engine', () => {
@@ -751,7 +751,7 @@ describe("telegram-bridge — ENGINE_COMMANDS and ENGINE_LABELS", () => {
   });
 
   it("known engines are all present", () => {
-    const knownEngines = ["claude", "cursor", "opencode", "codex", "crew-cli", "gemini"];
+    const knownEngines = ["claude", "cursor", "opencode", "codex", "iris-cli", "gemini"];
     for (const e of knownEngines) {
       assert.ok(ENGINE_LABELS[e], `Missing label for: ${e}`);
     }

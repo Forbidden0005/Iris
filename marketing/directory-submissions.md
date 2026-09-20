@@ -18,7 +18,7 @@ Submit starting launch day. Most directories approve within 24-72 hours.
 
 - [ ] **DevHunt** — https://devhunt.org
   - Category: Dev Tools
-  - Emphasize: crew-cli as CLI for models without one, Vibe IDE
+  - Emphasize: iris-cli as CLI for models without one, Vibe IDE
 
 - [ ] **AlternativeTo** — https://alternativeto.net/
   - List as alternative to: GitHub Copilot, Cursor, Windsurf, Devin
@@ -41,7 +41,7 @@ Submit starting launch day. Most directories approve within 24-72 hours.
 - [ ] **SourceForge** — mirror the GitHub repo
 
 - [ ] **LibHunt** — https://www.libhunt.com/
-  - For the npm package (crewswarm-cli)
+  - For the npm package (iris-cli)
 
 ## Aggregators
 
@@ -53,7 +53,7 @@ Submit starting launch day. Most directories approve within 24-72 hours.
 ## Submission copy (adapt per directory)
 
 **Short (50 words):**
-crewswarm is an open-source multi-agent AI coding platform. 20+ specialist agents, 6 coding engines, parallel execution in git worktrees. crew-cli gives agentic coding to every model — 29 score 100/100 on our benchmark. Local-first, MIT license.
+iris is an open-source multi-agent AI coding platform. 20+ specialist agents, 6 coding engines, parallel execution in git worktrees. iris-cli gives agentic coding to every model — 29 score 100/100 on our benchmark. Local-first, MIT license.
 
 **Medium (100 words):**
-crewswarm is an open-source, local-first multi-agent AI coding platform where you're the PM and agents are your engineers. 20+ specialists (coder, QA, fixer, security, PM) run in parallel across 6 coding engines (Claude Code, Cursor, Codex, Gemini, OpenCode, crew-cli). crew-cli is the missing CLI for every model that doesn't have one — Grok, DeepSeek, Qwen, Groq, Ollama. An 8-module execution quality engine makes cheap models match premium ones: 29 models score 100/100. 8 surfaces (Vibe IDE, Dashboard, CLI, crewchat, Telegram, WhatsApp, OpenClaw, MCP). MIT license, ~64K lines of TypeScript.
+iris is an open-source, local-first multi-agent AI coding platform where you're the PM and agents are your engineers. 20+ specialists (coder, QA, fixer, security, PM) run in parallel across 6 coding engines (Claude Code, Cursor, Codex, Gemini, OpenCode, iris-cli). iris-cli is the missing CLI for every model that doesn't have one — Grok, DeepSeek, Qwen, Groq, Ollama. An 8-module execution quality engine makes cheap models match premium ones: 29 models score 100/100. 8 surfaces (Vibe IDE, Dashboard, CLI, irischat, Telegram, WhatsApp, OpenClaw, MCP). MIT license, ~64K lines of TypeScript.

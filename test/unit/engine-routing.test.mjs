@@ -37,7 +37,7 @@ describe("engine routing — shouldUse*", () => {
     } = await loadRunners();
     initRunners(baseDeps());
 
-    const payload = { runtime: "cursor", agentId: "crew-coder" };
+    const payload = { runtime: "cursor", agentId: "iris-coder" };
     const prompt = "test";
 
     for (const t of invalidTypes) {
@@ -53,11 +53,11 @@ describe("engine routing — shouldUse*", () => {
     const { initRunners, shouldUseCursorCli } = await loadRunners();
     initRunners(
       baseDeps({
-        loadAgentList: () => [{ id: "crew-main", engine: "cursor" }],
+        loadAgentList: () => [{ id: "iris-main", engine: "cursor" }],
       }),
     );
     assert.equal(shouldUseCursorCli({ runtime: "cursor" }, "command.run_task"), true);
-    assert.equal(shouldUseCursorCli({ agentId: "crew-main" }, "command.run_task"), true);
+    assert.equal(shouldUseCursorCli({ agentId: "iris-main" }, "command.run_task"), true);
   });
 
   it("matches claude via runtime and explicit flag", async () => {
@@ -71,25 +71,25 @@ describe("engine routing — shouldUse*", () => {
     const { initRunners, shouldUseOpenCode } = await loadRunners();
     initRunners(
       baseDeps({
-        loadAgentList: () => [{ id: "crew-fixer" }],
+        loadAgentList: () => [{ id: "iris-fixer" }],
         getAgentOpenCodeConfig: () => ({ enabled: false, useCursorCli: false }),
       }),
     );
     assert.equal(
-      shouldUseOpenCode({ agentId: "crew-fixer" }, null, "command.run_task"),
+      shouldUseOpenCode({ agentId: "iris-fixer" }, null, "command.run_task"),
       false,
     );
   });
 
   it("matches codex when claude-code is not globally enabled", async () => {
     // Save and override env to disable higher-priority engines
-    const prev = process.env.CREWSWARM_CLAUDE_CODE;
-    process.env.CREWSWARM_CLAUDE_CODE = "0";
-    process.env.CREWSWARM_CODEX = "1";
+    const prev = process.env.IRIS_CLAUDE_CODE;
+    process.env.IRIS_CLAUDE_CODE = "0";
+    process.env.IRIS_CODEX = "1";
     const { initRunners, shouldUseCodex, shouldUseClaudeCode } = await import("../../lib/engines/runners.mjs");
     initRunners(
       baseDeps({
-        loadAgentList: () => [{ id: "crew-main", engine: "codex" }],
+        loadAgentList: () => [{ id: "iris-main", engine: "codex" }],
         getAgentOpenCodeConfig: () => ({
           enabled: false, useCursorCli: false, useClaudeCode: false, useCrewCLI: false,
         }),
@@ -99,8 +99,8 @@ describe("engine routing — shouldUse*", () => {
     assert.equal(shouldUseClaudeCode({ runtime: "codex" }, "command.run_task"), false);
     assert.equal(shouldUseCodex({ runtime: "codex" }, "command.run_task"), true);
     // Restore
-    if (prev !== undefined) process.env.CREWSWARM_CLAUDE_CODE = prev;
-    else delete process.env.CREWSWARM_CLAUDE_CODE;
+    if (prev !== undefined) process.env.IRIS_CLAUDE_CODE = prev;
+    else delete process.env.IRIS_CLAUDE_CODE;
   });
 
 });

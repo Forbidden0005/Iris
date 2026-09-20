@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- * crewswarm Config Validator
+ * iris Config Validator
  *
- * Validates ~/.crewswarm/crewswarm.json and config.json
+ * Validates ~/.iris/iris.json and config.json
  * Checks for missing models, invalid provider configs, and common issues.
  *
  * Usage:
@@ -17,9 +17,9 @@ import os from "node:os";
 
 const JSON_MODE = process.argv.includes("--json");
 const FIX_MODE = process.argv.includes("--fix");
-const SWARM_PATH = path.join(os.homedir(), ".crewswarm", "crewswarm.json");
-const CONFIG_PATH = path.join(os.homedir(), ".crewswarm", "crewswarm.json");
-const BACKUP_PATH = path.join(os.homedir(), ".crewswarm", `crewswarm.json.backup-${Date.now()}`);
+const SWARM_PATH = path.join(os.homedir(), ".iris", "iris.json");
+const CONFIG_PATH = path.join(os.homedir(), ".iris", "iris.json");
+const BACKUP_PATH = path.join(os.homedir(), ".iris", `iris.json.backup-${Date.now()}`);
 
 // ── Colors ──────────────────────────────────────────────────────────────────
 const R = "\x1b[0m", B = "\x1b[1m", G = "\x1b[32m", RE = "\x1b[31m", Y = "\x1b[33m", C = "\x1b[36m";
@@ -97,7 +97,7 @@ function validateAgentModels(config) {
   if (missingModels.length === agents.length) {
     log("error", `ALL ${agents.length} agents missing models`, 
       `This is likely from a broken bulk operation. Restore from backup:\n` +
-      `    cp ~/.crewswarm/crewswarm.json.backup ~/.crewswarm/crewswarm.json`);
+      `    cp ~/.iris/iris.json.backup ~/.iris/iris.json`);
     return { ok: false, missing: missingModels.map(a => a.id) };
   }
   
@@ -164,13 +164,13 @@ function validateBackups() {
   const backupDir = path.dirname(SWARM_PATH);
   try {
     const files = fs.readdirSync(backupDir)
-      .filter(f => f.startsWith("crewswarm.json.backup"))
+      .filter(f => f.startsWith("iris.json.backup"))
       .sort()
       .reverse();
     
     if (files.length === 0) {
       log("warn", "No backup files found", 
-        "Create one: cp ~/.crewswarm/crewswarm.json ~/.crewswarm/crewswarm.json.backup");
+        "Create one: cp ~/.iris/iris.json ~/.iris/iris.json.backup");
       return { ok: false, count: 0 };
     }
     
@@ -204,7 +204,7 @@ function autoFixMissingModels(config, missingAgents) {
   // Try to find a backup with models
   const backupDir = path.dirname(SWARM_PATH);
   const backups = fs.readdirSync(backupDir)
-    .filter(f => f.startsWith("crewswarm.json.backup"))
+    .filter(f => f.startsWith("iris.json.backup"))
     .sort()
     .reverse();
   
@@ -247,14 +247,14 @@ function autoFixMissingModels(config, missingAgents) {
 
 async function run() {
   if (!JSON_MODE) {
-    console.log(`\n${B}${C}━━━ crewswarm Config Validator ━━━${R}`);
+    console.log(`\n${B}${C}━━━ iris Config Validator ━━━${R}`);
     if (FIX_MODE) console.log(`${Y}⚡ Auto-fix mode enabled${R}`);
   }
   
   // 1. Check files exist
   section("Files");
   if (!fs.existsSync(SWARM_PATH)) {
-    log("error", "crewswarm.json not found", `Expected at: ${SWARM_PATH}\nRun: bash install.sh`);
+    log("error", "iris.json not found", `Expected at: ${SWARM_PATH}\nRun: bash install.sh`);
     process.exit(1);
   }
   if (!fs.existsSync(CONFIG_PATH)) {
@@ -264,8 +264,8 @@ async function run() {
   
   // 2. Validate JSON
   section("JSON Syntax");
-  const swarmResult = validateJSON(SWARM_PATH, "crewswarm.json");
-  const configResult = validateJSON(CONFIG_PATH, "crewswarm.json");
+  const swarmResult = validateJSON(SWARM_PATH, "iris.json");
+  const configResult = validateJSON(CONFIG_PATH, "iris.json");
   
   if (!swarmResult.ok || !configResult.ok) {
     log("error", "Cannot proceed with invalid JSON", "Fix syntax errors first");

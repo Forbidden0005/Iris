@@ -4,27 +4,27 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>The Case for Local-First AI Development</title>
-  <meta name="description" content="Your code shouldn't leave your machine. Why local-first AI execution changes the trust model and why we chose it for crewswarm." />
+  <meta name="description" content="Your code shouldn't leave your machine. Why local-first AI execution changes the trust model and why we chose it for iris." />
   <meta property="og:title" content="The Case for Local-First AI Development" />
   <meta property="og:description" content="Local execution means your code stays on your machine. No cloud proxy, no subscription, no vendor lock-in." />
-  <meta property="og:url" content="https://crewswarm.ai/blog/local-first-ai.html" />
+  <meta property="og:url" content="https://iris.ai/blog/local-first-ai.html" />
   <meta property="og:type" content="article" />
-  <meta property="og:site_name" content="crewswarm" />
+  <meta property="og:site_name" content="iris" />
   <meta property="og:locale" content="en_US" />
-  <meta property="og:image" content="https://crewswarm.ai/og-image.png" />
+  <meta property="og:image" content="https://iris.ai/og-image.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
-  <meta property="og:image:alt" content="crewswarm — local-first multi-agent AI orchestration" />
+  <meta property="og:image:alt" content="iris — local-first multi-agent AI orchestration" />
   <meta property="article:published_time" content="2026-03-15" />
-  <meta property="article:author" content="crewswarm" />
+  <meta property="article:author" content="iris" />
   <!-- Twitter / X -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:site" content="@crewswarm" />
+  <meta name="twitter:site" content="@iris" />
   <meta name="twitter:title" content="The Case for Local-First AI Development" />
   <meta name="twitter:description" content="Local execution means your code stays on your machine. No cloud proxy, no subscription, no vendor lock-in." />
-  <meta name="twitter:image" content="https://crewswarm.ai/og-image.png" />
+  <meta name="twitter:image" content="https://iris.ai/og-image.png" />
   <link rel="icon" type="image/webp" href="../favicon.webp?v=4" />
-  <link rel="canonical" href="https://crewswarm.ai/blog/local-first-ai.html" />
+  <link rel="canonical" href="https://iris.ai/blog/local-first-ai.html" />
   <style>
     :root { --bg: #060a10; --bg-card: #0f172a; --text-1: #e2e8f0; --text-2: #94a3b8; --text-3: #64748b; --border: #1e293b; --accent: #818cf8; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -53,17 +53,17 @@
     "@context": "https://schema.org",
     "@type": "BlogPosting",
     "headline": "The Case for Local-First AI Development",
-    "description": "Your code shouldn't leave your machine. Why local-first AI execution changes the trust model and why we chose it for crewswarm.",
+    "description": "Your code shouldn't leave your machine. Why local-first AI execution changes the trust model and why we chose it for iris.",
     "datePublished": "2026-03-15",
-    "author": { "@type": "Organization", "name": "crewswarm" },
-    "publisher": { "@type": "Organization", "name": "crewswarm", "logo": { "@type": "ImageObject", "url": "https://crewswarm.ai/favicon.png" } },
-    "mainEntityOfPage": "https://crewswarm.ai/blog/local-first-ai.html"
+    "author": { "@type": "Organization", "name": "iris" },
+    "publisher": { "@type": "Organization", "name": "iris", "logo": { "@type": "ImageObject", "url": "https://iris.ai/favicon.png" } },
+    "mainEntityOfPage": "https://iris.ai/blog/local-first-ai.html"
   }
   </script>
 </head>
 <body>
   <div class="header">
-    <a href="../index.html">crewswarm</a>
+    <a href="../index.html">iris</a>
     <span class="sep">/</span>
     <a href="index.html" style="font-weight:400;color:var(--text-2);">Blog</a>
     <div class="links">
@@ -79,20 +79,20 @@
 
     <h2>What "local-first" means</h2>
 
-    <p>In crewswarm, <strong>all execution happens on your machine</strong>. When an agent writes a file, it writes to your local disk. When it runs a command, it runs in your shell. When it calls an LLM, it goes directly from your machine to the provider's API — no proxy server in between.</p>
+    <p>In iris, <strong>all execution happens on your machine</strong>. When an agent writes a file, it writes to your local disk. When it runs a command, it runs in your shell. When it calls an LLM, it goes directly from your machine to the provider's API — no proxy server in between.</p>
 
     <p>This is a design choice with concrete consequences:</p>
 
     <ul>
       <li><strong>Your code never leaves your machine.</strong> No cloud storage, no third-party caching, no "we may use your data for training" clauses.</li>
-      <li><strong>API keys stay in your config.</strong> Stored in <code>~/.crewswarm/crewswarm.json</code> with file permissions you control. Not in someone else's database.</li>
+      <li><strong>API keys stay in your config.</strong> Stored in <code>~/.iris/iris.json</code> with file permissions you control. Not in someone else's database.</li>
       <li><strong>No subscription.</strong> You pay providers directly for what you use. No per-seat pricing, no monthly fee for the orchestration layer.</li>
-      <li><strong>Works offline.</strong> With Ollama or a local vLLM server, crewswarm runs with zero internet dependency.</li>
+      <li><strong>Works offline.</strong> With Ollama or a local vLLM server, iris runs with zero internet dependency.</li>
     </ul>
 
     <h2>Provider freedom</h2>
 
-    <p>When you're not locked into a platform, you can choose providers based on merit. crewswarm supports <strong>12+ providers</strong> out of the box — from Anthropic and OpenAI to Groq, DeepSeek, Cerebras, Together, and local inference via Ollama, vLLM, or SGLang.</p>
+    <p>When you're not locked into a platform, you can choose providers based on merit. iris supports <strong>12+ providers</strong> out of the box — from Anthropic and OpenAI to Groq, DeepSeek, Cerebras, Together, and local inference via Ollama, vLLM, or SGLang.</p>
 
     <p>More importantly, you can <strong>mix providers per agent</strong>. Your PM uses Groq for speed. Your coder uses Claude for quality. Your researcher uses Perplexity for web search. Switch any of them with one config change, no migration needed.</p>
 
@@ -110,12 +110,12 @@
 
     <p>Local-first isn't always the right answer. If you want a hosted product you never think about, a managed team deployment with centralized billing, or a mobile-first experience — cloud platforms serve that well.</p>
 
-    <p>crewswarm is for developers who want <strong>control</strong>. Control over which models they use, which providers they pay, where their code runs, and how their agents behave. If that's you, local-first is the only architecture that makes sense.</p>
+    <p>iris is for developers who want <strong>control</strong>. Control over which models they use, which providers they pay, where their code runs, and how their agents behave. If that's you, local-first is the only architecture that makes sense.</p>
 
     <div class="cta">
       <p style="color:var(--text-1);font-weight:600;margin-bottom:0.5rem;">Own your AI stack</p>
-      <p><a href="https://github.com/crewswarm/crewswarm">GitHub</a> &middot; <a href="https://www.npmjs.com/package/crewswarm">npm</a> &middot; <a href="../index.html#get-started">Install guide</a></p>
-      <code>npm install -g crewswarm</code>
+      <p><a href="https://github.com/crewswarm/crewswarm">GitHub</a> &middot; <a href="https://www.npmjs.com/package/iris">npm</a> &middot; <a href="../index.html#get-started">Install guide</a></p>
+      <code>npm install -g iris</code>
     </div>
   </div>
 </body>

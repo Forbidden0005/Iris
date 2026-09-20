@@ -27,7 +27,7 @@ import os from "node:os";
 
 // Isolate all file I/O in a temp directory
 const TEST_DIR = path.join(os.tmpdir(), `chat-uw-test-${process.pid}`);
-process.env.CREWSWARM_STATE_DIR = TEST_DIR;
+process.env.IRIS_STATE_DIR = TEST_DIR;
 
 import { resetPaths } from "../../lib/runtime/paths.mjs";
 
@@ -178,7 +178,7 @@ describe("unified-branch logic mirrors", () => {
     // Mirrors: history.map(h => ({ role, content, ...(h.agent && {name}) }))
     const raw = [
       { role: "user", content: "hi", source: "dashboard", ts: 1 },
-      { role: "assistant", content: "hello", agent: "crew-lead", source: "telegram", ts: 2 },
+      { role: "assistant", content: "hello", agent: "iris-lead", source: "telegram", ts: 2 },
     ];
     const formatted = raw.map((h) => ({
       role: h.role,
@@ -188,7 +188,7 @@ describe("unified-branch logic mirrors", () => {
     assert.equal(formatted[0].role, "user");
     assert.equal(formatted[0].content, "hi");
     assert.ok(!("source" in formatted[0]));
-    assert.equal(formatted[1].name, "crew-lead");
+    assert.equal(formatted[1].name, "iris-lead");
   });
 
   it("shouldUseUnifiedHistory returns false for an isolated (unlinked) user", async () => {

@@ -2,12 +2,12 @@
  * E2E tests for pipeline waves (multi-agent parallel execution).
  *
  * REQUIRES RUNNING SERVICES:
- * - crew-lead on port 5010
+ * - iris-lead on port 5010
  * - RT message bus
- * - At least 1 agent bridge running (crew-coder)
+ * - At least 1 agent bridge running (iris-coder)
  *
  * These tests verify actual parallel wave execution, not just unit logic.
- * SKIP: if crew-lead not running or agent can't complete a warm-up task in 30s.
+ * SKIP: if iris-lead not running or agent can't complete a warm-up task in 30s.
  */
 
 import { describe, it, before } from "node:test";
@@ -19,8 +19,8 @@ import { checkServiceUp, httpRequest } from "../helpers/http.mjs";
 import { logTestEvidence } from "../helpers/test-log.mjs";
 import { logEngineTestContext } from "../helpers/test-context.mjs";
 
-const CREW_LEAD_URL = "http://127.0.0.1:5010";
-const CONFIG_PATH = join(homedir(), ".crewswarm", "config.json");
+const IRIS_LEAD_URL = "http://127.0.0.1:5010";
+const CONFIG_PATH = join(homedir(), ".iris", "config.json");
 
 let authToken;
 
@@ -37,7 +37,7 @@ async function getAuthToken() {
 
 async function dispatchPipeline(pipeline) {
   const token = await getAuthToken();
-  const { status, data } = await httpRequest(`${CREW_LEAD_URL}/api/pipeline`, {
+  const { status, data } = await httpRequest(`${IRIS_LEAD_URL}/api/pipeline`, {
     method: "POST",
     headers: { "Authorization": token ? `Bearer ${token}` : "" },
     body: { pipeline },
@@ -61,7 +61,7 @@ async function pollPipelineStatus(pipelineId, maxWaitMs = 60000) {
 
   while (Date.now() - start < maxWaitMs) {
     try {
-      const { status, data } = await httpRequest(`${CREW_LEAD_URL}/api/pipeline/${pipelineId}`, {
+      const { status, data } = await httpRequest(`${IRIS_LEAD_URL}/api/pipeline/${pipelineId}`, {
         headers: { "Authorization": token ? `Bearer ${token}` : "" },
         timeout: 15000,
         trace: {
@@ -88,17 +88,17 @@ async function pollPipelineStatus(pipelineId, maxWaitMs = 60000) {
   throw new Error(`Pipeline timed out after ${maxWaitMs}ms`);
 }
 
-// Pre-flight: check crew-lead is up and agent can complete a task
-const crewLeadUp = await checkServiceUp(`${CREW_LEAD_URL}/health`);
+// Pre-flight: check iris-lead is up and agent can complete a task
+const crewLeadUp = await checkServiceUp(`${IRIS_LEAD_URL}/health`);
 
 let agentReady = false;
 if (crewLeadUp) {
   try {
     const token = await getAuthToken();
-    const { data } = await httpRequest(`${CREW_LEAD_URL}/api/pipeline`, {
+    const { data } = await httpRequest(`${IRIS_LEAD_URL}/api/pipeline`, {
       method: "POST",
       headers: { "Authorization": token ? `Bearer ${token}` : "" },
-      body: { pipeline: [{ wave: 1, agent: "crew-coder", task: "Reply OK" }] },
+      body: { pipeline: [{ wave: 1, agent: "iris-coder", task: "Reply OK" }] },
       timeout: 10000,
     });
     if (data?.pipelineId) {
@@ -109,9 +109,9 @@ if (crewLeadUp) {
 }
 
 const SKIP = !crewLeadUp
-  ? "crew-lead not running on :5010"
+  ? "iris-lead not running on :5010"
   : !agentReady
-    ? "crew-coder agent backlogged or unavailable (warm-up task didn't complete in 90s)"
+    ? "iris-coder agent backlogged or unavailable (warm-up task didn't complete in 90s)"
     : false;
 
 describe("pipeline-waves — parallel execution", { skip: SKIP, timeout: 120000 }, () => {
@@ -124,8 +124,8 @@ describe("pipeline-waves — parallel execution", { skip: SKIP, timeout: 120000 
       notes: "Parallel same-agent wave",
     });
     const pipeline = [
-      { wave: 1, agent: "crew-coder", task: "Reply with OK" },
-      { wave: 1, agent: "crew-coder", task: "Reply with OK" }
+      { wave: 1, agent: "iris-coder", task: "Reply with OK" },
+      { wave: 1, agent: "iris-coder", task: "Reply with OK" }
     ];
 
     const start = Date.now();
@@ -159,8 +159,8 @@ describe("pipeline-waves — sequential waves", { skip: SKIP, timeout: 120000 },
       notes: "Sequential waves",
     });
     const pipeline = [
-      { wave: 1, agent: "crew-coder", task: "Reply with WAVE1" },
-      { wave: 2, agent: "crew-coder", task: "Reply with WAVE2" }
+      { wave: 1, agent: "iris-coder", task: "Reply with WAVE1" },
+      { wave: 2, agent: "iris-coder", task: "Reply with WAVE2" }
     ];
 
     const result = await dispatchPipeline(pipeline);
@@ -178,13 +178,13 @@ describe("wave dispatcher integration", { skip: SKIP, timeout: 30000 }, () => {
   it("GET /api/pipeline/:id returns status for a dispatched pipeline", async () => {
     const testName = "GET /api/pipeline/:id returns status for a dispatched pipeline";
     const pipeline = [
-      { wave: 1, agent: "crew-coder", task: "Reply with PING" }
+      { wave: 1, agent: "iris-coder", task: "Reply with PING" }
     ];
     const result = await dispatchPipeline(pipeline);
     assert.ok(result.pipelineId, "Should return pipelineId");
 
     const token = await getAuthToken();
-    const { status, data } = await httpRequest(`${CREW_LEAD_URL}/api/pipeline/${result.pipelineId}`, {
+    const { status, data } = await httpRequest(`${IRIS_LEAD_URL}/api/pipeline/${result.pipelineId}`, {
       headers: { Authorization: token ? `Bearer ${token}` : "" },
       trace: {
         test: testName,

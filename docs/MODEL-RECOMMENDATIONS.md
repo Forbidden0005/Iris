@@ -1,21 +1,21 @@
 # Model Recommendations
 
-All providers below are pre-configured in `~/.crewswarm/crewswarm.json`. To swap a model for any agent, change its `"model"` field — no code changes required. The `CREWSWARM_OPENCODE_MODEL` env var overrides the model used by OpenCode (the primary coding executor).
+All providers below are pre-configured in `~/.iris/iris.json`. To swap a model for any agent, change its `"model"` field — no code changes required. The `IRIS_OPENCODE_MODEL` env var overrides the model used by OpenCode (the primary coding executor).
 
 ---
 
 ## Example Setup (verify against your config)
 
-The table below shows a typical configuration. Your actual models come from `~/.crewswarm/crewswarm.json` — run `node gateway-bridge.mjs --memory-status` to see what's running.
+The table below shows a typical configuration. Your actual models come from `~/.iris/iris.json` — run `node gateway-bridge.mjs --memory-status` to see what's running.
 
 | Agent | Example Model | Provider |
 |---|---|---|
-| `crew-main` (Quill) | `xai/grok-3-mini` | xAI |
-| `crew-coder` (Fuller) | `groq/moonshotai/kimi-k2-instruct-0905` | Groq |
-| `crew-pm` (Planx) | `deepseek/deepseek-reasoner` | DeepSeek |
-| `crew-qa` (Testy) | `deepseek/deepseek-chat` | DeepSeek |
-| `crew-fixer` (The Fixer) | `groq/moonshotai/kimi-k2-instruct-0905` | Groq |
-| `crew-security` (RoboCop) | `deepseek/deepseek-chat` | DeepSeek |
+| `iris-main` (Quill) | `xai/grok-3-mini` | xAI |
+| `iris-coder` (Fuller) | `groq/moonshotai/kimi-k2-instruct-0905` | Groq |
+| `iris-pm` (Planx) | `deepseek/deepseek-reasoner` | DeepSeek |
+| `iris-qa` (Testy) | `deepseek/deepseek-chat` | DeepSeek |
+| `iris-fixer` (The Fixer) | `groq/moonshotai/kimi-k2-instruct-0905` | Groq |
+| `iris-security` (RoboCop) | `deepseek/deepseek-chat` | DeepSeek |
 | **Default primary** | `opencode/big-pickle` | OpenCode |
 | **Default fallbacks** | `anthropic/claude-haiku-4-5` → `anthropic/claude-sonnet-4-20250514` | Anthropic |
 
@@ -32,7 +32,7 @@ OpenCode's proprietary model pool — accessed via `https://opencode.ai/zen/v1` 
 | `opencode/gpt-5.2-codex` | — | 200K | Flagship coding model |
 | `opencode/gpt-5.1-codex-mini` | — | 200K | Lighter/faster Codex |
 | `opencode/claude-opus-4-6` | — | 200K | Claude Opus via OpenCode |
-| `opencode/glm-5-free` | — | — | **Free tier** — current `CREWSWARM_OPENCODE_MODEL` default; low quality |
+| `opencode/glm-5-free` | — | — | **Free tier** — current `IRIS_OPENCODE_MODEL` default; low quality |
 
 **Pricing:** Covered by your Zen subscription. No per-token billing.
 
@@ -94,7 +94,7 @@ The standard baseline. Codex is OpenAI's coding-focused reasoning model — purp
 
 | Model ID | Alias | Context | Cost (input/output per 1M) | Notes |
 |---|---|---|---|---|
-| `openai/codex-mini-latest` | `codex-mini` | 200K | ~$1.50 / $6 | **Recommended for crew-coder** — built for agentic coding |
+| `openai/codex-mini-latest` | `codex-mini` | 200K | ~$1.50 / $6 | **Recommended for iris-coder** — built for agentic coding |
 | `openai/o4-mini` | `o4-mini` | 200K | ~$1.10 / $4.40 | Fast reasoning; great for fixer + security |
 | `openai/o3` | `o3` | 200K | ~$10 / $40 | Best reasoning available; use for hard problems only |
 | `openai/gpt-4.1` | `gpt-4.1` | 1M | $2 / $8 | Latest GPT; huge context, great instruction following |
@@ -128,9 +128,9 @@ European AI lab (French). Strong on instruction following, great European data p
 **Standout:** `devstral-small-latest` — specifically trained for agentic software engineering tasks. Uses tools, reads files, writes patches. Worth testing against Codex for the website build.
 
 ```bash
-CREWSWARM_OPENCODE_MODEL=mistral/codestral-latest node pm-loop.mjs
+IRIS_OPENCODE_MODEL=mistral/codestral-latest node pm-loop.mjs
 # or agentic variant:
-CREWSWARM_OPENCODE_MODEL=mistral/devstral-small-latest node pm-loop.mjs
+IRIS_OPENCODE_MODEL=mistral/devstral-small-latest node pm-loop.mjs
 ```
 
 ---
@@ -149,23 +149,23 @@ Cerebras runs on custom silicon (WSE chips) — not GPUs. The result is inferenc
 
 **To swap from Groq → Cerebras** (same model, much faster):
 ```bash
-CREWSWARM_OPENCODE_MODEL=cerebras/llama-3.3-70b node pm-loop.mjs
+IRIS_OPENCODE_MODEL=cerebras/llama-3.3-70b node pm-loop.mjs
 ```
 
 ---
 
 ### Perplexity (`perplexity/…`) ✅ Just added
-Perplexity's Sonar models have **built-in live web search** — every response can pull real-time information. Unique in the lineup: no other provider you have does this natively. Best used for `crew-main` and research-heavy tasks, not raw code generation.
+Perplexity's Sonar models have **built-in live web search** — every response can pull real-time information. Unique in the lineup: no other provider you have does this natively. Best used for `iris-main` and research-heavy tasks, not raw code generation.
 
 | Model ID | Alias | Context | Cost (input/output per 1M) | Notes |
 |---|---|---|---|---|
-| `perplexity/sonar-pro` | `sonar-pro` | 200K | $3 / $15 | Best quality + web search; good for crew-main |
+| `perplexity/sonar-pro` | `sonar-pro` | 200K | $3 / $15 | Best quality + web search; good for iris-main |
 | `perplexity/sonar` | `sonar` | 127K | $1 / $1 | Cheaper web-search model |
 | `perplexity/sonar-reasoning-pro` | `sonar-reasoning-pro` | 131K | $2 / $8 | Reasoning + web search; good for fixer |
 | `perplexity/sonar-reasoning` | — | 127K | $1 / $5 | Lighter reasoning + search |
 | `perplexity/sonar-deep-research` | `sonar-research` | 127K | $2 / $8 | Multi-step research tasks; synthesizes many sources |
 
-**Best use in the swarm:** assign `crew-main` to `sonar-pro` so it can web-search while coordinating. Assign `sonar-deep-research` to a dedicated research agent for tasks like "find the best auth library for this stack."
+**Best use in the swarm:** assign `iris-main` to `sonar-pro` so it can web-search while coordinating. Assign `sonar-deep-research` to a dedicated research agent for tasks like "find the best auth library for this stack."
 
 ---
 
@@ -180,7 +180,7 @@ Configured via your Google AI Studio key. Gemini has one of the largest context 
 | `google/gemini-1.5-pro` | — | **2M** | $1.25 / $5 | Largest context window available anywhere |
 | `google/gemini-1.5-flash` | `gemini-flash-1.5` | 1M | Free tier | Reliable, well-tested |
 
-**Free tier:** Available with model-specific RPM/TPM limits. Check [Gemini rate limits](https://ai.google.dev/gemini-api/docs/rate-limits) for current quotas — typically enough for light crew usage.
+**Free tier:** Available with model-specific RPM/TPM limits. Check [Gemini rate limits](https://ai.google.dev/gemini-api/docs/rate-limits) for current quotas — typically enough for light iris usage.
 
 ---
 
@@ -199,14 +199,14 @@ ollama pull deepseek-coder:6.7b # DeepSeek coder model
 ollama pull llama3.1:8b        # General purpose
 ```
 
-Then add to `~/.crewswarm/crewswarm.json` under `models.providers.ollama.models`:
+Then add to `~/.iris/iris.json` under `models.providers.ollama.models`:
 ```json
 { "id": "qwen2.5-coder:7b", "name": "Qwen 2.5 Coder 7B", "contextWindow": 128000 }
 ```
 
 And use with:
 ```bash
-CREWSWARM_OPENCODE_MODEL=ollama/qwen2.5-coder:7b node pm-loop.mjs
+IRIS_OPENCODE_MODEL=ollama/qwen2.5-coder:7b node pm-loop.mjs
 ```
 
 ---
@@ -256,7 +256,7 @@ CREWSWARM_OPENCODE_MODEL=ollama/qwen2.5-coder:7b node pm-loop.mjs
 
 ## Providers Not Yet Wired (easy to add)
 
-These use the same OpenAI-compatible API format. Add to `~/.crewswarm/crewswarm.json` under `models.providers`:
+These use the same OpenAI-compatible API format. Add to `~/.iris/iris.json` under `models.providers`:
 
 ### OpenAI
 ```json
@@ -327,7 +327,7 @@ These use the same OpenAI-compatible API format. Add to `~/.crewswarm/crewswarm.
 }
 ```
 ```bash
-CREWSWARM_OPENCODE_MODEL=openai/codex-mini-latest node pm-loop.mjs
+IRIS_OPENCODE_MODEL=openai/codex-mini-latest node pm-loop.mjs
 ```
 
 ### Best value (DeepSeek does the heavy lifting)
@@ -342,7 +342,7 @@ CREWSWARM_OPENCODE_MODEL=openai/codex-mini-latest node pm-loop.mjs
 }
 ```
 ```bash
-CREWSWARM_OPENCODE_MODEL=deepseek/deepseek-chat node pm-loop.mjs
+IRIS_OPENCODE_MODEL=deepseek/deepseek-chat node pm-loop.mjs
 ```
 
 ### All-free (Gemini + Groq — zero cost, solid quality)
@@ -358,7 +358,7 @@ CREWSWARM_OPENCODE_MODEL=deepseek/deepseek-chat node pm-loop.mjs
 ```
 
 ```bash
-CREWSWARM_OPENCODE_MODEL=google/gemini-2.0-flash node pm-loop.mjs
+IRIS_OPENCODE_MODEL=google/gemini-2.0-flash node pm-loop.mjs
 ```
 
 ### Maximum quality (current Zen subscription)
@@ -414,17 +414,17 @@ CREWSWARM_OPENCODE_MODEL=google/gemini-2.0-flash node pm-loop.mjs
 
 ## Switching models
 
-**Per-agent (in `~/.crewswarm/crewswarm.json`):**
+**Per-agent (in `~/.iris/iris.json`):**
 ```json
 { "id": "coder", "model": "anthropic/claude-sonnet-4-20250514" }
 ```
 
 **For PM Loop / OpenCode executor (env var):**
 ```bash
-CREWSWARM_OPENCODE_MODEL=anthropic/claude-sonnet-4-20250514 node pm-loop.mjs
+IRIS_OPENCODE_MODEL=anthropic/claude-sonnet-4-20250514 node pm-loop.mjs
 ```
 
-**Per-run (dashboard):** Set `CREWSWARM_OPENCODE_MODEL` in your shell before starting the dashboard.
+**Per-run (dashboard):** Set `IRIS_OPENCODE_MODEL` in your shell before starting the dashboard.
 
 **Check what's running:**
 ```bash

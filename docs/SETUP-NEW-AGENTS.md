@@ -1,14 +1,14 @@
 # Adding New Agents
 
-How to add a custom agent to crewswarm.
+How to add a custom agent to iris.
 
 ## 1. Add agent config
 
-Edit `~/.crewswarm/crewswarm.json`:
+Edit `~/.iris/iris.json`:
 
 ```json
 {
-  "id": "crew-researcher",
+  "id": "iris-researcher",
   "model": "perplexity/sonar-pro"
 }
 ```
@@ -17,11 +17,11 @@ Format is `provider/model-id`. The provider must have an API key in the `provide
 
 ## 2. Add system prompt
 
-Edit `~/.crewswarm/agent-prompts.json`. The key is the bare agent name without `crew-` prefix:
+Edit `~/.iris/agent-prompts.json`. The key is the bare agent name without `iris-` prefix:
 
 ```json
 {
-  "researcher": "You are crew-researcher. Search the web and summarize findings. Be concise and cite sources."
+  "researcher": "You are iris-researcher. Search the web and summarize findings. Be concise and cite sources."
 }
 ```
 
@@ -29,7 +29,7 @@ Edit `~/.crewswarm/agent-prompts.json`. The key is the bare agent name without `
 
 ```bash
 pkill -f "gateway-bridge.mjs"
-node scripts/start-crew.mjs
+node scripts/start-iris.mjs
 ```
 
 Or use **Dashboard → Services → Restart agents**.
@@ -38,23 +38,23 @@ The new agent is auto-registered and appears in the Agents tab.
 
 ## 4. Optional: tool permissions
 
-By default, role-based defaults apply. To override, add `crewswarmAllow`:
+By default, role-based defaults apply. To override, add `irisAllow`:
 
 ```json
 {
-  "id": "crew-researcher",
+  "id": "iris-researcher",
   "model": "perplexity/sonar-pro",
   "tools": {
-    "crewswarmAllow": ["read_file", "write_file"]
+    "irisAllow": ["read_file", "write_file"]
   }
 }
 ```
 
-Available permissions: `read_file`, `write_file`, `append_file`, `mkdir`, `run_cmd`, `git`, `dispatch`, `skill`, `define_skill`, `telegram`, `web_search`, `web_fetch`, `browser`. See `lib/tools/executor.mjs` → `CREWSWARM_TOOL_NAMES`.
+Available permissions: `read_file`, `write_file`, `append_file`, `mkdir`, `run_cmd`, `git`, `dispatch`, `skill`, `define_skill`, `telegram`, `web_search`, `web_fetch`, `browser`. See `lib/tools/executor.mjs` → `IRIS_TOOL_NAMES`.
 
 ## 5. Optional: add a provider
 
-If your agent uses a new provider, add it under `providers` in `crewswarm.json`:
+If your agent uses a new provider, add it under `providers` in `iris.json`:
 
 ```json
 {
@@ -71,4 +71,4 @@ Then use `my-provider/model-name` in the agent's `model` field.
 
 ## Registering for dispatch
 
-Agents are auto-registered when their bridge starts. To allow an agent to emit `@@DISPATCH` (coordination role), add it to the coordinator list in `lib/agent-registry.mjs`. Most agents only receive tasks; coordinators (crew-pm, crew-main, crew-orchestrator) can delegate.
+Agents are auto-registered when their bridge starts. To allow an agent to emit `@@DISPATCH` (coordination role), add it to the coordinator list in `lib/agent-registry.mjs`. Most agents only receive tasks; coordinators (iris-pm, iris-main, iris-orchestrator) can delegate.

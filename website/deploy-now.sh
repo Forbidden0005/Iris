@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-echo "🚀 Deploying crewswarm website with new screenshots..."
+echo "🚀 Deploying iris website with new screenshots..."
 echo ""
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -33,5 +33,5 @@ fi
 
 echo ""
 echo "✅ Deployment complete!"
-echo "🌐 Live at: https://crewswarm.fly.dev/"
-echo "🌐 Production: https://crewswarm.ai/"
+echo "🌐 Live at: https://iris.fly.dev/"
+echo "🌐 Production: https://iris.ai/"

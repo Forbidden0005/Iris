@@ -3,7 +3,7 @@ Allow: /
 Disallow: /STANDARD-FOOTER.html
 Disallow: /404.html
 
-Sitemap: https://crewswarm.ai/sitemap.xml
+Sitemap: https://iris.ai/sitemap.xml
 
 # AI crawlers — see /llms.txt for structured product context
 User-agent: GPTBot

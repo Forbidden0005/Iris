@@ -16,7 +16,7 @@ function makePresenceEvent(overrides = {}) {
     eventId: "ev-001",
     occurredAt: "2026-01-01T00:00:00.000Z",
     correlationId: "corr-001",
-    source: { component: "crew-coder", agentId: "crew-coder" },
+    source: { component: "iris-coder", agentId: "iris-coder" },
     data: {
       status: "online",
       latencyMs: 12,
@@ -35,10 +35,10 @@ function makeLifecycleEvent(overrides = {}) {
     eventId: "ev-002",
     occurredAt: "2026-01-01T00:00:00.000Z",
     correlationId: "corr-002",
-    source: { component: "crew-lead" },
+    source: { component: "iris-lead" },
     data: {
       taskId: "t-001",
-      agentId: "crew-coder",
+      agentId: "iris-coder",
       taskType: "code",
       phase: "completed",
       phaseOrdinal: 4,

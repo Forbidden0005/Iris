@@ -1,11 +1,11 @@
 /**
  * E2E: CLI Engine Passthrough Diagnostics
  *
- * Verifies each installed CLI engine responds via the crew-lead passthrough API
+ * Verifies each installed CLI engine responds via the iris-lead passthrough API
  * (the same path Dashboard, Vibe, and API surfaces use to talk to engines).
  *
  * WHAT THIS TESTS:
- *   - crew-lead /api/engine-passthrough SSE endpoint is reachable
+ *   - iris-lead /api/engine-passthrough SSE endpoint is reachable
  *   - Each CLI engine (Claude Code, Cursor, Gemini CLI, OpenCode) can:
  *     1. Receive a prompt via passthrough
  *     2. Return a non-empty text response
@@ -16,7 +16,7 @@
  *   - "Passthrough timeout" → engine started but didn't respond in time.
  *     Check engine process, rate limits, or increase PASSTHROUGH_TIMEOUT_MS.
  *   - "Should get non-empty response" → engine responded but returned nothing.
- *     Check engine auth/API keys and crew-lead logs.
+ *     Check engine auth/API keys and iris-lead logs.
  *   - "cancelled" → a prior test in the describe block timed out and killed
  *     remaining tests. Fix the timed-out test first.
  *
@@ -26,7 +26,7 @@
  *   Gemini CLI:   15-30s (cold start can be 30-60s)
  *   OpenCode:     30-60s
  *
- * REQUIRES: crew-lead on :5010 with engines installed.
+ * REQUIRES: iris-lead on :5010 with engines installed.
  * RUN: node --test test/e2e/chat-passthrough-engines.test.mjs
  * NOTE: Run this file SOLO — concurrent e2e tests cause timeouts.
  */
@@ -39,8 +39,8 @@ import { execSync } from "node:child_process";
 import { getCliEngineMetadata, logTestEvidence } from "../helpers/test-log.mjs";
 import { logEngineTestContext } from "../helpers/test-context.mjs";
 
-const CREW_LEAD_URL = "http://127.0.0.1:5010";
-const CONFIG_PATH = join(homedir(), ".crewswarm", "config.json");
+const IRIS_LEAD_URL = "http://127.0.0.1:5010";
+const CONFIG_PATH = join(homedir(), ".iris", "config.json");
 
 // Per-engine timeouts based on observed timing (see header).
 // These are HTTP request timeouts — the describe timeout must be >= these.
@@ -78,7 +78,7 @@ async function passthroughChat(engine, message, sessionId = "e2e-test", projectD
 
   return new Promise((resolve, reject) => {
     const body = JSON.stringify({ engine, message, sessionId, projectDir });
-    const url = new URL(`${CREW_LEAD_URL}/api/engine-passthrough`);
+    const url = new URL(`${IRIS_LEAD_URL}/api/engine-passthrough`);
     const req = http.request({
       hostname: url.hostname,
       port: url.port,
@@ -165,11 +165,11 @@ let crewLeadUp = false;
 try {
   const http = await import("node:http");
   crewLeadUp = await new Promise((resolve) => {
-    http.get(`${CREW_LEAD_URL}/health`, (res) => resolve(res.statusCode === 200)).on("error", () => resolve(false));
+    http.get(`${IRIS_LEAD_URL}/health`, (res) => resolve(res.statusCode === 200)).on("error", () => resolve(false));
   });
 } catch { }
 
-const SKIP = crewLeadUp ? false : "crew-lead not running on :5010";
+const SKIP = crewLeadUp ? false : "iris-lead not running on :5010";
 const engines = {
   claude: isInstalled("claude"),
   cursor: isInstalled("agent"),
@@ -264,7 +264,7 @@ describe("session resume: Claude Code", {
     const token = await getAuthToken();
     const http = await import("node:http");
     await new Promise((resolve) => {
-      const req = http.request(`${CREW_LEAD_URL}/api/engine-passthrough/clear-session`, {
+      const req = http.request(`${IRIS_LEAD_URL}/api/engine-passthrough/clear-session`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
       }, (res) => { res.on("data", () => {}); res.on("end", resolve); });

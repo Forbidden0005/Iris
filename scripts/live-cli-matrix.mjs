@@ -7,7 +7,7 @@ const jsonMode = process.argv.includes("--json");
 const smokeMode = process.argv.includes("--smoke");
 const cwd = process.cwd();
 const PROMPT = "Reply with exactly CLI_MATRIX_OK and nothing else.";
-const openCodeModel = process.env.CREWSWARM_OPENCODE_MODEL || "opencode/big-pickle";
+const openCodeModel = process.env.IRIS_OPENCODE_MODEL || "opencode/big-pickle";
 
 function hasBin(bin) {
   try {
@@ -19,7 +19,7 @@ function hasBin(bin) {
   }
 }
 
-function runCli(bin, args, timeoutMs = Number(process.env.CREWSWARM_LIVE_CLI_TIMEOUT_MS || 30000)) {
+function runCli(bin, args, timeoutMs = Number(process.env.IRIS_LIVE_CLI_TIMEOUT_MS || 30000)) {
   return new Promise((resolve) => {
     const child = spawn(bin, args, {
       cwd,
@@ -66,13 +66,13 @@ const clis = [
     id: "claude",
     available: hasBin("claude"),
     command: ["claude", ["-p", "--print", PROMPT]],
-    timeoutMs: Number(process.env.CREWSWARM_LIVE_CLAUDE_TIMEOUT_MS || 120000),
+    timeoutMs: Number(process.env.IRIS_LIVE_CLAUDE_TIMEOUT_MS || 120000),
   },
   {
     id: "codex",
     available: hasBin("codex"),
     command: ["codex", ["exec", "--sandbox", "read-only", "--json", PROMPT]],
-    timeoutMs: Number(process.env.CREWSWARM_LIVE_CODEX_TIMEOUT_MS || 30000),
+    timeoutMs: Number(process.env.IRIS_LIVE_CODEX_TIMEOUT_MS || 30000),
   },
   {
     id: "cursor",
@@ -87,30 +87,30 @@ const clis = [
         "stream-json",
         PROMPT,
         "--model",
-        process.env.CREWSWARM_CURSOR_MODEL || "composer-2-fast",
+        process.env.IRIS_CURSOR_MODEL || "composer-2-fast",
         "--workspace",
         cwd,
       ],
     ],
-    timeoutMs: Number(process.env.CREWSWARM_LIVE_CURSOR_TIMEOUT_MS || 30000),
+    timeoutMs: Number(process.env.IRIS_LIVE_CURSOR_TIMEOUT_MS || 30000),
   },
   {
     id: "gemini",
     available: hasBin("gemini"),
     command: ["gemini", ["-p", PROMPT]],
-    timeoutMs: Number(process.env.CREWSWARM_LIVE_GEMINI_TIMEOUT_MS || 120000),
+    timeoutMs: Number(process.env.IRIS_LIVE_GEMINI_TIMEOUT_MS || 120000),
   },
   {
     id: "opencode",
     available: hasBin("opencode"),
     command: ["opencode", ["run", "--model", openCodeModel, PROMPT]],
-    timeoutMs: Number(process.env.CREWSWARM_LIVE_OPENCODE_TIMEOUT_MS || 120000),
+    timeoutMs: Number(process.env.IRIS_LIVE_OPENCODE_TIMEOUT_MS || 120000),
   },
   {
-    id: "crew-cli",
+    id: "iris-cli",
     available: true,
-    command: ["node", ["crew-cli/bin/crew.js", "exec", PROMPT]],
-    timeoutMs: Number(process.env.CREWSWARM_LIVE_CREWCLI_TIMEOUT_MS || 30000),
+    command: ["node", ["iris-cli/bin/iris.js", "exec", PROMPT]],
+    timeoutMs: Number(process.env.IRIS_LIVE_CREWCLI_TIMEOUT_MS || 30000),
   },
 ];
 
@@ -145,7 +145,7 @@ if (jsonMode) {
   process.exit(0);
 }
 
-console.log("CrewSwarm live CLI matrix");
+console.log("Iris live CLI matrix");
 console.log("");
 for (const cli of payload.clis) {
   console.log(`${cli.id.padEnd(10)} ${cli.available ? "available" : "missing"}`);

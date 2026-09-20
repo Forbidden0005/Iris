@@ -20,8 +20,8 @@
  *
  * REQUIRES:
  *   - Dashboard on http://127.0.0.1:4319
- *   - crew-lead on http://127.0.0.1:5010
- *   - Auth token in ~/.crewswarm/config.json -> rt.authToken
+ *   - iris-lead on http://127.0.0.1:5010
+ *   - Auth token in ~/.iris/config.json -> rt.authToken
  *
  * Run: node --test test/e2e/dashboard-lifecycle.test.mjs
  */
@@ -35,8 +35,8 @@ import { checkServiceUp, httpRequest } from "../helpers/http.mjs";
 import { logTestEvidence } from "../helpers/test-log.mjs";
 
 const DASHBOARD_URL = "http://127.0.0.1:4319";
-const CREW_LEAD_URL = "http://127.0.0.1:5010";
-const CONFIG_PATH = join(homedir(), ".crewswarm", "config.json");
+const IRIS_LEAD_URL = "http://127.0.0.1:5010";
+const CONFIG_PATH = join(homedir(), ".iris", "config.json");
 const PROJECT_ROOT = process.cwd();
 const PACKAGE_JSON_PATH = join(PROJECT_ROOT, "package.json");
 
@@ -74,13 +74,13 @@ async function api(endpoint, method = "GET", body = null, opts = {}) {
 }
 
 /**
- * Dispatch a simple task via crew-lead /chat — used by tests that need to
+ * Dispatch a simple task via iris-lead /chat — used by tests that need to
  * generate activity on the bus.
  */
 async function dispatchSimpleTask(message = "reply with exactly: LIFECYCLE_PING") {
   const token = await getAuthToken();
   const sessionId = `e2e-lifecycle-${Date.now()}`;
-  return httpRequest(`${CREW_LEAD_URL}/chat`, {
+  return httpRequest(`${IRIS_LEAD_URL}/chat`, {
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -160,11 +160,11 @@ function openSSE(path, timeoutMs = 10000) {
 // ── Pre-flight checks ───────────────────────────────────────────────────────
 
 const dashboardUp = await checkServiceUp(`${DASHBOARD_URL}/api/health`);
-const crewLeadUp = await checkServiceUp(`${CREW_LEAD_URL}/health`);
+const crewLeadUp = await checkServiceUp(`${IRIS_LEAD_URL}/health`);
 const SKIP = !dashboardUp
   ? "Dashboard not running on :4319"
   : !crewLeadUp
-    ? "crew-lead not running on :5010"
+    ? "iris-lead not running on :5010"
     : false;
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -245,7 +245,7 @@ describe("Settings toggle lifecycle", { skip: SKIP, concurrency: 1, timeout: 300
 
 describe("Agent config lifecycle", { skip: SKIP, concurrency: 1, timeout: 30000 }, () => {
   let originalAgents;
-  const TEST_AGENT = "crew-qa";
+  const TEST_AGENT = "iris-qa";
   const TEST_MODEL = "e2e-test-model-placeholder";
   let originalModel;
 
@@ -258,7 +258,7 @@ describe("Agent config lifecycle", { skip: SKIP, concurrency: 1, timeout: 30000 
     }
     assert.ok(status >= 200 && status < 300, `GET /api/agents-config returned ${status}`);
     originalAgents = data;
-    // Find crew-qa model for later restore
+    // Find iris-qa model for later restore
     const agents = data?.agents || data;
     if (Array.isArray(agents)) {
       const qa = agents.find((a) => (a.id || a.name || "").includes("qa"));
@@ -266,11 +266,11 @@ describe("Agent config lifecycle", { skip: SKIP, concurrency: 1, timeout: 30000 
     } else if (agents && typeof agents === "object") {
       originalModel = agents[TEST_AGENT]?.model;
     }
-    console.log(`    Agent config loaded, crew-qa model: ${originalModel || "(not found)"}`);
+    console.log(`    Agent config loaded, iris-qa model: ${originalModel || "(not found)"}`);
   });
 
-  it("update crew-qa model and verify", async () => {
-    const testName = "update crew-qa model and verify";
+  it("update iris-qa model and verify", async () => {
+    const testName = "update iris-qa model and verify";
     if (!originalAgents) {
       logTestEvidence({ category: "agent_config", test: testName, file: import.meta.filename, note: "skipped — no original config" });
       return;
@@ -297,12 +297,12 @@ describe("Agent config lifecycle", { skip: SKIP, concurrency: 1, timeout: 30000 
     } else if (agents && typeof agents === "object") {
       found = agents[TEST_AGENT]?.model === TEST_MODEL;
     }
-    assert.ok(found, `crew-qa model should be updated to ${TEST_MODEL}`);
-    console.log("    crew-qa model updated and verified");
+    assert.ok(found, `iris-qa model should be updated to ${TEST_MODEL}`);
+    console.log("    iris-qa model updated and verified");
   });
 
-  it("restore crew-qa model", async () => {
-    const testName = "restore crew-qa model";
+  it("restore iris-qa model", async () => {
+    const testName = "restore iris-qa model";
     if (!originalModel) {
       logTestEvidence({ category: "agent_config", test: testName, file: import.meta.filename, note: "skipped — no original model to restore" });
       return;
@@ -314,7 +314,7 @@ describe("Agent config lifecycle", { skip: SKIP, concurrency: 1, timeout: 30000 
     }, { testName });
     // Endpoint may return 500 on edge cases — accept as long as it's not 404
     assert.ok(status !== 404, `POST restore returned ${status}`);
-    console.log(`    crew-qa model restored to: ${originalModel}`);
+    console.log(`    iris-qa model restored to: ${originalModel}`);
   });
 });
 
@@ -462,23 +462,23 @@ describe("Services status lifecycle", { skip: SKIP, concurrency: 1, timeout: 300
     console.log(`    Services: ${JSON.stringify(services).slice(0, 150)}`);
   });
 
-  it("crew-lead shows as running", async () => {
-    const testName = "crew-lead shows as running";
+  it("iris-lead shows as running", async () => {
+    const testName = "iris-lead shows as running";
     const { status, data } = await api("/api/services/status", "GET", null, { testName });
     if (status === 500) return;
     const services = data?.services || data;
     const asList = Array.isArray(services) ? services : Object.entries(services).map(([k, v]) => ({ id: k, ...v }));
     const crewLead = asList.find(
-      (s) => (s.id || s.name || "").toLowerCase().includes("crew-lead") ||
+      (s) => (s.id || s.name || "").toLowerCase().includes("iris-lead") ||
              (s.id || s.name || "").toLowerCase().includes("crewlead")
     );
     // It's possible the service name doesn't match — don't hard-fail
     if (crewLead) {
       const running = crewLead.status === "running" || crewLead.running === true || crewLead.healthy === true;
-      assert.ok(running, `crew-lead should be running, got: ${JSON.stringify(crewLead)}`);
-      console.log("    crew-lead: running");
+      assert.ok(running, `iris-lead should be running, got: ${JSON.stringify(crewLead)}`);
+      console.log("    iris-lead: running");
     } else {
-      console.log(`    crew-lead not found by name in services list — ${asList.length} services returned`);
+      console.log(`    iris-lead not found by name in services list — ${asList.length} services returned`);
     }
   });
 
@@ -618,13 +618,13 @@ describe("Prompt management lifecycle", { skip: SKIP, concurrency: 1, timeout: 3
     const prompts = data?.prompts || data;
     assert.ok(prompts && typeof prompts === "object", "should return prompt data");
 
-    // Check for crew-lead and crew-coder entries
+    // Check for iris-lead and iris-coder entries
     const asStr = JSON.stringify(prompts).toLowerCase();
-    const hasCrewLead = asStr.includes("crew-lead") || asStr.includes("crewlead");
-    const hasCrewCoder = asStr.includes("crew-coder") || asStr.includes("crewcoder");
-    assert.ok(hasCrewLead, "prompts should include crew-lead entry");
-    assert.ok(hasCrewCoder, "prompts should include crew-coder entry");
-    console.log(`    Prompts loaded — includes crew-lead and crew-coder`);
+    const hasCrewLead = asStr.includes("iris-lead") || asStr.includes("crewlead");
+    const hasCrewCoder = asStr.includes("iris-coder") || asStr.includes("crewcoder");
+    assert.ok(hasCrewLead, "prompts should include iris-lead entry");
+    assert.ok(hasCrewCoder, "prompts should include iris-coder entry");
+    console.log(`    Prompts loaded — includes iris-lead and iris-coder`);
   });
 });
 
@@ -681,7 +681,7 @@ describe("SSE events stream", { skip: SKIP, concurrency: 1, timeout: 60000 }, ()
     await getAuthToken(); // ensure token is loaded
 
     // Open SSE with 30s timeout
-    const sse = openSSE("/api/crew-lead/events", 30000);
+    const sse = openSSE("/api/iris-lead/events", 30000);
 
     // Give the connection a moment to establish
     await new Promise((r) => setTimeout(r, 1000));

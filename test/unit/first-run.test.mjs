@@ -1,9 +1,9 @@
 /**
  * first-run.test.mjs — Validates the zero-config first-run experience.
  *
- * These tests simulate a fresh clone (no ~/.crewswarm/ directory) and verify:
+ * These tests simulate a fresh clone (no ~/.iris/ directory) and verify:
  *   1. Core config helpers return safe defaults, never throw.
- *   2. Entry-point helpers (loadConfig in start-crew, loadConfig in crew-lead)
+ *   2. Entry-point helpers (loadConfig in start-iris, loadConfig in iris-lead)
  *      fall back gracefully and produce usable defaults.
  *   3. The "npm start" script exists and points at a real file.
  *   4. validateRequiredAgents gives actionable guidance when agents are absent.
@@ -31,11 +31,11 @@ const { validateRequiredAgents, REQUIRED_AGENTS } = await import(`${ROOT}/lib/ag
 
 /**
  * Run a function while a temp empty dir is available. Does not override the
- * module-level CREWSWARM_CONFIG_PATH (which is baked in at import time), but
+ * module-level IRIS_CONFIG_PATH (which is baked in at import time), but
  * provides the temp dir for callers that need an empty filesystem context.
  */
 function withEmptyConfigDir(fn) {
-  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "crewswarm-first-run-"));
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "iris-first-run-"));
   try {
     return fn(tmpDir);
   } finally {
@@ -81,8 +81,8 @@ describe("lib/runtime/config.mjs — zero-config safety", () => {
   });
 
   test("loadCursorWavesEnabled() returns a boolean and never throws", () => {
-    const prevEnv = process.env.CREWSWARM_CURSOR_WAVES;
-    delete process.env.CREWSWARM_CURSOR_WAVES;
+    const prevEnv = process.env.IRIS_CURSOR_WAVES;
+    delete process.env.IRIS_CURSOR_WAVES;
     try {
       let result;
       assert.doesNotThrow(() => { result = configMod.loadCursorWavesEnabled(); },
@@ -90,13 +90,13 @@ describe("lib/runtime/config.mjs — zero-config safety", () => {
       assert.ok(typeof result === "boolean",
         "loadCursorWavesEnabled() must return boolean");
     } finally {
-      if (prevEnv !== undefined) process.env.CREWSWARM_CURSOR_WAVES = prevEnv;
+      if (prevEnv !== undefined) process.env.IRIS_CURSOR_WAVES = prevEnv;
     }
   });
 
   test("loadClaudeCodeEnabled() returns a boolean and never throws", () => {
-    const prevEnv = process.env.CREWSWARM_CLAUDE_CODE;
-    delete process.env.CREWSWARM_CLAUDE_CODE;
+    const prevEnv = process.env.IRIS_CLAUDE_CODE;
+    delete process.env.IRIS_CLAUDE_CODE;
     try {
       let result;
       assert.doesNotThrow(() => { result = configMod.loadClaudeCodeEnabled(); },
@@ -104,39 +104,39 @@ describe("lib/runtime/config.mjs — zero-config safety", () => {
       assert.ok(typeof result === "boolean",
         "loadClaudeCodeEnabled() must return boolean");
     } finally {
-      if (prevEnv !== undefined) process.env.CREWSWARM_CLAUDE_CODE = prevEnv;
+      if (prevEnv !== undefined) process.env.IRIS_CLAUDE_CODE = prevEnv;
     }
   });
 });
 
-// ── 2. crew-lead loadConfig() fallback behaviour ─────────────────────────────
+// ── 2. iris-lead loadConfig() fallback behaviour ─────────────────────────────
 //
-// crew-lead.mjs cannot be imported directly (it binds a port on import).
+// iris-lead.mjs cannot be imported directly (it binds a port on import).
 // We replicate the relevant logic from its loadConfig() to verify the fallback
 // invariants that the file depends on.
 
-describe("crew-lead loadConfig() zero-config fallbacks", () => {
-  test("knownAgents falls back to built-in default roster when crewswarm.json is absent", () => {
+describe("iris-lead loadConfig() zero-config fallbacks", () => {
+  test("knownAgents falls back to built-in default roster when iris.json is absent", () => {
     const csSwarm = configMod.loadSwarmConfig(); // returns {} on ENOENT
     const agents = Array.isArray(csSwarm.agents) ? csSwarm.agents : [];
 
     const knownAgents = [...new Set(agents.map(a => a.id))];
     if (!knownAgents.length) {
       knownAgents.push(
-        "crew-main", "crew-pm", "crew-coder", "crew-qa", "crew-fixer",
-        "crew-security", "crew-coder-front", "crew-coder-back",
-        "crew-github", "crew-frontend", "crew-copywriter"
+        "iris-main", "iris-pm", "iris-coder", "iris-qa", "iris-fixer",
+        "iris-security", "iris-coder-front", "iris-coder-back",
+        "iris-github", "iris-frontend", "iris-copywriter"
       );
     }
     assert.ok(knownAgents.length > 0,
-      "crew-lead must always have at least one known agent after fallback");
+      "iris-lead must always have at least one known agent after fallback");
   });
 
   test("default model string is in provider/model format", () => {
     const csSwarm = configMod.loadSwarmConfig();
     const agents = Array.isArray(csSwarm.agents) ? csSwarm.agents : [];
-    const agentCfg = agents.find(a => a.id === "crew-lead");
-    const modelString = agentCfg?.model || process.env.CREW_LEAD_MODEL || "groq/llama-3.3-70b-versatile";
+    const agentCfg = agents.find(a => a.id === "iris-lead");
+    const modelString = agentCfg?.model || process.env.IRIS_LEAD_MODEL || "groq/llama-3.3-70b-versatile";
     assert.ok(modelString.includes("/"),
       `Default model string must be in provider/model format, got: ${modelString}`);
   });
@@ -205,23 +205,23 @@ describe("validateRequiredAgents() — first-run guidance", () => {
   });
 });
 
-// ── 5. start-crew.mjs — first-run error message references install.sh ────────
+// ── 5. start-iris.mjs — first-run error message references install.sh ────────
 
-describe("scripts/start-crew.mjs — first-run guidance text", () => {
-  const startCrewPath = path.join(ROOT, "scripts", "start-crew.mjs");
+describe("scripts/start-iris.mjs — first-run guidance text", () => {
+  const startCrewPath = path.join(ROOT, "scripts", "start-iris.mjs");
 
-  test("start-crew.mjs exists", () => {
+  test("start-iris.mjs exists", () => {
     assert.ok(
       fs.existsSync(startCrewPath),
-      `scripts/start-crew.mjs not found at ${startCrewPath}`
+      `scripts/start-iris.mjs not found at ${startCrewPath}`
     );
   });
 
-  test("start-crew.mjs error message references install.sh", () => {
+  test("start-iris.mjs error message references install.sh", () => {
     const src = fs.readFileSync(startCrewPath, "utf8");
     assert.ok(
       src.includes("install.sh"),
-      "start-crew.mjs must mention 'install.sh' in its missing-agents error " +
+      "start-iris.mjs must mention 'install.sh' in its missing-agents error " +
       "so new users know what to run. Found no reference to install.sh."
     );
   });
@@ -267,7 +267,7 @@ describe("scripts/dashboard.mjs — import-level zero-config safety", () => {
     assert.ok(
       hasTryCatch,
       "dashboard.mjs startup readFileSync(CFG_FILE) must be wrapped in try/catch " +
-      "so it does not crash when crewswarm.json is absent on first run"
+      "so it does not crash when iris.json is absent on first run"
     );
   });
 });
@@ -292,19 +292,19 @@ describe("scripts/start.mjs — first-run entry point", () => {
     );
   });
 
-  test("scripts/start.mjs checks for ~/.crewswarm directory", () => {
+  test("scripts/start.mjs checks for ~/.iris directory", () => {
     const src = fs.readFileSync(startPath, "utf8");
     assert.ok(
-      src.includes("CREWSWARM_DIR") || src.includes(".crewswarm"),
-      "scripts/start.mjs must check for the ~/.crewswarm config directory"
+      src.includes("IRIS_DIR") || src.includes(".iris"),
+      "scripts/start.mjs must check for the ~/.iris config directory"
     );
   });
 
-  test("scripts/start.mjs checks for crewswarm.json", () => {
+  test("scripts/start.mjs checks for iris.json", () => {
     const src = fs.readFileSync(startPath, "utf8");
     assert.ok(
-      src.includes("crewswarm.json"),
-      "scripts/start.mjs must check for crewswarm.json before starting"
+      src.includes("iris.json"),
+      "scripts/start.mjs must check for iris.json before starting"
     );
   });
 });

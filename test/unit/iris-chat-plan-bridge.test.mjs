@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 
 const TEST_DIR = path.join(os.tmpdir(), `iris-chat-plan-bridge-test-${process.pid}`);
-process.env.CREWSWARM_STATE_DIR = TEST_DIR;
+process.env.IRIS_STATE_DIR = TEST_DIR;
 
 import { resetPaths } from "../../lib/runtime/paths.mjs";
 import { clearIrisPlans, listIrisPlans } from "../../lib/iris/plans.mjs";

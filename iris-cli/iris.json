@@ -1,0 +1,220 @@
+{
+  "agents": [
+    {
+      "id": "iris-coder",
+      "name": "iris-coder",
+      "model": "groq/llama-3.3-70b-versatile",
+      "tools": {
+        "irisAllow": ["write_file", "read_file", "run_cmd", "dispatch"],
+        "timeout": 600000
+      },
+      "opencodeLoop": true,
+      "opencodeLoopMaxRounds": 10
+    },
+    {
+      "id": "iris-qa",
+      "name": "iris-qa",
+      "model": "groq/llama-3.3-70b-versatile",
+      "tools": {
+        "irisAllow": ["read_file", "run_cmd"],
+        "timeout": 600000
+      }
+    },
+    {
+      "id": "iris-fixer",
+      "name": "iris-fixer",
+      "model": "groq/moonshotai/kimi-k2-instruct-0905",
+      "tools": {
+        "irisAllow": ["write_file", "read_file", "run_cmd", "dispatch"],
+        "timeout": 600000
+      }
+    },
+    {
+      "id": "iris-main",
+      "name": "iris-main",
+      "model": "groq/llama-3.3-70b-versatile",
+      "tools": {
+        "irisAllow": ["write_file", "read_file", "run_cmd", "dispatch"],
+        "timeout": 600000
+      }
+    },
+    {
+      "id": "iris-pm",
+      "name": "iris-pm",
+      "model": "groq/llama-3.3-70b-versatile",
+      "tools": {
+        "irisAllow": ["read_file", "dispatch"],
+        "timeout": 600000
+      }
+    },
+    {
+      "id": "iris-pm-cli",
+      "name": "iris-pm-cli",
+      "model": "groq/llama-3.3-70b-versatile",
+      "tools": {
+        "irisAllow": ["read_file", "dispatch"],
+        "timeout": 600000
+      }
+    },
+    {
+      "id": "iris-pm-frontend",
+      "name": "iris-pm-frontend",
+      "model": "groq/llama-3.3-70b-versatile",
+      "tools": {
+        "irisAllow": ["read_file", "dispatch"],
+        "timeout": 600000
+      }
+    },
+    {
+      "id": "iris-pm-core",
+      "name": "iris-pm-core",
+      "model": "groq/llama-3.3-70b-versatile",
+      "tools": {
+        "irisAllow": ["read_file", "dispatch"],
+        "timeout": 600000
+      }
+    },
+    {
+      "id": "iris-github",
+      "name": "iris-github",
+      "model": "groq/llama-3.3-70b-versatile",
+      "tools": {
+        "irisAllow": ["read_file", "run_cmd", "git"],
+        "timeout": 600000
+      }
+    },
+    {
+      "id": "iris-security",
+      "name": "iris-security",
+      "model": "groq/llama-3.3-70b-versatile",
+      "tools": {
+        "irisAllow": ["read_file", "run_cmd"],
+        "timeout": 600000
+      }
+    },
+    {
+      "id": "iris-coder-front",
+      "name": "iris-coder-front",
+      "model": "groq/llama-3.3-70b-versatile",
+      "tools": {
+        "irisAllow": ["write_file", "read_file", "run_cmd"],
+        "timeout": 600000
+      },
+      "opencodeLoop": true,
+      "opencodeLoopMaxRounds": 10
+    },
+    {
+      "id": "iris-coder-back",
+      "name": "iris-coder-back",
+      "model": "groq/llama-3.3-70b-versatile",
+      "tools": {
+        "irisAllow": ["write_file", "read_file", "run_cmd"],
+        "timeout": 600000
+      },
+      "opencodeLoop": true,
+      "opencodeLoopMaxRounds": 10
+    },
+    {
+      "id": "iris-copywriter",
+      "name": "iris-copywriter",
+      "model": "groq/llama-3.3-70b-versatile",
+      "tools": {
+        "irisAllow": ["write_file", "read_file"],
+        "timeout": 600000
+      }
+    },
+    {
+      "id": "iris-telegram",
+      "name": "iris-telegram",
+      "model": "groq/llama-3.3-70b-versatile",
+      "tools": {
+        "irisAllow": ["read_file", "telegram"],
+        "timeout": 600000
+      }
+    },
+    {
+      "id": "iris-frontend",
+      "name": "iris-frontend",
+      "model": "groq/llama-3.3-70b-versatile",
+      "tools": {
+        "irisAllow": ["write_file", "read_file", "run_cmd"],
+        "timeout": 600000
+      }
+    },
+    {
+      "id": "iris-lead",
+      "name": "iris-lead",
+      "model": "groq/llama-3.3-70b-versatile",
+      "tools": {
+        "irisAllow": ["write_file", "read_file", "run_cmd", "dispatch"],
+        "timeout": 600000
+      }
+    },
+    {
+      "id": "iris-orchestrator",
+      "name": "iris-orchestrator",
+      "model": "groq/llama-3.3-70b-versatile",
+      "tools": {
+        "irisAllow": ["read_file", "dispatch"],
+        "timeout": 600000
+      }
+    },
+    {
+      "id": "iris-seo",
+      "name": "iris-seo",
+      "model": "groq/llama-3.3-70b-versatile",
+      "tools": {
+        "irisAllow": ["write_file", "read_file"],
+        "timeout": 600000
+      }
+    },
+    {
+      "id": "iris-researcher",
+      "name": "iris-researcher",
+      "model": "groq/llama-3.3-70b-versatile",
+      "tools": {
+        "irisAllow": ["read_file", "run_cmd", "web_search"],
+        "timeout": 600000
+      }
+    },
+    {
+      "id": "iris-architect",
+      "name": "iris-architect",
+      "model": "groq/llama-3.3-70b-versatile",
+      "tools": {
+        "irisAllow": ["write_file", "read_file"],
+        "timeout": 600000
+      }
+    },
+    {
+      "id": "iris-whatsapp",
+      "name": "iris-whatsapp",
+      "model": "groq/llama-3.3-70b-versatile",
+      "tools": {
+        "irisAllow": ["write_file", "read_file", "run_cmd"],
+        "timeout": 600000
+      }
+    },
+    {
+      "id": "iris-ml",
+      "name": "iris-ml",
+      "model": "groq/llama-3.3-70b-versatile",
+      "tools": {
+        "irisAllow": ["write_file", "read_file", "run_cmd"],
+        "timeout": 600000
+      },
+      "opencodeLoop": true,
+      "opencodeLoopMaxRounds": 10
+    },
+    {
+      "id": "iris-judge",
+      "name": "iris-judge",
+      "model": "groq/llama-3.3-70b-versatile",
+      "tools": {
+        "irisAllow": ["read_file"],
+        "timeout": 600000
+      }
+    }
+  ],
+  "loopBrain": "groq/llama-3.3-70b-versatile"
+}

@@ -76,7 +76,7 @@ function resolveDisplayName(contactNames, jid, sock = null) {
 }
 
 // Agent routing
-const TARGET_DEFAULT = "crew-lead";
+const TARGET_DEFAULT = "iris-lead";
 
 function getTargetAgent(userRouting, jid, sock = null) {
   if (userRouting[jid]) return userRouting[jid];
@@ -120,7 +120,7 @@ function addPersistTurn(persistedTurns, role, text, name) {
 // Context file content generator
 function buildContextFileContent(persistedTurns) {
   const lines = persistedTurns.slice(-MAX_CONTEXT_TURNS).map(t =>
-    `**${t.role === "user" ? (t.name || "User") : "crewswarm"}** (${t.ts.slice(0,16)}): ${t.text}`
+    `**${t.role === "user" ? (t.name || "User") : "iris"}** (${t.ts.slice(0,16)}): ${t.text}`
   ).join("\n\n");
   return [
     "# WhatsApp Conversation Context",
@@ -224,7 +224,7 @@ describe("whatsapp-bridge — splitMessage", () => {
 
 describe("whatsapp-bridge — dedupeKey", () => {
   it("strips ✅ *agent* finished: prefix", () => {
-    const text = "✅ *crew-pm* finished:\nActual content here";
+    const text = "✅ *iris-pm* finished:\nActual content here";
     assert.equal(dedupeKey(text), "Actual content here");
   });
 
@@ -369,28 +369,28 @@ describe("whatsapp-bridge — getTargetAgent", () => {
   });
 
   it("matches full JID in user routing", () => {
-    const routing = { "15551234567@s.whatsapp.net": "crew-loco" };
-    assert.equal(getTargetAgent(routing, "15551234567@s.whatsapp.net"), "crew-loco");
+    const routing = { "15551234567@s.whatsapp.net": "iris-loco" };
+    assert.equal(getTargetAgent(routing, "15551234567@s.whatsapp.net"), "iris-loco");
   });
 
   it("matches +digits key", () => {
-    const routing = { "+15551234567": "crew-pm" };
-    assert.equal(getTargetAgent(routing, "15551234567@s.whatsapp.net"), "crew-pm");
+    const routing = { "+15551234567": "iris-pm" };
+    assert.equal(getTargetAgent(routing, "15551234567@s.whatsapp.net"), "iris-pm");
   });
 
   it("matches bare digits key", () => {
-    const routing = { "15551234567": "crew-coder" };
-    assert.equal(getTargetAgent(routing, "15551234567@s.whatsapp.net"), "crew-coder");
+    const routing = { "15551234567": "iris-coder" };
+    assert.equal(getTargetAgent(routing, "15551234567@s.whatsapp.net"), "iris-coder");
   });
 
   it("resolves @lid via sock.user.id", () => {
-    const routing = { "+15551234567": "crew-loco" };
+    const routing = { "+15551234567": "iris-loco" };
     const sock = { user: { id: "15551234567:3@s.whatsapp.net" } };
-    assert.equal(getTargetAgent(routing, "abc@lid", sock), "crew-loco");
+    assert.equal(getTargetAgent(routing, "abc@lid", sock), "iris-loco");
   });
 
   it("returns TARGET_DEFAULT for unknown JID", () => {
-    const routing = { "99999@s.whatsapp.net": "crew-loco" };
+    const routing = { "99999@s.whatsapp.net": "iris-loco" };
     assert.equal(getTargetAgent(routing, "55555@s.whatsapp.net"), TARGET_DEFAULT);
   });
 });
@@ -487,10 +487,10 @@ describe("whatsapp-bridge — buildContextFileContent", () => {
     assert.ok(content.includes("hello"));
   });
 
-  it("assistant turns show 'crewswarm' label", () => {
+  it("assistant turns show 'iris' label", () => {
     const turns = [{ role: "assistant", text: "sure", name: "Bot", ts: "2026-04-01T10:00:00.000Z" }];
     const content = buildContextFileContent(turns);
-    assert.ok(content.includes("crewswarm"));
+    assert.ok(content.includes("iris"));
   });
 
   it("only includes last MAX_CONTEXT_TURNS turns", () => {

@@ -1,4 +1,4 @@
-# crewswarm Vibe — Quick Reference Card
+# iris Vibe — Quick Reference Card
 
 ## Start Vibe
 
@@ -15,7 +15,7 @@ npm start
 
 ```
 ┌─────────────────────────────────────────────┐
-│ 🐝 crewswarm Vibe            Project Name   │
+│ 🐝 iris Vibe            Project Name   │
 ├───────┬─────────────────┬───────────────────┤
 │ Files │  Editor (Monaco)│  Chat + Agents    │
 ├───────┴─────────────────┴───────────────────┤
@@ -75,8 +75,8 @@ Always local:
 - **Vibe** (:3333) — projects, file IO, local `cli:codex`
 
 Optional shared services:
-- **Dashboard** (:4319) — auth, agents, crew-lead passthrough
-- **crew-lead** (:5010) — shared chat backend
+- **Dashboard** (:4319) — auth, agents, iris-lead passthrough
+- **iris-lead** (:5010) — shared chat backend
 - **RT Bus** (:18889) — agent activity
 
 ---
@@ -145,7 +145,7 @@ npm run dev
 |---|---|
 | Vibe | 3333 |
 | Dashboard | 4319 |
-| crew-lead | 5010 |
+| iris-lead | 5010 |
 | RT Bus | 18889 |
 
 ---
@@ -168,9 +168,9 @@ npm run dev
 - ✅ Smoke test coverage
 
 **Still shared / optional:**
-- 🔄 crew-lead chat
+- 🔄 iris-lead chat
 - 🔄 broader agent routing
-- 🔄 RT activity from the full crewswarm stack
+- 🔄 RT activity from the full iris stack
 
 ---
 

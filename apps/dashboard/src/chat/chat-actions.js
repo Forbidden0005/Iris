@@ -29,7 +29,7 @@ export function initChatActions(deps) {
     setLastSentContent,
   } = deps;
 
-  const PASSTHROUGH_LOG_KEY = "crewswarm_passthrough_log";
+  const PASSTHROUGH_LOG_KEY = "iris_passthrough_log";
   const PASSTHROUGH_LOG_MAX = 200;
 
   function resolveVisibleChatProjectId() {
@@ -47,7 +47,7 @@ export function initChatActions(deps) {
           : getChatActiveProjectId() || state.chatActiveProjectId || "general";
     state.chatActiveProjectId = resolved;
     try {
-      localStorage.setItem("crewswarm_chat_active_project_id", resolved);
+      localStorage.setItem("iris_chat_active_project_id", resolved);
     } catch { }
     return resolved;
   }
@@ -75,18 +75,18 @@ export function initChatActions(deps) {
     {
       id: "DISPATCH",
       label: "Dispatch task to an agent",
-      template: '{"agent":"crew-coder","task":"Your task here"}',
+      template: '{"agent":"iris-coder","task":"Your task here"}',
     },
     {
       id: "PIPELINE",
       label: "Multi-step pipeline (waves of agents)",
       template:
-        '[{"wave":1,"agent":"crew-coder","task":"..."},{"wave":2,"agent":"crew-qa","task":"..."}]',
+        '[{"wave":1,"agent":"iris-coder","task":"..."},{"wave":2,"agent":"iris-qa","task":"..."}]',
     },
     {
       id: "PROMPT",
       label: "Append or set agent system prompt",
-      template: '{"agent":"crew-lead","append":"Your new rule here"}',
+      template: '{"agent":"iris-lead","append":"Your new rule here"}',
     },
     {
       id: "SKILL",
@@ -96,7 +96,7 @@ export function initChatActions(deps) {
     {
       id: "SERVICE",
       label: "Restart/stop a service or agent",
-      template: "restart crew-coder",
+      template: "restart iris-coder",
     },
     {
       id: "READ_FILE",
@@ -106,7 +106,7 @@ export function initChatActions(deps) {
     {
       id: "RUN_CMD",
       label: "Run a shell command",
-      template: "ls -la /home/user/CrewSwarm",
+      template: "ls -la /home/user/Iris",
     },
     {
       id: "WEB_SEARCH",
@@ -127,22 +127,22 @@ export function initChatActions(deps) {
     {
       id: "BRAIN",
       label: "Append a fact to brain.md",
-      template: "crew-lead: fact to remember",
+      template: "iris-lead: fact to remember",
     },
     {
       id: "TOOLS",
       label: "Grant/revoke tools for an agent",
-      template: '{"agent":"crew-qa","allow":["read_file","write_file"]}',
+      template: '{"agent":"iris-qa","allow":["read_file","write_file"]}',
     },
     {
       id: "CREATE_AGENT",
       label: "Create a dynamic agent",
-      template: '{"id":"crew-ml","role":"coder","description":"ML specialist"}',
+      template: '{"id":"iris-ml","role":"coder","description":"ML specialist"}',
     },
     {
       id: "REMOVE_AGENT",
       label: "Remove a dynamic agent",
-      template: "crew-ml",
+      template: "iris-ml",
     },
     {
       id: "DEFINE_SKILL",
@@ -152,7 +152,7 @@ export function initChatActions(deps) {
     {
       id: "DEFINE_WORKFLOW",
       label: "Save a workflow for cron",
-      template: 'name\\n[{"agent":"crew-copywriter","task":"..."}]',
+      template: 'name\\n[{"agent":"iris-copywriter","task":"..."}]',
     },
   ];
 
@@ -190,7 +190,7 @@ export function initChatActions(deps) {
     }
     const data = await getJSON("/api/agents-config");
     mentionAgents = (data.agents || [])
-      .filter((agent) => agent.id && agent.id !== "crew-lead")
+      .filter((agent) => agent.id && agent.id !== "iris-lead")
       .sort((a, b) => a.id.localeCompare(b.id));
     lastMentionAgentLoadAt = now;
     return mentionAgents;
@@ -201,7 +201,7 @@ export function initChatActions(deps) {
     if (!match) return null;
 
     const agentId = match[1];
-    if (!agentId || agentId === "crew-lead") return null;
+    if (!agentId || agentId === "iris-lead") return null;
 
     const agents = await loadMentionAgents();
     const exists = agents.some((agent) => agent.id === agentId);
@@ -240,7 +240,7 @@ export function initChatActions(deps) {
 
         try {
           // Cap payload; chunk-render below so the main thread stays responsive.
-          const url = `/api/crew-lead/project-messages?projectId=${encodeURIComponent(normalizedProjectId)}&limit=250`;
+          const url = `/api/iris-lead/project-messages?projectId=${encodeURIComponent(normalizedProjectId)}&limit=250`;
           console.log("📚 [LOAD HISTORY] Fetching:", url);
 
           const d = await getJSON(url);
@@ -273,8 +273,8 @@ export function initChatActions(deps) {
             const sourceEmoji = {
               dashboard: "💻",
               cli: "⚡",
-              agent: "🤖", // Direct agent chat (crew-main, crew-security)
-              "sub-agent": "👷", // Dispatched task completions (crew-coder, crew-qa)
+              agent: "🤖", // Direct agent chat (iris-main, iris-security)
+              "sub-agent": "👷", // Dispatched task completions (iris-coder, iris-qa)
             };
             let agentsById = new Map();
             try {
@@ -388,7 +388,7 @@ export function initChatActions(deps) {
             const errorDiv = document.createElement("div");
             errorDiv.style.cssText =
               "padding:12px;margin:8px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;color:#ef4444;font-size:13px;";
-            errorDiv.innerHTML = `⚠️ <strong>Iris unavailable</strong> — Cannot load project message history.<br><small>Check that the Iris lead runtime is running: <code>node crew-lead.mjs</code></small>`;
+            errorDiv.innerHTML = `⚠️ <strong>Iris unavailable</strong> — Cannot load project message history.<br><small>Check that the Iris lead runtime is running: <code>node iris-lead.mjs</code></small>`;
             box.appendChild(errorDiv);
           }
 
@@ -400,7 +400,7 @@ export function initChatActions(deps) {
       }
 
       // STANDARD VIEW: Load Iris lead history only (fallback or general chat)
-      let url = "/api/crew-lead/history?sessionId=owner";
+      let url = "/api/iris-lead/history?sessionId=owner";
       if (normalizedProjectId && normalizedProjectId !== "general") {
         url += "&projectId=" + encodeURIComponent(normalizedProjectId);
       }
@@ -444,7 +444,7 @@ export function initChatActions(deps) {
       setLastAppendedAssistantContent("");
       setLastAppendedUserContent("");
 
-      // Load crew-lead history if available
+      // Load iris-lead history if available
       if (d.history && d.history.length) {
         // Only show recent messages to avoid overwhelming UI (last 50)
         const recentHistory = d.history.slice(-50);
@@ -469,8 +469,8 @@ export function initChatActions(deps) {
         console.log("📚 [LOAD HISTORY] No history found");
       }
 
-      // Load passthrough logs (CLI interactions) ONLY if no crew-lead history exists
-      // This prevents mixing old CLI logs with current crew-lead conversations
+      // Load passthrough logs (CLI interactions) ONLY if no iris-lead history exists
+      // This prevents mixing old CLI logs with current iris-lead conversations
       if (!d.history || d.history.length === 0) {
         const passthroughLog = JSON.parse(
           localStorage.getItem(PASSTHROUGH_LOG_KEY) || "[]",
@@ -524,7 +524,7 @@ export function initChatActions(deps) {
       gemini: "Gemini CLI",
       "gemini-cli": "Gemini CLI",
       "docker-sandbox": "Docker Sandbox",
-      "crew-cli": "Crew CLI",
+      "iris-cli": "Iris CLI",
     };
     for (const entry of log) {
       if (entry.role === "user") {
@@ -614,7 +614,7 @@ export function initChatActions(deps) {
             hint.style.display = "block";
             hint.textContent = prefix
               ? `Matching agents for @${prefix}`
-              : "Type an agent name, e.g. @crew-coder";
+              : "Type an agent name, e.g. @iris-coder";
           })
           .catch(() => {
             menu.style.display = "none";
@@ -745,20 +745,20 @@ export function initChatActions(deps) {
 
     // NEW: Check unified mode selector
     const modeSelector = document.getElementById("chatModeSelector");
-    const selectedMode = modeSelector?.value || "crew-lead";
+    const selectedMode = modeSelector?.value || "iris-lead";
 
     if (selectedMode.startsWith("cli:")) {
       // Direct CLI mode (cli:opencode, cli:cursor, etc.)
       const cliName = selectedMode.replace("cli:", "");
       await sendPassthrough(text, cliName);
       return;
-    } else if (selectedMode !== "crew-lead") {
-      // Direct agent mode (crew-coder, crew-qa, etc.)
+    } else if (selectedMode !== "iris-lead") {
+      // Direct agent mode (iris-coder, iris-qa, etc.)
       await sendDirectAgent(text, selectedMode);
       return;
     }
 
-    // Legacy fallback: Priority: passthroughEngine > chatAgentSelector > crew-lead
+    // Legacy fallback: Priority: passthroughEngine > chatAgentSelector > iris-lead
     if (engine) {
       await sendPassthrough(text, engine);
       return;
@@ -804,7 +804,7 @@ export function initChatActions(deps) {
     // DON'T register chat messages as tasks - they're just conversations
     // Only agent dispatches should show in tasks panel
     // taskManager.registerTask(taskId, {
-    //   agent: 'crew-lead',
+    //   agent: 'iris-lead',
     //   type: 'chat',
     //   description: text.slice(0, 60) + (text.length > 60 ? '...' : ''),
     //   controller,
@@ -816,7 +816,7 @@ export function initChatActions(deps) {
       const d = await postJSON(
         "/api/chat/unified",
         {
-          mode: "crew-lead",
+          mode: "iris-lead",
           message: text,
           sessionId: getChatSessionId(),
           projectId: activeProject || "general",
@@ -898,7 +898,7 @@ export function initChatActions(deps) {
     box.innerHTML = "";
     box.dataset.historyLoaded = "false"; // Reset the flag so history reloads
     localStorage.removeItem(PASSTHROUGH_LOG_KEY);
-    await postJSON("/api/crew-lead/clear", {
+    await postJSON("/api/iris-lead/clear", {
       sessionId: getChatSessionId(),
     }).catch(() => {});
     // Reload fresh history after clearing
@@ -939,7 +939,7 @@ export function initChatActions(deps) {
   let _passthroughAbort = null;
 
   // Update the session indicator badge — shows green dot when a session exists for current engine+project
-  // Backend keys: engine:projectDir:sessionScope (e.g. gemini:/path/to/crew-cli:owner)
+  // Backend keys: engine:projectDir:sessionScope (e.g. gemini:/path/to/iris-cli:owner)
   async function refreshSessionIndicator() {
     const indicator = document.getElementById("passthroughSessionIndicator");
     if (!indicator) return;
@@ -1018,7 +1018,7 @@ export function initChatActions(deps) {
       gemini: "Gemini CLI",
       "gemini-cli": "Gemini CLI",
       "docker-sandbox": "Docker Sandbox",
-      "crew-cli": "Crew CLI",
+      "iris-cli": "Iris CLI",
     };
 
     // Legacy single-task abort (kept for backward compatibility)
@@ -1245,7 +1245,7 @@ export function initChatActions(deps) {
   async function stopAll() {
     if (!confirm("Stop all running pipelines?")) return;
     try {
-      await postJSON("/api/crew-lead/chat", {
+      await postJSON("/api/iris-lead/chat", {
         message: "@@STOP",
         sessionId: getChatSessionId(),
       });
@@ -1258,7 +1258,7 @@ export function initChatActions(deps) {
   async function killAll() {
     if (!confirm("Kill all agents? Bridges must be restarted after.")) return;
     try {
-      await postJSON("/api/crew-lead/chat", {
+      await postJSON("/api/iris-lead/chat", {
         message: "@@KILL",
         sessionId: getChatSessionId(),
       });
@@ -1621,7 +1621,7 @@ export function initChatActions(deps) {
       : agent.useClaudeCode ? { route: "claude", model: agent.claudeCodeModel || "auto" }
       : agent.useCodex ? { route: "codex", model: agent.codexModel || "auto" }
       : agent.useGeminiCli ? { route: "gemini", model: agent.geminiCliModel || "auto" }
-      : agent.useCrewCLI ? { route: "crew-cli", model: agent.crewCliModel || "auto" }
+      : agent.useCrewCLI ? { route: "iris-cli", model: agent.crewCliModel || "auto" }
       : agent.useOpenCode === true ? { route: "opencode", model: agent.opencodeModel || agent.model || "default" }
       : null;
     return { route: "llm", model: agent.model || "no model", cliEngine };
@@ -1650,12 +1650,12 @@ export function initChatActions(deps) {
 
         // Filter out coordinators
         const excludeAgents = new Set([
-          "crew-lead",
+          "iris-lead",
           "orchestrator",
-          "crew-orchestrator",
-          "crew-pm-cli",
-          "crew-pm-frontend",
-          "crew-pm-core",
+          "iris-orchestrator",
+          "iris-pm-cli",
+          "iris-pm-frontend",
+          "iris-pm-core",
         ]);
 
         // Clear and repopulate agents optgroup
@@ -1688,11 +1688,11 @@ export function initChatActions(deps) {
       // Clear existing options (keep default)
       selector.innerHTML = '<option value="">🧠 Iris (default)</option>';
 
-      // Add agents (exclude crew-lead and coordinators)
+      // Add agents (exclude iris-lead and coordinators)
       const excludeAgents = new Set([
-        "crew-lead",
+        "iris-lead",
         "orchestrator",
-        "crew-orchestrator",
+        "iris-orchestrator",
       ]);
 
       agents
@@ -1727,7 +1727,7 @@ export function initChatActions(deps) {
     processStatusInterval = setInterval(async () => {
       // NEW: Check unified selector
       const modeSelector = document.getElementById("chatModeSelector");
-      const selectedMode = modeSelector?.value || "crew-lead";
+      const selectedMode = modeSelector?.value || "iris-lead";
 
       // Extract agent ID (handle both 'agent-id' and 'cli:name' formats)
       let selectedAgent = null;
@@ -1736,7 +1736,7 @@ export function initChatActions(deps) {
         const statusPanel = document.getElementById("chatCLIProcessStatus");
         if (statusPanel) statusPanel.style.display = "none";
         return;
-      } else if (selectedMode !== "crew-lead") {
+      } else if (selectedMode !== "iris-lead") {
         selectedAgent = selectedMode;
       }
 

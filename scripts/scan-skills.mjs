@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * scan-skills.mjs — audit all SKILL.md files in ~/.crewswarm/skills/
+ * scan-skills.mjs — audit all SKILL.md files in ~/.iris/skills/
  * Usage: node scripts/scan-skills.mjs
  */
 import { execSync } from "child_process";
@@ -8,7 +8,7 @@ import fs from "fs";
 import path from "path";
 import os from "os";
 
-const SKILLS_DIR = path.join(os.homedir(), ".crewswarm", "skills");
+const SKILLS_DIR = path.join(os.homedir(), ".iris", "skills");
 
 if (!fs.existsSync(SKILLS_DIR)) {
   console.log("No skills directory found at", SKILLS_DIR);
@@ -24,7 +24,7 @@ const jsonSkills = entries
   .filter(e => e.isFile() && e.name.endsWith(".json"))
   .map(e => e.name.replace(".json", ""));
 
-console.log(`\n🛡️  crewswarm Skill Security Audit`);
+console.log(`\n🛡️  iris Skill Security Audit`);
 console.log(`${"─".repeat(60)}`);
 console.log(`Skills dir: ${SKILLS_DIR}`);
 console.log(`SKILL.md skills: ${skillDirs.length}  |  JSON skills: ${jsonSkills.length}`);

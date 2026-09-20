@@ -9,7 +9,7 @@
  * in-process test cannot exercise (Node never yields mid-synchronous-call).
  *
  * argv: <planId> <taskLabel>
- * Relies on CREWSWARM_STATE_DIR being set in the environment (inherited
+ * Relies on IRIS_STATE_DIR being set in the environment (inherited
  * from the parent test process) so it operates on the same plan store.
  */
 import { resetPaths } from "../../../lib/runtime/paths.mjs";

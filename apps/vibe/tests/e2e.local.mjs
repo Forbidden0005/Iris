@@ -9,7 +9,7 @@ process.env.STUDIO_DATA_DIR = path.join(process.cwd(), ".tmp-e2e-data");
 const { createOrUpdateProject, listWorkspaceFiles, readProjects } = await import("../server.mjs");
 
 const projectDir = await fs.mkdtemp(
-  path.join(os.tmpdir(), "crewswarm-vibe-e2e-"),
+  path.join(os.tmpdir(), "iris-vibe-e2e-"),
 );
 
 try {

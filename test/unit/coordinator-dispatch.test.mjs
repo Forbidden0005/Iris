@@ -7,7 +7,7 @@
  *  - Legacy pipe format: @@DISPATCH:agent-id|task
  *  - Non-coordinator agents are blocked from dispatching (@@DISPATCH ignored)
  *  - Self-dispatch blocked even for coordinators
- *  - dispatchTask queue cap (CREWSWARM_DISPATCH_QUEUE_LIMIT)
+ *  - dispatchTask queue cap (IRIS_DISPATCH_QUEUE_LIMIT)
  *  - correlationId generated and stored per dispatch
  */
 
@@ -23,7 +23,7 @@ import {
   initWaveDispatcher,
   dispatchTask,
   pendingDispatches,
-} from "../../lib/crew-lead/wave-dispatcher.mjs";
+} from "../../lib/iris-lead/wave-dispatcher.mjs";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -87,32 +87,32 @@ describe("coordinator-dispatch: agent-registry", () => {
     assert.ok(COORDINATOR_AGENT_IDS.length > 0);
   });
 
-  it("crew-main is a coordinator", () => {
-    assert.ok(COORDINATOR_AGENT_IDS.includes("crew-main"));
+  it("iris-main is a coordinator", () => {
+    assert.ok(COORDINATOR_AGENT_IDS.includes("iris-main"));
   });
 
-  it("crew-pm is a coordinator", () => {
-    assert.ok(COORDINATOR_AGENT_IDS.includes("crew-pm"));
+  it("iris-pm is a coordinator", () => {
+    assert.ok(COORDINATOR_AGENT_IDS.includes("iris-pm"));
   });
 
-  it("crew-orchestrator is a coordinator", () => {
-    assert.ok(COORDINATOR_AGENT_IDS.includes("crew-orchestrator"));
+  it("iris-orchestrator is a coordinator", () => {
+    assert.ok(COORDINATOR_AGENT_IDS.includes("iris-orchestrator"));
   });
 
-  it("crew-coder is NOT a coordinator", () => {
-    assert.ok(!COORDINATOR_AGENT_IDS.includes("crew-coder"));
+  it("iris-coder is NOT a coordinator", () => {
+    assert.ok(!COORDINATOR_AGENT_IDS.includes("iris-coder"));
   });
 
-  it("crew-qa is NOT a coordinator", () => {
-    assert.ok(!COORDINATOR_AGENT_IDS.includes("crew-qa"));
+  it("iris-qa is NOT a coordinator", () => {
+    assert.ok(!COORDINATOR_AGENT_IDS.includes("iris-qa"));
   });
 
-  it("crew-fixer is NOT a coordinator", () => {
-    assert.ok(!COORDINATOR_AGENT_IDS.includes("crew-fixer"));
+  it("iris-fixer is NOT a coordinator", () => {
+    assert.ok(!COORDINATOR_AGENT_IDS.includes("iris-fixer"));
   });
 
-  it("crew-github is NOT a coordinator", () => {
-    assert.ok(!COORDINATOR_AGENT_IDS.includes("crew-github"));
+  it("iris-github is NOT a coordinator", () => {
+    assert.ok(!COORDINATOR_AGENT_IDS.includes("iris-github"));
   });
 
   it("all coordinators appear in BUILT_IN_RT_AGENTS", () => {
@@ -126,123 +126,123 @@ describe("coordinator-dispatch: agent-registry", () => {
 });
 
 describe("coordinator-dispatch: @@DISPATCH parsing — coordinators CAN dispatch", () => {
-  it("crew-main parses canonical JSON format", () => {
-    const reply = 'I will dispatch this.\n@@DISPATCH {"agent":"crew-coder","task":"write hello.js"}';
-    const results = parseDispatchCommands("crew-main", reply);
+  it("iris-main parses canonical JSON format", () => {
+    const reply = 'I will dispatch this.\n@@DISPATCH {"agent":"iris-coder","task":"write hello.js"}';
+    const results = parseDispatchCommands("iris-main", reply);
     assert.equal(results.length, 1);
-    assert.equal(results[0].targetAgent, "crew-coder");
+    assert.equal(results[0].targetAgent, "iris-coder");
     assert.equal(results[0].taskText, "write hello.js");
   });
 
-  it("crew-pm parses canonical JSON format", () => {
-    const reply = '@@DISPATCH {"agent":"crew-frontend","task":"build landing page"}';
-    const results = parseDispatchCommands("crew-pm", reply);
+  it("iris-pm parses canonical JSON format", () => {
+    const reply = '@@DISPATCH {"agent":"iris-frontend","task":"build landing page"}';
+    const results = parseDispatchCommands("iris-pm", reply);
     assert.equal(results.length, 1);
-    assert.equal(results[0].targetAgent, "crew-frontend");
+    assert.equal(results[0].targetAgent, "iris-frontend");
   });
 
-  it("crew-orchestrator parses canonical JSON format", () => {
-    const reply = '@@DISPATCH {"agent":"crew-coder-back","task":"create API route"}';
-    const results = parseDispatchCommands("crew-orchestrator", reply);
+  it("iris-orchestrator parses canonical JSON format", () => {
+    const reply = '@@DISPATCH {"agent":"iris-coder-back","task":"create API route"}';
+    const results = parseDispatchCommands("iris-orchestrator", reply);
     assert.equal(results.length, 1);
-    assert.equal(results[0].targetAgent, "crew-coder-back");
+    assert.equal(results[0].targetAgent, "iris-coder-back");
   });
 
   it("parses legacy pipe format: @@DISPATCH:agent|task", () => {
-    const reply = "@@DISPATCH:crew-coder|write a REST endpoint for /users";
-    const results = parseDispatchCommands("crew-main", reply);
+    const reply = "@@DISPATCH:iris-coder|write a REST endpoint for /users";
+    const results = parseDispatchCommands("iris-main", reply);
     assert.equal(results.length, 1);
-    assert.equal(results[0].targetAgent, "crew-coder");
+    assert.equal(results[0].targetAgent, "iris-coder");
     assert.equal(results[0].taskText, "write a REST endpoint for /users");
   });
 
   it("parses multiple dispatches in one reply", () => {
     const reply = [
-      '@@DISPATCH {"agent":"crew-coder","task":"write backend"}',
-      '@@DISPATCH {"agent":"crew-frontend","task":"write UI"}',
+      '@@DISPATCH {"agent":"iris-coder","task":"write backend"}',
+      '@@DISPATCH {"agent":"iris-frontend","task":"write UI"}',
     ].join("\n");
-    const results = parseDispatchCommands("crew-main", reply);
+    const results = parseDispatchCommands("iris-main", reply);
     assert.equal(results.length, 2);
     const agents = results.map((r) => r.targetAgent);
-    assert.ok(agents.includes("crew-coder"));
-    assert.ok(agents.includes("crew-frontend"));
+    assert.ok(agents.includes("iris-coder"));
+    assert.ok(agents.includes("iris-frontend"));
   });
 
   it("ignores malformed JSON gracefully", () => {
-    const reply = '@@DISPATCH {agent:"crew-coder",task:broken}';
-    const results = parseDispatchCommands("crew-main", reply);
+    const reply = '@@DISPATCH {agent:"iris-coder",task:broken}';
+    const results = parseDispatchCommands("iris-main", reply);
     assert.equal(results.length, 0);
   });
 
   it("ignores @@DISPATCH with missing agent field", () => {
     const reply = '@@DISPATCH {"task":"do something"}';
-    const results = parseDispatchCommands("crew-main", reply);
+    const results = parseDispatchCommands("iris-main", reply);
     assert.equal(results.length, 0);
   });
 
   it("ignores @@DISPATCH with missing task field", () => {
-    const reply = '@@DISPATCH {"agent":"crew-coder"}';
-    const results = parseDispatchCommands("crew-main", reply);
+    const reply = '@@DISPATCH {"agent":"iris-coder"}';
+    const results = parseDispatchCommands("iris-main", reply);
     assert.equal(results.length, 0);
   });
 });
 
 describe("coordinator-dispatch: non-coordinators CANNOT dispatch", () => {
-  it("crew-coder is blocked — returns empty array", () => {
-    const reply = '@@DISPATCH {"agent":"crew-qa","task":"review everything"}';
-    const results = parseDispatchCommands("crew-coder", reply);
+  it("iris-coder is blocked — returns empty array", () => {
+    const reply = '@@DISPATCH {"agent":"iris-qa","task":"review everything"}';
+    const results = parseDispatchCommands("iris-coder", reply);
     assert.equal(results.length, 0);
   });
 
-  it("crew-qa is blocked — returns empty array", () => {
-    const reply = '@@DISPATCH {"agent":"crew-fixer","task":"fix all bugs"}';
-    const results = parseDispatchCommands("crew-qa", reply);
+  it("iris-qa is blocked — returns empty array", () => {
+    const reply = '@@DISPATCH {"agent":"iris-fixer","task":"fix all bugs"}';
+    const results = parseDispatchCommands("iris-qa", reply);
     assert.equal(results.length, 0);
   });
 
-  it("crew-fixer is blocked — returns empty array", () => {
-    const reply = '@@DISPATCH {"agent":"crew-coder","task":"rebuild it"}';
-    const results = parseDispatchCommands("crew-fixer", reply);
+  it("iris-fixer is blocked — returns empty array", () => {
+    const reply = '@@DISPATCH {"agent":"iris-coder","task":"rebuild it"}';
+    const results = parseDispatchCommands("iris-fixer", reply);
     assert.equal(results.length, 0);
   });
 
-  it("crew-github is blocked — returns empty array", () => {
-    const reply = "@@DISPATCH:crew-coder|write tests";
-    const results = parseDispatchCommands("crew-github", reply);
+  it("iris-github is blocked — returns empty array", () => {
+    const reply = "@@DISPATCH:iris-coder|write tests";
+    const results = parseDispatchCommands("iris-github", reply);
     assert.equal(results.length, 0);
   });
 
-  it("crew-copywriter is blocked — returns empty array", () => {
-    const reply = '@@DISPATCH {"agent":"crew-coder","task":"build it"}';
-    const results = parseDispatchCommands("crew-copywriter", reply);
+  it("iris-copywriter is blocked — returns empty array", () => {
+    const reply = '@@DISPATCH {"agent":"iris-coder","task":"build it"}';
+    const results = parseDispatchCommands("iris-copywriter", reply);
     assert.equal(results.length, 0);
   });
 
   it("unknown / arbitrary agent is blocked", () => {
-    const reply = '@@DISPATCH {"agent":"crew-coder","task":"do work"}';
+    const reply = '@@DISPATCH {"agent":"iris-coder","task":"do work"}';
     const results = parseDispatchCommands("some-rogue-agent", reply);
     assert.equal(results.length, 0);
   });
 });
 
 describe("coordinator-dispatch: self-dispatch blocked", () => {
-  it("crew-main cannot dispatch to itself", () => {
-    const reply = '@@DISPATCH {"agent":"crew-main","task":"do something"}';
-    const results = parseDispatchCommands("crew-main", reply);
+  it("iris-main cannot dispatch to itself", () => {
+    const reply = '@@DISPATCH {"agent":"iris-main","task":"do something"}';
+    const results = parseDispatchCommands("iris-main", reply);
     assert.equal(results.length, 0);
   });
 
-  it("crew-pm cannot dispatch to itself", () => {
-    const reply = '@@DISPATCH {"agent":"crew-pm","task":"plan again"}';
-    const results = parseDispatchCommands("crew-pm", reply);
+  it("iris-pm cannot dispatch to itself", () => {
+    const reply = '@@DISPATCH {"agent":"iris-pm","task":"plan again"}';
+    const results = parseDispatchCommands("iris-pm", reply);
     assert.equal(results.length, 0);
   });
 
-  it("allows cross-coordinator dispatch (crew-main → crew-pm)", () => {
-    const reply = '@@DISPATCH {"agent":"crew-pm","task":"build the roadmap"}';
-    const results = parseDispatchCommands("crew-main", reply);
+  it("allows cross-coordinator dispatch (iris-main → iris-pm)", () => {
+    const reply = '@@DISPATCH {"agent":"iris-pm","task":"build the roadmap"}';
+    const results = parseDispatchCommands("iris-main", reply);
     assert.equal(results.length, 1);
-    assert.equal(results[0].targetAgent, "crew-pm");
+    assert.equal(results[0].targetAgent, "iris-pm");
   });
 });
 
@@ -256,7 +256,7 @@ describe("coordinator-dispatch: dispatchTask engine enrichment", () => {
       loadConfig: () => ({
         agents: [
           {
-            id: "crew-frontend",
+            id: "iris-frontend",
             useCodex: true,
             codexModel: "gpt-5.3-codex",
             useOpenCode: false,
@@ -269,7 +269,7 @@ describe("coordinator-dispatch: dispatchTask engine enrichment", () => {
       },
     });
     initWaveDispatcher(deps);
-    dispatchTask("crew-frontend", "design brief", "owner");
+    dispatchTask("iris-frontend", "design brief", "owner");
     assert.ok(captured, "RT publish should have been called");
     assert.equal(captured.payload.useCodex, true);
     assert.equal(captured.payload.codexModel, "gpt-5.3-codex");
@@ -293,18 +293,18 @@ describe("coordinator-dispatch: dispatchTask queue cap", () => {
     initWaveDispatcher(deps);
 
     // Fill queue to limit
-    dispatchTask("crew-coder", "task one", "owner");
-    dispatchTask("crew-coder", "task two", "owner");
+    dispatchTask("iris-coder", "task one", "owner");
+    dispatchTask("iris-coder", "task two", "owner");
     assert.equal(pendingDispatches.size, LIMIT);
 
     // This one should be rejected
-    const result = dispatchTask("crew-coder", "task three — should be rejected", "owner");
+    const result = dispatchTask("iris-coder", "task three — should be rejected", "owner");
     assert.equal(result, false, "dispatch past limit should return false");
     assert.equal(pendingDispatches.size, LIMIT, "queue size unchanged after rejection");
 
     const queueFullEvent = sseCalls.find((e) => e.type === "task.queue_full");
     assert.ok(queueFullEvent, "task.queue_full SSE event should be broadcast");
-    assert.equal(queueFullEvent.agent, "crew-coder");
+    assert.equal(queueFullEvent.agent, "iris-coder");
   });
 
   it("allows dispatch again after a task is marked done", () => {
@@ -317,7 +317,7 @@ describe("coordinator-dispatch: dispatchTask queue cap", () => {
     });
     initWaveDispatcher(deps);
 
-    dispatchTask("crew-coder", "first task", "owner");
+    dispatchTask("iris-coder", "first task", "owner");
     assert.equal(pendingDispatches.size, 1);
 
     // Mark it done
@@ -325,7 +325,7 @@ describe("coordinator-dispatch: dispatchTask queue cap", () => {
     pendingDispatches.get(firstId).done = true;
 
     // Now queue has 0 active — should allow another dispatch
-    const result = dispatchTask("crew-coder", "second task", "owner");
+    const result = dispatchTask("iris-coder", "second task", "owner");
     assert.notEqual(result, false, "should dispatch after previous task marked done");
   });
 });
@@ -341,7 +341,7 @@ describe("coordinator-dispatch: correlationId", () => {
     });
     initWaveDispatcher(deps);
 
-    dispatchTask("crew-coder", "write hello", "owner");
+    dispatchTask("iris-coder", "write hello", "owner");
 
     const [entry] = pendingDispatches.values();
     assert.ok(entry.correlationId, "correlationId should be set");
@@ -355,7 +355,7 @@ describe("coordinator-dispatch: correlationId", () => {
     });
     initWaveDispatcher(deps);
 
-    dispatchTask("crew-coder", "write hello", "owner", { pipelineId: "pipe-abc123" });
+    dispatchTask("iris-coder", "write hello", "owner", { pipelineId: "pipe-abc123" });
 
     const [entry] = pendingDispatches.values();
     assert.equal(entry.correlationId, "pipe-abc123");
@@ -368,7 +368,7 @@ describe("coordinator-dispatch: correlationId", () => {
     });
     initWaveDispatcher(deps);
 
-    dispatchTask("crew-coder", "write hello", "owner", {
+    dispatchTask("iris-coder", "write hello", "owner", {
       pipelineId: "pipe-abc",
       correlationId: "corr-xyz",
     });
@@ -384,8 +384,8 @@ describe("coordinator-dispatch: correlationId", () => {
     });
     initWaveDispatcher(deps);
 
-    dispatchTask("crew-coder", "first", "owner");
-    dispatchTask("crew-qa", "second", "owner");
+    dispatchTask("iris-coder", "first", "owner");
+    dispatchTask("iris-qa", "second", "owner");
 
     const ids = [...pendingDispatches.values()].map((e) => e.correlationId);
     assert.equal(ids.length, 2);
@@ -402,7 +402,7 @@ describe("coordinator-dispatch: correlationId", () => {
     });
     initWaveDispatcher(deps);
 
-    dispatchTask("crew-coder", "write code", "owner", { correlationId: "corr-explicit" });
+    dispatchTask("iris-coder", "write code", "owner", { correlationId: "corr-explicit" });
 
     assert.equal(rtPayloads.length, 1);
     assert.equal(rtPayloads[0].payload.correlationId, "corr-explicit");

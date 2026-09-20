@@ -5,7 +5,7 @@
  * Sends a simple multi-task requirement, PM breaks it down, dispatches
  * to agents on different engines, verifies all complete.
  *
- * REQUIRES: crew-lead on :5010, agents running on mixed engines.
+ * REQUIRES: iris-lead on :5010, agents running on mixed engines.
  */
 import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
@@ -17,9 +17,9 @@ import { checkServiceUp, httpRequest } from "../helpers/http.mjs";
 import { logEngineTestContext } from "../helpers/test-context.mjs";
 import { logFileVerification, logTestEvidence } from "../helpers/test-log.mjs";
 
-const CREW_LEAD_URL = "http://127.0.0.1:5010";
-const CONFIG_PATH = join(homedir(), ".crewswarm", "config.json");
-const TEST_DIR = join(tmpdir(), `crewswarm-pm-multi-engine-${Date.now()}`);
+const IRIS_LEAD_URL = "http://127.0.0.1:5010";
+const CONFIG_PATH = join(homedir(), ".iris", "config.json");
+const TEST_DIR = join(tmpdir(), `iris-pm-multi-engine-${Date.now()}`);
 
 let authToken;
 async function getAuthToken() {
@@ -31,8 +31,8 @@ async function getAuthToken() {
   } catch { return ""; }
 }
 
-const crewLeadUp = await checkServiceUp(`${CREW_LEAD_URL}/health`);
-const SKIP = crewLeadUp ? false : "crew-lead not running on :5010";
+const crewLeadUp = await checkServiceUp(`${IRIS_LEAD_URL}/health`);
+const SKIP = crewLeadUp ? false : "iris-lead not running on :5010";
 
 describe("PM Loop multi-engine dispatch", { skip: SKIP, timeout: 300000 }, () => {
 
@@ -60,26 +60,26 @@ describe("PM Loop multi-engine dispatch", { skip: SKIP, timeout: 300000 }, () =>
       engine: "pipeline",
       timeout_ms: 300000,
       project_dir: TEST_DIR,
-      notes: "crew-coder + crew-coder-front",
+      notes: "iris-coder + iris-coder-front",
     });
     const token = await getAuthToken();
 
     // Use pipeline API with agents on different engines
-    // crew-coder (Claude Code) does HTML, crew-coder-front (Cursor) does CSS
+    // iris-coder (Claude Code) does HTML, iris-coder-front (Cursor) does CSS
     const pipeline = [
       {
         wave: 1,
-        agent: "crew-coder",
-        task: `Create ${TEST_DIR}/index.html with a basic landing page. Include <h1>CrewSwarm Test</h1> and a link to style.css. Write ONLY the file.`,
+        agent: "iris-coder",
+        task: `Create ${TEST_DIR}/index.html with a basic landing page. Include <h1>Iris Test</h1> and a link to style.css. Write ONLY the file.`,
       },
       {
         wave: 1,
-        agent: "crew-coder-front",
+        agent: "iris-coder-front",
         task: `Create ${TEST_DIR}/style.css with dark theme styles: body { background: #0a0e17; color: #c9d1d9; font-family: sans-serif; }. Write ONLY the file.`,
       },
     ];
 
-    const { status, data } = await httpRequest(`${CREW_LEAD_URL}/api/pipeline`, {
+    const { status, data } = await httpRequest(`${IRIS_LEAD_URL}/api/pipeline`, {
       method: "POST",
       headers: { "Authorization": token ? `Bearer ${token}` : "" },
       body: { pipeline, projectDir: TEST_DIR },
@@ -98,7 +98,7 @@ describe("PM Loop multi-engine dispatch", { skip: SKIP, timeout: 300000 }, () =>
     const start = Date.now();
     let finalState;
     while (Date.now() - start < 240000) {
-      const { data: s } = await httpRequest(`${CREW_LEAD_URL}/api/pipeline/${data.pipelineId}`, {
+      const { data: s } = await httpRequest(`${IRIS_LEAD_URL}/api/pipeline/${data.pipelineId}`, {
         headers: { "Authorization": token ? `Bearer ${token}` : "" },
         trace: {
           test: testName,

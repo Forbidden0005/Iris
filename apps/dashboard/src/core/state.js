@@ -1,7 +1,7 @@
 // Shared in-memory state — mutate via the exported object properties
 // Restored from sessionStorage on page load to survive refresh
 
-const STORAGE_KEY = 'crewswarm_ui_state';
+const STORAGE_KEY = 'iris_ui_state';
 
 function loadSaved() {
   try {
@@ -16,7 +16,7 @@ export const state = {
   // OpenCode session selection (Sessions tab)
   selected: saved.selected || null,
   
-  // Selected CLI engine for Sessions tab (opencode, claude, codex, gemini, crew-cli)
+  // Selected CLI engine for Sessions tab (opencode, claude, codex, gemini, iris-cli)
   selectedEngine: saved.selectedEngine || 'opencode',
 
   // Agent list (loaded from /api/agents)
@@ -75,15 +75,15 @@ export function restoreScrollPosition(tabName) {
 }
 
 export const AGENT_RANK = {
-  'crew-lead': 0,
-  'crew-orchestrator': 1, 'orchestrator': 1, 'crew-main': 2,
-  'crew-pm': 3, 'crew-architect': 4,
-  'crew-coder': 5, 'crew-coder-back': 6, 'crew-coder-front': 7, 'crew-frontend': 8,
-  'crew-ml': 9, 'crew-fixer': 10,
-  'crew-qa': 11, 'crew-security': 12,
-  'crew-researcher': 13, 'crew-copywriter': 14, 'crew-seo': 15,
-  'crew-github': 16, 'crew-db-migrator': 17,
-  'crew-telegram': 18, 'crew-mega': 19,
+  'iris-lead': 0,
+  'iris-orchestrator': 1, 'orchestrator': 1, 'iris-main': 2,
+  'iris-pm': 3, 'iris-architect': 4,
+  'iris-coder': 5, 'iris-coder-back': 6, 'iris-coder-front': 7, 'iris-frontend': 8,
+  'iris-ml': 9, 'iris-fixer': 10,
+  'iris-qa': 11, 'iris-security': 12,
+  'iris-researcher': 13, 'iris-copywriter': 14, 'iris-seo': 15,
+  'iris-github': 16, 'iris-db-migrator': 17,
+  'iris-telegram': 18, 'iris-mega': 19,
 };
 
 export function sortAgents(arr) {

@@ -1,6 +1,6 @@
 /**
- * Unit tests for skill resolution and execution logic (extracted from crew-lead.mjs).
- * Inlined algorithm — no import of crew-lead.mjs (side effects on import).
+ * Unit tests for skill resolution and execution logic (extracted from iris-lead.mjs).
+ * Inlined algorithm — no import of iris-lead.mjs (side effects on import).
  * Uses temp directories, no external network calls.
  */
 
@@ -10,7 +10,7 @@ import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 
-// ── Inlined logic from crew-lead.mjs (configurable skillsDir) ─────────────────
+// ── Inlined logic from iris-lead.mjs (configurable skillsDir) ─────────────────
 
 function resolveSkillAlias(skillName, skillsDir) {
   const exact = path.join(skillsDir, `${skillName}.json`);
@@ -72,7 +72,7 @@ describe("skills execution — inlined logic", () => {
   let tmpDir;
 
   function setupTmpDir() {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "crewswarm-skills-test-"));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "iris-skills-test-"));
     return tmpDir;
   }
 

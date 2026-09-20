@@ -9,7 +9,7 @@ CMD="${1:-help}"
 shift 2>/dev/null || true
 
 # Storage for pane labels (agent ID → pane ID mapping)
-LABEL_DIR="${CREWSWARM_TMUX_LABEL_DIR:-${HOME}/.crewswarm/state/tmux-labels}"
+LABEL_DIR="${IRIS_TMUX_LABEL_DIR:-${HOME}/.iris/state/tmux-labels}"
 mkdir -p "$LABEL_DIR" 2>/dev/null || true
 
 case "$CMD" in
@@ -21,7 +21,7 @@ case "$CMD" in
 
   name|label)
     # Label a pane with an agent ID
-    # Usage: tmux-bridge name %0 crew-coder
+    # Usage: tmux-bridge name %0 iris-coder
     PANE_ID="${1:?pane_id required}"
     AGENT_ID="${2:?agent_id required}"
     # Store label mapping
@@ -33,7 +33,7 @@ case "$CMD" in
 
   resolve)
     # Resolve agent ID to pane ID
-    # Usage: tmux-bridge resolve crew-coder
+    # Usage: tmux-bridge resolve iris-coder
     AGENT_ID="${1:?agent_id required}"
     LABEL_FILE="$LABEL_DIR/$AGENT_ID"
     if [ -f "$LABEL_FILE" ]; then
@@ -106,7 +106,7 @@ case "$CMD" in
     ;;
 
   help|--help|-h)
-    echo "tmux-bridge — CrewSwarm tmux pane communication"
+    echo "tmux-bridge — Iris tmux pane communication"
     echo ""
     echo "Commands:"
     echo "  id                      Print current pane ID"
@@ -118,7 +118,7 @@ case "$CMD" in
     echo "  list                    List all panes with labels"
     echo ""
     echo "Environment:"
-    echo "  CREWSWARM_TMUX_BRIDGE=1   Enable bridge"
+    echo "  IRIS_TMUX_BRIDGE=1   Enable bridge"
     echo "  SMUX_BRIDGE_BIN=path      Override binary path"
     ;;
 

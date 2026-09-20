@@ -1,4 +1,4 @@
-# crewswarm Architecture
+# iris Architecture
 
 System diagram, port map, and request flow.
 
@@ -7,7 +7,7 @@ System diagram, port map, and request flow.
 | Service | Port | Description |
 |---------|------|-------------|
 | Dashboard (Vite frontend + API) | 4319 | Web UI, chat, agents, settings |
-| crew-lead | 5010 | Chat, dispatch, pipelines, @@STOP/@@KILL |
+| iris-lead | 5010 | Chat, dispatch, pipelines, @@STOP/@@KILL |
 | RT message bus | 18889 | WebSocket pub/sub for agent coordination |
 | Code Engine | 4096 | OpenCode / Claude Code / Cursor / Codex |
 | MCP + OpenAI API | 5020 | Optional — Cursor, Claude Code, OpenCode MCP |
@@ -23,15 +23,15 @@ System diagram, port map, and request flow.
 │  Dashboard (4319)  │  SwiftBar  │  Telegram  │  WhatsApp  │  CLI │
 └────────────────────────────┬─────────────────────────────────────┘
                               │ HTTP (5010)
-                         crew-lead.mjs
+                         iris-lead.mjs
                    (chat · dispatch · pipelines · @@STOP/@@KILL)
                               │ WebSocket pub/sub
                  ┌────────────┴────────────┐
-                 │  RT Bus (18889)          │  ← opencrew-rt-daemon.mjs
+                 │  RT Bus (18889)          │  ← openiris-rt-daemon.mjs
                  └────────────┬────────────┘
                               │ task.assigned / command.run_task
         ┌───────┬─────────────┼───────┬──────────┐
-      crew-pm  crew-coder  crew-qa  crew-fixer  crew-github  …
+      iris-pm  iris-coder  iris-qa  iris-fixer  iris-github  …
                  │
               gateway-bridge.mjs (per-agent daemon)
                  ├── loads shared memory (brain.md, etc.)
@@ -39,24 +39,24 @@ System diagram, port map, and request flow.
                  ├── executes @@WRITE_FILE / @@READ_FILE / @@RUN_CMD
                  ├── approval gate for @@RUN_CMD
                  ├── Code Engine :4096 (OpenCode / Claude Code / Cursor / Codex)
-                 └── retry → escalate to crew-fixer → DLQ
+                 └── retry → escalate to iris-fixer → DLQ
 
   MCP + OpenAI API (5020)  ← mcp-server.mjs (optional)
      ├── Cursor MCP · Claude Code MCP · OpenCode MCP · Codex MCP
      └── Open WebUI · LM Studio (/v1/chat/completions)
 
   memory/           ← shared agent context (markdown)
-  crew-scribe.mjs   ← polls done.jsonl, writes brain.md + session-log.md
+  iris-scribe.mjs   ← polls done.jsonl, writes brain.md + session-log.md
   DLQ               ← failed task replay queue
 ```
 
 ## Request flow
 
-1. **User** → Dashboard Chat or CLI → HTTP to crew-lead (5010)
-2. **crew-lead** → parses intent, may call crew-pm for planning
-3. **crew-lead** → publishes `task.assigned` to RT bus (18889)
+1. **User** → Dashboard Chat or CLI → HTTP to iris-lead (5010)
+2. **iris-lead** → parses intent, may call iris-pm for planning
+3. **iris-lead** → publishes `task.assigned` to RT bus (18889)
 4. **gateway-bridge** (per agent) → claims task, calls LLM, executes tools
-5. **Result** → published back to RT bus → crew-lead → user
+5. **Result** → published back to RT bus → iris-lead → user
 
 ## Dispatch / result schemas
 
@@ -68,21 +68,21 @@ See [ORCHESTRATOR-GUIDE.md](ORCHESTRATOR-GUIDE.md) for pipeline DSL and wave exe
 
 ## API Reference
 
-The full OpenAPI 3.1 specification is at [`crew-cli/docs/openapi.complete.v2.json`](../crew-cli/docs/openapi.complete.v2.json) — 262 operations across 223 paths covering Dashboard (`:4319`), crew-lead (`:5010`), and Vibe (`:3333`). The original v1 spec (`openapi.unified.v1.json`) is retained for backwards compatibility.
+The full OpenAPI 3.1 specification is at [`iris-cli/docs/openapi.complete.v2.json`](../iris-cli/docs/openapi.complete.v2.json) — 262 operations across 223 paths covering Dashboard (`:4319`), iris-lead (`:5010`), and Vibe (`:3333`). The original v1 spec (`openapi.unified.v1.json`) is retained for backwards compatibility.
 
 Import into Postman, Insomnia, or any OpenAPI-compatible tool:
 ```bash
 # View in browser
-open crew-cli/docs/openapi.complete.v2.json
+open iris-cli/docs/openapi.complete.v2.json
 
 # Generate a client
-npx openapi-generator-cli generate -i crew-cli/docs/openapi.complete.v2.json -g typescript-fetch -o sdk/
+npx openapi-generator-cli generate -i iris-cli/docs/openapi.complete.v2.json -g typescript-fetch -o sdk/
 ```
 
 Key endpoint groups:
 - `/api/dispatch`, `/api/status/:taskId` — task orchestration
 - `/api/agents`, `/api/agents-config/*` — agent management
-- `/api/crew-lead/chat` — conversational chat
+- `/api/iris-lead/chat` — conversational chat
 - `/api/pm-loop/*` — autonomous PM loop control
 - `/api/skills/*` — skill management and execution
 - `/api/providers/*` — LLM provider configuration

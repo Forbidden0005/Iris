@@ -9,12 +9,12 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-CREWSWARM_DIR="${CREWSWARM_DIR:-${OPENCLAW_DIR:-$REPO_ROOT}}"
-DASHBOARD_SCRIPT="$CREWSWARM_DIR/scripts/dashboard.mjs"
-LOG_FILE="${CREWSWARM_DASH_LOG:-/tmp/dashboard.log}"
-HEALTH_URL="${CREWSWARM_DASH_HEALTH_URL:-http://127.0.0.1:4319/api/health}"
-NODE_BIN="${NODE:-$("$CREWSWARM_DIR/scripts/resolve-node-bin.sh")}"
-LAUNCH_LABEL="com.crewswarm.dashboard"
+IRIS_DIR="${IRIS_DIR:-${OPENCLAW_DIR:-$REPO_ROOT}}"
+DASHBOARD_SCRIPT="$IRIS_DIR/scripts/dashboard.mjs"
+LOG_FILE="${IRIS_DASH_LOG:-/tmp/dashboard.log}"
+HEALTH_URL="${IRIS_DASH_HEALTH_URL:-http://127.0.0.1:4319/api/health}"
+NODE_BIN="${NODE:-$("$IRIS_DIR/scripts/resolve-node-bin.sh")}"
+LAUNCH_LABEL="com.iris.dashboard"
 LAUNCH_PLIST="$HOME/Library/LaunchAgents/${LAUNCH_LABEL}.plist"
 
 wait_for_dashboard() {

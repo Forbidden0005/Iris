@@ -54,7 +54,7 @@ function extractAndValidateJSON(rawResponse) {
   }
   if (plan.dispatch.length === 0) {
     plan.dispatch = [{
-      agent: "crew-coder",
+      agent: "iris-coder",
       task: "fallback",
       acceptance: "Task completed successfully"
     }];
@@ -164,31 +164,31 @@ describe("unified-orchestrator — JSON extraction: valid inputs", () => {
     const raw = JSON.stringify({
       op_id: "op-abc123",
       summary: "Build auth",
-      dispatch: [{ agent: "crew-coder", task: "Write auth module", acceptance: "File exists" }]
+      dispatch: [{ agent: "iris-coder", task: "Write auth module", acceptance: "File exists" }]
     });
     const plan = extractAndValidateJSON(raw);
     assert.equal(plan.dispatch.length, 1);
-    assert.equal(plan.dispatch[0].agent, "crew-coder");
+    assert.equal(plan.dispatch[0].agent, "iris-coder");
   });
 
   it("strips markdown code fences", () => {
     const raw = "```json\n" + JSON.stringify({
       op_id: "op-1",
       summary: "Test",
-      dispatch: [{ agent: "crew-qa", task: "Run tests", acceptance: "Tests pass" }]
+      dispatch: [{ agent: "iris-qa", task: "Run tests", acceptance: "Tests pass" }]
     }) + "\n```";
     const plan = extractAndValidateJSON(raw);
-    assert.equal(plan.dispatch[0].agent, "crew-qa");
+    assert.equal(plan.dispatch[0].agent, "iris-qa");
   });
 
   it("strips plain code fences (no language)", () => {
     const raw = "```\n" + JSON.stringify({
       op_id: "op-2",
       summary: "Fix",
-      dispatch: [{ agent: "crew-fixer", task: "Debug issue", acceptance: "No errors" }]
+      dispatch: [{ agent: "iris-fixer", task: "Debug issue", acceptance: "No errors" }]
     }) + "\n```";
     const plan = extractAndValidateJSON(raw);
-    assert.equal(plan.dispatch[0].agent, "crew-fixer");
+    assert.equal(plan.dispatch[0].agent, "iris-fixer");
   });
 
   it("handles JSON embedded in surrounding text", () => {
@@ -206,7 +206,7 @@ describe("unified-orchestrator — JSON extraction: valid inputs", () => {
     const raw = JSON.stringify({
       op_id: "op-4",
       summary: "Quick fix",
-      dispatch: [{ agent: "crew-coder", task: "Fix typo" }]
+      dispatch: [{ agent: "iris-coder", task: "Fix typo" }]
     });
     const plan = extractAndValidateJSON(raw);
     assert.equal(plan.dispatch[0].acceptance, "Task completed");
@@ -216,7 +216,7 @@ describe("unified-orchestrator — JSON extraction: valid inputs", () => {
     const raw = JSON.stringify({ op_id: "op-5", summary: "Empty", dispatch: [] });
     const plan = extractAndValidateJSON(raw);
     assert.equal(plan.dispatch.length, 1);
-    assert.equal(plan.dispatch[0].agent, "crew-coder");
+    assert.equal(plan.dispatch[0].agent, "iris-coder");
     assert.equal(plan.dispatch[0].task, "fallback");
   });
 
@@ -225,9 +225,9 @@ describe("unified-orchestrator — JSON extraction: valid inputs", () => {
       op_id: "op-6",
       summary: "Full build",
       dispatch: [
-        { agent: "crew-coder", task: "Create schema", acceptance: "Schema file exists" },
-        { agent: "crew-qa", task: "Write tests", acceptance: "Test file exists" },
-        { agent: "crew-qa", task: "Run tests", acceptance: "Tests pass" }
+        { agent: "iris-coder", task: "Create schema", acceptance: "Schema file exists" },
+        { agent: "iris-qa", task: "Write tests", acceptance: "Test file exists" },
+        { agent: "iris-qa", task: "Run tests", acceptance: "Tests pass" }
       ]
     });
     const plan = extractAndValidateJSON(raw);
@@ -268,7 +268,7 @@ describe("unified-orchestrator — JSON extraction: error cases", () => {
     const raw = JSON.stringify({
       op_id: "op-z",
       summary: "Missing task",
-      dispatch: [{ agent: "crew-coder" }]
+      dispatch: [{ agent: "iris-coder" }]
     });
     assert.throws(
       () => extractAndValidateJSON(raw),
@@ -390,7 +390,7 @@ describe("unified-orchestrator — CLI: no-arg behavior", () => {
 // ─── valid agent names ────────────────────────────────────────────────────────
 
 describe("unified-orchestrator — valid agent names in dispatch", () => {
-  const VALID_AGENTS = ["crew-coder", "crew-qa", "crew-fixer", "security"];
+  const VALID_AGENTS = ["iris-coder", "iris-qa", "iris-fixer", "security"];
 
   it("all valid agent names are distinct strings", () => {
     assert.equal(new Set(VALID_AGENTS).size, VALID_AGENTS.length);

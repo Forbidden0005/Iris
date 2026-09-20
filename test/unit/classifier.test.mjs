@@ -5,7 +5,7 @@ import {
   QUESTION_START,
   STATUS_CHECK,
   classifyTask,
-} from "../../lib/crew-lead/classifier.mjs";
+} from "../../lib/iris-lead/classifier.mjs";
 
 describe("TASK_VERBS regex", () => {
   test("matches common coding action verbs", () => {

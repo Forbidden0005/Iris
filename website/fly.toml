@@ -1,4 +1,4 @@
-app = "crewswarm"
+app = "iris"
 primary_region = "lax"
 
 [build]

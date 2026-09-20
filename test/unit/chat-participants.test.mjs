@@ -29,7 +29,7 @@ describe("listCliParticipants", () => {
     assert.ok(ids.includes("cursor"));
     assert.ok(ids.includes("claude"));
     assert.ok(ids.includes("opencode"));
-    assert.ok(ids.includes("crew-cli"));
+    assert.ok(ids.includes("iris-cli"));
     assert.ok(ids.includes("gemini"));
   });
 
@@ -80,9 +80,9 @@ describe("listChatParticipants", () => {
     assert.ok(participants.some((p) => p.kind === "cli"));
   });
 
-  it("includes crew-lead agent participant", () => {
+  it("includes iris-lead agent participant", () => {
     const participants = listChatParticipants();
-    assert.ok(participants.some((p) => p.id === "crew-lead"));
+    assert.ok(participants.some((p) => p.id === "iris-lead"));
   });
 
   it("all entries have id, kind, and aliases fields", () => {
@@ -104,16 +104,16 @@ describe("resolveChatParticipant", () => {
   });
 
   it("resolves a canonical agent ID", () => {
-    const p = resolveChatParticipant("crew-lead");
+    const p = resolveChatParticipant("iris-lead");
     assert.ok(p !== null);
-    assert.equal(p.id, "crew-lead");
+    assert.equal(p.id, "iris-lead");
     assert.equal(p.kind, "agent");
   });
 
-  it("resolves a bare agent alias (without crew- prefix)", () => {
+  it("resolves a bare agent alias (without iris- prefix)", () => {
     const p = resolveChatParticipant("lead");
     assert.ok(p !== null);
-    assert.equal(p.id, "crew-lead");
+    assert.equal(p.id, "iris-lead");
   });
 
   it("resolves a CLI participant by id", () => {
@@ -130,25 +130,25 @@ describe("resolveChatParticipant", () => {
   });
 
   it("is case-insensitive", () => {
-    const lower = resolveChatParticipant("crew-coder");
-    const upper = resolveChatParticipant("CREW-CODER");
-    const mixed = resolveChatParticipant("Crew-Coder");
+    const lower = resolveChatParticipant("iris-coder");
+    const upper = resolveChatParticipant("IRIS-CODER");
+    const mixed = resolveChatParticipant("Iris-Coder");
     assert.equal(lower?.id, upper?.id);
     assert.equal(lower?.id, mixed?.id);
   });
 
   it("trims surrounding whitespace", () => {
-    const p = resolveChatParticipant("  crew-coder  ");
+    const p = resolveChatParticipant("  iris-coder  ");
     assert.ok(p !== null);
-    assert.equal(p.id, "crew-coder");
+    assert.equal(p.id, "iris-coder");
   });
 
   it("returns null for unrecognised ID", () => {
     assert.equal(resolveChatParticipant("not-a-real-participant"), null);
   });
 
-  it("resolves crew-qa", () => {
-    const p = resolveChatParticipant("crew-qa");
+  it("resolves iris-qa", () => {
+    const p = resolveChatParticipant("iris-qa");
     assert.ok(p !== null);
   });
 
@@ -158,10 +158,10 @@ describe("resolveChatParticipant", () => {
     assert.equal(p.id, "gemini");
   });
 
-  it("resolves crew-cli alias crewcli", () => {
+  it("resolves iris-cli alias crewcli", () => {
     const p = resolveChatParticipant("crewcli");
     assert.ok(p !== null);
-    assert.equal(p.id, "crew-cli");
+    assert.equal(p.id, "iris-cli");
   });
 });
 
@@ -179,20 +179,20 @@ describe("detectMentionParticipants", () => {
   });
 
   it("detects a single valid @mention", () => {
-    const result = detectMentionParticipants("hey @crew-coder can you help?");
+    const result = detectMentionParticipants("hey @iris-coder can you help?");
     assert.equal(result.length, 1);
-    assert.equal(result[0].id, "crew-coder");
+    assert.equal(result[0].id, "iris-coder");
   });
 
   it("detects multiple different @mentions", () => {
-    const result = detectMentionParticipants("@crew-coder and @crew-qa please review");
+    const result = detectMentionParticipants("@iris-coder and @iris-qa please review");
     const ids = result.map((p) => p.id);
-    assert.ok(ids.includes("crew-coder"));
-    assert.ok(ids.includes("crew-qa"));
+    assert.ok(ids.includes("iris-coder"));
+    assert.ok(ids.includes("iris-qa"));
   });
 
   it("deduplicates repeated mentions of the same participant", () => {
-    const result = detectMentionParticipants("@crew-coder @crew-coder do it twice");
+    const result = detectMentionParticipants("@iris-coder @iris-coder do it twice");
     const ids = result.map((p) => p.id);
     const unique = new Set(ids);
     assert.equal(unique.size, ids.length);
@@ -210,11 +210,11 @@ describe("detectMentionParticipants", () => {
     assert.equal(result[0].id, "cursor");
   });
 
-  it("broadcast @crew-all expands to all non-lead agent participants", () => {
-    const result = detectMentionParticipants("attention @crew-all");
-    assert.ok(result.length > 1, "crew-all should expand to multiple agents");
-    // crew-lead should be excluded from broadcast
-    assert.ok(!result.some((p) => p.id === "crew-lead"));
+  it("broadcast @iris-all expands to all non-lead agent participants", () => {
+    const result = detectMentionParticipants("attention @iris-all");
+    assert.ok(result.length > 1, "iris-all should expand to multiple agents");
+    // iris-lead should be excluded from broadcast
+    assert.ok(!result.some((p) => p.id === "iris-lead"));
     // All returned participants should be agents
     for (const p of result) {
       assert.equal(p.kind, "agent");
@@ -222,23 +222,23 @@ describe("detectMentionParticipants", () => {
   });
 
   it("handles @mention at the very start of text", () => {
-    const result = detectMentionParticipants("@crew-qa please run tests");
+    const result = detectMentionParticipants("@iris-qa please run tests");
     assert.equal(result.length, 1);
-    assert.equal(result[0].id, "crew-qa");
+    assert.equal(result[0].id, "iris-qa");
   });
 
   it("does not pick up mentions inside words (no leading space/start)", () => {
-    // "email@crew-qa.com" — the @ is not preceded by a word boundary (\\s or start)
-    const result = detectMentionParticipants("email@crew-qa.com is invalid");
+    // "email@iris-qa.com" — the @ is not preceded by a word boundary (\\s or start)
+    const result = detectMentionParticipants("email@iris-qa.com is invalid");
     // The regex requires (^|\s)@ so embedded @ in email should not match
-    // crew-qa.com will be parsed as "crew-qa" by the regex — test behaviour as-is
+    // iris-qa.com will be parsed as "iris-qa" by the regex — test behaviour as-is
     // The implementation uses /@([a-zA-Z0-9_-]+)/ preceded by (^|\s),
     // so "email@" has no leading space — should NOT match
     assert.equal(result.length, 0);
   });
 
   it("returns participant objects with all expected fields", () => {
-    const result = detectMentionParticipants("@crew-coder help");
+    const result = detectMentionParticipants("@iris-coder help");
     assert.equal(result.length, 1);
     const p = result[0];
     assert.ok("id" in p);

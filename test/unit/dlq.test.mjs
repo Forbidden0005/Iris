@@ -30,7 +30,7 @@ import os from "node:os";
 
 const TEST_SHARED_MEMORY_DIR = path.join(
   os.tmpdir(),
-  `crewswarm-dlq-test-${process.pid}`
+  `iris-dlq-test-${process.pid}`
 );
 
 // Derived the same way config.mjs derives SWARM_DLQ_DIR so we know the
@@ -39,7 +39,7 @@ const NAMESPACE = process.env.SHARED_MEMORY_NAMESPACE || "claw-swarm";
 const TEST_DLQ_DIR = path.join(
   TEST_SHARED_MEMORY_DIR,
   NAMESPACE,
-  "opencrew-rt",
+  "openiris-rt",
   "dlq"
 );
 
@@ -55,7 +55,7 @@ const { writeToDLQ, shouldDLQ, listDLQEntries, getDLQEntry, deleteDLQEntry } =
 function makeTask(overrides = {}) {
   return {
     taskId: `task-test-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-    agent: "crew-coder",
+    agent: "iris-coder",
     prompt: "Write a hello world function",
     error: "Something went wrong",
     retries: 0,
@@ -377,7 +377,7 @@ describe("dlq — getDLQEntry", () => {
   });
 
   it("returned entry matches the exact data written to disk", () => {
-    const task = makeTask({ taskId: "task-get-exact", agent: "crew-qa", retries: 2 });
+    const task = makeTask({ taskId: "task-get-exact", agent: "iris-qa", retries: 2 });
     const written = writeToDLQ(task);
     const retrieved = getDLQEntry("task-get-exact");
 

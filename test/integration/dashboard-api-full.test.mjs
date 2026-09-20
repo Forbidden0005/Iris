@@ -7,7 +7,7 @@
  *   - Config/CRUD: agents, providers (12)
  *   - Read-only data endpoints (15)
  *   - Chat endpoints (5)
- *   - Crew-lead forwarded (8)
+ *   - Iris-lead forwarded (8)
  *   - Memory (4)
  *   - Command approval (3)
  *   - Contacts (4)
@@ -82,7 +82,7 @@ describe("Dashboard API Full Endpoint Coverage", { concurrency: 1 }, () => {
   describe("Settings Toggles", () => {
     const toggles = [
       "autonomous-mentions", "bg-consciousness", "claude-code",
-      "cli-models", "codex", "crew-cli", "cursor-waves",
+      "cli-models", "codex", "iris-cli", "cursor-waves",
       "gemini-cli", "global-fallback", "global-oc-loop",
       "global-rules", "loop-brain",
       // "openclaw-status" — endpoint may not exist; tested separately below
@@ -121,7 +121,7 @@ describe("Dashboard API Full Endpoint Coverage", { concurrency: 1 }, () => {
   // ---------------------------------------------------------------------------
   describe("Session Listings", () => {
     const sessionEndpoints = [
-      "claude-sessions", "codex-sessions", "crew-cli-sessions",
+      "claude-sessions", "codex-sessions", "iris-cli-sessions",
       "gemini-sessions", "telegram-sessions", "passthrough-sessions",
     ];
 
@@ -324,51 +324,51 @@ describe("Dashboard API Full Endpoint Coverage", { concurrency: 1 }, () => {
       assertRouteRegistered(status);
     });
 
-    test("POST /api/crew-lead/chat rejects empty body", async (t) => {
+    test("POST /api/iris-lead/chat rejects empty body", async (t) => {
       if (skipIfDown(t)) return;
       // endpoint may lack validation — returns 500 instead of 400 on bad input
-      const { status } = await api(t.name, "/api/crew-lead/chat", "POST", {}, 30000);
+      const { status } = await api(t.name, "/api/iris-lead/chat", "POST", {}, 30000);
       assertRouteRegistered(status);
     });
 
-    test("POST /api/crew-lead/chat rejects missing message", async (t) => {
+    test("POST /api/iris-lead/chat rejects missing message", async (t) => {
       if (skipIfDown(t)) return;
       // endpoint may lack validation — returns 500 instead of 400 on bad input
-      const { status } = await api(t.name, "/api/crew-lead/chat", "POST", { foo: "bar" }, 30000);
+      const { status } = await api(t.name, "/api/iris-lead/chat", "POST", { foo: "bar" }, 30000);
       assertRouteRegistered(status);
     });
   });
 
   // ---------------------------------------------------------------------------
-  // CREW-LEAD FORWARDED
+  // IRIS-LEAD FORWARDED
   // ---------------------------------------------------------------------------
-  describe("Crew-Lead Forwarded Endpoints", () => {
-    test("POST /api/crew-lead/clear route exists", async (t) => {
+  describe("Iris-Lead Forwarded Endpoints", () => {
+    test("POST /api/iris-lead/clear route exists", async (t) => {
       if (skipIfDown(t)) return;
       // endpoint may lack validation — returns 500 instead of 400 on bad input
-      const { status } = await api(t.name, "/api/crew-lead/clear", "POST", {}, 30000);
+      const { status } = await api(t.name, "/api/iris-lead/clear", "POST", {}, 30000);
       assertRouteRegistered(status);
     });
 
-    test("POST /api/crew-lead/confirm-project route exists", async (t) => {
+    test("POST /api/iris-lead/confirm-project route exists", async (t) => {
       if (skipIfDown(t)) return;
       // endpoint may lack validation — returns 500 instead of 400 on bad input
-      const { status } = await api(t.name, "/api/crew-lead/confirm-project", "POST", {}, 30000);
+      const { status } = await api(t.name, "/api/iris-lead/confirm-project", "POST", {}, 30000);
       assertRouteRegistered(status);
     });
 
-    test("POST /api/crew-lead/discard-project route exists", async (t) => {
+    test("POST /api/iris-lead/discard-project route exists", async (t) => {
       if (skipIfDown(t)) return;
       // endpoint may lack validation — returns 500 instead of 400 on bad input
-      const { status } = await api(t.name, "/api/crew-lead/discard-project", "POST", {}, 30000);
+      const { status } = await api(t.name, "/api/iris-lead/discard-project", "POST", {}, 30000);
       assertRouteRegistered(status);
     });
 
-    test("GET /api/crew-lead/events responds (SSE endpoint)", async (t) => {
+    test("GET /api/iris-lead/events responds (SSE endpoint)", async (t) => {
       if (skipIfDown(t)) return;
       // SSE endpoints keep the connection open; use a short timeout and accept any non-404
       try {
-        const { status } = await api(t.name, "/api/crew-lead/events", "GET", null, 3000);
+        const { status } = await api(t.name, "/api/iris-lead/events", "GET", null, 3000);
         assertRouteExists(status);
       } catch (e) {
         // Timeout is expected for SSE -- as long as it connected, the route exists
@@ -376,16 +376,16 @@ describe("Dashboard API Full Endpoint Coverage", { concurrency: 1 }, () => {
       }
     });
 
-    test("GET /api/crew-lead/history returns response", async (t) => {
+    test("GET /api/iris-lead/history returns response", async (t) => {
       if (skipIfDown(t)) return;
-      const { status, data } = await api(t.name, "/api/crew-lead/history", "GET", null, 30000);
+      const { status, data } = await api(t.name, "/api/iris-lead/history", "GET", null, 30000);
       assertRouteExists(status);
       assert.ok(data !== undefined);
     });
 
-    test("GET /api/crew-lead/status returns response", async (t) => {
+    test("GET /api/iris-lead/status returns response", async (t) => {
       if (skipIfDown(t)) return;
-      const { status, data } = await api(t.name, "/api/crew-lead/status", "GET", null, 30000);
+      const { status, data } = await api(t.name, "/api/iris-lead/status", "GET", null, 30000);
       assertRouteExists(status);
       assert.ok(data !== undefined);
     });
@@ -836,10 +836,10 @@ describe("Dashboard API Full Endpoint Coverage", { concurrency: 1 }, () => {
       assertRouteRegistered(status);
     });
 
-    test("POST /api/crew/start route exists", async (t) => {
+    test("POST /api/iris/start route exists", async (t) => {
       if (skipIfDown(t)) return;
       // endpoint may lack validation — returns 500 instead of 400 on bad input
-      const { status } = await api(t.name, "/api/crew/start", "POST", {});
+      const { status } = await api(t.name, "/api/iris/start", "POST", {});
       assertRouteRegistered(status);
     });
   });

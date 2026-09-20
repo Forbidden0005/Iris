@@ -73,11 +73,11 @@ const WAVES_CONFIG_FIXTURE = {
       description: "Research and requirements gathering phase",
       agents: [
         {
-          id: "crew-researcher",
+          id: "iris-researcher",
           task: "[TASK] Research the topic thoroughly and produce a brief.",
         },
         {
-          id: "crew-pm",
+          id: "iris-pm",
           task: "[TASK] Distill requirements from the research output.",
         },
       ],
@@ -88,11 +88,11 @@ const WAVES_CONFIG_FIXTURE = {
       description: "Build phase — all coding agents work in parallel",
       agents: [
         {
-          id: "crew-coder-front",
+          id: "iris-coder-front",
           task: "[TASK] Implement the frontend changes.",
         },
         {
-          id: "crew-main",
+          id: "iris-main",
           task: "[TASK] Implement backend logic.",
         },
       ],
@@ -103,11 +103,11 @@ const WAVES_CONFIG_FIXTURE = {
       description: "QA and security review",
       agents: [
         {
-          id: "crew-qa",
+          id: "iris-qa",
           task: "[TASK] Run the full test suite and report failures.",
         },
         {
-          id: "crew-security",
+          id: "iris-security",
           task: "[TASK] Perform a security audit of the changes.",
         },
       ],
@@ -120,8 +120,8 @@ const WAVES_CONFIG_FIXTURE = {
       wave_overrides: {
         "2": {
           agents: [
-            { id: "crew-coder-front", task: "[TASK] Build the UI." },
-            { id: "crew-main", task: "[TASK] Build the API." },
+            { id: "iris-coder-front", task: "[TASK] Build the UI." },
+            { id: "iris-main", task: "[TASK] Build the API." },
           ],
         },
       },
@@ -133,7 +133,7 @@ const WAVES_CONFIG_FIXTURE = {
         "1": {
           agents: [
             {
-              id: "crew-researcher",
+              id: "iris-researcher",
               task: "[TASK] Research the subject matter.",
             },
           ],
@@ -236,7 +236,7 @@ test.describe("Waves tab", () => {
 
     // Agent dropdowns should show the assigned agent
     const firstSelect = wave1.locator(".agent-select").first();
-    await expect(firstSelect).toHaveValue("crew-researcher", {
+    await expect(firstSelect).toHaveValue("iris-researcher", {
       timeout: 8_000,
     });
   });
@@ -383,11 +383,11 @@ test.describe("Waves tab", () => {
   }) => {
     await openTab(page, "navWaves", "wavesView");
 
-    // Confirm the wave-2 first agent is 'crew-coder-front' before applying template
+    // Confirm the wave-2 first agent is 'iris-coder-front' before applying template
     const wave2Before = page.locator('.wave-card[data-wave-id="2"]');
     await expect(wave2Before).toBeVisible({ timeout: 8_000 });
     const selectBefore = wave2Before.locator(".agent-select").first();
-    await expect(selectBefore).toHaveValue("crew-coder-front", {
+    await expect(selectBefore).toHaveValue("iris-coder-front", {
       timeout: 8_000,
     });
 
@@ -417,10 +417,10 @@ test.describe("Waves tab", () => {
 
     const qaSelect = wave3.locator(".agent-select").first();
     await expect(qaSelect).toBeVisible({ timeout: 8_000 });
-    await expect(qaSelect).toHaveValue("crew-qa", { timeout: 8_000 });
+    await expect(qaSelect).toHaveValue("iris-qa", { timeout: 8_000 });
 
-    // Change to crew-main
-    await qaSelect.selectOption("crew-main");
-    await expect(qaSelect).toHaveValue("crew-main", { timeout: 4_000 });
+    // Change to iris-main
+    await qaSelect.selectOption("iris-main");
+    await expect(qaSelect).toHaveValue("iris-main", { timeout: 4_000 });
   });
 });

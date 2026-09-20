@@ -68,13 +68,13 @@ async function disableDashboardSSE(page) {
 const SESSIONS_FIXTURE = [
   {
     id: "session-abc-123",
-    title: "crew-coder: Add dashboard tests",
+    title: "iris-coder: Add dashboard tests",
     slug: "fleet-wolf",
     directory: "/Users/dev/project",
   },
   {
     id: "session-xyz-456",
-    title: "crew-pm: Roadmap planning Q2",
+    title: "iris-pm: Roadmap planning Q2",
     slug: "quiet-lake",
     directory: "/Users/dev/project",
   },
@@ -100,22 +100,22 @@ const MESSAGES_FIXTURE = [
 const RT_MESSAGES_FIXTURE = [
   {
     type: "task.dispatched",
-    from: "crew-lead",
-    to: "crew-coder",
+    from: "iris-lead",
+    to: "iris-coder",
     ts: Date.now() - 60_000,
     payload: { prompt: "Fix the login bug in auth.js" },
   },
   {
     type: "task.done",
-    from: "crew-coder",
-    to: "crew-lead",
+    from: "iris-coder",
+    to: "iris-lead",
     ts: Date.now() - 30_000,
     payload: { reply: "Done. Fixed auth.js line 42.", engineUsed: "opencode" },
   },
   {
     type: "task.reply",
-    from: "crew-qa",
-    to: "crew-lead",
+    from: "iris-qa",
+    to: "iris-lead",
     ts: Date.now() - 10_000,
     payload: { reply: "QA passed. No regressions found." },
   },
@@ -125,7 +125,7 @@ const DLQ_FIXTURE = [
   {
     key: "dlq-entry-001",
     filename: "dlq-entry-001.json",
-    agent: "crew-coder",
+    agent: "iris-coder",
     failedAt: "2026-04-01T09:00:00Z",
     error: "Task timed out after 120s",
   },
@@ -179,11 +179,11 @@ test.describe("Swarm (Sessions) tab", () => {
     const sessions = page.locator("#sessions");
     await expect(sessions).toBeVisible({ timeout: 8_000 });
     await expect(sessions).toContainText(
-      "crew-coder: Add dashboard tests",
+      "iris-coder: Add dashboard tests",
       { timeout: 8_000 }
     );
     await expect(sessions).toContainText(
-      "crew-pm: Roadmap planning Q2",
+      "iris-pm: Roadmap planning Q2",
       { timeout: 8_000 }
     );
   });
@@ -207,7 +207,7 @@ test.describe("Swarm (Sessions) tab", () => {
     await expect(select.locator("option[value='claude']")).toHaveCount(1);
     await expect(select.locator("option[value='codex']")).toHaveCount(1);
     await expect(select.locator("option[value='gemini']")).toHaveCount(1);
-    await expect(select.locator("option[value='crew-cli']")).toHaveCount(1);
+    await expect(select.locator("option[value='iris-cli']")).toHaveCount(1);
   });
 
   test("switching engine calls engine-sessions with correct engine param", async ({
@@ -277,14 +277,14 @@ test.describe("Swarm (Sessions) tab", () => {
     });
   });
 
-  test("session rows show agent badge for crew-assigned sessions", async ({
+  test("session rows show agent badge for iris-assigned sessions", async ({
     page,
   }) => {
     await openTab(page, "navSwarm", "sessionsView");
 
     const sessions = page.locator("#sessions");
     await expect(sessions).toBeVisible({ timeout: 8_000 });
-    // crew-coder title should surface an agent badge
+    // iris-coder title should surface an agent badge
     await expect(sessions).toContainText("Assigned to:", { timeout: 8_000 });
   });
 
@@ -347,7 +347,7 @@ test.describe("RT Messages tab", () => {
 
     const box = page.locator("#rtMessages");
     await expect(box).toBeVisible({ timeout: 8_000 });
-    // Agents should appear (strip 'crew-' prefix in rendering)
+    // Agents should appear (strip 'iris-' prefix in rendering)
     await expect(box).toContainText("lead", { timeout: 8_000 });
     await expect(box).toContainText("dispatched", { timeout: 8_000 });
   });
@@ -448,7 +448,7 @@ test.describe("DLQ tab", () => {
 
     const dlqBox = page.locator("#dlqMessages");
     await expect(dlqBox).toBeVisible({ timeout: 8_000 });
-    await expect(dlqBox).toContainText("crew-coder", { timeout: 8_000 });
+    await expect(dlqBox).toContainText("iris-coder", { timeout: 8_000 });
     await expect(dlqBox).toContainText("Task timed out after 120s", {
       timeout: 8_000,
     });

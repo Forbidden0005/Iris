@@ -19,8 +19,8 @@
 #   5. openswitchctl doctor (config blockers only — services not started yet)
 #   6. Start the full stack
 #   7. Wait for agents to connect
-#   8. Dispatch one task to crew-coder → verify output file
-#   9. Dispatch one task to crew-main  → verify text reply
+#   8. Dispatch one task to iris-coder → verify output file
+#   9. Dispatch one task to iris-main  → verify text reply
 #  10. Teardown
 #
 # Transcript is printed to stdout; pipe to tee to capture:
@@ -85,15 +85,15 @@ run_npm_ci() {
 }
 
 # ── Config ──────────────────────────────────────────────────────────────────
-REPO_URL="${FRESH_SMOKE_REPO:-https://github.com/CrewSwarm/CrewSwarm.git}"
+REPO_URL="${FRESH_SMOKE_REPO:-https://github.com/Iris/Iris.git}"
 GROQ_API_KEY="${GROQ_API_KEY:-}"
 RT_TOKEN="fresh-smoke-$(openssl rand -hex 8 2>/dev/null || echo 'testtoken')"
 TIMEOUT_AGENTS=120   # seconds to wait for agents to connect
 TIMEOUT_TASK=90      # seconds to wait for smoke dispatch
 RT_PORT="${FRESH_SMOKE_RT_PORT:-18989}"
-CREW_LEAD_PORT="${FRESH_SMOKE_CREW_LEAD_PORT:-5110}"
+IRIS_LEAD_PORT="${FRESH_SMOKE_IRIS_LEAD_PORT:-5110}"
 
-banner "🧪 CrewSwarm Fresh-Machine Smoke  $(date -u '+%Y-%m-%d %H:%M UTC')"
+banner "🧪 Iris Fresh-Machine Smoke  $(date -u '+%Y-%m-%d %H:%M UTC')"
 printf "${DIM}Repo:  %s${RST}\n" "$REPO_URL"
 printf "${DIM}Token: %s${RST}\n" "$RT_TOKEN"
 
@@ -126,7 +126,7 @@ fi
 # ── 2. Clone ────────────────────────────────────────────────────────────────
 step "2 · Clone"
 WORK_DIR=$(mktemp -d)
-CLONE_DIR="$WORK_DIR/CrewSwarm"
+CLONE_DIR="$WORK_DIR/Iris"
 export TMPDIR="$WORK_DIR/tmp"
 mkdir -p "$TMPDIR"
 trap 'echo ""; warn "Cleaning up $WORK_DIR ..."; kill $(jobs -p) 2>/dev/null || true; rm -rf "$WORK_DIR"' EXIT
@@ -161,41 +161,41 @@ fi
 
 # ── 4. Bootstrap config ─────────────────────────────────────────────────────
 step "4 · Bootstrap config"
-CFG_DIR="$WORK_DIR/.crewswarm"
+CFG_DIR="$WORK_DIR/.iris"
 mkdir -p "$CFG_DIR"
 
 # Redirect config to temp dir for isolation
 export HOME="$WORK_DIR"
-export CREWSWARM_DIR="$CLONE_DIR"
-export CREWSWARM_CONFIG_DIR="$CFG_DIR"
+export IRIS_DIR="$CLONE_DIR"
+export IRIS_CONFIG_DIR="$CFG_DIR"
 
 # config.json — RT token
 printf '{"rt":{"authToken":"%s"}}\n' "$RT_TOKEN" > "$CFG_DIR/config.json"
 pass "config.json — RT token written"
 
-# crewswarm.json — Groq provider + 5 core agents
+# iris.json — Groq provider + 5 core agents
 node -e "
   const fs = require('fs');
   const key = process.env.GROQ_API_KEY || '';
   const cfg = {
     _note: 'fresh-machine-smoke bootstrap',
     agents: [
-      { id: 'crew-lead',  model: 'groq/llama-3.3-70b-versatile' },
-      { id: 'crew-main',  model: 'groq/llama-3.3-70b-versatile' },
-      { id: 'crew-coder', model: 'groq/llama-3.3-70b-versatile' },
-      { id: 'crew-qa',    model: 'groq/llama-3.3-70b-versatile' },
-      { id: 'crew-fixer', model: 'groq/llama-3.3-70b-versatile' },
-      { id: 'crew-pm',    model: 'groq/llama-3.3-70b-versatile' },
-      { id: 'crew-orchestrator', model: 'groq/llama-3.3-70b-versatile' },
-      { id: 'crew-judge', model: 'groq/llama-3.3-70b-versatile' },
+      { id: 'iris-lead',  model: 'groq/llama-3.3-70b-versatile' },
+      { id: 'iris-main',  model: 'groq/llama-3.3-70b-versatile' },
+      { id: 'iris-coder', model: 'groq/llama-3.3-70b-versatile' },
+      { id: 'iris-qa',    model: 'groq/llama-3.3-70b-versatile' },
+      { id: 'iris-fixer', model: 'groq/llama-3.3-70b-versatile' },
+      { id: 'iris-pm',    model: 'groq/llama-3.3-70b-versatile' },
+      { id: 'iris-orchestrator', model: 'groq/llama-3.3-70b-versatile' },
+      { id: 'iris-judge', model: 'groq/llama-3.3-70b-versatile' },
     ],
     providers: {
       groq: { apiKey: key, baseUrl: 'https://api.groq.com/openai/v1' }
     }
   };
-  fs.writeFileSync(process.env.CREWSWARM_CONFIG_DIR + '/crewswarm.json', JSON.stringify(cfg, null, 2));
+  fs.writeFileSync(process.env.IRIS_CONFIG_DIR + '/iris.json', JSON.stringify(cfg, null, 2));
 "
-pass "crewswarm.json — Groq + 5 agents written"
+pass "iris.json — Groq + 5 agents written"
 
 # cmd-allowlist
 printf '{"patterns":["npm *","node *","npx *"]}\n' > "$CFG_DIR/cmd-allowlist.json"
@@ -224,20 +224,20 @@ fi
 
 # ── 6. Start the stack ──────────────────────────────────────────────────────
 step "6 · Start stack"
-export CREWSWARM_RT_AUTH_TOKEN="$RT_TOKEN"
-export CREWSWARM_RT_REQUIRE_TOKEN=1
-export CREWSWARM_RT_PORT="$RT_PORT"
-export CREWSWARM_RT_URL="ws://127.0.0.1:${RT_PORT}"
-export CREWSWARM_OPENCODE_ENABLED=0
-export CREW_LEAD_PORT="$CREW_LEAD_PORT"
-export CREW_LEAD_URL="http://127.0.0.1:${CREW_LEAD_PORT}"
-export CREWSWARM_DISABLE_PGREP_FALLBACK=1
+export IRIS_RT_AUTH_TOKEN="$RT_TOKEN"
+export IRIS_RT_REQUIRE_TOKEN=1
+export IRIS_RT_PORT="$RT_PORT"
+export IRIS_RT_URL="ws://127.0.0.1:${RT_PORT}"
+export IRIS_OPENCODE_ENABLED=0
+export IRIS_LEAD_PORT="$IRIS_LEAD_PORT"
+export IRIS_LEAD_URL="http://127.0.0.1:${IRIS_LEAD_PORT}"
+export IRIS_DISABLE_PGREP_FALLBACK=1
 
-"$NODE" "$CLONE_DIR/scripts/opencrew-rt-daemon.mjs" >> /tmp/fresh-smoke-rt.log 2>&1 &
+"$NODE" "$CLONE_DIR/scripts/openiris-rt-daemon.mjs" >> /tmp/fresh-smoke-rt.log 2>&1 &
 sleep 3
-"$NODE" "$CLONE_DIR/crew-lead.mjs" >> /tmp/fresh-smoke-lead.log 2>&1 &
+"$NODE" "$CLONE_DIR/iris-lead.mjs" >> /tmp/fresh-smoke-lead.log 2>&1 &
 sleep 2
-"$NODE" "$CLONE_DIR/scripts/start-crew.mjs" >> /tmp/fresh-smoke-bridges.log 2>&1
+"$NODE" "$CLONE_DIR/scripts/start-iris.mjs" >> /tmp/fresh-smoke-bridges.log 2>&1
 sleep 5
 pass "Stack processes started"
 
@@ -248,7 +248,7 @@ CONNECTED=false
 printf "  Polling RT bus"
 while [[ $SECONDS -lt $T_END ]]; do
   STATUS=$(curl -sf "http://127.0.0.1:${RT_PORT}/status" 2>/dev/null || echo '{}')
-  if echo "$STATUS" | grep -q '"crew-coder"' && echo "$STATUS" | grep -q '"crew-main"'; then
+  if echo "$STATUS" | grep -q '"iris-coder"' && echo "$STATUS" | grep -q '"iris-main"'; then
     CONNECTED=true
     printf "\n"
     break
@@ -267,8 +267,8 @@ else
   exit 1
 fi
 
-# ── 8. Dispatch → crew-coder ─────────────────────────────────────────────────
-step "8 · Dispatch → crew-coder (file write)"
+# ── 8. Dispatch → iris-coder ─────────────────────────────────────────────────
+step "8 · Dispatch → iris-coder (file write)"
 RUN_ID="fm$(date +%s | tail -c 6)"
 OUT_FILE="$CLONE_DIR/test-output/fresh-smoke/coder-${RUN_ID}.txt"
 EXPECTED="FRESH_SMOKE_OK_${RUN_ID}"
@@ -278,36 +278,36 @@ TASK_TEXT="Create this file with @@WRITE_FILE: ${OUT_FILE}
 Write exactly one line: ${EXPECTED}
 No extra text."
 
-printf "  Dispatching to crew-coder ...\n"
+printf "  Dispatching to iris-coder ...\n"
 DISPATCH_REPLY=$(
   timeout "$TIMEOUT_TASK" "$NODE" "$CLONE_DIR/gateway-bridge.mjs" \
-    --send crew-coder "$TASK_TEXT" 2>/dev/null || echo ""
+    --send iris-coder "$TASK_TEXT" 2>/dev/null || echo ""
 )
 
 # Give file system a moment
 sleep 3
 
 if [[ -f "$OUT_FILE" ]] && grep -q "$EXPECTED" "$OUT_FILE" 2>/dev/null; then
-  pass "crew-coder wrote $OUT_FILE with correct content"
+  pass "iris-coder wrote $OUT_FILE with correct content"
 else
-  fail "crew-coder did not produce $OUT_FILE with '$EXPECTED'"
+  fail "iris-coder did not produce $OUT_FILE with '$EXPECTED'"
   printf "${DIM}Reply: %s${RST}\n" "${DISPATCH_REPLY:0:200}"
   FAILED=$((FAILED+1))
 fi
 
-# ── 9. Dispatch → crew-main (text reply) ────────────────────────────────────
-step "9 · Dispatch → crew-main (text reply)"
+# ── 9. Dispatch → iris-main (text reply) ────────────────────────────────────
+step "9 · Dispatch → iris-main (text reply)"
 MARKER="MAIN_OK_${RUN_ID}"
-printf "  Dispatching to crew-main ...\n"
+printf "  Dispatching to iris-main ...\n"
 MAIN_REPLY=$(
   timeout "$TIMEOUT_TASK" "$NODE" "$CLONE_DIR/gateway-bridge.mjs" \
-    --send crew-main "Reply with exactly: $MARKER" 2>/dev/null || echo ""
+    --send iris-main "Reply with exactly: $MARKER" 2>/dev/null || echo ""
 )
 
 if echo "$MAIN_REPLY" | grep -q "$MARKER"; then
-  pass "crew-main replied with $MARKER"
+  pass "iris-main replied with $MARKER"
 else
-  fail "crew-main did not reply with '$MARKER'"
+  fail "iris-main did not reply with '$MARKER'"
   printf "${DIM}Reply: %s${RST}\n" "${MAIN_REPLY:0:200}"
   FAILED=$((FAILED+1))
 fi
@@ -315,7 +315,7 @@ fi
 # ── 10. Summary ──────────────────────────────────────────────────────────────
 banner "━━━ Fresh-Machine Smoke Results ━━━"
 if [[ "$FAILED" -eq 0 ]]; then
-  printf "${GRN}${BLD}✅ All checks passed — CrewSwarm works on a clean install.${RST}\n\n"
+  printf "${GRN}${BLD}✅ All checks passed — Iris works on a clean install.${RST}\n\n"
   exit 0
 else
   printf "${RED}${BLD}❌ $FAILED check(s) failed.${RST}\n\n"

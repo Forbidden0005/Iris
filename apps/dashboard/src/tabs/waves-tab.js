@@ -85,15 +85,15 @@ export function initWavesTab() {
         <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
           <select class="agent-select" data-wave-id="${waveId}" data-agent-idx="${idx}" style="padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface-2); font-size: 13px; font-weight: 600;">
             <option value="${agent.id}" selected>${agent.id}</option>
-            <option value="crew-researcher">crew-researcher</option>
-            <option value="crew-copywriter">crew-copywriter</option>
-            <option value="crew-pm">crew-pm</option>
-            <option value="crew-architect">crew-architect</option>
-            <option value="crew-coder-front">crew-coder-front</option>
-            <option value="crew-frontend">crew-frontend</option>
-            <option value="crew-qa">crew-qa</option>
-            <option value="crew-security">crew-security</option>
-            <option value="crew-main">crew-main</option>
+            <option value="iris-researcher">iris-researcher</option>
+            <option value="iris-copywriter">iris-copywriter</option>
+            <option value="iris-pm">iris-pm</option>
+            <option value="iris-architect">iris-architect</option>
+            <option value="iris-coder-front">iris-coder-front</option>
+            <option value="iris-frontend">iris-frontend</option>
+            <option value="iris-qa">iris-qa</option>
+            <option value="iris-security">iris-security</option>
+            <option value="iris-main">iris-main</option>
           </select>
           <button class="remove-agent-btn" data-wave-id="${waveId}" data-agent-idx="${idx}" style="padding: 6px 12px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; font-size: 12px; color: var(--text-3);">
             ✕ Remove
@@ -149,7 +149,7 @@ export function initWavesTab() {
         const wave = wavesConfig.waves.find(w => w.id === waveId);
         if (wave) {
           wave.agents.push({
-            id: 'crew-main',
+            id: 'iris-main',
             task: '[TASK] Describe what this agent should do...'
           });
           renderWaves();

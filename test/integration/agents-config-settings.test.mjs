@@ -48,9 +48,9 @@ describe("dashboard agents-config settings", () => {
   let logs = "";
 
   before(async () => {
-    tmpRoot = await mkdtemp(path.join(tmpdir(), "crewswarm-agent-settings-"));
-    configDir = path.join(tmpRoot, ".crewswarm");
-    configPath = path.join(configDir, "crewswarm.json");
+    tmpRoot = await mkdtemp(path.join(tmpdir(), "iris-agent-settings-"));
+    configDir = path.join(tmpRoot, ".iris");
+    configPath = path.join(configDir, "iris.json");
     promptsPath = path.join(configDir, "agent-prompts.json");
     await fs.promises.mkdir(configDir, { recursive: true });
 
@@ -65,7 +65,7 @@ describe("dashboard agents-config settings", () => {
           },
           agents: [
             {
-              id: "crew-coder",
+              id: "iris-coder",
               model: "openai/gpt-5.4",
               tools: { profile: "default", alsoAllow: ["write_file"] },
             },
@@ -84,9 +84,9 @@ describe("dashboard agents-config settings", () => {
       env: {
         ...process.env,
         HOME: tmpRoot,
-        CREWSWARM_CONFIG_DIR: configDir,
-        SWARM_DASH_PORT: String(port),
-        CREWSWARM_BIND_HOST: "127.0.0.1",
+        IRIS_CONFIG_DIR: configDir,
+        IRIS_DASH_PORT: String(port),
+        IRIS_BIND_HOST: "127.0.0.1",
       },
       stdio: ["ignore", "pipe", "pipe"],
     });
@@ -119,7 +119,7 @@ describe("dashboard agents-config settings", () => {
       return;
     }
     const res = await postJson(`${baseUrl}/api/agents-config/update`, {
-      agentId: "crew-coder",
+      agentId: "iris-coder",
       useCodex: true,
       codexModel: "gpt-5.4",
       useClaudeCode: false,
@@ -133,31 +133,31 @@ describe("dashboard agents-config settings", () => {
     assert.equal(res.body.ok, true);
 
     const saved = JSON.parse(await readFile(configPath, "utf8"));
-    const coder = saved.agents.find((agent) => agent.id === "crew-coder");
+    const coder = saved.agents.find((agent) => agent.id === "iris-coder");
     assert.equal(coder.useCodex, true);
     assert.equal(coder.codexModel, "gpt-5.4");
     assert.equal(coder.useClaudeCode, false);
     assert.equal(coder.fallbackModel, "openai/gpt-5.4");
 
     const files = await readdir(configDir);
-    const backups = files.filter((file) => file.startsWith("crewswarm.json.backup."));
+    const backups = files.filter((file) => file.startsWith("iris.json.backup."));
     assert.ok(backups.length >= 1, "expected a timestamped config backup");
 
     const api = await fetch(`${baseUrl}/api/agents-config`);
     const body = await api.json();
-    const returned = body.agents.find((agent) => agent.id === "crew-coder");
+    const returned = body.agents.find((agent) => agent.id === "iris-coder");
     assert.equal(returned.useCodex, true);
     assert.equal(returned.codexModel, "gpt-5.4");
     assert.equal(returned.fallbackModel, "openai/gpt-5.4");
   });
 
-  it("persists crew-cli settings and prompt updates through the same endpoint", async (t) => {
+  it("persists iris-cli settings and prompt updates through the same endpoint", async (t) => {
     if (startupBlocked) {
       t.skip(startupBlocked);
       return;
     }
     const res = await postJson(`${baseUrl}/api/agents-config/update`, {
-      agentId: "crew-coder",
+      agentId: "iris-coder",
       useCodex: false,
       useCrewCLI: true,
       crewCliModel: "openai/gpt-5.4",
@@ -168,14 +168,14 @@ describe("dashboard agents-config settings", () => {
     assert.equal(res.body.ok, true);
 
     const saved = JSON.parse(await readFile(configPath, "utf8"));
-    const coder = saved.agents.find((agent) => agent.id === "crew-coder");
+    const coder = saved.agents.find((agent) => agent.id === "iris-coder");
     assert.equal(coder.useCrewCLI, true);
     assert.equal(coder.crewCliModel, "openai/gpt-5.4");
     assert.equal(coder.useCodex, false);
 
     const prompts = JSON.parse(await readFile(promptsPath, "utf8"));
     assert.equal(
-      prompts["crew-coder"],
+      prompts["iris-coder"],
       "Use the configured engine and leave clear logs.",
     );
   });

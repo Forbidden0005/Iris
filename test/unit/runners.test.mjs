@@ -15,15 +15,15 @@ import assert from "node:assert/strict";
 // Clear engine-related env vars to get predictable routing
 const envSnapshot = {};
 const engineEnvVars = [
-  "CREWSWARM_OPENCODE_ENABLED",
-  "CREWSWARM_OPENCODE_FORCE",
-  "CREWSWARM_CURSOR_WAVES",
-  "CREWSWARM_CLAUDE_CODE",
-  "CREWSWARM_CODEX",
-  "CREWSWARM_GEMINI_CLI_ENABLED",
-  "CREWSWARM_CREW_CLI_ENABLED",
-  "CREWSWARM_DOCKER_SANDBOX",
-  "CREWSWARM_RT_AGENT",
+  "IRIS_OPENCODE_ENABLED",
+  "IRIS_OPENCODE_FORCE",
+  "IRIS_CURSOR_WAVES",
+  "IRIS_CLAUDE_CODE",
+  "IRIS_CODEX",
+  "IRIS_GEMINI_CLI_ENABLED",
+  "IRIS_CREW_CLI_ENABLED",
+  "IRIS_DOCKER_SANDBOX",
+  "IRIS_RT_AGENT",
 ];
 for (const key of engineEnvVars) {
   envSnapshot[key] = process.env[key];
@@ -32,10 +32,10 @@ for (const key of engineEnvVars) {
 // Explicitly disable Claude Code so lower-priority engine routing is testable.
 // Without this, loadSystemConfig() may return claudeCode:true from disk config,
 // causing shouldUseClaudeCode() to intercept payloads meant for other engines.
-process.env.CREWSWARM_CLAUDE_CODE = "0";
-// Also override CREWSWARM_CODEX to prevent disk config (.crewswarm/crewswarm.json)
+process.env.IRIS_CLAUDE_CODE = "0";
+// Also override IRIS_CODEX to prevent disk config (.iris/iris.json)
 // from enabling codex globally, which would affect lower-priority routing tests.
-process.env.CREWSWARM_CODEX = "0";
+process.env.IRIS_CODEX = "0";
 
 const {
   shouldUseCursorCli,
@@ -119,7 +119,7 @@ describe("runners — shouldUseClaudeCode", () => {
   });
 
   it("returns false for empty payload when claudeCode is disabled via env", () => {
-    // CREWSWARM_CLAUDE_CODE=0 is set above to isolate routing tests
+    // IRIS_CLAUDE_CODE=0 is set above to isolate routing tests
     assert.equal(shouldUseClaudeCode({}, "command.run_task"), false);
   });
 });
@@ -163,7 +163,7 @@ describe("runners — shouldUseCodex", () => {
 // ── shouldUseOpenCode ───────────────────────────────────────────────────────
 
 describe("runners — shouldUseOpenCode", () => {
-  it("returns false when CREWSWARM_OPENCODE_ENABLED is not set", () => {
+  it("returns false when IRIS_OPENCODE_ENABLED is not set", () => {
     // We cleared this env var above, so opencode should never be enabled
     assert.equal(shouldUseOpenCode({}, "test prompt", "command.run_task"), false);
   });
@@ -175,7 +175,7 @@ describe("runners — shouldUseOpenCode", () => {
 
 // ── shouldUseGeminiCli ──────────────────────────────────────────────────────
 // Note: shouldUseGeminiCli calls shouldUseCodex in its priority chain.
-// If codex is globally enabled via config file (codex: true in crewswarm.json),
+// If codex is globally enabled via config file (codex: true in iris.json),
 // codex will claim unmatched payloads and gemini-cli routing won't fire.
 // These tests verify the routing logic by testing what we can control.
 
@@ -209,8 +209,8 @@ describe("runners — shouldUseCrewCLI", () => {
     assert.equal(shouldUseCrewCLI({ runtime: "cursor" }, "command.run_task"), false);
   });
 
-  it("crew-cli runtime is recognized (may be blocked by higher-priority global engines)", () => {
-    const result = shouldUseCrewCLI({ runtime: "crew-cli" }, "command.run_task");
+  it("iris-cli runtime is recognized (may be blocked by higher-priority global engines)", () => {
+    const result = shouldUseCrewCLI({ runtime: "iris-cli" }, "command.run_task");
     assert.equal(typeof result, "boolean");
   });
 });
@@ -244,7 +244,7 @@ describe("runners — shouldUseDockerSandbox", () => {
 describe("runners — shouldUseGenericEngine", () => {
   const engineDef = {
     id: "test-engine",
-    envToggle: "CREWSWARM_TEST_ENGINE",
+    envToggle: "IRIS_TEST_ENGINE",
     agentConfigKey: "useTestEngine",
   };
 

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>crewswarm vibe</title>
+    <title>iris vibe</title>
   <link rel="icon" type="image/png" href="./favicon.png" />
   <script>
     (() => {
@@ -24,7 +24,7 @@
   </script>
   <!-- System font stack only to avoid CORS when dashboard (4319) and studio (3333) both load Inter from Google -->
   <style>
-    /* crewswarm Brand Colors (from dashboard) */
+    /* iris Brand Colors (from dashboard) */
     :root {
       /* Backgrounds */
       --bg:       #060a10;
@@ -2059,8 +2059,8 @@
     <!-- Titlebar -->
     <div id="titlebar">
       <div class="brand-section">
-        <img class="brand-icon" src="./favicon.png" alt="crewswarm" />
-        <span class="brand-name">crew<span>swarm</span></span>
+        <img class="brand-icon" src="./favicon.png" alt="iris" />
+        <span class="brand-name">iris<span>swarm</span></span>
         <span style="font-size: 11px; color: var(--text-3); margin-left: 4px;">vibe</span>
       </div>
       
@@ -2216,11 +2216,11 @@
         <div class="controls">
           <label for="chat-mode-selector" style="font-size: 11px; color: var(--text-3);">Mode:</label>
           <select id="chat-mode-selector" onchange="switchChatMode()">
-            <option value="crew-lead">🧠 crew-lead (Smart Routing)</option>
+            <option value="iris-lead">🧠 iris-lead (Smart Routing)</option>
             <optgroup label="───── Direct CLIs ─────">
               <option value="cli:opencode">⚡ OpenCode — Full workspace context</option>
               <option value="cli:cursor">🖱 Cursor CLI — Complex reasoning</option>
-              <option value="cli:crew-cli">🔧 Crew CLI — TypeScript specialist</option>
+              <option value="cli:iris-cli">🔧 Iris CLI — TypeScript specialist</option>
               <option value="cli:codex">🟣 Codex CLI — OpenAI Codex</option>
               <option value="cli:gemini">✨ Gemini CLI — Google Gemini</option>
               <option value="cli:claude">🤖 Claude Code — Anthropic Claude</option>
@@ -2239,7 +2239,7 @@
       <div id="chat-input-container">
         <textarea 
           id="chat-input" 
-          placeholder="Ask the crew anything... (Enter to send, Shift+Enter for new line)"
+          placeholder="Ask the iris anything... (Enter to send, Shift+Enter for new line)"
           rows="3"
         ></textarea>
       </div>
@@ -2286,7 +2286,7 @@
     <div class="settings-panel-header">
       <div>
         <h3 id="settings-panel-title">Vibe Settings</h3>
-        <p>Quick access to workspace controls and the main crewswarm dashboard.</p>
+        <p>Quick access to workspace controls and the main iris dashboard.</p>
       </div>
       <button
         id="settings-close"

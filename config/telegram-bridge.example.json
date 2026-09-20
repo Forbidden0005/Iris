@@ -1,6 +1,6 @@
 {
   "token": "YOUR_TELEGRAM_BOT_TOKEN",
-  "targetAgent": "crew-lead",
+  "targetAgent": "iris-lead",
   "allowedChatIds": [
     123456789
   ],
@@ -8,7 +8,7 @@
     "123456789": "Owner"
   },
   "userRouting": {
-    "123456789": "crew-lead"
+    "123456789": "iris-lead"
   },
   "topicRouting": {},
   "tts": {

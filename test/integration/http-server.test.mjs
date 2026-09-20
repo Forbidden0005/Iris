@@ -1,14 +1,14 @@
 /**
- * Integration tests for lib/crew-lead/http-server.mjs
+ * Integration tests for lib/iris-lead/http-server.mjs
  * Starts the HTTP server on a random port with minimal mock deps.
- * No Docker, no crew-lead daemon, no RT bus required.
+ * No Docker, no iris-lead daemon, no RT bus required.
  */
 import { test, describe, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { mkdtemp, mkdir, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { initHttpServer, createAndStartServer } from "../../lib/crew-lead/http-server.mjs";
+import { initHttpServer, createAndStartServer } from "../../lib/iris-lead/http-server.mjs";
 import {
   clearProjectMessages,
   saveProjectMessage,
@@ -28,10 +28,10 @@ function makeMockDeps(overrides = {}) {
       model: "test/model",
       displayName: "TestLead",
       emoji: "🧠",
-      knownAgents: ["crew-coder", "crew-qa"],
+      knownAgents: ["iris-coder", "iris-qa"],
       agentRoster: [
-        { id: "crew-coder", name: "Fuller", role: "Full Stack Coder", model: "test/model" },
-        { id: "crew-qa",    name: "Testy",  role: "QA",               model: "test/model" },
+        { id: "iris-coder", name: "Fuller", role: "Full Stack Coder", model: "test/model" },
+        { id: "iris-qa",    name: "Testy",  role: "QA",               model: "test/model" },
       ],
       providers: {},
     }),
@@ -61,7 +61,7 @@ function makeMockDeps(overrides = {}) {
     writeAgentTools: () => {},
     activeOpenCodeAgents: new Map(),
     agentTimeoutCounts: new Map(),
-    crewswarmToolNames: ["read_file", "write_file"],
+    irisToolNames: ["read_file", "write_file"],
     classifyTask:   async () => null,
     tryRead:        () => null,
     resolveSkillAlias: (name) => name,
@@ -90,15 +90,15 @@ let originalHome;
 let originalUserProfile;
 
 before(async () => {
-  tempHomeDir = await mkdtemp(join(tmpdir(), "crewswarm-http-server-test-"));
+  tempHomeDir = await mkdtemp(join(tmpdir(), "iris-http-server-test-"));
   originalHome = process.env.HOME;
   originalUserProfile = process.env.USERPROFILE;
   process.env.HOME = tempHomeDir;
   process.env.USERPROFILE = tempHomeDir;
   resetPaths();
-  await mkdir(join(tempHomeDir, ".crewswarm"), { recursive: true });
+  await mkdir(join(tempHomeDir, ".iris"), { recursive: true });
   await writeFile(
-    join(tempHomeDir, ".crewswarm", "crewswarm.json"),
+    join(tempHomeDir, ".iris", "iris.json"),
     JSON.stringify({}, null, 2),
   );
   const deps = makeMockDeps();
@@ -122,15 +122,15 @@ after(async () => {
   await rm(tempHomeDir, { recursive: true, force: true });
 });
 
-describe("GET /api/crew-lead/project-messages", () => {
+describe("GET /api/iris-lead/project-messages", () => {
   test("supports mention and thread filters", async () => {
     const projectId = `test-http-messages-${Date.now()}`;
     saveProjectMessage(projectId, {
       source: "dashboard",
       role: "user",
-      content: "@crew-main investigate this",
+      content: "@iris-main investigate this",
       threadId: "thread-1",
-      metadata: { mentions: ["crew-main"] },
+      metadata: { mentions: ["iris-main"] },
     });
     saveProjectMessage(projectId, {
       source: "dashboard",
@@ -141,14 +141,14 @@ describe("GET /api/crew-lead/project-messages", () => {
     });
 
     const res = await fetch(
-      `${BASE}/api/crew-lead/project-messages?projectId=${encodeURIComponent(projectId)}&threadId=thread-1&mentionedAgent=crew-main`,
+      `${BASE}/api/iris-lead/project-messages?projectId=${encodeURIComponent(projectId)}&threadId=thread-1&mentionedAgent=iris-main`,
     );
     assert.equal(res.status, 200);
     const body = await res.json();
     assert.equal(body.ok, true);
     assert.equal(body.count, 1);
     assert.equal(body.messages[0].threadId, "thread-1");
-    assert.deepEqual(body.messages[0].metadata.mentions, ["crew-main"]);
+    assert.deepEqual(body.messages[0].metadata.mentions, ["iris-main"]);
 
     clearProjectMessages(projectId);
   });
@@ -168,12 +168,12 @@ describe("GET /api/crew-lead/project-messages", () => {
       source: "agent",
       role: "assistant",
       content: "newer persisted message",
-      agent: "crew-coder",
+      agent: "iris-coder",
       metadata: {},
     });
 
     const res = await fetch(
-      `${BASE}/api/crew-lead/project-messages?projectId=${encodeURIComponent(projectId)}&since=${since}&excludeDirect=true`,
+      `${BASE}/api/iris-lead/project-messages?projectId=${encodeURIComponent(projectId)}&since=${since}&excludeDirect=true`,
     );
     assert.equal(res.status, 200);
     const body = await res.json();
@@ -197,12 +197,12 @@ describe("project message search/export endpoints", () => {
       source: "agent",
       role: "assistant",
       content: "Investigating a separate issue",
-      agent: "crew-qa",
+      agent: "iris-qa",
       metadata: {},
     });
 
     const res = await fetch(
-      `${BASE}/api/crew-lead/search-project-messages?projectId=${encodeURIComponent(projectId)}&q=${encodeURIComponent("authentication")}&source=dashboard`,
+      `${BASE}/api/iris-lead/search-project-messages?projectId=${encodeURIComponent(projectId)}&q=${encodeURIComponent("authentication")}&source=dashboard`,
     );
     assert.equal(res.status, 200);
     const body = await res.json();
@@ -219,12 +219,12 @@ describe("project message search/export endpoints", () => {
       source: "agent",
       role: "assistant",
       content: "Export this message",
-      agent: "crew-coder",
+      agent: "iris-coder",
       metadata: { severity: "info" },
     });
 
     const res = await fetch(
-      `${BASE}/api/crew-lead/export-project-messages?projectId=${encodeURIComponent(projectId)}&format=markdown&includeMetadata=true`,
+      `${BASE}/api/iris-lead/export-project-messages?projectId=${encodeURIComponent(projectId)}&format=markdown&includeMetadata=true`,
     );
     assert.equal(res.status, 200);
     assert.equal(
@@ -261,7 +261,7 @@ describe("project message search/export endpoints", () => {
     });
 
     const allRes = await fetch(
-      `${BASE}/api/crew-lead/message-threads?projectId=${encodeURIComponent(projectId)}`,
+      `${BASE}/api/iris-lead/message-threads?projectId=${encodeURIComponent(projectId)}`,
     );
     assert.equal(allRes.status, 200);
     const allBody = await allRes.json();
@@ -269,7 +269,7 @@ describe("project message search/export endpoints", () => {
     assert.equal(allBody.threads["thread-a"].length, 1);
 
     const singleRes = await fetch(
-      `${BASE}/api/crew-lead/message-threads?projectId=${encodeURIComponent(projectId)}&threadId=thread-b`,
+      `${BASE}/api/iris-lead/message-threads?projectId=${encodeURIComponent(projectId)}&threadId=thread-b`,
     );
     assert.equal(singleRes.status, 200);
     const singleBody = await singleRes.json();
@@ -290,7 +290,7 @@ describe("semantic message endpoints", () => {
       metadata: {},
     });
 
-    const indexRes = await fetch(`${BASE}/api/crew-lead/index-project-messages`, {
+    const indexRes = await fetch(`${BASE}/api/iris-lead/index-project-messages`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ projectId }),
@@ -301,7 +301,7 @@ describe("semantic message endpoints", () => {
     assert.equal(indexBody.messagesIndexed, 1);
 
     const searchRes = await fetch(
-      `${BASE}/api/crew-lead/search-messages-semantic?projectId=${encodeURIComponent(projectId)}&q=${encodeURIComponent("authentication security")}`,
+      `${BASE}/api/iris-lead/search-messages-semantic?projectId=${encodeURIComponent(projectId)}&q=${encodeURIComponent("authentication security")}`,
     );
     assert.equal(searchRes.status, 200);
     const searchBody = await searchRes.json();
@@ -309,7 +309,7 @@ describe("semantic message endpoints", () => {
     assert.ok(searchBody.count >= 1);
     assert.match(searchBody.results[0].content, /authentication service/i);
 
-    const statsRes = await fetch(`${BASE}/api/crew-lead/message-index-stats`);
+    const statsRes = await fetch(`${BASE}/api/iris-lead/message-index-stats`);
     assert.equal(statsRes.status, 200);
     const statsBody = await statsRes.json();
     assert.equal(statsBody.ok, true);
@@ -328,7 +328,7 @@ describe("GET /health", () => {
     assert.equal(res.status, 200);
     const body = await res.json();
     assert.equal(body.ok, true);
-    assert.equal(body.agent, "crew-lead");
+    assert.equal(body.agent, "iris-lead");
     // PORT=0 means OS-assigned; body.port reflects the requested port (0), not the actual bound port
     assert.equal(typeof body.port, "number");
   });
@@ -390,7 +390,7 @@ describe("POST /api/dispatch and GET /api/status/:taskId", () => {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        agent: "crew-coder",
+        agent: "iris-coder",
         task: "Write a regression test",
         sessionId: "session-123",
       }),
@@ -399,13 +399,13 @@ describe("POST /api/dispatch and GET /api/status/:taskId", () => {
     const body = await res.json();
     assert.equal(body.ok, true);
     assert.equal(body.taskId, "test-task-id");
-    assert.equal(body.agent, "crew-coder");
+    assert.equal(body.agent, "iris-coder");
 
     const statusRes = await fetch(`${BASE}/api/status/test-task-id`);
     assert.equal(statusRes.status, 200);
     const statusBody = await statusRes.json();
     assert.equal(statusBody.status, "pending");
-    assert.equal(statusBody.agent, "crew-coder");
+    assert.equal(statusBody.agent, "iris-coder");
     assert.equal(statusBody.sessionId, "session-123");
   });
 
@@ -413,7 +413,7 @@ describe("POST /api/dispatch and GET /api/status/:taskId", () => {
     const res = await fetch(`${BASE}/api/dispatch`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ agent: "crew-unknown", task: "Do work" }),
+      body: JSON.stringify({ agent: "iris-unknown", task: "Do work" }),
     });
     assert.equal(res.status, 400);
     const body = await res.json();
@@ -437,7 +437,7 @@ describe("GET /api/agents", () => {
     assert.equal(res.status, 200);
     const body = await res.json();
     assert.equal(body.ok, true);
-    assert.ok(body.crewLead?.id === "crew-lead");
+    assert.ok(body.crewLead?.id === "iris-lead");
     assert.ok(body.crewLead?.model === "test/model");
     assert.ok(Array.isArray(body.agents));
     assert.ok(body.agents.length >= 2);

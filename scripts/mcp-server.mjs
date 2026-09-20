@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- * crewswarm MCP Server
+ * iris MCP Server
  *
- * Exposes the entire crewswarm fleet as MCP tools — 100% dynamic.
+ * Exposes the entire iris fleet as MCP tools — 100% dynamic.
  * Every agent and every skill discovered at runtime becomes a callable tool.
  *
  * Compatible with: Cursor, Claude Code CLI, OpenCode, Claude Desktop,
@@ -18,10 +18,10 @@
  *   node scripts/mcp-server.mjs --stdio    # for Claude Desktop / Claude Code
  *
  * Cursor .cursor/mcp.json:
- *   { "crewswarm": { "url": "http://localhost:5020/mcp" } }
+ *   { "iris": { "url": "http://localhost:5020/mcp" } }
  *
  * Claude Code (~/.claude/mcp.json or via --mcp-config):
- *   { "crewswarm": { "type": "http", "url": "http://localhost:5020/mcp" } }
+ *   { "iris": { "type": "http", "url": "http://localhost:5020/mcp" } }
  */
 
 import http from "http";
@@ -37,11 +37,11 @@ import {
 import { detectMentions } from "../lib/chat/autonomous-mentions.mjs";
 
 // ── Config ────────────────────────────────────────────────────────────────────
-const CREW_LEAD_URL = process.env.CREW_LEAD_URL || "http://127.0.0.1:5010";
+const IRIS_LEAD_URL = process.env.IRIS_LEAD_URL || "http://127.0.0.1:5010";
 const PORT = parseInt(process.env.MCP_PORT || "5020");
-const SKILLS_DIR = path.join(os.homedir(), ".crewswarm", "skills");
-const CONFIG_PATH = path.join(os.homedir(), ".crewswarm", "crewswarm.json");
-const CREWSWARM_CFG = path.join(os.homedir(), ".crewswarm", "crewswarm.json");
+const SKILLS_DIR = path.join(os.homedir(), ".iris", "skills");
+const CONFIG_PATH = path.join(os.homedir(), ".iris", "iris.json");
+const IRIS_CFG = path.join(os.homedir(), ".iris", "iris.json");
 const STDIO_MODE = process.argv.includes("--stdio");
 
 function getAuthToken() {
@@ -134,7 +134,7 @@ function composeChatPayloadFromOpenAI(
 }
 
 function loadPipelineMetricsSummary(baseDir = process.cwd()) {
-  const file = path.join(baseDir, ".crew", "pipeline-metrics.jsonl");
+  const file = path.join(baseDir, ".iris", "pipeline-metrics.jsonl");
   try {
     if (!fs.existsSync(file)) {
       return {
@@ -279,7 +279,7 @@ function buildToolCallResponse({ model, stream, toolName, task }) {
 // ── Dynamic agent list ────────────────────────────────────────────────────────
 function loadAgents() {
   try {
-    const cfg = JSON.parse(fs.readFileSync(CREWSWARM_CFG, "utf8"));
+    const cfg = JSON.parse(fs.readFileSync(IRIS_CFG, "utf8"));
     return (cfg.agents || []).map((a) => ({
       id: a.id,
       name: a.identity?.name || a.name || a.id,
@@ -332,7 +332,7 @@ let gitnexusProcess = null;
 let gitnexusTools = [];
 let gitnexusReady = false;
 const GITNEXUS_ENABLED = /^(1|true|yes|on)$/i.test(
-  String(process.env.CREWSWARM_GITNEXUS_ENABLED || ""),
+  String(process.env.IRIS_GITNEXUS_ENABLED || ""),
 );
 
 async function initGitNexusBridge() {
@@ -422,7 +422,7 @@ async function initGitNexusBridge() {
           params: {
             protocolVersion: "2024-11-05",
             capabilities: {},
-            clientInfo: { name: "crewswarm-mcp-bridge", version: "1.0.0" },
+            clientInfo: { name: "iris-mcp-bridge", version: "1.0.0" },
           },
         }) + "\n",
       );
@@ -501,10 +501,10 @@ function buildToolList() {
     {
       name: "dispatch_agent",
       description: [
-        "Send a task to any specialist agent in the crewswarm fleet and wait for the result.",
+        "Send a task to any specialist agent in the iris fleet and wait for the result.",
         "Use this when you need a specialist: security audit, complex code refactor, QA testing, PM planning, copywriting, data analysis.",
         "Each agent runs its own LLM (may be different from yours) with a specialized system prompt.",
-        "Rate-limited on your main account? Route through crewswarm agents running on Groq, Mistral, DeepSeek, or local Ollama.",
+        "Rate-limited on your main account? Route through iris agents running on Groq, Mistral, DeepSeek, or local Ollama.",
         "",
         `Available agents: ${agents.map((a) => `${a.emoji} ${a.name} (${a.id}${a.role ? " · " + a.role : ""})`).join(", ")}`,
       ].join("\n"),
@@ -534,7 +534,7 @@ function buildToolList() {
     {
       name: "list_agents",
       description:
-        "List all available crewswarm agents with their specialties, models, and current status.",
+        "List all available iris agents with their specialties, models, and current status.",
       inputSchema: { type: "object", properties: {} },
     },
     {
@@ -569,8 +569,8 @@ function buildToolList() {
     {
       name: "chat_stinki",
       description: [
-        "Talk directly to Stinki (crew-lead) — the crewswarm commander.",
-        "Use for: roadmap questions, dispatching complex multi-agent workflows, asking about the codebase, getting Stinki to coordinate the crew.",
+        "Talk directly to Stinki (iris-lead) — the iris commander.",
+        "Use for: roadmap questions, dispatching complex multi-agent workflows, asking about the codebase, getting Stinki to coordinate the iris.",
         "Stinki can read files, search the web, dispatch agents, and roast you if you're being stupid.",
       ].join("\n"),
       inputSchema: {
@@ -582,9 +582,9 @@ function buildToolList() {
       },
     },
     {
-      name: "crewswarm_status",
+      name: "iris_status",
       description:
-        "Get live status of all crewswarm agents — which are running, their models, and recent task telemetry.",
+        "Get live status of all iris agents — which are running, their models, and recent task telemetry.",
       inputSchema: { type: "object", properties: {} },
     },
     {
@@ -593,7 +593,7 @@ function buildToolList() {
         "Analyze a task and get a multi-agent breakdown BEFORE executing — returns the proposed plan without firing anything.",
         "Use this when you're unsure how to break down a complex task. Returns score (1-5), suggested agents, and step-by-step breakdown.",
         "After reviewing the plan, call run_pipeline with the returned stages to execute, or call dispatch_agent for a single agent.",
-        "Example: smart_dispatch('build auth system with JWT') → { score: 4, agents: ['crew-pm','crew-coder-back','crew-qa'], breakdown: ['plan spec','build endpoints','write tests'] }",
+        "Example: smart_dispatch('build auth system with JWT') → { score: 4, agents: ['iris-pm','iris-coder-back','iris-qa'], breakdown: ['plan spec','build endpoints','write tests'] }",
       ].join("\n"),
       inputSchema: {
         type: "object",
@@ -610,13 +610,13 @@ function buildToolList() {
     {
       name: "pipeline_metrics",
       description:
-        "Return aggregated pipeline QA/context metrics from .crew/pipeline-metrics.jsonl.",
+        "Return aggregated pipeline QA/context metrics from .iris/pipeline-metrics.jsonl.",
       inputSchema: { type: "object", properties: {} },
     },
     {
       name: "chat_send",
       description:
-        "Write a message into the shared crewswarm channel history without dispatching work. Use this for real channel participation.",
+        "Write a message into the shared iris channel history without dispatching work. Use this for real channel participation.",
       inputSchema: {
         type: "object",
         properties: {
@@ -650,7 +650,7 @@ function buildToolList() {
     {
       name: "chat_read",
       description:
-        "Read recent shared channel messages from crewswarm history.",
+        "Read recent shared channel messages from iris history.",
       inputSchema: {
         type: "object",
         properties: {
@@ -707,7 +707,7 @@ function buildToolList() {
   for (const skill of skills) {
     tools.push({
       name: `skill_${skill.name.replace(/[^a-zA-Z0-9_]/g, "_")}`,
-      description: `Run crewswarm skill: ${skill.name}. ${skill.description}`,
+      description: `Run iris skill: ${skill.name}. ${skill.description}`,
       inputSchema: {
         type: "object",
         properties: {
@@ -737,7 +737,7 @@ async function callTool(name, args) {
     const maxMs = Math.min((timeout_seconds || 90) * 1000, 300_000);
     try {
       // Dispatch
-      const dispatchRes = await fetch(`${CREW_LEAD_URL}/api/dispatch`, {
+      const dispatchRes = await fetch(`${IRIS_LEAD_URL}/api/dispatch`, {
         method: "POST",
         headers: crewHeaders(),
         body: JSON.stringify({ agent, task, source: "mcp", via: "mcp-tool" }),
@@ -755,7 +755,7 @@ async function callTool(name, args) {
         await new Promise((r) => setTimeout(r, 2000));
         try {
           const statusRes = await fetch(
-            `${CREW_LEAD_URL}/api/status/${taskId}`,
+            `${IRIS_LEAD_URL}/api/status/${taskId}`,
             {
               headers: crewHeaders(),
               signal: AbortSignal.timeout(5_000),
@@ -789,14 +789,14 @@ async function callTool(name, args) {
         error: `Agent did not respond within ${timeout_seconds}s. Task is still running — check dashboard.`,
       };
     } catch (e) {
-      return { error: `crew-lead unreachable: ${e.message}` };
+      return { error: `iris-lead unreachable: ${e.message}` };
     }
   }
 
   // list_agents
   if (name === "list_agents") {
     try {
-      const res = await fetch(`${CREW_LEAD_URL}/api/agents`, {
+      const res = await fetch(`${IRIS_LEAD_URL}/api/agents`, {
         headers: crewHeaders(),
         signal: AbortSignal.timeout(8_000),
       });
@@ -813,15 +813,15 @@ async function callTool(name, args) {
     } catch (e) {
       return {
         agents: loadAgents(),
-        note: "crew-lead offline — showing config data only",
+        note: "iris-lead offline — showing config data only",
       };
     }
   }
 
-  // crewswarm_status
-  if (name === "crewswarm_status") {
+  // iris_status
+  if (name === "iris_status") {
     try {
-      const res = await fetch(`${CREW_LEAD_URL}/api/health`, {
+      const res = await fetch(`${IRIS_LEAD_URL}/api/health`, {
         headers: crewHeaders(),
         signal: AbortSignal.timeout(8_000),
       });
@@ -841,8 +841,8 @@ async function callTool(name, args) {
       };
     } catch (e) {
       return {
-        error: `crew-lead unreachable: ${e.message}`,
-        note: "Is crewswarm running? Try: npm run restart-all",
+        error: `iris-lead unreachable: ${e.message}`,
+        note: "Is iris running? Try: npm run restart-all",
       };
     }
   }
@@ -851,7 +851,7 @@ async function callTool(name, args) {
   if (name === "chat_stinki") {
     const { message } = args;
     try {
-      const res = await fetch(`${CREW_LEAD_URL}/chat`, {
+      const res = await fetch(`${IRIS_LEAD_URL}/chat`, {
         method: "POST",
         headers: crewHeaders(),
         body: JSON.stringify({ message, sessionId: "mcp" }),
@@ -860,7 +860,7 @@ async function callTool(name, args) {
       const d = await res.json();
       return { reply: d.reply || d.message || d.text || JSON.stringify(d) };
     } catch (e) {
-      return { error: `crew-lead unreachable: ${e.message}` };
+      return { error: `iris-lead unreachable: ${e.message}` };
     }
   }
 
@@ -892,7 +892,7 @@ async function callTool(name, args) {
     const { task } = args;
     if (!task) return { error: "task is required" };
     try {
-      const res = await fetch(`${CREW_LEAD_URL}/api/classify`, {
+      const res = await fetch(`${IRIS_LEAD_URL}/api/classify`, {
         method: "POST",
         headers: crewHeaders(),
         body: JSON.stringify({ task }),
@@ -926,7 +926,7 @@ async function callTool(name, args) {
           score >= 4
             ? `Call run_pipeline with pipeline_stages to execute, or customize the stages first.`
             : score >= 3
-              ? `Call dispatch_agent("${agents[0] || "crew-coder"}", task) to execute.`
+              ? `Call dispatch_agent("${agents[0] || "iris-coder"}", task) to execute.`
               : `Simple task — call dispatch_agent or handle directly.`,
       };
     } catch (e) {
@@ -1056,7 +1056,7 @@ async function callTool(name, args) {
     const { params = {} } = args;
     try {
       const res = await fetch(
-        `${CREW_LEAD_URL}/api/skill/${encodeURIComponent(skillName)}`,
+        `${IRIS_LEAD_URL}/api/skill/${encodeURIComponent(skillName)}`,
         {
           method: "POST",
           headers: crewHeaders(),
@@ -1097,9 +1097,9 @@ async function handleMcpMessage(msg) {
         protocolVersion: "2024-11-05",
         capabilities: { tools: {} },
         serverInfo: {
-          name: "crewswarm",
+          name: "iris",
           version: "1.0.0",
-          description: "crewswarm multi-agent fleet as MCP tools",
+          description: "iris multi-agent fleet as MCP tools",
         },
       },
     };
@@ -1186,7 +1186,7 @@ if (STDIO_MODE) {
       }
     }
   });
-  process.stderr.write(`[crewswarm-mcp] stdio transport ready\n`);
+  process.stderr.write(`[iris-mcp] stdio transport ready\n`);
   process.stdin.on("end", () => process.exit(0));
 } else {
   // ── HTTP transport ──────────────────────────────────────────────────────────
@@ -1219,7 +1219,7 @@ if (STDIO_MODE) {
       res.end(
         JSON.stringify({
           ok: true,
-          server: "crewswarm-mcp",
+          server: "iris-mcp",
           version: "1.0.0",
           agents: loadAgents().length,
           skills: loadSkills().length,
@@ -1238,19 +1238,19 @@ if (STDIO_MODE) {
 
     // ── OpenAI-compatible API (/v1/*) ──────────────────────────────────────────
     // Lets any tool with a "custom base URL" setting (Open WebUI, LM Studio,
-    // Aider, Continue.dev, Cursor, etc.) use crewswarm agents as models.
+    // Aider, Continue.dev, Cursor, etc.) use iris agents as models.
     // Set base URL to http://127.0.0.1:5020 — each agent appears as a model.
 
     if (url.pathname === "/v1/models") {
       const agents = loadAgents();
       const models = [
-        // crew-lead (Stinki) — the general-purpose commander
+        // iris-lead (Stinki) — the general-purpose commander
         {
-          id: "crewswarm",
+          id: "iris",
           object: "model",
           created: 1700000000,
-          owned_by: "crewswarm",
-          description: "🧠 Stinki — crew-lead, general purpose commander",
+          owned_by: "iris",
+          description: "🧠 Stinki — iris-lead, general purpose commander",
           capabilities: ["chat", "coordination", "dispatch"],
           mode: "chat",
         },
@@ -1259,7 +1259,7 @@ if (STDIO_MODE) {
           id: a.id,
           object: "model",
           created: 1700000000,
-          owned_by: "crewswarm",
+          owned_by: "iris",
           description: `${a.emoji || ""} ${a.name} — ${a.role || a.id}`.trim(),
           capabilities: ["dispatch", "tools"],
           mode: "agent",
@@ -1293,7 +1293,7 @@ if (STDIO_MODE) {
       }
 
       const {
-        model = "crewswarm",
+        model = "iris",
         messages = [],
         stream = false,
         temperature,
@@ -1362,13 +1362,13 @@ if (STDIO_MODE) {
         hasTools: Array.isArray(tools) && tools.length > 0,
       };
 
-      // Route: "crewswarm" / "crew-lead" → /chat  |  anything else → dispatch
-      const isChatRoute = model === "crewswarm" || model === "crew-lead";
+      // Route: "iris" / "iris-lead" → /chat  |  anything else → dispatch
+      const isChatRoute = model === "iris" || model === "iris-lead";
       let reply = "";
       try {
         if (isChatRoute) {
           const chatMessage = contextPack ? `${contextPack}\n\n${task}` : task;
-          const r = await fetch(`${CREW_LEAD_URL}/chat`, {
+          const r = await fetch(`${IRIS_LEAD_URL}/chat`, {
             method: "POST",
             headers: crewHeaders(),
             body: JSON.stringify({
@@ -1385,7 +1385,7 @@ if (STDIO_MODE) {
           const taskWithContext = contextPack
             ? `${task}\n\n${contextPack}`
             : task;
-          const r = await fetch(`${CREW_LEAD_URL}/api/dispatch`, {
+          const r = await fetch(`${IRIS_LEAD_URL}/api/dispatch`, {
             method: "POST",
             headers: crewHeaders(),
             body: JSON.stringify({
@@ -1407,7 +1407,7 @@ if (STDIO_MODE) {
           const start = Date.now();
           while (Date.now() - start < 90_000) {
             await new Promise((r) => setTimeout(r, 2000));
-            const sr = await fetch(`${CREW_LEAD_URL}/api/status/${taskId}`, {
+            const sr = await fetch(`${IRIS_LEAD_URL}/api/status/${taskId}`, {
               headers: crewHeaders(),
               signal: AbortSignal.timeout(5_000),
             });
@@ -1566,7 +1566,7 @@ if (STDIO_MODE) {
     const agents = loadAgents();
     const skills = loadSkills();
 
-    console.log(`\n🔌 crewswarm MCP Server`);
+    console.log(`\n🔌 iris MCP Server`);
     console.log(`${"─".repeat(50)}`);
     console.log(`  HTTP endpoint : http://127.0.0.1:${PORT}/mcp`);
     console.log(`  Health check  : http://127.0.0.1:${PORT}/health`);
@@ -1592,27 +1592,27 @@ if (STDIO_MODE) {
       }
     } else {
       console.log(
-        `  GitNexus      : off (set CREWSWARM_GITNEXUS_ENABLED=1 to enable)`,
+        `  GitNexus      : off (set IRIS_GITNEXUS_ENABLED=1 to enable)`,
       );
     }
 
     console.log(`${"─".repeat(50)}`);
     console.log(`\nMCP clients (Cursor / Claude Code / OpenCode):`);
     console.log(
-      `  Cursor .cursor/mcp.json:  { "crewswarm": { "url": "http://127.0.0.1:${PORT}/mcp" } }`,
+      `  Cursor .cursor/mcp.json:  { "iris": { "url": "http://127.0.0.1:${PORT}/mcp" } }`,
     );
     console.log(
       `  Claude Code stdio:        node scripts/mcp-server.mjs --stdio`,
     );
     console.log(
-      `  OpenCode:                 { "mcpServers": { "crewswarm": { "type": "http", "url": "http://127.0.0.1:${PORT}/mcp" } } }`,
+      `  OpenCode:                 { "mcpServers": { "iris": { "type": "http", "url": "http://127.0.0.1:${PORT}/mcp" } } }`,
     );
     console.log(
       `\nOpenAI-compatible API (Open WebUI / LM Studio / Aider / Continue.dev):`,
     );
     console.log(`  Base URL : http://127.0.0.1:${PORT}/v1`);
     console.log(
-      `  API key  : (any string — uses crewswarm auth token internally)`,
+      `  API key  : (any string — uses iris auth token internally)`,
     );
     console.log(
       `  Models   : GET http://127.0.0.1:${PORT}/v1/models   (one per agent)`,

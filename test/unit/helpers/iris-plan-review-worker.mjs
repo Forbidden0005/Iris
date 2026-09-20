@@ -10,7 +10,7 @@
  * silently vanishes with the next save.
  *
  * argv: <planId> <label>
- * Relies on CREWSWARM_STATE_DIR being set in the environment.
+ * Relies on IRIS_STATE_DIR being set in the environment.
  */
 import { resetPaths } from "../../../lib/runtime/paths.mjs";
 import { generateIrisPlanReview } from "../../../lib/iris/plans.mjs";

@@ -12,7 +12,7 @@ body:
     attributes:
       label: What happened?
       description: Clear description of the bug.
-      placeholder: "e.g. crew-coder dispatched but never replied — task hung indefinitely"
+      placeholder: "e.g. iris-coder dispatched but never replied — task hung indefinitely"
     validations:
       required: true
 
@@ -20,7 +20,7 @@ body:
     id: expected
     attributes:
       label: What did you expect?
-      placeholder: "e.g. crew-coder should have returned a result within the dispatch timeout"
+      placeholder: "e.g. iris-coder should have returned a result within the dispatch timeout"
     validations:
       required: true
 
@@ -29,9 +29,9 @@ body:
     attributes:
       label: Steps to reproduce
       placeholder: |
-        1. Set crew-coder model to ...
+        1. Set iris-coder model to ...
         2. Send message: "..."
-        3. See error in /tmp/crew-lead.log
+        3. See error in /tmp/iris-lead.log
     validations:
       required: true
 
@@ -39,7 +39,7 @@ body:
     id: logs
     attributes:
       label: Relevant logs
-      description: Paste from `/tmp/crew-lead.log`, `/tmp/opencrew-rt-daemon.log`, or browser console.
+      description: Paste from `/tmp/iris-lead.log`, `/tmp/openiris-rt-daemon.log`, or browser console.
       render: shell
 
   - type: input

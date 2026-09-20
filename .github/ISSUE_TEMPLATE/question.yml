@@ -11,7 +11,7 @@ body:
     id: question
     attributes:
       label: Question
-      placeholder: "e.g. How do I route crew-coder to use Claude Code instead of OpenCode?"
+      placeholder: "e.g. How do I route iris-coder to use Claude Code instead of OpenCode?"
     validations:
       required: true
 

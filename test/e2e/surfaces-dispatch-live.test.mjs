@@ -5,7 +5,7 @@ import { checkServiceUp } from "../helpers/http.mjs";
 
 const DASHBOARD_URL = "http://127.0.0.1:4319";
 const VIBE_URL = "http://127.0.0.1:3333";
-const CREW_LEAD_URL = "http://127.0.0.1:5010";
+const IRIS_LEAD_URL = "http://127.0.0.1:5010";
 const CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 
 let browser = null;
@@ -13,7 +13,7 @@ let servicesUp = false;
 
 function skipIfDown(t) {
   if (!servicesUp) {
-    t.skip("Requires dashboard :4319, vibe :3333, crew-lead :5010");
+    t.skip("Requires dashboard :4319, vibe :3333, iris-lead :5010");
     return true;
   }
   return false;
@@ -39,7 +39,7 @@ describe("Dashboard + Vibe dispatch surfaces", { timeout: 120000 }, () => {
     const [dashUp, vibeUp, leadUp] = await Promise.all([
       checkServiceUp(`${DASHBOARD_URL}/api/health`),
       checkServiceUp(`${VIBE_URL}/api/studio/projects`),
-      checkServiceUp(`${CREW_LEAD_URL}/health`),
+      checkServiceUp(`${IRIS_LEAD_URL}/health`),
     ]);
     servicesUp = dashUp && vibeUp && leadUp;
     if (!servicesUp) return;
@@ -56,7 +56,7 @@ describe("Dashboard + Vibe dispatch surfaces", { timeout: 120000 }, () => {
     if (browser) await browser.close();
   });
 
-  test("Dashboard chat dispatches via crew-lead and shows the reply", async (t) => {
+  test("Dashboard chat dispatches via iris-lead and shows the reply", async (t) => {
     if (skipIfDown(t)) return;
 
     const page = await newPage();
@@ -74,14 +74,14 @@ describe("Dashboard + Vibe dispatch surfaces", { timeout: 120000 }, () => {
       await clearAndType(
         page,
         "#chatInput",
-        `dispatch crew-seo to reply with exactly ${token}`,
+        `dispatch iris-seo to reply with exactly ${token}`,
       );
       await page.click("#chatSendBtn");
 
       await page.waitForFunction(
         (expected) => {
           const box = document.getElementById("chatMessages");
-          return box && box.textContent.includes("crew-seo") && box.textContent.includes(expected);
+          return box && box.textContent.includes("iris-seo") && box.textContent.includes(expected);
         },
         { timeout: 45000 },
         token,
@@ -91,7 +91,7 @@ describe("Dashboard + Vibe dispatch surfaces", { timeout: 120000 }, () => {
     }
   });
 
-  test("Vibe chat dispatches via crew-lead and shows the reply", async (t) => {
+  test("Vibe chat dispatches via iris-lead and shows the reply", async (t) => {
     if (skipIfDown(t)) return;
 
     const page = await newPage();
@@ -103,20 +103,20 @@ describe("Dashboard + Vibe dispatch surfaces", { timeout: 120000 }, () => {
         timeout: 30000,
       });
       await page.waitForSelector("#chat-input");
-      await page.select("#chat-mode-selector", "crew-lead");
+      await page.select("#chat-mode-selector", "iris-lead");
       await page.select("#projectSelector", "general");
 
       await clearAndType(
         page,
         "#chat-input",
-        `dispatch crew-seo to reply with exactly ${token}`,
+        `dispatch iris-seo to reply with exactly ${token}`,
       );
       await page.keyboard.press("Enter");
 
       await page.waitForFunction(
         (expected) => {
           const box = document.getElementById("chat-messages");
-          return box && box.textContent.includes("crew-seo") && box.textContent.includes(expected);
+          return box && box.textContent.includes("iris-seo") && box.textContent.includes(expected);
         },
         { timeout: 45000 },
         token,

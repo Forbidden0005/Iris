@@ -2,7 +2,7 @@
 
 These checks cover the last parts of the system that cannot be made fully hermetic:
 
-- native macOS `crewchat`
+- native macOS `irischat`
 - real Telegram / WhatsApp delivery
 - real funded-provider quota / fallback behavior
 
@@ -18,7 +18,7 @@ node scripts/live-provider-failover-matrix.mjs
 
 This prints:
 
-- configured providers from `~/.crewswarm/crewswarm.json`
+- configured providers from `~/.iris/iris.json`
 - important routed agents and their primary/fallback models
 - a short execution checklist for live failover verification
 
@@ -58,24 +58,24 @@ These remain live tests by nature because they depend on:
 - real device auth
 - real third-party network delivery
 
-## crewchat
+## irischat
 
 Run:
 
 ```bash
-node scripts/live-crewchat-check.mjs
+node scripts/live-irischat-check.mjs
 ```
 
 Then:
 
 ```bash
-./build-crewchat.sh
-open -a crewchat.app
+./build-irischat.sh
+open -a irischat.app
 ```
 
 Verify:
 
-- mode switching between crew-lead / CLI / direct agent
+- mode switching between iris-lead / CLI / direct agent
 - text send
 - image send
 - voice note send

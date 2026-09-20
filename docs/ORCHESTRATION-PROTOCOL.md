@@ -1,13 +1,13 @@
 # Orchestration Protocol
 
-This document describes the stable coordination rules for CrewSwarm.
+This document describes the stable coordination rules for Iris.
 
 ## Participants
 
 Shared chat can coordinate:
 
-- crewswarm agents such as `@crew-coder`, `@crew-qa`, `@crew-pm`
-- CLI participants such as `@codex`, `@cursor`, `@claude`, `@opencode`, `@gemini`, `@crew-cli`
+- iris agents such as `@iris-coder`, `@iris-qa`, `@iris-pm`
+- CLI participants such as `@codex`, `@cursor`, `@claude`, `@opencode`, `@gemini`, `@iris-cli`
 
 Not every participant has the same execution model, but they should follow the same coordination contract.
 
@@ -15,7 +15,7 @@ Not every participant has the same execution model, but they should follow the s
 
 1. User request enters through a surface such as Dashboard, Vibe, or API.
 2. The surface provides explicit `projectId` and `projectDir` where available.
-3. `crew-lead` or the selected engine resolves the task target.
+3. `iris-lead` or the selected engine resolves the task target.
 4. If the task is a swarm task, it is dispatched over RT.
 5. If the task is a direct engine task, it runs through the selected engine adapter.
 
@@ -38,7 +38,7 @@ Every task is routed to either a **CLI engine** (Claude Code, Cursor, Codex, Gem
 - CLI engines are better for complex multi-file coding tasks (full repo context, incremental edits, test runs).
 - direct-llm is fine for single-file writes, research reports, and simple tasks.
 - When crafting @@DISPATCH tasks for build agents, use verbs like "Create", "Build", "Implement", "Fix" to ensure CLI engine routing.
-- The per-agent CLI engine is resolved from `crewswarm.json` flags (`useClaudeCode`, `useCursorCli`, `useCodex`, etc.) or the `engine` field.
+- The per-agent CLI engine is resolved from `iris.json` flags (`useClaudeCode`, `useCursorCli`, `useCodex`, etc.) or the `engine` field.
 
 ## Dispatch Rules
 

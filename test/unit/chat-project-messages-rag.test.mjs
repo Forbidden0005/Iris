@@ -136,8 +136,8 @@ describe("buildTitle", () => {
   });
 
   it("includes agent label when agent is set", () => {
-    const title = buildTitle(msg({ agent: "crew-qa" }));
-    assert.ok(title.includes("[crew-qa]"));
+    const title = buildTitle(msg({ agent: "iris-qa" }));
+    assert.ok(title.includes("[iris-qa]"));
   });
 
   it("omits agent label when agent is null", () => {
@@ -178,11 +178,11 @@ describe("buildContent", () => {
 
 describe("buildTags", () => {
   it("includes projectId, source, role, agent", () => {
-    const tags = buildTags("proj-1", msg({ agent: "crew-qa", source: "sub-agent", role: "assistant" }));
+    const tags = buildTags("proj-1", msg({ agent: "iris-qa", source: "sub-agent", role: "assistant" }));
     assert.ok(tags.includes("proj-1"));
     assert.ok(tags.includes("sub-agent"));
     assert.ok(tags.includes("assistant"));
-    assert.ok(tags.includes("crew-qa"));
+    assert.ok(tags.includes("iris-qa"));
   });
 
   it("uses 'user' as default tag when agent is null", () => {
@@ -272,10 +272,10 @@ describe("buildContext", () => {
 
   it("includes agent label when agent is set", () => {
     const results = [
-      { source: "sub-agent", agent: "crew-qa", timestamp: 1_700_000_000_000, content: "qa response" },
+      { source: "sub-agent", agent: "iris-qa", timestamp: 1_700_000_000_000, content: "qa response" },
     ];
     const ctx = buildContext("p", results);
-    assert.ok(ctx.includes("[crew-qa]"));
+    assert.ok(ctx.includes("[iris-qa]"));
   });
 
   it("truncates long content to 300 chars and adds ellipsis", () => {

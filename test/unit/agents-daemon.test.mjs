@@ -24,28 +24,28 @@ import {
 
 describe("agentPidPath", () => {
   it("ends with <agent>.pid", () => {
-    const p = agentPidPath("crew-coder");
-    assert.ok(p.endsWith("crew-coder.pid"), `unexpected path: ${p}`);
+    const p = agentPidPath("iris-coder");
+    assert.ok(p.endsWith("iris-coder.pid"), `unexpected path: ${p}`);
   });
 
   it("contains rt-agents directory component", () => {
-    const p = agentPidPath("crew-pm");
+    const p = agentPidPath("iris-pm");
     assert.ok(p.includes("rt-agents"), `expected rt-agents in path: ${p}`);
   });
 
   it("is an absolute path", () => {
-    const p = agentPidPath("crew-qa");
+    const p = agentPidPath("iris-qa");
     assert.ok(p.startsWith("/"), `expected absolute path: ${p}`);
   });
 
   it("uses the agent name verbatim in the filename", () => {
-    const p = agentPidPath("crew-fixer");
-    assert.ok(p.includes("crew-fixer"), p);
+    const p = agentPidPath("iris-fixer");
+    assert.ok(p.includes("iris-fixer"), p);
   });
 
   it("handles agent names with hyphens", () => {
-    const p = agentPidPath("crew-coder-front");
-    assert.ok(p.endsWith("crew-coder-front.pid"));
+    const p = agentPidPath("iris-coder-front");
+    assert.ok(p.endsWith("iris-coder-front.pid"));
   });
 });
 
@@ -53,23 +53,23 @@ describe("agentPidPath", () => {
 
 describe("agentLogPath", () => {
   it("ends with <agent>.log", () => {
-    const p = agentLogPath("crew-coder");
-    assert.ok(p.endsWith("crew-coder.log"), `unexpected path: ${p}`);
+    const p = agentLogPath("iris-coder");
+    assert.ok(p.endsWith("iris-coder.log"), `unexpected path: ${p}`);
   });
 
   it("contains rt-agents directory component", () => {
-    const p = agentLogPath("crew-qa");
+    const p = agentLogPath("iris-qa");
     assert.ok(p.includes("rt-agents"), p);
   });
 
   it("is an absolute path", () => {
-    const p = agentLogPath("crew-pm");
+    const p = agentLogPath("iris-pm");
     assert.ok(p.startsWith("/"), p);
   });
 
   it("shares the same parent directory as agentPidPath", () => {
-    const pidDir = agentPidPath("crew-qa").replace(/[^/]+$/, "");
-    const logDir = agentLogPath("crew-qa").replace(/[^/]+$/, "");
+    const pidDir = agentPidPath("iris-qa").replace(/[^/]+$/, "");
+    const logDir = agentLogPath("iris-qa").replace(/[^/]+$/, "");
     assert.equal(pidDir, logDir);
   });
 });
@@ -82,7 +82,7 @@ describe("readPid", () => {
   });
 
   it("returns a number (never throws)", () => {
-    const result = readPid("crew-definitely-not-running-xyz");
+    const result = readPid("iris-definitely-not-running-xyz");
     assert.equal(typeof result, "number");
   });
 
@@ -149,7 +149,7 @@ describe("latestHeartbeatAgeSec", () => {
   it("returns a non-negative number when a heartbeat IS found", () => {
     // We cannot guarantee a heartbeat file exists in CI, so we only assert
     // the contract: if not null, it must be >= 0.
-    const result = latestHeartbeatAgeSec("crew-coder");
+    const result = latestHeartbeatAgeSec("iris-coder");
     if (result !== null) {
       assert.ok(result >= 0, `expected non-negative age, got ${result}`);
     }
@@ -166,22 +166,22 @@ describe("isAgentDaemonRunning", () => {
 
   it("returns false for an agent that has never been started", () => {
     // An agent whose name would never match any real pid file or heartbeat
-    assert.equal(isAgentDaemonRunning("crew-phantom-never-started-00000"), false);
+    assert.equal(isAgentDaemonRunning("iris-phantom-never-started-00000"), false);
   });
 
-  it("respects CREWSWARM_RT_HEARTBEAT_WINDOW_SEC env override", () => {
+  it("respects IRIS_RT_HEARTBEAT_WINDOW_SEC env override", () => {
     // With window=0, even a very recent heartbeat would appear stale — the
     // function should still return a boolean without throwing.
-    const orig = process.env.CREWSWARM_RT_HEARTBEAT_WINDOW_SEC;
-    process.env.CREWSWARM_RT_HEARTBEAT_WINDOW_SEC = "0";
+    const orig = process.env.IRIS_RT_HEARTBEAT_WINDOW_SEC;
+    process.env.IRIS_RT_HEARTBEAT_WINDOW_SEC = "0";
     try {
-      const result = isAgentDaemonRunning("crew-coder");
+      const result = isAgentDaemonRunning("iris-coder");
       assert.equal(typeof result, "boolean");
     } finally {
       if (orig === undefined) {
-        delete process.env.CREWSWARM_RT_HEARTBEAT_WINDOW_SEC;
+        delete process.env.IRIS_RT_HEARTBEAT_WINDOW_SEC;
       } else {
-        process.env.CREWSWARM_RT_HEARTBEAT_WINDOW_SEC = orig;
+        process.env.IRIS_RT_HEARTBEAT_WINDOW_SEC = orig;
       }
     }
   });
@@ -217,18 +217,18 @@ describe("resolveSpawnTargets – default / fallback", () => {
 
 describe("resolveSpawnTargets – payload.agents array", () => {
   it("returns the provided agents array verbatim", () => {
-    const targets = resolveSpawnTargets({ agents: ["crew-coder", "crew-qa"] });
-    assert.deepEqual(targets, ["crew-coder", "crew-qa"]);
+    const targets = resolveSpawnTargets({ agents: ["iris-coder", "iris-qa"] });
+    assert.deepEqual(targets, ["iris-coder", "iris-qa"]);
   });
 
   it("trims whitespace from agent names", () => {
-    const targets = resolveSpawnTargets({ agents: ["  crew-coder  ", "crew-qa"] });
-    assert.deepEqual(targets, ["crew-coder", "crew-qa"]);
+    const targets = resolveSpawnTargets({ agents: ["  iris-coder  ", "iris-qa"] });
+    assert.deepEqual(targets, ["iris-coder", "iris-qa"]);
   });
 
   it("filters out empty strings", () => {
-    const targets = resolveSpawnTargets({ agents: ["crew-coder", "", "  "] });
-    assert.deepEqual(targets, ["crew-coder"]);
+    const targets = resolveSpawnTargets({ agents: ["iris-coder", "", "  "] });
+    assert.deepEqual(targets, ["iris-coder"]);
   });
 
   it("falls back to all agents when every entry is empty", () => {
@@ -238,15 +238,15 @@ describe("resolveSpawnTargets – payload.agents array", () => {
   });
 
   it("handles a single-item array", () => {
-    const targets = resolveSpawnTargets({ agents: ["crew-pm"] });
-    assert.deepEqual(targets, ["crew-pm"]);
+    const targets = resolveSpawnTargets({ agents: ["iris-pm"] });
+    assert.deepEqual(targets, ["iris-pm"]);
   });
 });
 
 describe("resolveSpawnTargets – payload.agent string", () => {
   it("returns a single-element array for a named agent", () => {
-    const targets = resolveSpawnTargets({ agent: "crew-fixer" });
-    assert.deepEqual(targets, ["crew-fixer"]);
+    const targets = resolveSpawnTargets({ agent: "iris-fixer" });
+    assert.deepEqual(targets, ["iris-fixer"]);
   });
 
   it("returns all agents when agent is 'all'", () => {
@@ -262,8 +262,8 @@ describe("resolveSpawnTargets – payload.agent string", () => {
   });
 
   it("trims whitespace from agent string", () => {
-    const targets = resolveSpawnTargets({ agent: "  crew-github  " });
-    assert.deepEqual(targets, ["crew-github"]);
+    const targets = resolveSpawnTargets({ agent: "  iris-github  " });
+    assert.deepEqual(targets, ["iris-github"]);
   });
 
   it("falls back to all when agent is whitespace-only string", () => {
@@ -275,8 +275,8 @@ describe("resolveSpawnTargets – payload.agent string", () => {
 
 describe("resolveSpawnTargets – payload.target string", () => {
   it("returns a single-element array when target is provided", () => {
-    const targets = resolveSpawnTargets({ target: "crew-github" });
-    assert.deepEqual(targets, ["crew-github"]);
+    const targets = resolveSpawnTargets({ target: "iris-github" });
+    assert.deepEqual(targets, ["iris-github"]);
   });
 
   it("returns all agents when target is 'all'", () => {
@@ -292,25 +292,25 @@ describe("resolveSpawnTargets – payload.target string", () => {
   });
 
   it("trims whitespace from target string", () => {
-    const targets = resolveSpawnTargets({ target: "  crew-pm  " });
-    assert.deepEqual(targets, ["crew-pm"]);
+    const targets = resolveSpawnTargets({ target: "  iris-pm  " });
+    assert.deepEqual(targets, ["iris-pm"]);
   });
 });
 
 describe("resolveSpawnTargets – priority: agents > agent > target", () => {
   it("agents array takes priority over agent string", () => {
     const targets = resolveSpawnTargets({
-      agents: ["crew-coder"],
-      agent: "crew-pm",
+      agents: ["iris-coder"],
+      agent: "iris-pm",
     });
-    assert.deepEqual(targets, ["crew-coder"]);
+    assert.deepEqual(targets, ["iris-coder"]);
   });
 
   it("agent string takes priority over target string", () => {
     const targets = resolveSpawnTargets({
-      agent: "crew-pm",
-      target: "crew-qa",
+      agent: "iris-pm",
+      target: "iris-qa",
     });
-    assert.deepEqual(targets, ["crew-pm"]);
+    assert.deepEqual(targets, ["iris-pm"]);
   });
 });

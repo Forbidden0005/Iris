@@ -73,7 +73,7 @@ export async function loadProjects() {
         +   '<button data-action="edit-roadmap" data-id="' + id + '" class="btn-ghost" style="font-size:13px;" id="roadmap-btn-' + id + '">📋 Roadmap</button>'
         +   '<button data-action="chat-project" data-id="' + id + '" data-name="' + escHtml(p.name) + '" class="btn-ghost" style="font-size:13px;">🧠 Chat</button>'
         +   retryBtn
-        +   '<label style="margin-left:auto;display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:var(--text-3);user-select:none;" title="When enabled, crew-lead automatically starts the next ROADMAP phase when the current pipeline completes">'
+        +   '<label style="margin-left:auto;display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:var(--text-3);user-select:none;" title="When enabled, iris-lead automatically starts the next ROADMAP phase when the current pipeline completes">'
         +     '<input type="checkbox" data-action="toggle-auto-advance" data-id="' + id + '" ' + (p.autoAdvance ? 'checked' : '') + ' style="accent-color:var(--green);width:14px;height:14px;cursor:pointer;">'
         +     '⚡ Auto-advance'
         +   '</label>'
@@ -182,7 +182,7 @@ export function initProjectsList(deps) {
 
 // ── Chat project dropdown ─────────────────────────────────────────────────────
 
-const CHAT_ACTIVE_PROJECT_KEY = 'crewswarm_chat_active_project_id';
+const CHAT_ACTIVE_PROJECT_KEY = 'iris_chat_active_project_id';
 
 export function getStoredChatProjectId() {
   try { return localStorage.getItem(CHAT_ACTIVE_PROJECT_KEY) || ''; } catch { return ''; }

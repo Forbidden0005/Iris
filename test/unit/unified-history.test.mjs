@@ -113,9 +113,9 @@ describe("formatHistory", () => {
   });
 
   it("includes agent name when present", () => {
-    const input = [{ role: "assistant", content: "reply", agent: "crew-coder", ts: 1 }];
+    const input = [{ role: "assistant", content: "reply", agent: "iris-coder", ts: 1 }];
     const out = formatHistory(input);
-    assert.equal(out[0].name, "crew-coder");
+    assert.equal(out[0].name, "iris-coder");
   });
 
   it("omits name when agent is absent", () => {

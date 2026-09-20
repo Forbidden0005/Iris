@@ -52,7 +52,7 @@ export async function loadMemoryStats() {
       storageInfoEl.innerHTML = `
         Location: <code style="font-size:11px;background:var(--bg-2);padding:2px 6px;border-radius:3px;">${data.storageDir || 'N/A'}</code><br>
         Status: <strong style="color:var(--green);">${data.available ? '✅ Active' : '⚠️ Unavailable'}</strong><br>
-        <span style="font-size:10px;color:var(--text-3);">Set CREW_MEMORY_DIR to customize location</span>
+        <span style="font-size:10px;color:var(--text-3);">Set IRIS_MEMORY_DIR to customize location</span>
       `;
     }
   } catch (err) {
