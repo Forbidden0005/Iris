@@ -66,12 +66,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/crewswarm/crewswarm.git",
+    "url": "https://github.com/Forbidden0005/Iris.git",
     "directory": "iris-cli"
   },
   "homepage": "https://iris.ai/cli.html",
   "bugs": {
-    "url": "https://github.com/crewswarm/crewswarm/issues"
+    "url": "https://github.com/Forbidden0005/Iris/issues"
   },
   "author": "iris <info@iris.ai>",
   "license": "MIT",

@@ -30,7 +30,7 @@ The full platform also has 20+ specialist agents, 6 coding engines (Claude Code,
 MIT license, local-first, TypeScript.
 
 - Site: https://iris.ai
-- Repo: https://github.com/crewswarm/crewswarm
+- Repo: https://github.com/Forbidden0005/Iris
 - CLI benchmarks: https://iris.ai/cli.html
 
 Happy to share details on the engine internals or benchmark methodology.
@@ -56,7 +56,7 @@ Best part: Codex CLI only works with OpenAI models. iris-cli works with 40+ mode
 
 The broader platform: 20+ specialist agents, 6 coding engines running in parallel, session resume across all of them, PM loop for autonomous task execution.
 
-Open source (MIT), local-first: https://github.com/crewswarm/crewswarm
+Open source (MIT), local-first: https://github.com/Forbidden0005/Iris
 
 ---
 
@@ -81,7 +81,7 @@ The whole thing is ~64K lines of TypeScript, MIT licensed, local-first.
 Stack: Node.js, TypeScript, Monaco, WebSocket bus (ATAT protocol — 85% fewer tokens than JSON-RPC), 227 REST API endpoints.
 
 - Demo: https://iris.ai
-- Repo: https://github.com/crewswarm/crewswarm
+- Repo: https://github.com/Forbidden0005/Iris
 - Vibe: https://iris.ai/vibe.html
 
 ---
@@ -101,4 +101,4 @@ The full platform: 6 coding engines (Claude Code, Cursor, Codex, Gemini, OpenCod
 Free, open source (MIT), local-first.
 
 https://iris.ai
-https://github.com/crewswarm/crewswarm
+https://github.com/Forbidden0005/Iris

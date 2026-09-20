@@ -136,7 +136,7 @@ iris chat "refactor the auth middleware and write tests"
 Or clone the full stack:
 
 ```bash
-git clone https://github.com/crewswarm/crewswarm
+git clone https://github.com/Forbidden0005/Iris
 cd iris && bash install.sh
 ```
 
@@ -145,7 +145,7 @@ Open the dashboard at `http://localhost:4319` and Vibe at `http://localhost:3333
 ## Links
 
 - **Site:** https://iris.ai
-- **Repo:** https://github.com/crewswarm/crewswarm
+- **Repo:** https://github.com/Forbidden0005/Iris
 - **Vibe IDE:** https://iris.ai/vibe.html
 - **Models & benchmarks:** https://iris.ai/models.html
 - **Twitter:** https://twitter.com/iris

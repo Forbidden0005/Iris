@@ -47,13 +47,13 @@ This is the best path when you want to:
 Fresh machine:
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/crewswarm/crewswarm/main/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/Forbidden0005/Iris/main/install.sh)
 ```
 
 Cloned repo:
 
 ```bash
-git clone https://github.com/crewswarm/crewswarm
+git clone https://github.com/Forbidden0005/Iris
 cd iris
 bash install.sh
 ```
@@ -104,13 +104,13 @@ This is the best path for:
 For a server or team box:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/crewswarm/crewswarm/main/scripts/install-docker.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Forbidden0005/Iris/main/scripts/install-docker.sh | bash
 ```
 
 Or:
 
 ```bash
-git clone https://github.com/crewswarm/crewswarm
+git clone https://github.com/Forbidden0005/Iris
 cd iris
 docker compose up -d
 ```

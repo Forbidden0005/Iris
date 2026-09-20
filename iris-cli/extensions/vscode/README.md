@@ -15,7 +15,7 @@ iris must be running on your system:
 
 ```bash
 # Install iris
-git clone https://github.com/crewswarm/crewswarm
+git clone https://github.com/Forbidden0005/Iris
 cd iris
 npm install
 bash install.sh
@@ -140,6 +140,6 @@ MIT
 
 ## Links
 
-- [iris GitHub](https://github.com/crewswarm/crewswarm)
+- [iris GitHub](https://github.com/Forbidden0005/Iris)
 - [Documentation](https://iris.com/docs)
-- [Report Issues](https://github.com/crewswarm/crewswarm/issues)
+- [Report Issues](https://github.com/Forbidden0005/Iris/issues)

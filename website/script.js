@@ -150,9 +150,9 @@ function initDocsFeed() {
       title: 'Canonical Runtime Docs',
       description: 'Follow the current source of truth for routing, runtime identity, shared memory, and testing rules.',
       links: [
-        { label: 'Canonical Docs Map', href: 'https://github.com/crewswarm/crewswarm/blob/main/docs/CANONICAL/README.md' },
-        { label: 'Routing', href: 'https://github.com/crewswarm/crewswarm/blob/main/docs/CANONICAL/ROUTING.md' },
-        { label: 'Runtime', href: 'https://github.com/crewswarm/crewswarm/blob/main/docs/CANONICAL/RUNTIME.md' }
+        { label: 'Canonical Docs Map', href: 'https://github.com/Forbidden0005/Iris/blob/main/docs/CANONICAL/README.md' },
+        { label: 'Routing', href: 'https://github.com/Forbidden0005/Iris/blob/main/docs/CANONICAL/ROUTING.md' },
+        { label: 'Runtime', href: 'https://github.com/Forbidden0005/Iris/blob/main/docs/CANONICAL/RUNTIME.md' }
       ]
     },
     {
@@ -160,9 +160,9 @@ function initDocsFeed() {
       title: 'Memory & Context',
       description: 'Understand shared memory layers, migration, retrieval, and project message search behavior.',
       links: [
-        { label: 'Memory (canonical)', href: 'https://github.com/crewswarm/crewswarm/blob/main/docs/CANONICAL/MEMORY.md' },
-        { label: 'iris-cli shared memory', href: 'https://github.com/crewswarm/crewswarm/blob/main/iris-cli/docs/SHARED-MEMORY.md' },
-        { label: 'Unified API overview', href: 'https://github.com/crewswarm/crewswarm/blob/main/docs/UNIFIED-API.md' }
+        { label: 'Memory (canonical)', href: 'https://github.com/Forbidden0005/Iris/blob/main/docs/CANONICAL/MEMORY.md' },
+        { label: 'iris-cli shared memory', href: 'https://github.com/Forbidden0005/Iris/blob/main/iris-cli/docs/SHARED-MEMORY.md' },
+        { label: 'Unified API overview', href: 'https://github.com/Forbidden0005/Iris/blob/main/docs/UNIFIED-API.md' }
       ]
     },
     {
@@ -170,9 +170,9 @@ function initDocsFeed() {
       title: 'Testing & Verification',
       description: 'Smoke tests, verification rules, and fast health checks for dashboard, agents, and MCP surfaces.',
       links: [
-        { label: 'Canonical Testing', href: 'https://github.com/crewswarm/crewswarm/blob/main/docs/CANONICAL/TESTING.md' },
-        { label: 'Health Check Script', href: 'https://github.com/crewswarm/crewswarm/blob/main/scripts/health-check.mjs' },
-        { label: 'Dashboard Validator', href: 'https://github.com/crewswarm/crewswarm/blob/main/scripts/check-dashboard.mjs' }
+        { label: 'Canonical Testing', href: 'https://github.com/Forbidden0005/Iris/blob/main/docs/CANONICAL/TESTING.md' },
+        { label: 'Health Check Script', href: 'https://github.com/Forbidden0005/Iris/blob/main/scripts/health-check.mjs' },
+        { label: 'Dashboard Validator', href: 'https://github.com/Forbidden0005/Iris/blob/main/scripts/check-dashboard.mjs' }
       ]
     },
     {
@@ -180,9 +180,9 @@ function initDocsFeed() {
       title: 'Deployment Paths',
       description: 'Choose between Docker, local development, Vibe, and bridge integrations without digging through the repo.',
       links: [
-        { label: 'Docker Guide', href: 'https://github.com/crewswarm/crewswarm/blob/main/docs/docker.md' },
+        { label: 'Docker Guide', href: 'https://github.com/Forbidden0005/Iris/blob/main/docs/docker.md' },
         { label: 'Deploy Page', href: 'deploy.html' },
-        { label: 'Vibe README', href: 'https://github.com/crewswarm/crewswarm/blob/main/apps/vibe/README.md' }
+        { label: 'Vibe README', href: 'https://github.com/Forbidden0005/Iris/blob/main/apps/vibe/README.md' }
       ]
     },
     {
@@ -190,8 +190,8 @@ function initDocsFeed() {
       title: 'API & Integrations',
       description: 'OpenAPI spec for dashboard, iris-lead, and headless integrations.',
       links: [
-        { label: 'OpenAPI Spec (JSON)', href: 'https://github.com/crewswarm/crewswarm/blob/main/iris-cli/docs/openapi.unified.v1.json' },
-        { label: 'API-UNIFIED-v1', href: 'https://github.com/crewswarm/crewswarm/blob/main/iris-cli/docs/API-UNIFIED-v1.md' }
+        { label: 'OpenAPI Spec (JSON)', href: 'https://github.com/Forbidden0005/Iris/blob/main/iris-cli/docs/openapi.unified.v1.json' },
+        { label: 'API-UNIFIED-v1', href: 'https://github.com/Forbidden0005/Iris/blob/main/iris-cli/docs/API-UNIFIED-v1.md' }
       ]
     }
   ];

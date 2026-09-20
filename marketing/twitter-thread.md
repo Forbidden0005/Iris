@@ -91,7 +91,7 @@ open source (MIT). local-first. no cloud.
 npm i -g iris && iris
 
 https://iris.ai
-https://github.com/crewswarm/crewswarm
+https://github.com/Forbidden0005/Iris
 
 ---
 

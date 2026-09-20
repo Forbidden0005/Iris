@@ -45,6 +45,6 @@ Tested with 40+ models across 12+ providers — works with any OpenAI-compatible
 
 `npm i -g iris && iris` (full platform) or `npm i -g iris-cli && iris doctor` (CLI only)
 
-Repo: https://github.com/crewswarm/crewswarm
+Repo: https://github.com/Forbidden0005/Iris
 Site: https://iris.ai/
 Vibe: https://iris.ai/vibe.html

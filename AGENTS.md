@@ -107,13 +107,13 @@ iris supports three deployment methods:
 **One-line install on any Linux machine:**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/crewswarm/crewswarm/main/scripts/install-docker.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Forbidden0005/Iris/main/scripts/install-docker.sh | bash
 ```
 
 **Or use Docker Compose manually:**
 
 ```bash
-git clone https://github.com/crewswarm/crewswarm.git
+git clone https://github.com/Forbidden0005/Iris.git
 cd iris
 docker compose up -d
 ```
@@ -125,7 +125,7 @@ docker compose up -d
 docker pull iris/iris:latest
 
 # GitHub Container Registry
-docker pull ghcr.io/crewswarm/crewswarm:latest
+docker pull ghcr.io/forbidden0005/iris:latest
 ```
 
 **Perfect for:**
