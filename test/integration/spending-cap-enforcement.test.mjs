@@ -34,7 +34,7 @@ const {
 
 const TEST_DIR = path.join(os.tmpdir(), `iris-test-${process.pid}`);
 
-function writeCrewswarmConfig(config) {
+function writeIrisConfig(config) {
   const configPath = getConfigPath("iris.json");
   fs.mkdirSync(path.dirname(configPath), { recursive: true });
   fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
@@ -61,7 +61,7 @@ describe("spending cap enforcement — full flow", () => {
   // ── Global token limit ──────────────────────────────────────────────────
 
   it("blocks when global daily token limit is exceeded", () => {
-    writeCrewswarmConfig({
+    writeIrisConfig({
       globalSpendingCaps: { dailyTokenLimit: 1000 },
       agents: [],
     });
@@ -77,7 +77,7 @@ describe("spending cap enforcement — full flow", () => {
   });
 
   it("allows when under global daily token limit", () => {
-    writeCrewswarmConfig({
+    writeIrisConfig({
       globalSpendingCaps: { dailyTokenLimit: 10000 },
       agents: [],
     });
@@ -91,7 +91,7 @@ describe("spending cap enforcement — full flow", () => {
   // ── Global cost limit ───────────────────────────────────────────────────
 
   it("blocks when global daily cost limit is exceeded", () => {
-    writeCrewswarmConfig({
+    writeIrisConfig({
       globalSpendingCaps: { dailyCostLimitUSD: 5.0 },
       agents: [],
     });
@@ -108,7 +108,7 @@ describe("spending cap enforcement — full flow", () => {
   // ── Per-agent token limit ───────────────────────────────────────────────
 
   it("enforces per-agent token limit with 'stop' action", () => {
-    writeCrewswarmConfig({
+    writeIrisConfig({
       agents: [{
         id: "iris-coder",
         spending: { dailyTokenLimit: 500, onExceed: "stop" },
@@ -124,7 +124,7 @@ describe("spending cap enforcement — full flow", () => {
   });
 
   it("enforces per-agent cost limit with 'notify' action (default)", () => {
-    writeCrewswarmConfig({
+    writeIrisConfig({
       agents: [{
         id: "iris-coder",
         spending: { dailyCostLimitUSD: 1.0 },
@@ -139,7 +139,7 @@ describe("spending cap enforcement — full flow", () => {
   });
 
   it("enforces per-agent limit with 'pause' action", () => {
-    writeCrewswarmConfig({
+    writeIrisConfig({
       agents: [{
         id: "iris-qa",
         spending: { dailyTokenLimit: 200, onExceed: "pause" },
@@ -156,7 +156,7 @@ describe("spending cap enforcement — full flow", () => {
   // ── Agent not in config → no cap ───────────────────────────────────────
 
   it("does not enforce caps for agents not in config", () => {
-    writeCrewswarmConfig({
+    writeIrisConfig({
       agents: [{
         id: "iris-coder",
         spending: { dailyTokenLimit: 100, onExceed: "stop" },
@@ -173,7 +173,7 @@ describe("spending cap enforcement — full flow", () => {
   // ── Global cap takes priority over per-agent ────────────────────────────
 
   it("global cap blocks even if per-agent cap is not exceeded", () => {
-    writeCrewswarmConfig({
+    writeIrisConfig({
       globalSpendingCaps: { dailyTokenLimit: 1000 },
       agents: [{
         id: "iris-coder",
@@ -194,7 +194,7 @@ describe("spending cap enforcement — full flow", () => {
   // ── recordTokenUsage integration ────────────────────────────────────────
 
   it("recordTokenUsage accumulates spending that checkSpendingCap reads", () => {
-    writeCrewswarmConfig({
+    writeIrisConfig({
       agents: [{
         id: "iris-coder",
         spending: { dailyTokenLimit: 500, onExceed: "stop" },
@@ -222,7 +222,7 @@ describe("spending cap enforcement — full flow", () => {
   // ── Daily reset ─────────────────────────────────────────────────────────
 
   it("resets spending on new day (different date in spending file)", () => {
-    writeCrewswarmConfig({
+    writeIrisConfig({
       globalSpendingCaps: { dailyTokenLimit: 1000 },
       agents: [],
     });

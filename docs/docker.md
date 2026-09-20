@@ -5,13 +5,13 @@ Run iris on any Linux server with Docker.
 ## Quick start
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/crewswarm/crewswarm/main/scripts/install-docker.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Forbidden0005/Iris/main/scripts/install-docker.sh | bash
 ```
 
 Or manually:
 
 ```bash
-git clone https://github.com/crewswarm/crewswarm.git
+git clone https://github.com/Forbidden0005/Iris.git
 cd iris
 docker compose up -d
 ```
@@ -20,7 +20,7 @@ docker compose up -d
 
 ```bash
 docker pull iris/iris:latest
-docker pull ghcr.io/crewswarm/crewswarm:latest
+docker pull ghcr.io/forbidden0005/iris:latest
 ```
 
 **Multi-arch:** AMD64 + ARM64 (Apple Silicon, Raspberry Pi, Graviton)

@@ -375,7 +375,7 @@ function projectMessageFile(projectId) {
   return path.join(MESSAGE_DIR, `${safeId}.jsonl`);
 }
 
-function loadCrewswarmRtToken() {
+function loadIrisRtToken() {
   const envToken = (process.env.IRIS_RT_AUTH_TOKEN || "").trim();
   if (envToken) return envToken;
   for (const file of [
@@ -1443,7 +1443,7 @@ async function handleCliChatViaCrewLead(req, res, body) {
   const sessionId = String(body.sessionId || "studio-cli");
   const engine = body.engine || "";
   const model = body.model ? String(body.model) : "";
-  const token = loadCrewswarmRtToken();
+  const token = loadIrisRtToken();
 
   if (!token) {
     throw new Error("Iris RT auth token unavailable");
@@ -1858,7 +1858,7 @@ export const server = http.createServer(async (req, res) => {
   if (parsedUrl.pathname === "/api/studio/clear-cli-session" && req.method === "POST") {
     try {
       const body = await readBody(req);
-      const token = loadCrewswarmRtToken();
+      const token = loadIrisRtToken();
       const upstream = await fetch("http://127.0.0.1:5010/api/engine-passthrough/clear-session", {
         method: "POST",
         headers: { "content-type": "application/json", authorization: `Bearer ${token}` },

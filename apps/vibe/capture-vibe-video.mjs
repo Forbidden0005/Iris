@@ -174,7 +174,7 @@ function buildSplitSceneHtml() {
           </section>
           <section class="command">
             <div class="eyebrow">Install</div>
-            <code>bash &lt;(curl -fsSL https://raw.githubusercontent.com/crewswarm/crewswarm/main/install.sh)</code>
+            <code>bash &lt;(curl -fsSL https://raw.githubusercontent.com/Forbidden0005/Iris/main/install.sh)</code>
           </section>
         </div>
         <section class="panes">

@@ -1,6 +1,6 @@
 # Iris Plugin for OpenClaw
 
-Connects your OpenClaw agents to a local [Iris](https://github.com/crewswarm/crewswarm) multi-agent runtime.
+Connects your OpenClaw agents to a local [Iris](https://github.com/Forbidden0005/Iris) multi-agent runtime.
 
 Your OpenClaw agents gain three new tools — `iris_dispatch`, `iris_status`, and `iris_agents` — plus a `/iris` slash command and Gateway RPC methods. **No LLM credentials are shared** — only a single auth token.
 
@@ -22,7 +22,7 @@ Your OpenClaw agents gain three new tools — `iris_dispatch`, `iris_status`, an
 
 ## Requirements
 
-- [Iris](https://github.com/crewswarm/crewswarm) running locally (`npm run restart-all`)
+- [Iris](https://github.com/Forbidden0005/Iris) running locally (`npm run restart-all`)
 - `iris-lead` reachable at `http://127.0.0.1:5010` (default)
 - Your RT auth token from `~/.iris/config.json → rt.authToken`
 

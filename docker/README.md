@@ -7,13 +7,13 @@
 ### One-Line Install (Recommended)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/crewswarm/crewswarm/main/docker/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Forbidden0005/Iris/main/docker/install.sh | bash
 ```
 
 ### Manual Docker Compose
 
 ```bash
-git clone https://github.com/crewswarm/crewswarm.git
+git clone https://github.com/Forbidden0005/Iris.git
 cd iris/docker
 docker compose up -d
 ```
@@ -25,7 +25,7 @@ docker compose up -d
 docker pull iris/iris:latest
 
 # GitHub Container Registry (ghcr.io)
-docker pull ghcr.io/crewswarm/crewswarm:latest
+docker pull ghcr.io/forbidden0005/iris:latest
 ```
 
 **Multi-arch support:** AMD64 + ARM64 (Apple Silicon, Raspberry Pi, AWS Graviton)
@@ -64,7 +64,7 @@ Run on a VPS for your team to share one iris instance.
 ```bash
 # DigitalOcean, AWS, GCP, Azure
 ssh root@your-server.com
-curl -fsSL https://raw.githubusercontent.com/crewswarm/crewswarm/main/docker/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Forbidden0005/Iris/main/docker/install.sh | bash
 
 # Access dashboard: http://your-server.com:4319
 ```
@@ -80,7 +80,7 @@ Run on Raspberry Pi 4/5, NUC, or home server.
 
 ```bash
 # Same install script works on ARM64
-curl -fsSL https://raw.githubusercontent.com/crewswarm/crewswarm/main/docker/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Forbidden0005/Iris/main/docker/install.sh | bash
 ```
 
 ### 3. CI/CD Integration

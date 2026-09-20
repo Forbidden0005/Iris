@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # iris Docker Installer — one-line setup for cloud VMs and dedicated servers
-# Usage: curl -fsSL https://raw.githubusercontent.com/crewswarm/crewswarm/main/scripts/install-docker.sh | bash
+# Usage: curl -fsSL https://raw.githubusercontent.com/Forbidden0005/Iris/main/scripts/install-docker.sh | bash
 
 set -e
 
@@ -112,7 +112,7 @@ if [[ -d "${INSTALL_DIR}/.git" ]]; then
   git pull -q
 else
   echo "Cloning iris repository..."
-  git clone https://github.com/crewswarm/crewswarm.git "${INSTALL_DIR}"
+  git clone https://github.com/Forbidden0005/Iris.git "${INSTALL_DIR}"
   cd "${INSTALL_DIR}"
 fi
 

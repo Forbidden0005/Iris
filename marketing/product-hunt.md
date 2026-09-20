@@ -28,7 +28,7 @@ MIT license. Local-first. No cloud dependency. Your code never leaves your machi
 
 ## Links
 - Website: https://iris.ai
-- GitHub: https://github.com/crewswarm/crewswarm
+- GitHub: https://github.com/Forbidden0005/Iris
 - Twitter: https://twitter.com/iris
 
 ## Maker Comment

@@ -35,7 +35,7 @@ Non-interactive environment variables:
   IRIS_START_NOW=1              Start the local Iris stack after install
 
 Typical one-file local install:
-  bash <(curl -fsSL https://raw.githubusercontent.com/crewswarm/crewswarm/main/install.sh)
+  bash <(curl -fsSL https://raw.githubusercontent.com/Forbidden0005/Iris/main/install.sh)
 
 Typical headless install:
   IRIS_SETUP_MCP=1 IRIS_START_NOW=1 bash install.sh --non-interactive

@@ -57,14 +57,14 @@
     <span class="sep">/</span>
     <span>Changelog</span>
     <div class="links">
-      <a href="https://github.com/crewswarm/crewswarm/blob/main/CHANGELOG.md" target="_blank" rel="noopener">Raw</a>
+      <a href="https://github.com/Forbidden0005/Iris/blob/main/CHANGELOG.md" target="_blank" rel="noopener">Raw</a>
       <a href="docs.html">Docs</a>
       <a href="index.html">Home</a>
     </div>
   </div>
   <div class="container">
     <h1>Changelog</h1>
-    <p class="subtitle">What's new in iris. See the <a href="https://github.com/crewswarm/crewswarm/blob/main/CHANGELOG.md" style="color:var(--accent);">full changelog on GitHub</a>.</p>
+    <p class="subtitle">What's new in iris. See the <a href="https://github.com/Forbidden0005/Iris/blob/main/CHANGELOG.md" style="color:var(--accent);">full changelog on GitHub</a>.</p>
     <div id="releases"></div>
   </div>
   <script>
@@ -78,11 +78,11 @@
         if (localRes && localRes.ok && (await localRes.clone().text()).startsWith('#')) {
           md = await localRes.text();
         } else {
-          const ghRes = await fetch('https://raw.githubusercontent.com/crewswarm/crewswarm/main/CHANGELOG.md');
+          const ghRes = await fetch('https://raw.githubusercontent.com/Forbidden0005/Iris/main/CHANGELOG.md');
           md = await ghRes.text();
         }
       } catch {
-        container.innerHTML = '<p style="color:var(--text-3)">Could not load changelog. <a href="https://github.com/crewswarm/crewswarm/blob/main/CHANGELOG.md" style="color:var(--accent)">View on GitHub</a>.</p>';
+        container.innerHTML = '<p style="color:var(--text-3)">Could not load changelog. <a href="https://github.com/Forbidden0005/Iris/blob/main/CHANGELOG.md" style="color:var(--accent)">View on GitHub</a>.</p>';
         return;
       }
 
