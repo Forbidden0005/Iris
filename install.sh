@@ -754,10 +754,24 @@ if [[ "$START_NOW" =~ ^[Yy] ]]; then
     echo -e "${GREEN}✓ up${RESET}  (${elapsed}s)"
   }
 
+  # Portable TCP port check: `nc` isn't installed by default on Git Bash for
+  # Windows, so a plain `nc -z` reports every port as closed regardless of
+  # whether the service is actually up. Bash's own /dev/tcp pseudo-device
+  # works the same way on Linux, macOS, and Git Bash/MSYS, so prefer it and
+  # fall back to nc only if /dev/tcp isn't available for some reason.
+  port_open() {
+    local port="$1"
+    if (exec 3<>"/dev/tcp/127.0.0.1/$port") 2>/dev/null; then
+      exec 3>&- 3<&-
+      return 0
+    fi
+    command -v nc >/dev/null 2>&1 && nc -z 127.0.0.1 "$port" 2>/dev/null
+  }
+
   wait_for_port() {
     local label="$1" port="$2" timeout=30 elapsed=0
     printf "  %-22s" "$label"
-    while ! nc -z 127.0.0.1 "$port" 2>/dev/null; do
+    while ! port_open "$port"; do
       sleep 1; elapsed=$((elapsed + 1))
       [[ $elapsed -ge $timeout ]] && { echo -e "${RED}✗ timed out${RESET}"; return 1; }
     done
