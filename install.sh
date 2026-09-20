@@ -58,6 +58,20 @@ skip()    { echo -e "  ${YELLOW}–${RESET} $*"; }
 error()   { echo -e "${RED}✗${RESET} $*"; exit 1; }
 header()  { echo -e "\n${BOLD}$*${RESET}"; }
 
+# Portable in-place sed: BSD/macOS sed requires `-i ''`, GNU sed (Linux, Git
+# Bash on Windows) treats a detached '' as the script and the real script as
+# the filename, so `sed -i '' "s|...|" file` silently fails on GNU sed with
+# "can't read s|...|: No such file or directory". Detect via a real capability
+# probe rather than uname, since Git Bash reports MINGW/MSYS, not Linux/Darwin.
+sed_inplace() {
+  local script="$1"; shift
+  if sed --version >/dev/null 2>&1; then
+    sed -i "$script" "$@"      # GNU sed
+  else
+    sed -i '' "$script" "$@"   # BSD/macOS sed
+  fi
+}
+
 header "╔════════════════════════════════╗"
 header "║     Iris  Installer       ║"
 header "╚════════════════════════════════╝"
@@ -329,7 +343,7 @@ if [[ -d "$SWIFTBAR_APP" ]] || [[ -d "$HOME/Applications/SwiftBar.app" ]]; then
   if mkdir -p "$SWIFTBAR_PLUGIN_DIR" 2>/dev/null && \
      cp "$SWIFTBAR_SRC" "$SWIFTBAR_PLUGIN_DIR/openswitch.10s.sh" 2>/dev/null; then
     chmod +x "$SWIFTBAR_PLUGIN_DIR/openswitch.10s.sh"
-    sed -i '' "s|^IRIS_DIR=.*|IRIS_DIR=\"$REPO_DIR\"|" \
+    sed_inplace "s|^IRIS_DIR=.*|IRIS_DIR=\"$REPO_DIR\"|" \
       "$SWIFTBAR_PLUGIN_DIR/openswitch.10s.sh" 2>/dev/null || true
     success "SwiftBar plugin installed → menu bar status active"
   else
@@ -422,7 +436,7 @@ if [[ "$SETUP_TG" =~ ^[Yy] ]]; then
     # Add to .env if it exists, otherwise write one
     ENV_FILE="$REPO_DIR/.env"
     if [[ -f "$ENV_FILE" ]] && grep -q "TELEGRAM_BOT_TOKEN" "$ENV_FILE"; then
-      sed -i '' "s|^TELEGRAM_BOT_TOKEN=.*|TELEGRAM_BOT_TOKEN=$TG_TOKEN|" "$ENV_FILE"
+      sed_inplace "s|^TELEGRAM_BOT_TOKEN=.*|TELEGRAM_BOT_TOKEN=$TG_TOKEN|" "$ENV_FILE"
     else
       echo "" >> "$ENV_FILE"
       echo "TELEGRAM_BOT_TOKEN=$TG_TOKEN" >> "$ENV_FILE"
@@ -607,8 +621,8 @@ if [[ "$SETUP_AUTO" =~ ^[Yy] ]]; then
   AUTO_MS=$(( AUTO_INTERVAL * 60 * 1000 ))
 
   if [[ -f "$ENV_FILE" ]] && grep -q "IRIS_BG_CONSCIOUSNESS" "$ENV_FILE"; then
-    sed -i '' "s|^IRIS_BG_CONSCIOUSNESS=.*|IRIS_BG_CONSCIOUSNESS=1|" "$ENV_FILE"
-    sed -i '' "s|^IRIS_BG_CONSCIOUSNESS_INTERVAL_MS=.*|IRIS_BG_CONSCIOUSNESS_INTERVAL_MS=$AUTO_MS|" "$ENV_FILE"
+    sed_inplace "s|^IRIS_BG_CONSCIOUSNESS=.*|IRIS_BG_CONSCIOUSNESS=1|" "$ENV_FILE"
+    sed_inplace "s|^IRIS_BG_CONSCIOUSNESS_INTERVAL_MS=.*|IRIS_BG_CONSCIOUSNESS_INTERVAL_MS=$AUTO_MS|" "$ENV_FILE"
   else
     echo "" >> "$ENV_FILE"
     echo "IRIS_BG_CONSCIOUSNESS=1" >> "$ENV_FILE"
