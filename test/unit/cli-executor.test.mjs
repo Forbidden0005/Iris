@@ -27,7 +27,7 @@ test("buildCLICommand maps provider model strings to Cursor default (composer-2-
     "--print",
     "--yolo",
     "--model",
-    process.env.CREWSWARM_CURSOR_MODEL || "composer-2-fast",
+    process.env.IRIS_CURSOR_MODEL || "composer-2-fast",
   ]);
   assert.equal(result.args[4], "inspect this");
 });
@@ -49,14 +49,14 @@ test("buildCLICommand uses skip-permissions for claude", () => {
   assert.equal(result.cwd, "/tmp");
 });
 
-test("buildCLICommand uses crew chat json mode for crew-cli", () => {
+test("buildCLICommand uses iris chat json mode for iris-cli", () => {
   const result = buildCLICommand(
-    "crew-cli",
+    "iris-cli",
     "inspect this",
     "groq/llama-3.3-70b-versatile",
     "/tmp/project",
   );
-  assert.equal(result.bin, process.env.CREW_CLI_BIN || "crew");
+  assert.equal(result.bin, process.env.IRIS_CLI_BIN || "iris");
   assert.deepEqual(result.args, [
     "chat",
     "inspect this",

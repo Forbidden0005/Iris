@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# openswitchctl — CrewSwarm control script for RT bus, agents, and optional legacy gateway.
+# openswitchctl — Iris control script for RT bus, agents, and optional legacy gateway.
 # Install: ln -s "$(pwd)/scripts/openswitchctl" ~/bin/openswitchctl   (or copy)
-# Requires: CREWSWARM_DIR or OPENCLAW_DIR (legacy) set to repo root.
+# Requires: IRIS_DIR or OPENCLAW_DIR (legacy) set to repo root.
 
 set -euo pipefail
 
@@ -13,26 +13,26 @@ while [[ -L "$SCRIPT_SOURCE" ]]; do
   SCRIPT_SOURCE="$TARGET"
 done
 REPO_ROOT="$(cd "$(dirname "$SCRIPT_SOURCE")/.." && pwd)"
-CREWSWARM_DIR="${CREWSWARM_DIR:-${OPENCLAW_DIR:-$REPO_ROOT}}"
-OPENCLAW_DIR="$CREWSWARM_DIR"   # backward compat
-CFG_DIR="${CREWSWARM_CONFIG_DIR:-${OPENCREWHQ_CONFIG_DIR:-$HOME/.crewswarm}}"
+IRIS_DIR="${IRIS_DIR:-${OPENCLAW_DIR:-$REPO_ROOT}}"
+OPENCLAW_DIR="$IRIS_DIR"   # backward compat
+CFG_DIR="${IRIS_CONFIG_DIR:-${OPENCREWHQ_CONFIG_DIR:-$HOME/.iris}}"
 LEGACY_CFG_DIR="$HOME/.openclaw"
-CFG="$CFG_DIR/crewswarm.json"
+CFG="$CFG_DIR/iris.json"
 [[ -f "$CFG" ]] || CFG="$CFG_DIR/config.json"
 [[ -f "$CFG" ]] || CFG="$LEGACY_CFG_DIR/openclaw.json"
 
-# Resolve CREWSWARM_DIR when script is symlinked (e.g. from ~/bin)
-if [[ -z "${CREWSWARM_DIR:-}" ]] || [[ ! -f "$CREWSWARM_DIR/scripts/start-crew.mjs" ]]; then
+# Resolve IRIS_DIR when script is symlinked (e.g. from ~/bin)
+if [[ -z "${IRIS_DIR:-}" ]] || [[ ! -f "$IRIS_DIR/scripts/start-iris.mjs" ]]; then
   RESOLVED_DIR=$(cd "$(dirname "$SCRIPT_SOURCE")/.." && pwd)
-  if [[ -f "$RESOLVED_DIR/scripts/start-crew.mjs" ]]; then
-    CREWSWARM_DIR="$RESOLVED_DIR"
+  if [[ -f "$RESOLVED_DIR/scripts/start-iris.mjs" ]]; then
+    IRIS_DIR="$RESOLVED_DIR"
     OPENCLAW_DIR="$RESOLVED_DIR"
   fi
 fi
 
 if [[ -z "${NODE:-}" ]]; then
-  if [[ -x "$CREWSWARM_DIR/scripts/resolve-node-bin.sh" ]]; then
-    NODE="$("$CREWSWARM_DIR/scripts/resolve-node-bin.sh")"
+  if [[ -x "$IRIS_DIR/scripts/resolve-node-bin.sh" ]]; then
+    NODE="$("$IRIS_DIR/scripts/resolve-node-bin.sh")"
   else
     NODE="node"
   fi
@@ -41,14 +41,14 @@ else
 fi
 # Prefer RT daemon in repo; fall back to swarm plugin
 if [[ -z "${RT_DAEMON:-}" ]]; then
-  if [[ -f "$CREWSWARM_DIR/scripts/opencrew-rt-daemon.mjs" ]]; then
-    RT_DAEMON="$CREWSWARM_DIR/scripts/opencrew-rt-daemon.mjs"
+  if [[ -f "$IRIS_DIR/scripts/openiris-rt-daemon.mjs" ]]; then
+    RT_DAEMON="$IRIS_DIR/scripts/openiris-rt-daemon.mjs"
   else
-    RT_DAEMON="$HOME/swarm/.opencode/plugin/opencrew-rt-daemon.mjs"
+    RT_DAEMON="$HOME/swarm/.opencode/plugin/openiris-rt-daemon.mjs"
   fi
 fi
-# Same built-ins as start-crew.mjs; prefer shared registry, fall back to safe default.
-DEFAULT_BUILT_IN_AGENTS="crew-main,crew-pm,crew-qa,crew-fixer,crew-coder,crew-coder-front,crew-coder-back,crew-github,crew-security,crew-frontend,crew-copywriter,crew-telegram,orchestrator"
+# Same built-ins as start-iris.mjs; prefer shared registry, fall back to safe default.
+DEFAULT_BUILT_IN_AGENTS="iris-main,iris-pm,iris-qa,iris-fixer,iris-coder,iris-coder-front,iris-coder-back,iris-github,iris-security,iris-frontend,iris-copywriter,iris-telegram,orchestrator"
 BUILT_IN_AGENTS=$(
   "$NODE" -e "
     const fs = require('fs');
@@ -67,13 +67,13 @@ BUILT_IN_AGENTS=$(
       } catch {}
       console.log(fallback);
     })();
-  " "$CREWSWARM_DIR/lib/agent-registry.mjs" "$DEFAULT_BUILT_IN_AGENTS" 2>/dev/null
+  " "$IRIS_DIR/lib/agent-registry.mjs" "$DEFAULT_BUILT_IN_AGENTS" 2>/dev/null
 )
 
-# Load RT token from config (crewswarm first, then legacy openclaw.json)
+# Load RT token from config (iris first, then legacy openclaw.json)
 rt_token() {
   local t
-  for f in "$HOME/.crewswarm/crewswarm.json" "$HOME/.crewswarm/crewswarm.json" "$CFG"; do
+  for f in "$HOME/.iris/iris.json" "$HOME/.iris/iris.json" "$CFG"; do
     [[ -f "$f" ]] || continue
     t=$("$NODE" -e "try{const c=JSON.parse(require('fs').readFileSync('$f','utf8'));console.log(c.rt?.authToken||c.env?.OPENCREW_RT_AUTH_TOKEN||'')}catch(e){console.log('')}" 2>/dev/null)
     [[ -n "$t" ]] && echo "$t" && return
@@ -82,8 +82,8 @@ rt_token() {
 
 # ── agents: list canonical RT agent IDs from config (normalized via registry), fallback to registry built-ins ──
 cmd_agents() {
-  local cfg="$HOME/.crewswarm/crewswarm.json"
-  [[ -f "$cfg" ]] || cfg="$HOME/.crewswarm/crewswarm.json"
+  local cfg="$HOME/.iris/iris.json"
+  [[ -f "$cfg" ]] || cfg="$HOME/.iris/iris.json"
   [[ -f "$cfg" ]] || cfg="$CFG"
   [[ -f "$cfg" ]] || cfg="$LEGACY_CFG_DIR/openclaw.json"
   "$NODE" -e "
@@ -114,10 +114,10 @@ cmd_agents() {
       if (ids.length === 0) ids = builtIns;
       ids.forEach(id => console.log(id));
     })();
-  " "$CREWSWARM_DIR" "$cfg" 2>/dev/null || echo $BUILT_IN_AGENTS | tr ',' '\n'
+  " "$IRIS_DIR" "$cfg" 2>/dev/null || echo $BUILT_IN_AGENTS | tr ',' '\n'
 }
 
-# ── rt_agents: list bridge agents connected to RT daemon (excludes crew-lead) ──
+# ── rt_agents: list bridge agents connected to RT daemon (excludes iris-lead) ──
 rt_agents() {
   "$NODE" -e "
     const http=require('http');
@@ -125,7 +125,7 @@ rt_agents() {
       let d=''; res.on('data',c=>d+=c); res.on('end',()=>{
         try{
           const j=JSON.parse(d);
-          (j.agents||[]).filter(a=>a!=='crew-lead').forEach(a=>console.log(a));
+          (j.agents||[]).filter(a=>a!=='iris-lead').forEach(a=>console.log(a));
         }catch{}
       });
     });
@@ -149,7 +149,7 @@ cmd_list() {
 # ── status: one-line health (rt:up, agents:N/M, agent:up ...) ──
 cmd_status() {
   local rt_state="down" agents_frac="0/0"
-  if pgrep -f "opencrew-rt-daemon" >/dev/null 2>&1; then rt_state="up"; fi
+  if pgrep -f "openiris-rt-daemon" >/dev/null 2>&1; then rt_state="up"; fi
   agents_frac=$(cmd_list)
   local parts="running (rt:${rt_state}, agents:${agents_frac})"
   # Per-agent :up markers from RT daemon (agents that have hello'd in)
@@ -179,47 +179,47 @@ _launchd_stop() {
   fi
 }
 
-# ── start: full stack — RT daemon + bridges + crew-lead + dashboard ──
+# ── start: full stack — RT daemon + bridges + iris-lead + dashboard ──
 cmd_start() {
   export OPENCREW_RT_AUTH_TOKEN=$(rt_token)
   # RT daemon
   if [[ -f "$RT_DAEMON" ]]; then
-    pkill -f "opencrew-rt-daemon" 2>/dev/null || true
+    pkill -f "openiris-rt-daemon" 2>/dev/null || true
     sleep 1
-    nohup "$NODE" "$RT_DAEMON" >> /tmp/opencrew-rt-daemon.log 2>&1 &
+    nohup "$NODE" "$RT_DAEMON" >> /tmp/openiris-rt-daemon.log 2>&1 &
     sleep 2
   fi
   # Agent bridges - kill any strays before starting to prevent duplicates
   pkill -f "gateway-bridge.mjs --rt-daemon" 2>/dev/null || true
   find /tmp -maxdepth 1 -name "bridge-*.pid" -delete 2>/dev/null || true
   sleep 1
-  (cd "$CREWSWARM_DIR" && "$NODE" scripts/start-crew.mjs --force)
+  (cd "$IRIS_DIR" && "$NODE" scripts/start-iris.mjs --force)
   sleep 1
-  # crew-lead
-  pkill -f "crew-lead.mjs" 2>/dev/null || true
+  # iris-lead
+  pkill -f "iris-lead.mjs" 2>/dev/null || true
   sleep 1
-  nohup "$NODE" "$CREWSWARM_DIR/crew-lead.mjs" >> /tmp/crew-lead.log 2>&1 &
+  nohup "$NODE" "$IRIS_DIR/iris-lead.mjs" >> /tmp/iris-lead.log 2>&1 &
   # Dashboard — use launchctl if a LaunchAgent manages it (avoids port conflict)
-  _launchd_start com.crewswarm.dashboard \
-    "nohup '$NODE' '$CREWSWARM_DIR/scripts/dashboard.mjs' >> /tmp/dashboard.log 2>&1"
+  _launchd_start com.iris.dashboard \
+    "nohup '$NODE' '$IRIS_DIR/scripts/dashboard.mjs' >> /tmp/dashboard.log 2>&1"
   # TG / WA bridges — use launchctl if LaunchAgents exist
-  _launchd_start com.crewswarm.telegram \
-    "nohup '$NODE' '$CREWSWARM_DIR/telegram-bridge.mjs' >> /tmp/telegram-bridge.log 2>&1"
-  _launchd_start com.crewswarm.whatsapp \
-    "nohup '$NODE' '$CREWSWARM_DIR/whatsapp-bridge.mjs' >> /tmp/whatsapp-bridge.log 2>&1"
+  _launchd_start com.iris.telegram \
+    "nohup '$NODE' '$IRIS_DIR/telegram-bridge.mjs' >> /tmp/telegram-bridge.log 2>&1"
+  _launchd_start com.iris.whatsapp \
+    "nohup '$NODE' '$IRIS_DIR/whatsapp-bridge.mjs' >> /tmp/whatsapp-bridge.log 2>&1"
   echo "Stack started."
 }
 
 # ── stop: kill the full stack ──
 cmd_stop() {
   pkill -f "gateway-bridge.mjs --rt-daemon" 2>/dev/null || true
-  pkill -f "opencrew-rt-daemon" 2>/dev/null || true
-  pkill -f "crew-lead.mjs" 2>/dev/null || true
+  pkill -f "openiris-rt-daemon" 2>/dev/null || true
+  pkill -f "iris-lead.mjs" 2>/dev/null || true
   pkill -f "opencode serve" 2>/dev/null || true
   # Stop launchd-managed services gracefully (KeepAlive will restart them unless fully unloaded)
-  _launchd_stop com.crewswarm.dashboard "scripts/dashboard.mjs"
-  _launchd_stop com.crewswarm.telegram  "telegram-bridge.mjs"
-  _launchd_stop com.crewswarm.whatsapp  "whatsapp-bridge.mjs"
+  _launchd_stop com.iris.dashboard "scripts/dashboard.mjs"
+  _launchd_stop com.iris.telegram  "telegram-bridge.mjs"
+  _launchd_stop com.iris.whatsapp  "whatsapp-bridge.mjs"
   echo "Stopped."
 }
 
@@ -230,7 +230,7 @@ cmd_send() {
     echo "Usage: openswitchctl send <agent> <message>" >&2
     exit 1
   fi
-  (cd "$CREWSWARM_DIR" && "$NODE" gateway-bridge.mjs --send "$to" "$msg")
+  (cd "$IRIS_DIR" && "$NODE" gateway-bridge.mjs --send "$to" "$msg")
 }
 
 # ── broadcast <message> ──
@@ -240,7 +240,7 @@ cmd_broadcast() {
     echo "Usage: openswitchctl broadcast <message>" >&2
     exit 1
   fi
-  (cd "$CREWSWARM_DIR" && echo "/broadcast $msg" | "$NODE" gateway-bridge.mjs "/broadcast $msg")
+  (cd "$IRIS_DIR" && echo "/broadcast $msg" | "$NODE" gateway-bridge.mjs "/broadcast $msg")
 }
 
 # ── dlq-replay <key> ──
@@ -250,7 +250,7 @@ cmd_dlq_replay() {
     echo "Usage: openswitchctl dlq-replay <key>" >&2
     exit 1
   fi
-  (cd "$CREWSWARM_DIR" && "$NODE" scripts/dlq-replay.mjs "$key")
+  (cd "$IRIS_DIR" && "$NODE" scripts/dlq-replay.mjs "$key")
 }
 
 # ── doctor: preflight check — paths, config, token, provider, services ──
@@ -264,7 +264,7 @@ cmd_doctor() {
   warn() { printf "${YLW}⚠️  ${RST}%s\n   ${DIM}%s${RST}\n" "$1" "$2"; warnings=$((warnings+1)); }
   info() { printf "   ${DIM}%s${RST}\n" "$1"; }
 
-  printf "\n${BLD}🩺  CrewSwarm Doctor — preflight check${RST}\n\n"
+  printf "\n${BLD}🩺  Iris Doctor — preflight check${RST}\n\n"
 
   # ── 1. Node.js version ────────────────────────────────────────────────────
   local node_ver
@@ -280,31 +280,31 @@ cmd_doctor() {
   fi
 
   # ── 2. Repo directory + key files ─────────────────────────────────────────
-  if [[ ! -d "$CREWSWARM_DIR" ]]; then
-    fail "Repo dir not found: $CREWSWARM_DIR" "export CREWSWARM_DIR=/path/to/CrewSwarm"
+  if [[ ! -d "$IRIS_DIR" ]]; then
+    fail "Repo dir not found: $IRIS_DIR" "export IRIS_DIR=/path/to/Iris"
   else
-    pass "Repo dir: $CREWSWARM_DIR"
-    for f in crew-lead.mjs gateway-bridge.mjs scripts/start-crew.mjs scripts/dashboard.mjs scripts/opencrew-rt-daemon.mjs package.json; do
-      if [[ ! -f "$CREWSWARM_DIR/$f" ]]; then
+    pass "Repo dir: $IRIS_DIR"
+    for f in iris-lead.mjs gateway-bridge.mjs scripts/start-iris.mjs scripts/dashboard.mjs scripts/openiris-rt-daemon.mjs package.json; do
+      if [[ ! -f "$IRIS_DIR/$f" ]]; then
         fail "Missing file: $f" "git checkout HEAD -- $f   (or re-clone the repo)"
       fi
     done
-    if [[ -f "$CREWSWARM_DIR/crew-lead.mjs" ]]; then
-      pass "Key files present (crew-lead, gateway-bridge, start-crew, dashboard, rt-daemon, package.json)"
+    if [[ -f "$IRIS_DIR/iris-lead.mjs" ]]; then
+      pass "Key files present (iris-lead, gateway-bridge, start-iris, dashboard, rt-daemon, package.json)"
     fi
   fi
 
   # ── 3. npm dependencies ───────────────────────────────────────────────────
-  if [[ ! -d "$CREWSWARM_DIR/node_modules" ]]; then
-    fail "node_modules missing" "cd $CREWSWARM_DIR && npm install"
+  if [[ ! -d "$IRIS_DIR/node_modules" ]]; then
+    fail "node_modules missing" "cd $IRIS_DIR && npm install"
   else
     pass "node_modules installed"
   fi
 
   # ── 4. Config directory ───────────────────────────────────────────────────
-  local cfg_dir="$HOME/.crewswarm"
+  local cfg_dir="$HOME/.iris"
   if [[ ! -d "$cfg_dir" ]]; then
-    fail "Config dir missing: $cfg_dir" "bash $CREWSWARM_DIR/install.sh   (creates ~/.crewswarm/)"
+    fail "Config dir missing: $cfg_dir" "bash $IRIS_DIR/install.sh   (creates ~/.iris/)"
   else
     pass "Config dir: $cfg_dir"
   fi
@@ -312,7 +312,7 @@ cmd_doctor() {
   # ── 5. config.json + RT auth token ───────────────────────────────────────
   local cfg_json="$cfg_dir/config.json"
   if [[ ! -f "$cfg_json" ]]; then
-    fail "config.json missing" "bash $CREWSWARM_DIR/install.sh   (or: echo '{\"rt\":{\"authToken\":\"my-token\"}}' > $cfg_json)"
+    fail "config.json missing" "bash $IRIS_DIR/install.sh   (or: echo '{\"rt\":{\"authToken\":\"my-token\"}}' > $cfg_json)"
   else
     local token
     token=$("$NODE" -e "
@@ -326,12 +326,12 @@ cmd_doctor() {
     fi
   fi
 
-  # ── 6. crewswarm.json + at least one LLM provider ─────────────────────────
-  local swarm_json="$cfg_dir/crewswarm.json"
+  # ── 6. iris.json + at least one LLM provider ─────────────────────────
+  local swarm_json="$cfg_dir/iris.json"
   if [[ ! -f "$swarm_json" ]]; then
-    fail "crewswarm.json missing" "bash $CREWSWARM_DIR/install.sh   (bootstraps model + provider config)"
+    fail "iris.json missing" "bash $IRIS_DIR/install.sh   (bootstraps model + provider config)"
   else
-    pass "crewswarm.json present"
+    pass "iris.json present"
     local provider_count
     provider_count=$("$NODE" -e "
       try{
@@ -359,8 +359,8 @@ cmd_doctor() {
   fi
 
   # ── 8. Writable workspace ─────────────────────────────────────────────────
-  if [[ ! -w "$CREWSWARM_DIR" ]]; then
-    fail "Repo dir not writable: $CREWSWARM_DIR" "sudo chown -R \$(whoami) $CREWSWARM_DIR"
+  if [[ ! -w "$IRIS_DIR" ]]; then
+    fail "Repo dir not writable: $IRIS_DIR" "sudo chown -R \$(whoami) $IRIS_DIR"
   else
     pass "Repo dir writable"
   fi
@@ -385,14 +385,14 @@ cmd_doctor() {
     req.on('error',()=>console.log('down'));req.on('timeout',()=>{req.destroy();console.log('down');});
   " 2>/dev/null)
   if [[ "$rt_status" == "down" ]]; then
-    warn "RT bus not running (port 18889)" "openswitchctl start   or: node $CREWSWARM_DIR/scripts/opencrew-rt-daemon.mjs &"
+    warn "RT bus not running (port 18889)" "openswitchctl start   or: node $IRIS_DIR/scripts/openiris-rt-daemon.mjs &"
   else
     pass "RT bus up  ($rt_status)"
     # Connected agents
     local connected_agents
-    connected_agents=$(rt_agents | grep -v crew-lead | tr '\n' ' ' | sed 's/ $//')
+    connected_agents=$(rt_agents | grep -v iris-lead | tr '\n' ' ' | sed 's/ $//')
     local agent_count
-    agent_count=$(rt_agents | grep -v crew-lead | wc -l | tr -d ' ')
+    agent_count=$(rt_agents | grep -v iris-lead | wc -l | tr -d ' ')
     if [[ "$agent_count" -gt 0 ]]; then
       pass "Agents connected: $agent_count  ($connected_agents)"
     else
@@ -400,7 +400,7 @@ cmd_doctor() {
     fi
   fi
 
-  # crew-lead
+  # iris-lead
   local cl_status
   cl_status=$("$NODE" -e "
     const http=require('http');
@@ -410,9 +410,9 @@ cmd_doctor() {
     req.on('error',()=>console.log('down'));req.on('timeout',()=>{req.destroy();console.log('down');});
   " 2>/dev/null)
   if [[ "$cl_status" == "down" ]]; then
-    warn "crew-lead not running (port 5010)" "node $CREWSWARM_DIR/crew-lead.mjs &   or: openswitchctl start"
+    warn "iris-lead not running (port 5010)" "node $IRIS_DIR/iris-lead.mjs &   or: openswitchctl start"
   else
-    pass "crew-lead up  (http://127.0.0.1:5010)"
+    pass "iris-lead up  (http://127.0.0.1:5010)"
   fi
 
   # Dashboard
@@ -425,7 +425,7 @@ cmd_doctor() {
     req.on('error',()=>console.log('down'));req.on('timeout',()=>{req.destroy();console.log('down');});
   " 2>/dev/null)
   if [[ "$dash_status" == "down" ]]; then
-    warn "Dashboard not running (port 4319)" "node $CREWSWARM_DIR/scripts/dashboard.mjs &   or: openswitchctl start"
+    warn "Dashboard not running (port 4319)" "node $IRIS_DIR/scripts/dashboard.mjs &   or: openswitchctl start"
   else
     pass "Dashboard up  (http://127.0.0.1:4319)"
   fi
@@ -433,11 +433,11 @@ cmd_doctor() {
   # ── Summary ───────────────────────────────────────────────────────────────
   printf "\n"
   if [[ "$blockers" -eq 0 && "$warnings" -eq 0 ]]; then
-    printf "${GRN}${BLD}✅ All checks passed — CrewSwarm is ready.${RST}\n\n"
+    printf "${GRN}${BLD}✅ All checks passed — Iris is ready.${RST}\n\n"
   elif [[ "$blockers" -eq 0 ]]; then
     printf "${YLW}${BLD}⚠️  Ready with $warnings warning(s) — services may not be running yet.${RST}\n\n"
   else
-    printf "${RED}${BLD}❌ $blockers blocker(s) must be fixed before CrewSwarm will work.${RST}\n"
+    printf "${RED}${BLD}❌ $blockers blocker(s) must be fixed before Iris will work.${RST}\n"
     [[ "$warnings" -gt 0 ]] && printf "${YLW}   $warnings warning(s) also noted.${RST}\n"
     printf "\n"
     return 1
@@ -447,7 +447,7 @@ cmd_doctor() {
 # ── health: live snapshot — queue, agents, failures ──
 cmd_health() {
   local GRN="\033[32m" RED="\033[31m" YLW="\033[33m" BLD="\033[1m" RST="\033[0m" DIM="\033[2m"
-  printf "\n${BLD}📊  CrewSwarm Health Snapshot${RST}\n\n"
+  printf "\n${BLD}📊  Iris Health Snapshot${RST}\n\n"
 
   # ── RT bus ─────────────────────────────────────────────────────────────────
   local rt_out
@@ -484,7 +484,7 @@ cmd_health() {
   done < <(ls /tmp/bridge-*.pid 2>/dev/null)
   printf "   Bridges   — ${bridge_count} running:${bridges:-  (none)}\n"
 
-  # ── crew-lead + queue ──────────────────────────────────────────────────────
+  # ── iris-lead + queue ──────────────────────────────────────────────────────
   local cl_ok
   cl_ok=$("$NODE" -e "
     const http=require('http');
@@ -495,9 +495,9 @@ cmd_health() {
   " 2>/dev/null)
 
   if [[ "$cl_ok" == "down" ]]; then
-    printf "${RED}❌ crew-lead — down (port 5010)${RST}\n"
+    printf "${RED}❌ iris-lead — down (port 5010)${RST}\n"
   else
-    printf "${GRN}✅ crew-lead — up  (http://127.0.0.1:5010)${RST}\n"
+    printf "${GRN}✅ iris-lead — up  (http://127.0.0.1:5010)${RST}\n"
     # Try to hit /api/background for queue depth (requires auth token)
     local token
     token=$(rt_token 2>/dev/null)
@@ -555,8 +555,8 @@ cmd_restart_openclaw_gateway() {
 
 # ── restart-all: full stack restart via repo script ──
 cmd_restart_agents() {
-  if [[ -x "$CREWSWARM_DIR/scripts/restart-all-from-repo.sh" ]]; then
-    exec /bin/bash "$CREWSWARM_DIR/scripts/restart-all-from-repo.sh"
+  if [[ -x "$IRIS_DIR/scripts/restart-all-from-repo.sh" ]]; then
+    exec /bin/bash "$IRIS_DIR/scripts/restart-all-from-repo.sh"
   else
     cmd_stop
     sleep 2
@@ -566,11 +566,11 @@ cmd_restart_agents() {
 
 # ── restart-rt: restart only the RT daemon ──
 cmd_restart_rt() {
-  pkill -f "opencrew-rt-daemon" 2>/dev/null || true
+  pkill -f "openiris-rt-daemon" 2>/dev/null || true
   sleep 1
   if [[ -f "$RT_DAEMON" ]]; then
     export OPENCREW_RT_AUTH_TOKEN=$(rt_token)
-    nohup "$NODE" "$RT_DAEMON" >> /tmp/opencrew-rt-daemon.log 2>&1 &
+    nohup "$NODE" "$RT_DAEMON" >> /tmp/openiris-rt-daemon.log 2>&1 &
   fi
   echo "RT daemon restarted."
 }
@@ -581,14 +581,14 @@ cmd_restart_gateway() {
   # Clean stale PID files to ensure safe restart
   find /tmp -maxdepth 1 -name "bridge-*.pid" -delete 2>/dev/null || true
   sleep 2
-  (cd "$CREWSWARM_DIR" && export OPENCREW_RT_AUTH_TOKEN=$(rt_token) && "$NODE" scripts/start-crew.mjs --force)
+  (cd "$IRIS_DIR" && export OPENCREW_RT_AUTH_TOKEN=$(rt_token) && "$NODE" scripts/start-iris.mjs --force)
 }
 
 # ── stop/start/restart single agent (for SwiftBar per-agent menu) ──
 cmd_stop_agent() {
   local agent="$1"
   [[ -n "$agent" ]] || { echo "Usage: openswitchctl stop-agent <agent>" >&2; exit 1; }
-  [[ "$agent" == crew-* ]] || agent="crew-$agent"
+  [[ "$agent" == iris-* ]] || agent="iris-$agent"
   pkill -f "OPENCREW_RT_AGENT[=\"']*${agent}[\"' ].*gateway-bridge" 2>/dev/null || true
   echo "Stopped $agent"
 }
@@ -596,14 +596,14 @@ cmd_stop_agent() {
 cmd_start_agent() {
   local agent="$1"
   [[ -n "$agent" ]] || { echo "Usage: openswitchctl start-agent <agent>" >&2; exit 1; }
-  # Normalize agent name (add crew- prefix if missing)
-  [[ "$agent" == crew-* ]] || agent="crew-$agent"
+  # Normalize agent name (add iris- prefix if missing)
+  [[ "$agent" == iris-* ]] || agent="iris-$agent"
   cmd_stop_agent "$agent"
   # Clean the PID file for this specific agent to ensure clean restart
   rm -f "/tmp/bridge-${agent}.pid" 2>/dev/null || true
   sleep 0.5
   # Use --force for maximum safety (will start all missing agents, including the one we just killed)
-  (cd "$CREWSWARM_DIR" && export OPENCREW_RT_AUTH_TOKEN=$(rt_token) && "$NODE" scripts/start-crew.mjs --force)
+  (cd "$IRIS_DIR" && export OPENCREW_RT_AUTH_TOKEN=$(rt_token) && "$NODE" scripts/start-iris.mjs --force)
   echo "Started $agent (and any other missing agents)."
 }
 

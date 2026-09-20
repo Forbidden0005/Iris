@@ -16,7 +16,7 @@ for arg in "$@"; do
 done
 
 echo ""
-echo "━━━ crewswarm release check ━━━"
+echo "━━━ iris release check ━━━"
 echo "repo: $REPO_DIR"
 echo "date: $(date)"
 

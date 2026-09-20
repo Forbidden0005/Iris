@@ -1,5 +1,5 @@
 /**
- * Unit tests for lib/crew-lead/http-server.mjs
+ * Unit tests for lib/iris-lead/http-server.mjs
  *
  * Tests pure/helper functions that are exported.
  * Many helpers (stripAnsiPassthrough, shouldSkipOpenCodePassthroughLine, etc.)
@@ -15,7 +15,7 @@ let mod;
 let importError;
 
 try {
-  mod = await import("../../lib/crew-lead/http-server.mjs");
+  mod = await import("../../lib/iris-lead/http-server.mjs");
 } catch (err) {
   importError = err;
 }
@@ -51,7 +51,7 @@ describe("http-server — initHttpServer", () => {
         dispatchTask: async () => {},
         pendingDispatches: new Map(),
         pendingPipelines: new Map(),
-        resolveAgentId: () => "crew-main",
+        resolveAgentId: () => "iris-main",
         readAgentTools: () => [],
         writeAgentTools: () => {},
       });

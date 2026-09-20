@@ -1,6 +1,6 @@
-# crewswarm Vibe
+# iris Vibe
 
-Local coding surface for crewswarm with:
+Local coding surface for iris with:
 
 - real local project persistence
 - real file read/write through the local server
@@ -27,9 +27,9 @@ Local Vibe owns:
 - local project chat history
 - `cli:codex` execution
 
-Optional crewswarm services add:
+Optional iris services add:
 
-- `crew-lead` / agent chat via dashboard APIs
+- `iris-lead` / agent chat via dashboard APIs
 - RT activity stream
 - agent roster loading
 
@@ -60,7 +60,7 @@ python3 ../../scripts/bench/load_testing.py \
   --requests 40 \
   --concurrency 4 \
   --profile-command "npm start" \
-  --profile-output /tmp/crewswarm-vibe.speedscope.json
+  --profile-output /tmp/iris-vibe.speedscope.json
 ```
 
 Use `npm run perf:audit` for a browser-level audit of the shipped Vibe bundle. It boots the local Vibe server on an isolated port, captures navigation timing, transfer size, long tasks, and heap usage through Playwright + the browser Performance APIs, then writes a report to `apps/vibe/output/performance-audit.json`.

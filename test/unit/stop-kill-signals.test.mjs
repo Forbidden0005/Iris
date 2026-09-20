@@ -15,9 +15,9 @@ import {
   dispatchPipelineWave,
   pendingDispatches,
   pendingPipelines,
-} from "../../lib/crew-lead/wave-dispatcher.mjs";
+} from "../../lib/iris-lead/wave-dispatcher.mjs";
 
-// Pattern mirrors from lib/crew-lead/chat-handler.mjs (same as autonomous-mode.test.mjs)
+// Pattern mirrors from lib/iris-lead/chat-handler.mjs (same as autonomous-mode.test.mjs)
 const STOP_SIGNAL = /^@@STOP\b/;
 const KILL_SIGNAL = /^@@KILL\b/;
 
@@ -39,7 +39,7 @@ function createMockDeps() {
 function makePipeline(sessionId = "owner") {
   return {
     sessionId,
-    waves: [[{ agent: "crew-coder", task: "x" }]],
+    waves: [[{ agent: "iris-coder", task: "x" }]],
     currentWave: 0,
     pendingTaskIds: new Set(),
   };
@@ -98,8 +98,8 @@ describe("stop-kill signals", () => {
       const deps = createMockDeps();
       initWaveDispatcher(deps);
 
-      pendingDispatches.set("d1", { sessionId: "owner", agent: "crew-coder", task: "x", ts: Date.now() });
-      pendingDispatches.set("d2", { sessionId: "owner", agent: "crew-qa", task: "y", ts: Date.now() });
+      pendingDispatches.set("d1", { sessionId: "owner", agent: "iris-coder", task: "x", ts: Date.now() });
+      pendingDispatches.set("d2", { sessionId: "owner", agent: "iris-qa", task: "y", ts: Date.now() });
       pendingPipelines.set("pipe-1", makePipeline());
       pendingPipelines.set("pipe-2", makePipeline());
 
@@ -124,7 +124,7 @@ describe("stop-kill signals", () => {
 
   describe("PM loop stop file path", () => {
     it("path is deterministic from PM_PROJECT_ID logic (matches pm-loop.mjs pattern)", () => {
-      const LOG_DIR = path.join(os.homedir(), ".crewswarm", "orchestrator-logs");
+      const LOG_DIR = path.join(os.homedir(), ".iris", "orchestrator-logs");
       const PROJECT_ID = process.env.PM_PROJECT_ID || null;
       const _pidSuffix = PROJECT_ID ? `-${PROJECT_ID}` : "";
       const STOP_FILE = path.join(LOG_DIR, `pm-loop${_pidSuffix}.stop`);

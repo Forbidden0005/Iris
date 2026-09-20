@@ -1,7 +1,7 @@
 /**
  * Unit tests for scripts/scan-skills.mjs
  *
- * This script is a CLI tool with no exports. It scans ~/.crewswarm/skills/
+ * This script is a CLI tool with no exports. It scans ~/.iris/skills/
  * and prints an audit report. We test:
  *  - The file can be parsed without syntax errors
  *  - Running the script completes without crashing (exit 0) when skills dir

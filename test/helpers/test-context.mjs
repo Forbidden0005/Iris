@@ -3,7 +3,7 @@ import os from "node:os";
 import fs from "node:fs";
 import { getAgentRuntimeMetadata, getCliEngineMetadata, logTestEvidence } from "./test-log.mjs";
 
-const DEFAULT_CONFIG_PATH = path.join(os.homedir(), ".crewswarm", "crewswarm.json");
+const DEFAULT_CONFIG_PATH = path.join(os.homedir(), ".iris", "iris.json");
 
 function safeReadJson(filePath) {
   try {

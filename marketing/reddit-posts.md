@@ -10,7 +10,7 @@ Stagger 1-2 hours after HN post. Each subreddit gets a different angle. Be genui
 
 **Body:**
 
-I've been building crewswarm, a multi-agent AI coding platform. The part that might interest this community: our execution quality engine makes local and cheap models match premium ones on coding tasks.
+I've been building iris, a multi-agent AI coding platform. The part that might interest this community: our execution quality engine makes local and cheap models match premium ones on coding tasks.
 
 **The problem:** AI coding agents built on top of Llama, Qwen, DeepSeek, etc. fail in predictable ways — they retry the same broken command, declare "done" without running tests, edit files they never read, waste turns exploring instead of acting. These aren't model problems. They happen with GPT-5 and Claude too. But cheap models hit them more often because they have less built-in self-correction.
 
@@ -23,15 +23,15 @@ I've been building crewswarm, a multi-agent AI coding platform. The part that mi
 
 **Result:** 29 models score 100/100 on our coding benchmark. Groq GPT-OSS 20B ($0.0003/task) produces identical verified TypeScript to Claude Opus ($0.03/task) — 100x cheaper.
 
-crew-cli also gives agentic coding to models that don't have their own CLI — attach any Ollama model and it gets 45+ tools (file I/O, git, LSP, shell, web search, Docker sandbox). The 3-tier pipeline uses a cheap model for routing, expensive model only for planning, and your local model for execution.
+iris-cli also gives agentic coding to models that don't have their own CLI — attach any Ollama model and it gets 45+ tools (file I/O, git, LSP, shell, web search, Docker sandbox). The 3-tier pipeline uses a cheap model for routing, expensive model only for planning, and your local model for execution.
 
-The full platform also has 20+ specialist agents, 6 coding engines (Claude Code, Codex, Gemini, Cursor, OpenCode, crew-cli), parallel execution in git worktrees, and a PM loop that reads ROADMAP.md and ships autonomously.
+The full platform also has 20+ specialist agents, 6 coding engines (Claude Code, Codex, Gemini, Cursor, OpenCode, iris-cli), parallel execution in git worktrees, and a PM loop that reads ROADMAP.md and ships autonomously.
 
 MIT license, local-first, TypeScript.
 
-- Site: https://crewswarm.ai
+- Site: https://iris.ai
 - Repo: https://github.com/crewswarm/crewswarm
-- CLI benchmarks: https://crewswarm.ai/cli.html
+- CLI benchmarks: https://iris.ai/cli.html
 
 Happy to share details on the engine internals or benchmark methodology.
 
@@ -43,7 +43,7 @@ Happy to share details on the engine internals or benchmark methodology.
 
 **Body:**
 
-I built crewswarm because I was tired of paying premium pricing for every single step of an AI coding task. Not every step needs GPT-5.4's reasoning.
+I built iris because I was tired of paying premium pricing for every single step of an AI coding task. Not every step needs GPT-5.4's reasoning.
 
 The 3-tier pipeline:
 - **L1 router** — cheap model classifies the task ($0.0001)
@@ -52,7 +52,7 @@ The 3-tier pipeline:
 
 The execution quality engine (8 modules: failure memory, verification gates, patch critic, etc.) makes cheap models produce identical quality to premium ones. 29 models score 100/100 on our coding benchmark.
 
-Best part: Codex CLI only works with OpenAI models. crew-cli works with 40+ models across 12 providers. GPT-5.4 for planning, DeepSeek for cheap execution, Groq for fast routing. Or use OAuth — GPT-5.4 through Codex OAuth costs $0.
+Best part: Codex CLI only works with OpenAI models. iris-cli works with 40+ models across 12 providers. GPT-5.4 for planning, DeepSeek for cheap execution, Groq for fast routing. Or use OAuth — GPT-5.4 through Codex OAuth costs $0.
 
 The broader platform: 20+ specialist agents, 6 coding engines running in parallel, session resume across all of them, PM loop for autonomous task execution.
 
@@ -66,39 +66,39 @@ Open source (MIT), local-first: https://github.com/crewswarm/crewswarm
 
 **Body:**
 
-I've been building crewswarm — a multi-agent AI coding platform. Thought r/webdev might find the technical approach interesting.
+I've been building iris — a multi-agent AI coding platform. Thought r/webdev might find the technical approach interesting.
 
-**The idea:** Instead of one AI chat window, you get a full engineering crew. You're the PM. Specialist agents (crew-coder, crew-qa, crew-fixer, crew-security, crew-pm) handle the work in parallel, each with their own model and tools.
+**The idea:** Instead of one AI chat window, you get a full engineering iris. You're the PM. Specialist agents (iris-coder, iris-qa, iris-fixer, iris-security, iris-pm) handle the work in parallel, each with their own model and tools.
 
 **Vibe IDE** is our browser workspace — Monaco editor, integrated terminal, multi-engine chat, and live file sync. When an agent edits a file, you see it update in the editor within 500ms. No Electron, runs at localhost:3333. Think Cursor but you pick any model from any provider.
 
-**The wave orchestrator** runs agents in parallel git worktrees. crew-coder-back builds the API while crew-coder-front wires the UI while crew-qa writes tests — simultaneously, isolated, then merged back.
+**The wave orchestrator** runs agents in parallel git worktrees. iris-coder-back builds the API while iris-coder-front wires the UI while iris-qa writes tests — simultaneously, isolated, then merged back.
 
-**crew-cli** is the execution engine — gives agentic coding to every model. 45+ built-in tools including LSP diagnostics, git operations, web search, Docker sandbox. An execution quality engine (8 modules) makes cheap models produce the same verified code as expensive ones. 29 models at 100/100 on our benchmark.
+**iris-cli** is the execution engine — gives agentic coding to every model. 45+ built-in tools including LSP diagnostics, git operations, web search, Docker sandbox. An execution quality engine (8 modules) makes cheap models produce the same verified code as expensive ones. 29 models at 100/100 on our benchmark.
 
 The whole thing is ~64K lines of TypeScript, MIT licensed, local-first.
 
 Stack: Node.js, TypeScript, Monaco, WebSocket bus (ATAT protocol — 85% fewer tokens than JSON-RPC), 227 REST API endpoints.
 
-- Demo: https://crewswarm.ai
+- Demo: https://iris.ai
 - Repo: https://github.com/crewswarm/crewswarm
-- Vibe: https://crewswarm.ai/vibe.html
+- Vibe: https://iris.ai/vibe.html
 
 ---
 
 ## r/macapps (shorter, focused)
 
-**Title:** crewswarm — native macOS chat app for multi-agent AI coding (open source)
+**Title:** iris — native macOS chat app for multi-agent AI coding (open source)
 
 **Body:**
 
-Built crewchat — a native macOS chat surface for crewswarm, our multi-agent AI coding platform.
+Built irischat — a native macOS chat surface for iris, our multi-agent AI coding platform.
 
 Talk to 20+ specialist AI agents from a lightweight native app. Dispatch tasks, check status, route work to the right specialist. Connected to the same real-time bus as the browser IDE, dashboard, and CLI.
 
-The full platform: 6 coding engines (Claude Code, Cursor, Codex, Gemini, OpenCode, crew-cli), parallel agent execution, session resume, and a PM loop that reads your roadmap and ships autonomously.
+The full platform: 6 coding engines (Claude Code, Cursor, Codex, Gemini, OpenCode, iris-cli), parallel agent execution, session resume, and a PM loop that reads your roadmap and ships autonomously.
 
 Free, open source (MIT), local-first.
 
-https://crewswarm.ai
+https://iris.ai
 https://github.com/crewswarm/crewswarm

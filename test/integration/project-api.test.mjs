@@ -3,7 +3,7 @@
  * Tests POST /api/projects, GET /api/projects, and validation.
  *
  * We start a real in-process HTTP server with mocked deps to avoid
- * touching the filesystem registry at ~/.crewswarm/orchestrator-logs/projects.json.
+ * touching the filesystem registry at ~/.iris/orchestrator-logs/projects.json.
  */
 import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
@@ -99,7 +99,7 @@ describe("project API — POST /api/projects", () => {
   let registryFile;
 
   before(async () => {
-    tmpDir = await mkdtemp(join(tmpdir(), "crewswarm-project-test-"));
+    tmpDir = await mkdtemp(join(tmpdir(), "iris-project-test-"));
     registryFile = join(tmpDir, "projects.json");
     server = makeServer(registryFile);
     await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
@@ -175,7 +175,7 @@ describe("project API — GET /api/projects", () => {
   let registryFile;
 
   before(async () => {
-    tmpDir = await mkdtemp(join(tmpdir(), "crewswarm-project-get-test-"));
+    tmpDir = await mkdtemp(join(tmpdir(), "iris-project-get-test-"));
     registryFile = join(tmpDir, "projects.json");
     server = makeServer(registryFile);
     await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));

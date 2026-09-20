@@ -1,8 +1,8 @@
 #!/bin/bash
-# Setup Zed + crewswarm Integration
+# Setup Zed + iris Integration
 set -e
 
-echo "🐝 Setting up Zed + crewswarm..."
+echo "🐝 Setting up Zed + iris..."
 
 # 1. Check if Zed is installed
 if ! command -v zed &> /dev/null; then
@@ -12,17 +12,17 @@ fi
 
 echo "✅ Zed found: $(which zed)"
 
-# 2. Check if crewswarm is running
+# 2. Check if iris is running
 if ! curl -s http://127.0.0.1:5020/health &> /dev/null; then
-    echo "⚠️  MCP server not running. Starting crewswarm..."
+    echo "⚠️  MCP server not running. Starting iris..."
     npm run restart-all &
     sleep 3
 fi
 
-echo "✅ crewswarm MCP server running on :5020"
+echo "✅ iris MCP server running on :5020"
 
 # 3. Get auth token
-TOKEN=$(cat ~/.crewswarm/crewswarm.json | python3 -c "import json,sys; print(json.load(sys.stdin)['rt']['authToken'])")
+TOKEN=$(cat ~/.iris/iris.json | python3 -c "import json,sys; print(json.load(sys.stdin)['rt']['authToken'])")
 echo "✅ Auth token: ${TOKEN:0:20}..."
 
 # 4. Backup existing Zed config if it exists
@@ -45,7 +45,7 @@ cat > "$ZED_CONFIG" <<EOF
     "version": "2"
   },
   "mcp_servers": {
-    "crewswarm": {
+    "iris": {
       "transport": "http",
       "url": "http://127.0.0.1:5020/mcp",
       "headers": {
@@ -77,11 +77,11 @@ echo ""
 echo "Next steps:"
 echo "1. Restart Zed (if it's already open)"
 echo "2. Press cmd-? to open the agent panel"
-echo "3. You should see crewswarm MCP tools available"
-echo "4. Try: 'Use list_agents to show available crew members'"
+echo "3. You should see iris MCP tools available"
+echo "4. Try: 'Use list_agents to show available iris members'"
 echo ""
 echo "WhatsApp/Telegram integration:"
-echo "- Chat with crew-lead via Telegram/WhatsApp"
+echo "- Chat with iris-lead via Telegram/WhatsApp"
 echo "- Agents will create/edit files in your project"
 echo "- Files appear in Zed automatically"
 echo ""

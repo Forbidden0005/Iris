@@ -11,7 +11,7 @@
  * logic (channel defaulting, limit clamping, participant aggregation) inline
  * so that every branch of each tool is exercised.
  *
- * Uses temp directories via CREWSWARM_STATE_DIR so no real ~/.crewswarm data
+ * Uses temp directories via IRIS_STATE_DIR so no real ~/.iris data
  * is ever touched.
  */
 
@@ -28,13 +28,13 @@ let tmpBase;
 before(async () => {
   tmpBase = await mkdtemp(join(tmpdir(), "cs-mcp-chat-test-"));
   // Must be set before any dynamic import so paths.mjs picks it up
-  process.env.CREWSWARM_STATE_DIR = tmpBase;
-  process.env.CREWSWARM_CONFIG_DIR = tmpBase;
+  process.env.IRIS_STATE_DIR = tmpBase;
+  process.env.IRIS_CONFIG_DIR = tmpBase;
 });
 
 after(async () => {
-  delete process.env.CREWSWARM_STATE_DIR;
-  delete process.env.CREWSWARM_CONFIG_DIR;
+  delete process.env.IRIS_STATE_DIR;
+  delete process.env.IRIS_CONFIG_DIR;
   await rm(tmpBase, { recursive: true, force: true });
 });
 
@@ -177,7 +177,7 @@ async function simulateChatWho(args) {
 describe("chat_send", () => {
   it("writes a message and returns ok with a non-null id", async () => {
     const channel = uniqueChannel();
-    const result = await simulateChatSend({ channel, content: "Hello crew!" });
+    const result = await simulateChatSend({ channel, content: "Hello iris!" });
 
     assert.equal(result.ok, true);
     assert.ok(result.id, "id should be a truthy UUID string");
@@ -205,11 +205,11 @@ describe("chat_send", () => {
     );
 
     const channel = uniqueChannel();
-    await simulateChatSend({ channel, content: "Actor test", actor: "crew-qa" });
+    await simulateChatSend({ channel, content: "Actor test", actor: "iris-qa" });
 
     const [msg] = loadProjectMessages(channel);
-    assert.equal(msg.agent, "crew-qa");
-    assert.equal(msg.metadata.agentName, "crew-qa");
+    assert.equal(msg.agent, "iris-qa");
+    assert.equal(msg.metadata.agentName, "iris-qa");
   });
 
   it("defaults actor to 'mcp' when not provided", async () => {
@@ -343,19 +343,19 @@ describe("chat_read", () => {
   it("filters by mentionsFor", async () => {
     const channel = uniqueChannel();
 
-    // Message mentioning crew-qa
+    // Message mentioning iris-qa
     await simulateChatSend({
       channel,
-      content: "@crew-qa please review this",
+      content: "@iris-qa please review this",
       actor: "user-actor",
     });
     // Message without mention
     await simulateChatSend({ channel, content: "No mention here" });
 
-    const result = await simulateChatRead({ channel, mentionsFor: "crew-qa" });
+    const result = await simulateChatRead({ channel, mentionsFor: "iris-qa" });
     assert.equal(result.messages.length, 1);
-    assert.ok(result.messages[0].content.includes("@crew-qa"));
-    assert.equal(result.mentionsFor, "crew-qa");
+    assert.ok(result.messages[0].content.includes("@iris-qa"));
+    assert.equal(result.mentionsFor, "iris-qa");
   });
 
   it("filters by since timestamp", async () => {
@@ -389,7 +389,7 @@ describe("chat_read", () => {
 
   it("each returned message has the expected shape", async () => {
     const channel = uniqueChannel();
-    await simulateChatSend({ channel, content: "Shape test", actor: "crew-coder" });
+    await simulateChatSend({ channel, content: "Shape test", actor: "iris-coder" });
 
     const { messages } = await simulateChatRead({ channel });
     const [msg] = messages;
@@ -470,7 +470,7 @@ describe("chat_channels", () => {
 describe("chat_who", () => {
   it("returns ok with channel and participants array", async () => {
     const channel = uniqueChannel();
-    await simulateChatSend({ channel, content: "Presence ping", actor: "crew-pm" });
+    await simulateChatSend({ channel, content: "Presence ping", actor: "iris-pm" });
 
     const result = await simulateChatWho({ channel });
 
@@ -481,46 +481,46 @@ describe("chat_who", () => {
 
   it("lists each actor that posted to the channel", async () => {
     const channel = uniqueChannel();
-    await simulateChatSend({ channel, content: "From coder", actor: "crew-coder" });
-    await simulateChatSend({ channel, content: "From qa", actor: "crew-qa" });
+    await simulateChatSend({ channel, content: "From coder", actor: "iris-coder" });
+    await simulateChatSend({ channel, content: "From qa", actor: "iris-qa" });
 
     const { participants } = await simulateChatWho({ channel });
     const names = participants.map((p) => p.name);
 
-    assert.ok(names.includes("crew-coder"));
-    assert.ok(names.includes("crew-qa"));
+    assert.ok(names.includes("iris-coder"));
+    assert.ok(names.includes("iris-qa"));
   });
 
   it("sorts participants by most recent activity (descending)", async () => {
     const channel = uniqueChannel();
-    await simulateChatSend({ channel, content: "Earlier post", actor: "crew-first" });
+    await simulateChatSend({ channel, content: "Earlier post", actor: "iris-first" });
     // Small delay to guarantee a different timestamp
     await new Promise((r) => setTimeout(r, 5));
-    await simulateChatSend({ channel, content: "Later post", actor: "crew-last" });
+    await simulateChatSend({ channel, content: "Later post", actor: "iris-last" });
 
     const { participants } = await simulateChatWho({ channel });
-    assert.equal(participants[0].name, "crew-last", "most recent actor should be first");
+    assert.equal(participants[0].name, "iris-last", "most recent actor should be first");
   });
 
   it("deduplicates an actor that posted multiple times", async () => {
     const channel = uniqueChannel();
-    await simulateChatSend({ channel, content: "First post", actor: "crew-repeat" });
-    await simulateChatSend({ channel, content: "Second post", actor: "crew-repeat" });
+    await simulateChatSend({ channel, content: "First post", actor: "iris-repeat" });
+    await simulateChatSend({ channel, content: "Second post", actor: "iris-repeat" });
 
     const { participants } = await simulateChatWho({ channel });
-    const repeated = participants.filter((p) => p.name === "crew-repeat");
+    const repeated = participants.filter((p) => p.name === "iris-repeat");
     assert.equal(repeated.length, 1, "duplicate actor should be merged to one entry");
   });
 
   it("updates lastTs to the most recent message when an actor posts multiple times", async () => {
     const channel = uniqueChannel();
-    await simulateChatSend({ channel, content: "Old post", actor: "crew-ts-test" });
+    await simulateChatSend({ channel, content: "Old post", actor: "iris-ts-test" });
     await new Promise((r) => setTimeout(r, 5));
     const beforeSecond = Date.now();
-    await simulateChatSend({ channel, content: "New post", actor: "crew-ts-test" });
+    await simulateChatSend({ channel, content: "New post", actor: "iris-ts-test" });
 
     const { participants } = await simulateChatWho({ channel });
-    const p = participants.find((p) => p.name === "crew-ts-test");
+    const p = participants.find((p) => p.name === "iris-ts-test");
     assert.ok(p.lastTs >= beforeSecond, "lastTs should reflect the most recent post");
   });
 
@@ -536,7 +536,7 @@ describe("chat_who", () => {
 
   it("each participant entry has name, source, and lastTs fields", async () => {
     const channel = uniqueChannel();
-    await simulateChatSend({ channel, content: "Shape test", actor: "crew-shape" });
+    await simulateChatSend({ channel, content: "Shape test", actor: "iris-shape" });
 
     const { participants } = await simulateChatWho({ channel });
     const [p] = participants;
@@ -555,9 +555,9 @@ describe("thread support — send messages with threadId and read back only that
     const channel = uniqueChannel();
     const threadId = "e2e-thread-xyz";
 
-    await simulateChatSend({ channel, content: "Thread start", threadId, actor: "crew-lead" });
-    await simulateChatSend({ channel, content: "Thread reply", threadId, actor: "crew-coder" });
-    await simulateChatSend({ channel, content: "Off thread", actor: "crew-pm" });
+    await simulateChatSend({ channel, content: "Thread start", threadId, actor: "iris-lead" });
+    await simulateChatSend({ channel, content: "Thread reply", threadId, actor: "iris-coder" });
+    await simulateChatSend({ channel, content: "Off thread", actor: "iris-pm" });
 
     const result = await simulateChatRead({ channel, threadId });
 
@@ -569,10 +569,10 @@ describe("thread support — send messages with threadId and read back only that
     const channel = uniqueChannel();
     const threadId = "actor-thread-001";
 
-    await simulateChatSend({ channel, content: "Actor in thread", threadId, actor: "crew-qa" });
+    await simulateChatSend({ channel, content: "Actor in thread", threadId, actor: "iris-qa" });
 
     const { messages } = await simulateChatRead({ channel, threadId });
-    assert.equal(messages[0].agent, "crew-qa");
+    assert.equal(messages[0].agent, "iris-qa");
   });
 
   it("thread messages preserve parentId linkage", async () => {
@@ -615,14 +615,14 @@ describe("mentions — send with @mentions in metadata, filter by mentionsFor", 
     );
 
     const channel = uniqueChannel();
-    await simulateChatSend({ channel, content: "@crew-qa please review this PR" });
+    await simulateChatSend({ channel, content: "@iris-qa please review this PR" });
 
     const [msg] = loadProjectMessages(channel);
     assert.ok(
       Array.isArray(msg.metadata.mentions),
       "mentions should be an array in metadata"
     );
-    assert.ok(msg.metadata.mentions.includes("crew-qa"));
+    assert.ok(msg.metadata.mentions.includes("iris-qa"));
   });
 
   it("detects multiple @mentions in a single message", async () => {
@@ -633,12 +633,12 @@ describe("mentions — send with @mentions in metadata, filter by mentionsFor", 
     const channel = uniqueChannel();
     await simulateChatSend({
       channel,
-      content: "@crew-coder and @crew-qa can you pair on this?",
+      content: "@iris-coder and @iris-qa can you pair on this?",
     });
 
     const [msg] = loadProjectMessages(channel);
-    assert.ok(msg.metadata.mentions.includes("crew-coder"));
-    assert.ok(msg.metadata.mentions.includes("crew-qa"));
+    assert.ok(msg.metadata.mentions.includes("iris-coder"));
+    assert.ok(msg.metadata.mentions.includes("iris-qa"));
   });
 
   it("stores no mentions key when there are no @mentions in content", async () => {
@@ -660,44 +660,44 @@ describe("mentions — send with @mentions in metadata, filter by mentionsFor", 
   it("mentionsFor filter returns only messages that mention the specified agent", async () => {
     const channel = uniqueChannel();
 
-    await simulateChatSend({ channel, content: "@crew-qa please look at this" });
-    await simulateChatSend({ channel, content: "@crew-coder can you fix this" });
+    await simulateChatSend({ channel, content: "@iris-qa please look at this" });
+    await simulateChatSend({ channel, content: "@iris-coder can you fix this" });
     await simulateChatSend({ channel, content: "General announcement" });
 
-    const result = await simulateChatRead({ channel, mentionsFor: "crew-qa" });
+    const result = await simulateChatRead({ channel, mentionsFor: "iris-qa" });
 
     assert.equal(result.messages.length, 1);
-    assert.ok(result.messages[0].content.includes("@crew-qa"));
+    assert.ok(result.messages[0].content.includes("@iris-qa"));
   });
 
   it("mentionsFor filter returns multiple messages when the same agent is mentioned more than once", async () => {
     const channel = uniqueChannel();
 
-    await simulateChatSend({ channel, content: "@crew-qa first task" });
-    await simulateChatSend({ channel, content: "@crew-qa second task" });
+    await simulateChatSend({ channel, content: "@iris-qa first task" });
+    await simulateChatSend({ channel, content: "@iris-qa second task" });
     await simulateChatSend({ channel, content: "Unrelated" });
 
-    const result = await simulateChatRead({ channel, mentionsFor: "crew-qa" });
+    const result = await simulateChatRead({ channel, mentionsFor: "iris-qa" });
     assert.equal(result.messages.length, 2);
-    assert.ok(result.messages.every((m) => m.mentions.includes("crew-qa")));
+    assert.ok(result.messages.every((m) => m.mentions.includes("iris-qa")));
   });
 
   it("mentionsFor returns empty when no message mentions the queried agent", async () => {
     const channel = uniqueChannel();
-    await simulateChatSend({ channel, content: "@crew-coder do the thing" });
+    await simulateChatSend({ channel, content: "@iris-coder do the thing" });
 
-    const result = await simulateChatRead({ channel, mentionsFor: "crew-lead" });
+    const result = await simulateChatRead({ channel, mentionsFor: "iris-lead" });
     assert.equal(result.messages.length, 0);
   });
 
   it("mentions array is exposed on the read message objects (not buried in metadata)", async () => {
     const channel = uniqueChannel();
-    await simulateChatSend({ channel, content: "@crew-pm sprint review" });
+    await simulateChatSend({ channel, content: "@iris-pm sprint review" });
 
     const { messages } = await simulateChatRead({ channel });
     const [msg] = messages;
 
     assert.ok(Array.isArray(msg.mentions), "mentions should be a top-level array on read messages");
-    assert.ok(msg.mentions.includes("crew-pm"));
+    assert.ok(msg.mentions.includes("iris-pm"));
   });
 });

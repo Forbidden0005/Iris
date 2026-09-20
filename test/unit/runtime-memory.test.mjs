@@ -50,9 +50,9 @@ describe("runtime-memory — constants", () => {
   });
 
   it("_AGENT_EXTRA_MEMORY_STATIC has expected agent entries", () => {
-    assert.ok("crew-fixer" in _AGENT_EXTRA_MEMORY_STATIC);
-    assert.ok("crew-coder" in _AGENT_EXTRA_MEMORY_STATIC);
-    assert.ok(Array.isArray(_AGENT_EXTRA_MEMORY_STATIC["crew-coder"]));
+    assert.ok("iris-fixer" in _AGENT_EXTRA_MEMORY_STATIC);
+    assert.ok("iris-coder" in _AGENT_EXTRA_MEMORY_STATIC);
+    assert.ok(Array.isArray(_AGENT_EXTRA_MEMORY_STATIC["iris-coder"]));
   });
 
   it("_EXTRA_MEMORY_BY_ROLE has coder and ops roles", () => {
@@ -64,18 +64,18 @@ describe("runtime-memory — constants", () => {
 // ── getAgentExtraMemory ─────────────────────────────────────────────────────
 
 describe("runtime-memory — getAgentExtraMemory", () => {
-  it("returns lessons.md for crew-coder", () => {
-    const files = getAgentExtraMemory("crew-coder");
+  it("returns lessons.md for iris-coder", () => {
+    const files = getAgentExtraMemory("iris-coder");
     assert.ok(files.includes("lessons.md"));
   });
 
-  it("returns lessons.md for crew-fixer", () => {
-    const files = getAgentExtraMemory("crew-fixer");
+  it("returns lessons.md for iris-fixer", () => {
+    const files = getAgentExtraMemory("iris-fixer");
     assert.ok(files.includes("lessons.md"));
   });
 
   it("returns empty array for unknown agent", () => {
-    const files = getAgentExtraMemory("crew-unknown-xyz");
+    const files = getAgentExtraMemory("iris-unknown-xyz");
     assert.ok(Array.isArray(files));
     assert.equal(files.length, 0);
   });

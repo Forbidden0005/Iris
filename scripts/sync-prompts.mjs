@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * sync-prompts.mjs — Sync canonical agent prompts from repo prompts/ into ~/.crewswarm/agent-prompts.json
+ * sync-prompts.mjs — Sync canonical agent prompts from repo prompts/ into ~/.iris/agent-prompts.json
  *
  * Usage:
  *   node scripts/sync-prompts.mjs          # merge (repo wins on conflict)
@@ -12,7 +12,7 @@ import path from "node:path";
 import os from "node:os";
 
 const PROMPTS_DIR    = path.resolve(process.cwd(), "prompts");
-const AGENT_PROMPTS  = path.join(os.homedir(), ".crewswarm", "agent-prompts.json");
+const AGENT_PROMPTS  = path.join(os.homedir(), ".iris", "agent-prompts.json");
 const DRY            = process.argv.includes("--dry");
 
 // Map filename → bare agent-prompts.json key
@@ -35,7 +35,7 @@ const FILE_TO_KEY = {
 
 function canonicalKeysFor(key) {
   if (!key) return [];
-  return [key, `crew-${key}`];
+  return [key, `iris-${key}`];
 }
 
 // Load existing

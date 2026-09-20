@@ -1,5 +1,5 @@
 {
-  "// CREWSWARM + ZED CONFIGURATION": "Copy this to ~/.config/zed/settings.json and replace the placeholder token.",
+  "// IRIS + ZED CONFIGURATION": "Copy this to ~/.config/zed/settings.json and replace the placeholder token.",
 
   "assistant": {
     "enabled": true,
@@ -11,16 +11,16 @@
   },
 
   "mcp_servers": {
-    "crewswarm": {
+    "iris": {
       "transport": "http",
       "url": "http://127.0.0.1:5020/mcp",
       "headers": {
-        "Authorization": "Bearer YOUR_CREWSWARM_TOKEN"
+        "Authorization": "Bearer YOUR_IRIS_TOKEN"
       }
     }
   },
 
-  "// FILE WATCHER": "Auto-reload when crew agents modify files",
+  "// FILE WATCHER": "Auto-reload when iris agents modify files",
   "file_watchers": {
     "enabled": true
   },

@@ -142,7 +142,7 @@ export async function loadOpencodeProject() {
     const inp = document.getElementById('opencodeProjInput');
     const st  = document.getElementById('opencodeProjStatus');
     if (inp) { inp.placeholder = d.dir || 'e.g. /Users/you/Desktop/myproject'; inp.value = d.dir || ''; }
-    if (st) st.textContent = d.dir ? ('✅ Current: ' + d.dir) : '⚠️ Not set — OpenCode will write files to the crewswarm repo root. Set this to your project folder.';
+    if (st) st.textContent = d.dir ? ('✅ Current: ' + d.dir) : '⚠️ Not set — OpenCode will write files to the iris repo root. Set this to your project folder.';
     if (document.getElementById('opencodeFallbackSelect') && _getModels) {
       await _getModels();
       if (_populateModelDropdown) _populateModelDropdown('opencodeFallbackSelect', d.fallbackModel || '');
@@ -158,7 +158,7 @@ export async function loadOpencodeProject() {
     const ocSt = document.getElementById('opencodeModelStatus');
     if (ocSt) ocSt.textContent = d.opencodeModel ? ('✅ Primary: ' + d.opencodeModel) : '⚠️ Using default groq/moonshotai/kimi-k2-instruct-0905';
     
-    // Load crew-lead model
+    // Load iris-lead model
     const clSel = document.getElementById('crewLeadModelSelect');
     if (clSel && d.crewLeadModel) clSel.value = d.crewLeadModel;
   } catch {}
@@ -208,7 +208,7 @@ export async function saveCrewLeadModel() {
   try {
     await postJSON('/api/settings/opencode-project', { crewLeadModel: crewLeadModel || undefined });
     if (st) { st.textContent = '✓ Saved'; st.style.color = 'var(--green-hi)'; }
-    showNotification(crewLeadModel ? `Crew lead model → ${crewLeadModel}` : 'Crew lead model reset to default');
+    showNotification(crewLeadModel ? `Iris lead model → ${crewLeadModel}` : 'Iris lead model reset to default');
     setTimeout(() => { if (st) st.textContent = ''; }, 3000);
   } catch(e) {
     if (st) { st.textContent = 'Error: ' + e.message; st.style.color = 'var(--red)'; }
@@ -224,7 +224,7 @@ export async function loadBgConsciousness() {
     const d = await getJSON('/api/settings/bg-consciousness');
     if (d.ok === false) {
       if (btn) btn.textContent = '⚫ OFF';
-      if (status) { status.textContent = '⚠️ Could not reach crew-lead — restart services.'; status.style.color = 'var(--amber)'; }
+      if (status) { status.textContent = '⚠️ Could not reach iris-lead — restart services.'; status.style.color = 'var(--amber)'; }
       return;
     }
     const on = d.enabled;
@@ -236,8 +236,8 @@ export async function loadBgConsciousness() {
     }
     if (modelInput && d.model) modelInput.placeholder = d.model;
     if (status) status.textContent = on
-      ? 'Active — crew-lead reflects every ' + Math.round(d.intervalMs / 60000) + 'min when idle. Model: ' + d.model
-      : 'Off — crew-lead will not self-reflect between tasks.';
+      ? 'Active — iris-lead reflects every ' + Math.round(d.intervalMs / 60000) + 'min when idle. Model: ' + d.model
+      : 'Off — iris-lead will not self-reflect between tasks.';
   } catch(e) {
     if (btn) btn.textContent = 'Error';
     if (status) status.textContent = 'Could not load: ' + e.message;
@@ -247,7 +247,7 @@ export async function loadBgConsciousness() {
 export async function toggleBgConsciousness() {
   try {
     const current = await getJSON('/api/settings/bg-consciousness');
-    if (current.ok === false) { showNotification('Cannot reach crew-lead — restart services first', 'error'); return; }
+    if (current.ok === false) { showNotification('Cannot reach iris-lead — restart services first', 'error'); return; }
     const d = await postJSON('/api/settings/bg-consciousness', { enabled: !current.enabled });
     showNotification('Background consciousness ' + (d.enabled ? 'ENABLED' : 'DISABLED'));
     loadBgConsciousness();
@@ -273,7 +273,7 @@ export async function loadCursorWaves() {
     const d = await getJSON('/api/settings/cursor-waves');
     if (d.ok === false) {
       if (btn) btn.textContent = '⚫ OFF';
-      if (status) { status.textContent = '⚠️ Could not reach crew-lead — restart services.'; status.style.color = 'var(--amber)'; }
+      if (status) { status.textContent = '⚠️ Could not reach iris-lead — restart services.'; status.style.color = 'var(--amber)'; }
       return;
     }
     const on = d.enabled;
@@ -284,7 +284,7 @@ export async function loadCursorWaves() {
       btn.style.color = on ? '#c084fc' : 'var(--text-2)';
     }
     if (status) status.textContent = on
-      ? 'Active — multi-agent waves fan out to Cursor subagents in parallel. crew-orchestrator coordinates each wave.'
+      ? 'Active — multi-agent waves fan out to Cursor subagents in parallel. iris-orchestrator coordinates each wave.'
       : 'Off — each agent in a wave dispatches independently through the standard gateway.';
   } catch(e) {
     if (btn) btn.textContent = 'Error';
@@ -295,7 +295,7 @@ export async function loadCursorWaves() {
 export async function toggleCursorWaves() {
   try {
     const current = await getJSON('/api/settings/cursor-waves');
-    if (current.ok === false) { showNotification('Cannot reach crew-lead — restart services first', 'error'); return; }
+    if (current.ok === false) { showNotification('Cannot reach iris-lead — restart services first', 'error'); return; }
     const d = await postJSON('/api/settings/cursor-waves', { enabled: !current.enabled });
     showNotification('Cursor Parallel Waves ' + (d.enabled ? 'ENABLED ⚡' : 'DISABLED'));
     loadCursorWaves();
@@ -309,7 +309,7 @@ export async function loadTmuxBridge() {
     const d = await getJSON('/api/settings/tmux-bridge');
     if (d.ok === false) {
       if (btn) btn.textContent = '⚫ OFF';
-      if (status) { status.textContent = '⚠️ Could not reach crew-lead — restart services.'; status.style.color = 'var(--amber)'; }
+      if (status) { status.textContent = '⚠️ Could not reach iris-lead — restart services.'; status.style.color = 'var(--amber)'; }
       return;
     }
     const on = d.enabled;
@@ -331,7 +331,7 @@ export async function loadTmuxBridge() {
 export async function toggleTmuxBridge() {
   try {
     const current = await getJSON('/api/settings/tmux-bridge');
-    if (current.ok === false) { showNotification('Cannot reach crew-lead — restart services first', 'error'); return; }
+    if (current.ok === false) { showNotification('Cannot reach iris-lead — restart services first', 'error'); return; }
     const d = await postJSON('/api/settings/tmux-bridge', { enabled: !current.enabled });
     showNotification('tmux-bridge ' + (d.enabled ? 'ENABLED 🔌' : 'DISABLED'));
     loadTmuxBridge();
@@ -345,7 +345,7 @@ export async function loadAutonomousMentions() {
     const d = await getJSON('/api/settings/autonomous-mentions');
     if (d.ok === false) {
       if (btn) btn.textContent = '⚫ OFF';
-      if (status) { status.textContent = '⚠️ Could not reach crew-lead — restart services.'; status.style.color = 'var(--amber)'; }
+      if (status) { status.textContent = '⚠️ Could not reach iris-lead — restart services.'; status.style.color = 'var(--amber)'; }
       return;
     }
     const on = d.enabled !== false;
@@ -370,7 +370,7 @@ export async function loadAutonomousMentions() {
 export async function toggleAutonomousMentions() {
   try {
     const current = await getJSON('/api/settings/autonomous-mentions');
-    if (current.ok === false) { showNotification('Cannot reach crew-lead — restart services first', 'error'); return; }
+    if (current.ok === false) { showNotification('Cannot reach iris-lead — restart services first', 'error'); return; }
     const d = await postJSON('/api/settings/autonomous-mentions', {
       enabled: !current.enabled,
     });
@@ -391,7 +391,7 @@ export async function loadClaudeCode() {
     if (d.ok === false) {
       if (btn) btn.textContent = '⚫ OFF';
       if (status) {
-        status.textContent = '⚠️ Could not reach crew-lead — restart services or check that crew-lead is running.';
+        status.textContent = '⚠️ Could not reach iris-lead — restart services or check that iris-lead is running.';
         status.style.color = 'var(--amber)';
       }
       return;
@@ -409,7 +409,7 @@ export async function loadClaudeCode() {
         status.style.color = 'var(--amber)';
       } else {
         status.textContent = on
-          ? 'Active — tasks route through Claude Code CLI. Per-agent override: set useClaudeCode: true in crewswarm.json.'
+          ? 'Active — tasks route through Claude Code CLI. Per-agent override: set useClaudeCode: true in iris.json.'
           : 'Off — tasks use direct LLM or OpenCode. Enable to run agents through Claude Code CLI.';
         status.style.color = 'var(--text-3)';
       }
@@ -424,7 +424,7 @@ export async function toggleClaudeCode() {
   try {
     const current = await getJSON('/api/settings/claude-code');
     if (current.ok === false) {
-      showNotification('Cannot reach crew-lead — restart services first', 'error');
+      showNotification('Cannot reach iris-lead — restart services first', 'error');
       return;
     }
     if (!current.hasKey) {
@@ -444,7 +444,7 @@ export async function loadCodexExecutor() {
     const d = await getJSON('/api/settings/codex');
     if (d.ok === false) {
       if (btn) btn.textContent = '⚫ OFF';
-      if (status) { status.textContent = '⚠️ Could not reach crew-lead — restart services.'; status.style.color = 'var(--amber)'; }
+      if (status) { status.textContent = '⚠️ Could not reach iris-lead — restart services.'; status.style.color = 'var(--amber)'; }
       return;
     }
     const on = d.enabled;
@@ -456,7 +456,7 @@ export async function loadCodexExecutor() {
     }
     if (status) {
       status.textContent = on
-        ? 'Active — tasks route through Codex CLI. Per-agent override: set useCodex: true in crewswarm.json.'
+        ? 'Active — tasks route through Codex CLI. Per-agent override: set useCodex: true in iris.json.'
         : 'Off — tasks use direct LLM or other engine. Enable to route all coding agents through Codex CLI.';
       status.style.color = 'var(--text-3)';
     }
@@ -469,7 +469,7 @@ export async function loadCodexExecutor() {
 export async function toggleCodexExecutor() {
   try {
     const current = await getJSON('/api/settings/codex');
-    if (current.ok === false) { showNotification('Cannot reach crew-lead — restart services first', 'error'); return; }
+    if (current.ok === false) { showNotification('Cannot reach iris-lead — restart services first', 'error'); return; }
     const d = await postJSON('/api/settings/codex', { enabled: !current.enabled });
     showNotification('Codex CLI executor ' + (d.enabled ? 'ENABLED 🟣' : 'DISABLED'));
     loadCodexExecutor();
@@ -483,7 +483,7 @@ export async function loadGeminiCliExecutor() {
     const d = await getJSON('/api/settings/gemini-cli');
     if (d.ok === false) {
       if (btn) btn.textContent = '⚫ OFF';
-      if (status) { status.textContent = '⚠️ Could not reach crew-lead — restart services.'; status.style.color = 'var(--amber)'; }
+      if (status) { status.textContent = '⚠️ Could not reach iris-lead — restart services.'; status.style.color = 'var(--amber)'; }
       return;
     }
     const on = d.enabled;
@@ -513,7 +513,7 @@ export async function loadGeminiCliExecutor() {
 export async function toggleGeminiCliExecutor() {
   try {
     const current = await getJSON('/api/settings/gemini-cli');
-    if (current.ok === false) { showNotification('Cannot reach crew-lead — restart services first', 'error'); return; }
+    if (current.ok === false) { showNotification('Cannot reach iris-lead — restart services first', 'error'); return; }
     if (!current.installed) {
       showNotification('Install Gemini CLI first: npm install -g @google/gemini-cli', 'error');
       return;
@@ -528,10 +528,10 @@ export async function loadCrewCliExecutor() {
   const btn = document.getElementById('crewCliBtn');
   const status = document.getElementById('crewCliStatus');
   try {
-    const d = await getJSON('/api/settings/crew-cli');
+    const d = await getJSON('/api/settings/iris-cli');
     if (d.ok === false) {
       if (btn) btn.textContent = '⚫ OFF';
-      if (status) { status.textContent = '⚠️ Could not reach crew-lead — restart services.'; status.style.color = 'var(--amber)'; }
+      if (status) { status.textContent = '⚠️ Could not reach iris-lead — restart services.'; status.style.color = 'var(--amber)'; }
       return;
     }
     const on = d.enabled;
@@ -543,8 +543,8 @@ export async function loadCrewCliExecutor() {
     }
     if (status) {
       status.textContent = on
-        ? 'Active — multi-agent swarm tasks route through crew-cli with intelligent dispatch to specialists.'
-        : 'Off — tasks use direct LLM or other engine. Enable to route all coding agents through crew-cli natively.';
+        ? 'Active — multi-agent swarm tasks route through iris-cli with intelligent dispatch to specialists.'
+        : 'Off — tasks use direct LLM or other engine. Enable to route all coding agents through iris-cli natively.';
     }
   } catch(e) {
     if (btn) btn.textContent = 'Error';
@@ -554,10 +554,10 @@ export async function loadCrewCliExecutor() {
 
 export async function toggleCrewCliExecutor() {
   try {
-    const current = await getJSON('/api/settings/crew-cli');
-    if (current.ok === false) { showNotification('Cannot reach crew-lead — restart services first', 'error'); return; }
-    const d = await postJSON('/api/settings/crew-cli', { enabled: !current.enabled });
-    showNotification('Crew CLI executor ' + (d.enabled ? 'ENABLED 🔧' : 'DISABLED'));
+    const current = await getJSON('/api/settings/iris-cli');
+    if (current.ok === false) { showNotification('Cannot reach iris-lead — restart services first', 'error'); return; }
+    const d = await postJSON('/api/settings/iris-cli', { enabled: !current.enabled });
+    showNotification('Iris CLI executor ' + (d.enabled ? 'ENABLED 🔧' : 'DISABLED'));
     loadCrewCliExecutor();
   } catch(e) { showNotification('Failed: ' + e.message, 'error'); }
 }
@@ -569,7 +569,7 @@ export async function loadOpencodeExecutor() {
     const d = await getJSON('/api/settings/opencode');
     if (d.ok === false) {
       if (btn) btn.textContent = '⚫ OFF';
-      if (status) { status.textContent = '⚠️ Could not reach crew-lead — restart services.'; status.style.color = 'var(--amber)'; }
+      if (status) { status.textContent = '⚠️ Could not reach iris-lead — restart services.'; status.style.color = 'var(--amber)'; }
       return;
     }
     const on = d.enabled;
@@ -599,7 +599,7 @@ export async function loadOpencodeExecutor() {
 export async function toggleOpencodeExecutor() {
   try {
     const current = await getJSON('/api/settings/opencode');
-    if (current.ok === false) { showNotification('Cannot reach crew-lead — restart services first', 'error'); return; }
+    if (current.ok === false) { showNotification('Cannot reach iris-lead — restart services first', 'error'); return; }
     if (!current.installed) {
       showNotification('Install OpenCode CLI first: npm install -g opencode', 'error');
       return;
@@ -699,72 +699,72 @@ const ENV_GROUPS = [
   {
     label: 'Engine — OpenCode',
     vars: [
-      { key: 'CREWSWARM_OPENCODE_ENABLED',          hint: 'Route coding agents through OpenCode globally',               default: 'off' },
-      { key: 'CREWSWARM_OPENCODE_MODEL',            hint: 'Model passed to OpenCode — leave blank to use per-agent model', default: 'per-agent' },
-      { key: 'CREWSWARM_OPENCODE_TIMEOUT_MS',       hint: 'ms before an OpenCode task is killed',                        default: '300000' },
-      { key: 'CREWSWARM_OPENCODE_AGENT',            hint: 'Override agent name passed to OpenCode',                      default: 'auto' },
+      { key: 'IRIS_OPENCODE_ENABLED',          hint: 'Route coding agents through OpenCode globally',               default: 'off' },
+      { key: 'IRIS_OPENCODE_MODEL',            hint: 'Model passed to OpenCode — leave blank to use per-agent model', default: 'per-agent' },
+      { key: 'IRIS_OPENCODE_TIMEOUT_MS',       hint: 'ms before an OpenCode task is killed',                        default: '300000' },
+      { key: 'IRIS_OPENCODE_AGENT',            hint: 'Override agent name passed to OpenCode',                      default: 'auto' },
     ],
   },
   {
     label: 'Engine — Claude Code & Cursor',
     note: 'Both use OAuth login (run claude or cursor once). No API key required.',
     vars: [
-      { key: 'CREWSWARM_CLAUDE_CODE_MODEL', hint: 'Model passed to claude -p — leave blank for Claude Code default',   default: 'claude default' },
-      { key: 'CREWSWARM_CURSOR_MODEL',      hint: 'Cursor CLI --model when agent has no cursorCliModel (default: composer-2-fast)', default: 'composer-2-fast' },
+      { key: 'IRIS_CLAUDE_CODE_MODEL', hint: 'Model passed to claude -p — leave blank for Claude Code default',   default: 'claude default' },
+      { key: 'IRIS_CURSOR_MODEL',      hint: 'Cursor CLI --model when agent has no cursorCliModel (default: composer-2-fast)', default: 'composer-2-fast' },
     ],
   },
   {
-    label: 'Engine — Codex & crew-cli',
+    label: 'Engine — Codex & iris-cli',
     note: 'These are the dashboard-wide defaults when an agent does not have a per-route model override.',
     vars: [
-      { key: 'CREWSWARM_CODEX_MODEL',     hint: 'Model passed to codex exec --model (leave blank for Codex default)', default: 'codex default' },
-      { key: 'CREWSWARM_CREW_CLI_MODEL',  hint: 'Model passed to crew chat --model and gateway crew-cli engine',      default: 'gemini-2.5-flash' },
+      { key: 'IRIS_CODEX_MODEL',     hint: 'Model passed to codex exec --model (leave blank for Codex default)', default: 'codex default' },
+      { key: 'IRIS_CREW_CLI_MODEL',  hint: 'Model passed to iris chat --model and gateway iris-cli engine',      default: 'gemini-2.5-flash' },
     ],
   },
   {
     label: 'Engine — Gemini CLI',
     note: 'Free tier via Google account — 60 req/min. Run gemini once to auth.',
     vars: [
-      { key: 'CREWSWARM_GEMINI_CLI_ENABLED', hint: 'Route agents through Gemini CLI globally',                               default: 'off' },
-      { key: 'CREWSWARM_GEMINI_CLI_MODEL',   hint: 'Model passed to gemini -p (e.g. gemini-2.0-flash) — blank for default',  default: 'gemini default' },
+      { key: 'IRIS_GEMINI_CLI_ENABLED', hint: 'Route agents through Gemini CLI globally',                               default: 'off' },
+      { key: 'IRIS_GEMINI_CLI_MODEL',   hint: 'Model passed to gemini -p (e.g. gemini-2.0-flash) — blank for default',  default: 'gemini default' },
     ],
   },
   {
     label: 'Engine — Docker Sandbox',
     note: 'Runs any inner engine inside an isolated Docker microVM. API keys injected by network proxy — never exposed to the agent.',
     vars: [
-      { key: 'CREWSWARM_DOCKER_SANDBOX',              hint: 'Route all coding agents through Docker Sandbox globally',        default: 'off' },
-      { key: 'CREWSWARM_DOCKER_SANDBOX_NAME',         hint: 'Pre-created sandbox name',                                      default: 'crewswarm' },
-      { key: 'CREWSWARM_DOCKER_SANDBOX_INNER_ENGINE', hint: 'Engine inside the sandbox: claude, opencode, or codex',         default: 'claude' },
-      { key: 'CREWSWARM_DOCKER_SANDBOX_TIMEOUT_MS',   hint: 'ms before a sandboxed task is killed',                          default: '300000' },
+      { key: 'IRIS_DOCKER_SANDBOX',              hint: 'Route all coding agents through Docker Sandbox globally',        default: 'off' },
+      { key: 'IRIS_DOCKER_SANDBOX_NAME',         hint: 'Pre-created sandbox name',                                      default: 'iris' },
+      { key: 'IRIS_DOCKER_SANDBOX_INNER_ENGINE', hint: 'Engine inside the sandbox: claude, opencode, or codex',         default: 'claude' },
+      { key: 'IRIS_DOCKER_SANDBOX_TIMEOUT_MS',   hint: 'ms before a sandboxed task is killed',                          default: '300000' },
     ],
   },
   {
     label: 'Engine Loop & Dispatch',
     vars: [
-      { key: 'CREWSWARM_ENGINE_LOOP',                 hint: 'Enable Ouroboros engine loop for all agents',                      default: 'off' },
-      { key: 'CREWSWARM_ENGINE_LOOP_MAX_ROUNDS',      hint: 'Max STEP iterations per loop run',                                 default: '10' },
-      { key: 'CREWSWARM_ENGINE_IDLE_TIMEOUT_MS',      hint: 'Kill engine (Cursor/Claude) if no output for this many ms',        default: '300000' },
-      { key: 'CREWSWARM_ENGINE_MAX_TOTAL_MS',         hint: 'Absolute max ms for any single engine task',                       default: '2700000' },
-      { key: 'CREWSWARM_DISPATCH_TIMEOUT_MS',         hint: 'ms before an unclaimed dispatch times out',                        default: '300000' },
-      { key: 'CREWSWARM_DISPATCH_CLAIMED_TIMEOUT_MS', hint: 'ms before a claimed (in-progress) dispatch times out',             default: '900000' },
-      { key: 'CREWSWARM_RT_AGENT',                    hint: 'Agent ID used for the RT bus',                                     default: 'crew-coder' },
+      { key: 'IRIS_ENGINE_LOOP',                 hint: 'Enable Ouroboros engine loop for all agents',                      default: 'off' },
+      { key: 'IRIS_ENGINE_LOOP_MAX_ROUNDS',      hint: 'Max STEP iterations per loop run',                                 default: '10' },
+      { key: 'IRIS_ENGINE_IDLE_TIMEOUT_MS',      hint: 'Kill engine (Cursor/Claude) if no output for this many ms',        default: '300000' },
+      { key: 'IRIS_ENGINE_MAX_TOTAL_MS',         hint: 'Absolute max ms for any single engine task',                       default: '2700000' },
+      { key: 'IRIS_DISPATCH_TIMEOUT_MS',         hint: 'ms before an unclaimed dispatch times out',                        default: '300000' },
+      { key: 'IRIS_DISPATCH_CLAIMED_TIMEOUT_MS', hint: 'ms before a claimed (in-progress) dispatch times out',             default: '900000' },
+      { key: 'IRIS_RT_AGENT',                    hint: 'Agent ID used for the RT bus',                                     default: 'iris-coder' },
     ],
   },
   {
     label: 'Ports',
     vars: [
-      { key: 'CREW_LEAD_PORT',  hint: 'crew-lead HTTP server port', default: '5010' },
-      { key: 'SWARM_DASH_PORT', hint: 'Dashboard port',             default: '4319' },
+      { key: 'IRIS_LEAD_PORT',  hint: 'iris-lead HTTP server port', default: '5010' },
+      { key: 'IRIS_DASH_PORT', hint: 'Dashboard port',             default: '4319' },
       { key: 'WA_HTTP_PORT',    hint: 'WhatsApp bridge HTTP port',  default: '3000' },
     ],
   },
   {
     label: 'Background Consciousness',
     vars: [
-      { key: 'CREWSWARM_BG_CONSCIOUSNESS',              hint: 'Enable idle reflection loop',                                  default: 'off' },
-      { key: 'CREWSWARM_BG_CONSCIOUSNESS_INTERVAL_MS',  hint: 'Idle reflection interval in ms',                               default: '900000' },
-      { key: 'CREWSWARM_BG_CONSCIOUSNESS_MODEL',        hint: 'Model for background cycle (e.g. groq/llama-3.1-8b-instant)',  default: 'groq/llama-3.1-8b-instant' },
+      { key: 'IRIS_BG_CONSCIOUSNESS',              hint: 'Enable idle reflection loop',                                  default: 'off' },
+      { key: 'IRIS_BG_CONSCIOUSNESS_INTERVAL_MS',  hint: 'Idle reflection interval in ms',                               default: '900000' },
+      { key: 'IRIS_BG_CONSCIOUSNESS_MODEL',        hint: 'Model for background cycle (e.g. groq/llama-3.1-8b-instant)',  default: 'groq/llama-3.1-8b-instant' },
     ],
   },
   {
@@ -777,36 +777,36 @@ const ENV_GROUPS = [
   {
     label: 'Memory',
     vars: [
-      { key: 'SHARED_MEMORY_NAMESPACE', hint: 'Namespace prefix for shared memory keys', default: 'crewswarm' },
-      { key: 'SHARED_MEMORY_DIR',       hint: 'Directory for shared memory files',       default: '~/.crewswarm/memory' },
+      { key: 'SHARED_MEMORY_NAMESPACE', hint: 'Namespace prefix for shared memory keys', default: 'iris' },
+      { key: 'SHARED_MEMORY_DIR',       hint: 'Directory for shared memory files',       default: '~/.iris/memory' },
     ],
   },
   {
-    label: 'crew-cli — Streaming & Hooks',
-    note: 'Controls for crew-cli streaming output, tool hooks, and session token limits.',
+    label: 'iris-cli — Streaming & Hooks',
+    note: 'Controls for iris-cli streaming output, tool hooks, and session token limits.',
     vars: [
-      { key: 'CREW_NO_STREAM',          hint: 'Disable streaming output — tokens arrive after full response (true/false)', default: 'false' },
-      { key: 'CREW_HOOKS_FILE',         hint: 'Path to hooks.json for PreToolUse/PostToolUse hooks',                       default: '.crew/hooks.json' },
-      { key: 'CREW_MAX_SESSION_TOKENS',  hint: 'Max estimated tokens per session before oldest turns are trimmed',          default: '100000' },
+      { key: 'IRIS_NO_STREAM',          hint: 'Disable streaming output — tokens arrive after full response (true/false)', default: 'false' },
+      { key: 'IRIS_HOOKS_FILE',         hint: 'Path to hooks.json for PreToolUse/PostToolUse hooks',                       default: '.iris/hooks.json' },
+      { key: 'IRIS_MAX_SESSION_TOKENS',  hint: 'Max estimated tokens per session before oldest turns are trimmed',          default: '100000' },
     ],
   },
   {
-    label: 'crew-cli — Codebase Index & RAG',
+    label: 'iris-cli — Codebase Index & RAG',
     note: 'Codebase embedding index auto-builds on startup. Injects relevant file context into every worker prompt.',
     vars: [
-      { key: 'CREW_RAG_MODE',            hint: 'RAG mode: auto (use index when ready, else keyword), semantic, keyword, import-graph, off', default: 'auto' },
-      { key: 'CREW_EMBEDDING_PROVIDER',  hint: 'Embedding provider: local (zero-cost), openai (best), gemini (free tier)',                  default: 'local' },
-      { key: 'CREW_RAG_WORKER_BUDGET',   hint: 'Max tokens of RAG context injected per worker (approximate)',                               default: '4000' },
-      { key: 'CREW_RAG_MAX_FILES',       hint: 'Max code files to index (larger repos should increase this)',                                default: '2000' },
-      { key: 'CREW_RAG_BATCH_SIZE',      hint: 'Files per embedding batch (higher = faster but more API calls)',                             default: '20' },
+      { key: 'IRIS_RAG_MODE',            hint: 'RAG mode: auto (use index when ready, else keyword), semantic, keyword, import-graph, off', default: 'auto' },
+      { key: 'IRIS_EMBEDDING_PROVIDER',  hint: 'Embedding provider: local (zero-cost), openai (best), gemini (free tier)',                  default: 'local' },
+      { key: 'IRIS_RAG_WORKER_BUDGET',   hint: 'Max tokens of RAG context injected per worker (approximate)',                               default: '4000' },
+      { key: 'IRIS_RAG_MAX_FILES',       hint: 'Max code files to index (larger repos should increase this)',                                default: '2000' },
+      { key: 'IRIS_RAG_BATCH_SIZE',      hint: 'Files per embedding batch (higher = faster but more API calls)',                             default: '20' },
     ],
   },
   {
-    label: 'crew-cli — Checkpointing',
+    label: 'iris-cli — Checkpointing',
     note: 'Automatic git checkpoints during pipeline execution for easy rollback.',
     vars: [
-      { key: 'CREW_AUTO_CHECKPOINT',         hint: 'Enable auto-commit at task boundaries (true/false)',                     default: 'true' },
-      { key: 'CREW_CHECKPOINT_INTERVAL_MS',  hint: 'Periodic git stash snapshot interval during long tasks (ms, 0=off)',     default: '60000' },
+      { key: 'IRIS_AUTO_CHECKPOINT',         hint: 'Enable auto-commit at task boundaries (true/false)',                     default: 'true' },
+      { key: 'IRIS_CHECKPOINT_INTERVAL_MS',  hint: 'Periodic git stash snapshot interval during long tasks (ms, 0=off)',     default: '60000' },
     ],
   },
   {
@@ -814,12 +814,12 @@ const ENV_GROUPS = [
     vars: [
       { key: 'PM_MAX_ITEMS',           hint: 'Max roadmap items per PM loop run',                                        default: '10' },
       { key: 'PM_MAX_CONCURRENT',      hint: 'Max concurrent agent tasks in PM loop',                                    default: '20' },
-      { key: 'PM_USE_QA',              hint: 'Include crew-qa review after each PM task',                                default: 'off' },
-      { key: 'PM_USE_SECURITY',        hint: 'Include crew-security review for auth/key tasks',                          default: 'off' },
+      { key: 'PM_USE_QA',              hint: 'Include iris-qa review after each PM task',                                default: 'off' },
+      { key: 'PM_USE_SECURITY',        hint: 'Include iris-security review for auth/key tasks',                          default: 'off' },
       { key: 'PM_USE_SPECIALISTS',     hint: 'Route tasks to specialist agents (front/back/github) by keyword',          default: 'on' },
       { key: 'PM_SELF_EXTEND',         hint: 'Auto-generate new roadmap items when queue is empty',                      default: 'on' },
       { key: 'PM_EXTEND_EVERY',        hint: 'Generate new items every N completions (0 = only when empty)',             default: '5' },
-      { key: 'PM_CODER_AGENT',         hint: 'Override default coding agent for PM loop (e.g. crew-coder-front)',        default: 'crew-coder' },
+      { key: 'PM_CODER_AGENT',         hint: 'Override default coding agent for PM loop (e.g. iris-coder-front)',        default: 'iris-coder' },
       { key: 'PM_AGENT_IDLE_TIMEOUT_MS', hint: 'Kill PM dispatch if no activity for this many ms',                      default: '900000' },
       { key: 'PHASED_TASK_TIMEOUT_MS', hint: 'Overall timeout for a single agent task in the PM loop',                  default: '600000' },
     ],

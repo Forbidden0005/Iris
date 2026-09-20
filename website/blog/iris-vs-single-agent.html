@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Multi-Agent vs Single-Agent: Why One AI Isn't Enough</title>
+  <meta name="description" content="Why a PM agent plus specialist iris outperforms a single general-purpose model on real software projects. Architecture comparison and practical results." />
+  <meta property="og:title" content="Multi-Agent vs Single-Agent: Why One AI Isn't Enough" />
+  <meta property="og:description" content="A PM + specialist iris outperforms a single model on real software tasks." />
+  <meta property="og:url" content="https://iris.ai/blog/iris-vs-single-agent.html" />
+  <meta property="og:type" content="article" />
+  <meta property="og:site_name" content="iris" />
+  <meta property="og:locale" content="en_US" />
+  <meta property="og:image" content="https://iris.ai/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="iris — local-first multi-agent AI orchestration" />
+  <meta property="article:published_time" content="2026-03-15" />
+  <meta property="article:author" content="iris" />
+  <!-- Twitter / X -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:site" content="@iris" />
+  <meta name="twitter:title" content="Multi-Agent vs Single-Agent: Why One AI Isn't Enough" />
+  <meta name="twitter:description" content="A PM + specialist iris outperforms a single model on real software tasks." />
+  <meta name="twitter:image" content="https://iris.ai/og-image.png" />
+  <link rel="icon" type="image/webp" href="../favicon.webp?v=4" />
+  <link rel="canonical" href="https://iris.ai/blog/iris-vs-single-agent.html" />
+  <style>
+    :root { --bg: #060a10; --bg-card: #0f172a; --text-1: #e2e8f0; --text-2: #94a3b8; --text-3: #64748b; --border: #1e293b; --accent: #818cf8; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: var(--bg); color: var(--text-1); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.8; }
+    .header { background: var(--bg); border-bottom: 1px solid var(--border); padding: 1rem 2rem; display: flex; align-items: center; gap: 1rem; }
+    .header a { color: var(--text-1); text-decoration: none; font-weight: 600; }
+    .header a:hover { color: var(--accent); }
+    .header .sep { color: var(--text-3); }
+    .header .links { margin-left: auto; display: flex; gap: 1rem; font-size: 0.85rem; }
+    .header .links a { color: var(--text-2); font-weight: 400; }
+    .container { max-width: 680px; margin: 0 auto; padding: 3rem 1.5rem 5rem; }
+    h1 { font-size: 2rem; margin-bottom: 0.5rem; line-height: 1.3; }
+    .meta { color: var(--text-3); font-size: 0.85rem; margin-bottom: 2rem; }
+    h2 { font-size: 1.3rem; margin: 2.5rem 0 0.75rem; }
+    p { color: var(--text-2); margin-bottom: 1.25rem; font-size: 1rem; }
+    strong { color: var(--text-1); }
+    code { background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; font-size: 0.85rem; }
+    table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.9rem; }
+    th { text-align: left; padding: 0.5rem; border-bottom: 2px solid var(--border); color: var(--text-1); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    td { padding: 0.5rem; border-bottom: 1px solid var(--border); color: var(--text-2); }
+    .cta { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; margin-top: 3rem; text-align: center; }
+    .cta a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    .cta code { display: block; margin-top: 0.75rem; font-size: 0.9rem; color: var(--accent); }
+  </style>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "Multi-Agent vs Single-Agent: Why One AI Isn't Enough",
+    "description": "Why a PM agent plus specialist iris outperforms a single general-purpose model on real software projects. Architecture comparison and practical results.",
+    "datePublished": "2026-03-15",
+    "author": { "@type": "Organization", "name": "iris" },
+    "publisher": { "@type": "Organization", "name": "iris", "logo": { "@type": "ImageObject", "url": "https://iris.ai/favicon.png" } },
+    "mainEntityOfPage": "https://iris.ai/blog/iris-vs-single-agent.html"
+  }
+  </script>
+</head>
+<body>
+  <div class="header">
+    <a href="../index.html">iris</a>
+    <span class="sep">/</span>
+    <a href="index.html" style="font-weight:400;color:var(--text-2);">Blog</a>
+    <div class="links">
+      <a href="../changelog.html">Changelog</a>
+      <a href="../docs.html">Docs</a>
+    </div>
+  </div>
+  <div class="container">
+    <h1>Multi-Agent vs Single-Agent: Why One AI Isn't Enough</h1>
+    <div class="meta">March 2026</div>
+
+    <p>The default approach to AI coding is: open a chat, describe what you want, get code back. One model, one conversation. It works for small tasks. It breaks down on real projects.</p>
+
+    <h2>The single-agent ceiling</h2>
+
+    <p>A single model doing everything hits predictable limits:</p>
+
+    <p><strong>Context window pressure.</strong> By the time you've described the project, loaded relevant files, and gone through a few iterations, you're deep into the context window. The model starts forgetting earlier decisions. It contradicts itself. Quality degrades.</p>
+
+    <p><strong>Role confusion.</strong> Should the model plan or execute? Review its own code? Make architectural decisions and also write CSS? Every role switch costs quality. A model that just finished writing backend code isn't in the right headspace to catch security vulnerabilities in that same code.</p>
+
+    <p><strong>No verification loop.</strong> When the same model writes code and evaluates it, it has a blind spot for its own mistakes. It "looks right" because it wrote it.</p>
+
+    <h2>The multi-agent advantage</h2>
+
+    <p>iris splits the work across <strong>20+ specialist agents</strong>, each with a focused role, fresh context, and purpose-built tools:</p>
+
+    <table>
+      <tr><th>Task</th><th>Single Agent</th><th>iris Iris</th></tr>
+      <tr><td>Planning a feature</td><td>Same model as coder</td><td>iris-pm with web research capability</td></tr>
+      <tr><td>Writing backend code</td><td>Same model as everything</td><td>iris-coder-back with dedicated coding engine</td></tr>
+      <tr><td>Writing frontend</td><td>Same model, same context</td><td>iris-coder-front with fresh context</td></tr>
+      <tr><td>Code review</td><td>Self-review (blind spots)</td><td>iris-qa with different model + fresh eyes</td></tr>
+      <tr><td>Security audit</td><td>Afterthought, if at all</td><td>iris-security as dedicated gate</td></tr>
+      <tr><td>Git workflow</td><td>Manual</td><td>iris-github handles commits, PRs</td></tr>
+    </table>
+
+    <p>Each agent starts with <strong>clean context</strong> — just its role prompt, the task, and shared project memory. No accumulated conversation noise. No role confusion.</p>
+
+    <h2>The PM as coordinator</h2>
+
+    <p>The key insight: specialists without coordination produce chaos. iris's PM agent reads a <code>ROADMAP.md</code>, breaks work into tasks, dispatches to the right agent, evaluates results, and iterates. It uses a fast model (Groq) for speed and a reasoning model for complex planning decisions.</p>
+
+    <p>The PM doesn't write code. It doesn't review code. It coordinates. This separation is what makes the system reliable — each agent does one thing well.</p>
+
+    <h2>Model diversity</h2>
+
+    <p>A single-agent system uses one model for everything. iris lets you put <strong>the right model on each task</strong>:</p>
+
+    <table>
+      <tr><th>Agent</th><th>Optimized for</th><th>Example setup</th></tr>
+      <tr><td>iris-pm (planning)</td><td>Fast, cheap model</td><td>Groq Llama 3.3 70B or Grok — speed over depth</td></tr>
+      <tr><td>iris-coder (execution)</td><td>Best coding model</td><td>Claude Sonnet, GPT-5, or Codex — quality matters</td></tr>
+      <tr><td>iris-qa (review)</td><td>Different model than coder</td><td>Gemini Flash or DeepSeek — fresh eyes catch more</td></tr>
+      <tr><td>iris-fixer (bugs)</td><td>Tool-heavy engine</td><td>Codex or Claude Code — needs to run code and debug</td></tr>
+      <tr><td>iris-researcher</td><td>Web-connected model</td><td>Perplexity Sonar or any model with web search</td></tr>
+      <tr><td>iris-security (audit)</td><td>Thorough reasoning</td><td>Claude or GPT — needs to think through attack vectors</td></tr>
+      <tr><td>iris-lead (coordinator)</td><td>Conversational, fast</td><td>Any fast model — this is your chat interface</td></tr>
+    </table>
+
+    <p>This isn't theoretical. Using different models for different roles consistently outperforms a single frontier model doing everything — at lower total cost, because most agents use fast/cheap models.</p>
+
+    <h2>Shared memory, separate context</h2>
+
+    <p>All agents share a persistent memory layer: project state, decisions, handoff notes. But each agent's <em>conversation context</em> is fresh. This gives you the best of both worlds: agents know what's been decided (shared memory) without carrying the burden of everything that's been said (clean context).</p>
+
+    <h2>When single-agent is fine</h2>
+
+    <p>For a quick question, a one-file edit, or an explanation — a single agent is faster and simpler. iris doesn't replace that. You can always chat with iris-lead directly for lightweight tasks. The multi-agent system kicks in when you need to <strong>build, test, and ship</strong> — not just generate.</p>
+
+    <div class="cta">
+      <p style="color:var(--text-1);font-weight:600;margin-bottom:0.5rem;">Try multi-agent orchestration</p>
+      <p><a href="https://github.com/crewswarm/crewswarm">GitHub</a> &middot; <a href="https://www.npmjs.com/package/iris">npm</a> &middot; <a href="../index.html#get-started">Install guide</a></p>
+      <code>npm install -g iris</code>
+    </div>
+  </div>
+</body>
+</html>

@@ -70,14 +70,14 @@ const SPENDING_TODAY_FIXTURE = {
     date: "2026-04-02",
     global: { tokens: 85000, costUSD: 0.2125 },
     agents: {
-      "crew-lead": { tokens: 50000, costUSD: 0.125 },
-      "crew-pm": { tokens: 35000, costUSD: 0.0875 },
+      "iris-lead": { tokens: 50000, costUSD: 0.125 },
+      "iris-pm": { tokens: 35000, costUSD: 0.0875 },
     },
   },
   caps: {
     global: { dailyTokenLimit: 200000, dailyCostLimitUSD: 5.0 },
     agents: {
-      "crew-lead": { dailyTokenLimit: 100000 },
+      "iris-lead": { dailyTokenLimit: 100000 },
     },
   },
 };
@@ -200,8 +200,8 @@ test.describe("Spending tab — today view", () => {
 
     const widget = page.locator("#spendingWidget");
     await expect(widget).toBeVisible({ timeout: 8_000 });
-    await expect(widget).toContainText("crew-lead", { timeout: 8_000 });
-    await expect(widget).toContainText("crew-pm", { timeout: 8_000 });
+    await expect(widget).toContainText("iris-lead", { timeout: 8_000 });
+    await expect(widget).toContainText("iris-pm", { timeout: 8_000 });
   });
 
   test("grand total row shows agent cost, OC cost, and combined total", async ({

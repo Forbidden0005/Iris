@@ -248,7 +248,7 @@ export async function loadOcStats(reportOcCost) {
 
 export async function checkCrewLeadStatus() {
   try {
-    const d = await getJSON('/api/crew-lead/status');
+    const d = await getJSON('/api/iris-lead/status');
     const badge = document.getElementById('crewLeadBadge');
     if (d.online) {
       badge.textContent = '● online'; badge.className = 'status-badge status-running';
@@ -289,21 +289,21 @@ export async function loadToolMatrix(){
     if (!res.ok || !d.ok) {
       const msg = d.error || (res.status === 401 ? 'Unauthorized' : res.statusText || 'Request failed');
       el.innerHTML = '<div class="card" style="padding:16px;"><div style="color:var(--yellow);font-size:13px;font-weight:600;">Health check failed</div>' +
-        '<div style="color:var(--text-2);font-size:12px;margin-top:8px;">' + (res.status === 401 ? 'RT token missing or invalid. Set it in Settings → System (RT token) or in ~/.crewswarm/crewswarm.json (rt.authToken).' : msg) + '</div>' +
-        '<div style="color:var(--text-3);font-size:11px;margin-top:8px;">Ensure crew-lead is running on :5010 (Services tab).</div></div>';
+        '<div style="color:var(--text-2);font-size:12px;margin-top:8px;">' + (res.status === 401 ? 'RT token missing or invalid. Set it in Settings → System (RT token) or in ~/.iris/iris.json (rt.authToken).' : msg) + '</div>' +
+        '<div style="color:var(--text-3);font-size:11px;margin-top:8px;">Ensure iris-lead is running on :5010 (Services tab).</div></div>';
       return;
     }
     window._telemetryEvents = d.telemetry || [];
     renderTaskLifecycle(d.telemetry || []);
-    const bridgeAgents = (d.agents || []).filter(a => (a.id || '').toLowerCase() !== 'crew-lead');
-    const crewLeadInfo = window._crewLeadInfo || { name: 'Crew Lead', emoji: '🧠' };
-    const crewLeadRow = { id: 'crew-lead', name: crewLeadInfo.name, emoji: crewLeadInfo.emoji, tools: ['read_file', 'write_file', 'mkdir', 'run_cmd', 'web_search', 'web_fetch', 'skill', 'define_skill', 'dispatch', 'telegram', 'whatsapp'] };
+    const bridgeAgents = (d.agents || []).filter(a => (a.id || '').toLowerCase() !== 'iris-lead');
+    const crewLeadInfo = window._crewLeadInfo || { name: 'Iris Lead', emoji: '🧠' };
+    const crewLeadRow = { id: 'iris-lead', name: crewLeadInfo.name, emoji: crewLeadInfo.emoji, tools: ['read_file', 'write_file', 'mkdir', 'run_cmd', 'web_search', 'web_fetch', 'skill', 'define_skill', 'dispatch', 'telegram', 'whatsapp'] };
     const agents = [crewLeadRow, ...bridgeAgents];
     const toolKeys = [...new Set(['define_skill', 'skill', ...agents.flatMap(a => Array.isArray(a.tools) ? a.tools : Object.keys(a.tools || {}))])].sort();
     const labels = toolKeys.map(t => TOOL_LABELS[t] || t);
     if (!agents.length) {
       el.innerHTML = '<div class="card" style="padding:16px;"><div style="color:var(--text-2);font-size:13px;">No agents in roster.</div>' +
-        '<div style="color:var(--text-3);font-size:12px;margin-top:6px;">Add agents in Settings → Agents (or ~/.crewswarm/crewswarm.json), then start bridges from Services.</div></div>';
+        '<div style="color:var(--text-3);font-size:12px;margin-top:6px;">Add agents in Settings → Agents (or ~/.iris/iris.json), then start bridges from Services.</div></div>';
       return;
     }
     let html = '<div class="card" style="overflow:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;">'

@@ -5,16 +5,16 @@ Shared memory, project messages, and RAG role.
 ## Three memory layers
 
 1. **AgentMemory** — cognitive facts (decisions, constraints, preferences)
-   - Stored: `~/.crewswarm/shared-memory/.crew/agent-memory/<agent-id>.json`
+   - Stored: `~/.iris/shared-memory/.iris/agent-memory/<agent-id>.json`
    - Written by: `@@BRAIN` commands, migration script, `rememberFact()` API
 
 2. **AgentKeeper** — task results (completed work by all agents)
-   - Stored: `~/.crewswarm/shared-memory/.crew/agentkeeper.jsonl`
+   - Stored: `~/.iris/shared-memory/.iris/agentkeeper.jsonl`
    - Written by: Gateway after task completion, CLI `--keep` mode
 
 3. **Collections** — local docs/code RAG (optional)
-   - Stored: `~/.crewswarm/shared-memory/.crew/collections/`
-   - Written by: `crew index --docs`, `crew index --code`
+   - Stored: `~/.iris/shared-memory/.iris/collections/`
+   - Written by: `iris index --docs`, `iris index --code`
 
 **MemoryBroker** blends all three, scores hits, returns unified context.
 
@@ -36,12 +36,12 @@ node scripts/migrate-brain-to-shared-memory.mjs
 
 ## Project messages
 
-- Chat history: `~/.crewswarm/project-messages/{projectId}/messages.jsonl`
+- Chat history: `~/.iris/project-messages/{projectId}/messages.jsonl`
 - Auto-indexed for semantic search
-- API: `GET /api/crew-lead/search-messages-semantic?projectId=...&q=...`
+- API: `GET /api/iris-lead/search-messages-semantic?projectId=...&q=...`
 
 ## How it works
 
 - **Gateway:** Calls `recallMemoryContext()` when building prompts; records tasks via `recordTaskMemory()`
-- **Crew-lead chat:** Injects MemoryBroker context at session start; parses `@@MEMORY` commands
-- **CLI:** Uses MemoryBroker natively in crew-cli
+- **Iris-lead chat:** Injects MemoryBroker context at session start; parses `@@MEMORY` commands
+- **CLI:** Uses MemoryBroker natively in iris-cli

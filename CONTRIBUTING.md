@@ -1,6 +1,6 @@
 # Contributing to Iris
 
-Thanks for your interest. Iris is an active project and contributions are welcome -- bug fixes, new skills, agent improvements, engine integrations, and docs all matter. Iris is forked from [crewswarm](https://github.com/crewswarm/crewswarm), so most of the runtime below (crew-lead, gateway-bridge, the RT bus, engines) is inherited crewswarm internals — see [docs/IRIS_FOUNDATION.md](docs/IRIS_FOUNDATION.md) for what Iris adds on top.
+Thanks for your interest. Iris is an active project and contributions are welcome -- bug fixes, new skills, agent improvements, engine integrations, and docs all matter. See [docs/IRIS_FOUNDATION.md](docs/IRIS_FOUNDATION.md) for the product direction and how the runtime (iris-lead, gateway-bridge, the RT bus, engines) fits together.
 
 ---
 
@@ -20,12 +20,12 @@ npm run restart-all
 
 # 4. Verify
 open http://127.0.0.1:4319   # Dashboard UI
-curl http://127.0.0.1:5010/health  # crew-lead API
+curl http://127.0.0.1:5010/health  # iris-lead API
 ```
 
-You need at least one LLM API key to run the crew. Groq is free: https://console.groq.com/keys
+You need at least one LLM API key to run the iris. Groq is free: https://console.groq.com/keys
 
-Configuration lives in `~/.crewswarm/`. The installer creates it if missing.
+Configuration lives in `~/.iris/`. The installer creates it if missing.
 
 ---
 
@@ -33,20 +33,20 @@ Configuration lives in `~/.crewswarm/`. The installer creates it if missing.
 
 | Path | What lives here |
 |---|---|
-| `crew-lead.mjs` | Conversational commander + HTTP API (port 5010) |
+| `iris-lead.mjs` | Conversational commander + HTTP API (port 5010) |
 | `gateway-bridge.mjs` | Per-agent daemon -- LLM calls, tool execution, engine routing |
-| `lib/crew-lead/` | Chat handler, wave dispatcher, LLM caller, prompts, HTTP server |
+| `lib/iris-lead/` | Chat handler, wave dispatcher, LLM caller, prompts, HTTP server |
 | `lib/engines/` | Engine runners (Cursor CLI, Claude Code, Gemini CLI, Codex), Ouroboros loop |
 | `lib/pipeline/` | Project draft/confirm, roadmap AI generation |
 | `lib/skills/` | Skill loader -- handles both `.json` API skills and `SKILL.md` knowledge skills |
 | `lib/tools/` | `@@TOOL` marker parser and executor |
 | `apps/dashboard/` | Vite dashboard UI -- edit `apps/dashboard/src/`, build with `npm run build` |
 | `apps/vibe/` | Vibe standalone app |
-| `crew-cli/` | CLI tool integrations and external engine bridges |
+| `iris-cli/` | CLI tool integrations and external engine bridges |
 | `scripts/` | Dashboard API server (`dashboard.mjs`), smoke tests, utility scripts |
 | `pm-loop.mjs` | Autonomous PM loop -- reads ROADMAP.md, dispatches items |
 | `skills/` | Bundled skill plugins shipped with the repo |
-| `~/.crewswarm/skills/` | User-installed skills (JSON + SKILL.md) |
+| `~/.iris/skills/` | User-installed skills (JSON + SKILL.md) |
 | `memory/` | Shared agent context (brain.md, laws, lessons) |
 | `test/unit/` | Unit tests -- no services needed |
 | `test/integration/` | Integration tests -- no services needed |
@@ -100,24 +100,24 @@ node scripts/health-check.mjs
 
 ## How to add a new agent
 
-1. Add an entry to `~/.crewswarm/crewswarm.json`:
+1. Add an entry to `~/.iris/iris.json`:
 ```json
-{ "id": "crew-myagent", "model": "groq/llama-3.3-70b-versatile" }
+{ "id": "iris-myagent", "model": "groq/llama-3.3-70b-versatile" }
 ```
 
-2. Add a system prompt to `~/.crewswarm/agent-prompts.json`:
+2. Add a system prompt to `~/.iris/agent-prompts.json`:
 ```json
-{ "myagent": "You are crew-myagent. Your specialty is X. Always @@WRITE_FILE your output." }
+{ "myagent": "You are iris-myagent. Your specialty is X. Always @@WRITE_FILE your output." }
 ```
 
 3. Optionally add a skill reference to the prompt:
 ```json
-{ "myagent": "You are crew-myagent...\n\n## Your Skill: my-skill\nUse @@SKILL my-skill {} when doing X." }
+{ "myagent": "You are iris-myagent...\n\n## Your Skill: my-skill\nUse @@SKILL my-skill {} when doing X." }
 ```
 
 4. Restart bridges -- the new agent auto-registers on the RT bus:
 ```bash
-node scripts/start-crew.mjs
+node scripts/start-iris.mjs
 ```
 
 ---
@@ -160,19 +160,19 @@ pkill -f "dashboard.mjs" && node scripts/dashboard.mjs &
 node scripts/check-dashboard.mjs --source-only
 ```
 
-### Backend (crew-lead, gateway-bridge)
+### Backend (iris-lead, gateway-bridge)
 
 Plain ESM Node.js -- no build step. Restart the affected process:
 
 ```bash
-# crew-lead
-pkill -f "crew-lead.mjs" && node crew-lead.mjs &
+# iris-lead
+pkill -f "iris-lead.mjs" && node iris-lead.mjs &
 
 # All agent bridges
-pkill -f "gateway-bridge.mjs" && node scripts/start-crew.mjs
+pkill -f "gateway-bridge.mjs" && node scripts/start-iris.mjs
 
-# Single bridge (e.g. crew-coder)
-pkill -f "crew-coder" && node gateway-bridge.mjs crew-coder &
+# Single bridge (e.g. iris-coder)
+pkill -f "iris-coder" && node gateway-bridge.mjs iris-coder &
 ```
 
 ### Adding a knowledge skill (SKILL.md -- no code)
@@ -180,8 +180,8 @@ pkill -f "crew-coder" && node gateway-bridge.mjs crew-coder &
 Knowledge skills are Markdown playbooks agents read when they call `@@SKILL skillname {}`.
 
 ```bash
-mkdir -p ~/.crewswarm/skills/my-skill
-cat > ~/.crewswarm/skills/my-skill/SKILL.md << 'EOF'
+mkdir -p ~/.iris/skills/my-skill
+cat > ~/.iris/skills/my-skill/SKILL.md << 'EOF'
 ---
 name: my-skill
 description: One sentence describing when to use this skill.
@@ -203,7 +203,7 @@ The skill is immediately available -- no restart needed. Test it: `@@SKILL my-sk
 ### Adding an API skill (JSON -- calls an external endpoint)
 
 ```bash
-cat > ~/.crewswarm/skills/my-api.json << 'EOF'
+cat > ~/.iris/skills/my-api.json << 'EOF'
 {
   "description": "What this skill does",
   "url": "https://api.example.com/endpoint",
@@ -236,11 +236,11 @@ Or use the dashboard Skills tab and the **+ New API Skill** form.
 Conventional Commits -- imperative subject, 72 chars max:
 
 ```
-fix: prevent dispatch loop when crew-lead echoes past-tense replies
+fix: prevent dispatch loop when iris-lead echoes past-tense replies
 feat: add Codex CLI as passthrough engine with --full-auto flag
 docs: update CONTRIBUTING.md with skill authoring guide
 test: add 45 unit tests for Ouroboros engine loop
-refactor: extract LLM caller into lib/crew-lead/llm-caller.mjs
+refactor: extract LLM caller into lib/iris-lead/llm-caller.mjs
 ```
 
 No ticket numbers required. No emoji in commit messages unless the file already uses them.
@@ -261,7 +261,7 @@ No ticket numbers required. No emoji in commit messages unless the file already 
 - [ ] `npm test` passes (unit + integration)
 - [ ] `node scripts/check-dashboard.mjs --source-only` passes (if you touched dashboard/frontend)
 - [ ] No secrets, API keys, or personal paths in the diff
-- [ ] `~/.crewswarm/` paths never hardcoded -- use `os.homedir()` + `path.join()`
+- [ ] `~/.iris/` paths never hardcoded -- use `os.homedir()` + `path.join()`
 - [ ] New env vars documented in `AGENTS.md`
 - [ ] New user-facing behaviour documented in `README.md` or `docs/`
 - [ ] `CHANGELOG.md` updated under `[Unreleased]`
@@ -272,8 +272,8 @@ No ticket numbers required. No emoji in commit messages unless the file already 
 
 These are concrete starter tasks for new contributors:
 
-- **Add a new skill to `~/.crewswarm/skills/`** -- Write a SKILL.md knowledge playbook for a domain you know (deployment checklists, code review guides, security audits).
-- **Improve an agent's system prompt** -- Refine the prompt in `~/.crewswarm/agent-prompts.json` for an existing agent to handle edge cases better.
+- **Add a new skill to `~/.iris/skills/`** -- Write a SKILL.md knowledge playbook for a domain you know (deployment checklists, code review guides, security audits).
+- **Improve an agent's system prompt** -- Refine the prompt in `~/.iris/agent-prompts.json` for an existing agent to handle edge cases better.
 - **Add unit tests for an untested module** -- Pick a file in `lib/` that lacks test coverage and add tests using Node.js built-in test runner.
 - **Add a new LLM provider integration** -- Wire up a new provider (Mistral, Cohere, local Ollama) in the engine registry.
 - **Improve dashboard UI** -- Dark mode polish, responsive layout fixes, accessibility improvements in `apps/dashboard/`.
@@ -320,4 +320,4 @@ Iris uses `main` as the release branch. No versioned npm releases yet -- install
 
 Open a [discussion](../../discussions) or a [question issue](../../issues/new?template=question.yml).
 
-You can also ask the crew directly -- run `npm run restart-all`, open the dashboard, and ask in the chat.
+You can also ask the iris directly -- run `npm run restart-all`, open the dashboard, and ask in the chat.

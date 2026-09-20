@@ -49,19 +49,19 @@ describe("addAgentSpend", () => {
   test("accumulates tokens for a new agent", () => {
     const before = loadSpending();
     const initialGlobal = before.global.tokens;
-    addAgentSpend("test-crew-agent", 500, 0.05);
+    addAgentSpend("test-iris-agent", 500, 0.05);
     const after = loadSpending();
     assert.ok(after.global.tokens >= initialGlobal + 500);
-    assert.ok(after.agents["test-crew-agent"]);
-    assert.ok(after.agents["test-crew-agent"].tokens >= 500);
+    assert.ok(after.agents["test-iris-agent"]);
+    assert.ok(after.agents["test-iris-agent"].tokens >= 500);
   });
 
   test("accumulates additional spend for existing agent", () => {
     const before = loadSpending();
-    const initialTokens = (before.agents["test-crew-agent"] || { tokens: 0 }).tokens;
-    addAgentSpend("test-crew-agent", 200, 0.02);
+    const initialTokens = (before.agents["test-iris-agent"] || { tokens: 0 }).tokens;
+    addAgentSpend("test-iris-agent", 200, 0.02);
     const after = loadSpending();
-    assert.ok(after.agents["test-crew-agent"].tokens >= initialTokens + 200);
+    assert.ok(after.agents["test-iris-agent"].tokens >= initialTokens + 200);
   });
 
   test("accumulates costUSD correctly", () => {
@@ -69,7 +69,7 @@ describe("addAgentSpend", () => {
     const prevGlobalCost = before.global.costUSD;
     const prevGlobalTokens = before.global.tokens;
 
-    addAgentSpend("test-crew-agent-c", 1000, 0.10);
+    addAgentSpend("test-iris-agent-c", 1000, 0.10);
 
     const after = loadSpending();
     assert.ok(after.global.costUSD >= prevGlobalCost + 0.10 - 0.001,

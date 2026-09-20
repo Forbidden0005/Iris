@@ -8,7 +8,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 
-// ── Pattern mirrors from lib/crew-lead/chat-handler.mjs ───────────────────
+// ── Pattern mirrors from lib/iris-lead/chat-handler.mjs ───────────────────
 const AUTONOMOUS_START = /run\s+until\s+done|autonomous\s+build|build\s+until\s+done/i;
 const AUTONOMOUS_STOP  = /stop\s+autonomous|stop\s+(the\s+)?build/i;
 const STOP_SIGNAL      = /^@@STOP\b/;

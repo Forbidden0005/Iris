@@ -51,7 +51,7 @@ async function loadChatHistoryWithUnified() {
   }
   
   try {
-    const data = await getJSON(`/api/crew-lead/project-messages?projectId=${encodeURIComponent(projectId)}&limit=100`);
+    const data = await getJSON(`/api/iris-lead/project-messages?projectId=${encodeURIComponent(projectId)}&limit=100`);
     
     if (!data.ok) {
       console.error('Failed to load unified messages:', data.error);
@@ -154,7 +154,7 @@ export async function performSearch() {
   resultsDiv.innerHTML = '<div style="text-align:center;padding:20px;">Searching...</div>';
   
   try {
-    let url = `/api/crew-lead/search-project-messages?projectId=${encodeURIComponent(projectId)}&q=${encodeURIComponent(query)}`;
+    let url = `/api/iris-lead/search-project-messages?projectId=${encodeURIComponent(projectId)}&q=${encodeURIComponent(query)}`;
     if (caseSensitive) url += '&caseSensitive=true';
     if (source) url += `&source=${encodeURIComponent(source)}`;
     
@@ -263,7 +263,7 @@ export async function exportMessages() {
   try {
     notify('Exporting...');
     
-    const url = `/api/crew-lead/export-project-messages?projectId=${encodeURIComponent(projectId)}&format=${format}&includeMetadata=true`;
+    const url = `/api/iris-lead/export-project-messages?projectId=${encodeURIComponent(projectId)}&format=${format}&includeMetadata=true`;
     
     // Download file
     const a = document.createElement('a');

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Restart the full crewswarm stack using only repo scripts (OpenCode, RT daemon, gateways, crew-lead, dashboard, Vibe, watch).
+# Restart the full iris stack using only repo scripts (OpenCode, RT daemon, gateways, iris-lead, dashboard, Vibe, watch).
 # Run from repo root: ./scripts/restart-all-from-repo.sh
 # Optional: --no-dashboard  skip dashboard
 #           --no-studio    skip Vibe + file watcher
@@ -7,7 +7,7 @@
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_DIR"
-export CREWSWARM_DIR="$REPO_DIR"
+export IRIS_DIR="$REPO_DIR"
 export OPENCLAW_DIR="$REPO_DIR"   # backward compat for scripts that only check this
 export NODE="$("$REPO_DIR/scripts/resolve-node-bin.sh")"
 # Work around intermittent Node 24/25 ESM loader crashes (`Unknown system error -11, read`)
@@ -99,16 +99,16 @@ done
 # PHASE 1: Stop everything gracefully
 # ══════════════════════════════════════════════════════════════════════════════
 echo ""
-echo -e "${BOLD}Stopping existing crewswarm processes...${RESET}"
+echo -e "${BOLD}Stopping existing iris processes...${RESET}"
 
 # ── Kill by process name (SIGTERM → SIGKILL) ─────────────────────────────────
 # Use pattern without leading "node " so we catch all node binary paths
 graceful_kill_pattern "gateway-bridge.mjs"
-graceful_kill_pattern "opencrew-rt-daemon.mjs"
-graceful_kill_pattern "crew-lead.mjs"
+graceful_kill_pattern "openiris-rt-daemon.mjs"
+graceful_kill_pattern "iris-lead.mjs"
 graceful_kill_pattern "scripts/dashboard.mjs"
 graceful_kill_pattern "scripts/mcp-server.mjs"
-graceful_kill_pattern "scripts/crew-scribe.mjs"
+graceful_kill_pattern "scripts/iris-scribe.mjs"
 graceful_kill_pattern "telegram-bridge.mjs"
 graceful_kill_pattern "whatsapp-bridge.mjs"
 graceful_kill_pattern "opencode serve"
@@ -124,7 +124,7 @@ for port in 5010 4319 18889 4096 5020 3333 3334; do
   graceful_kill_port "$port"
 done
 
-# ── Clean stale PID files so start-crew doesn't skip re-spawning
+# ── Clean stale PID files so start-iris doesn't skip re-spawning
 find /tmp -maxdepth 1 -name "bridge-*.pid" -delete 2>/dev/null; true
 
 sleep 1
@@ -164,17 +164,17 @@ fi
 # ── 2. RT daemon (port 18889) ────────────────────────────────────────────────
 echo ""
 echo "Starting RT daemon (port 18889)..."
-nohup "$NODE" scripts/opencrew-rt-daemon.mjs >> /tmp/opencrew-rt-daemon.log 2>&1 &
+nohup "$NODE" scripts/openiris-rt-daemon.mjs >> /tmp/openiris-rt-daemon.log 2>&1 &
 
 if ! wait_for_health "http://127.0.0.1:18889/status" "rt-bus" 15; then
   echo "  Retrying RT daemon once..."
-  graceful_kill_pattern "opencrew-rt-daemon.mjs"
+  graceful_kill_pattern "openiris-rt-daemon.mjs"
   graceful_kill_port 18889
   sleep 1
-  nohup "$NODE" scripts/opencrew-rt-daemon.mjs >> /tmp/opencrew-rt-daemon.log 2>&1 &
+  nohup "$NODE" scripts/openiris-rt-daemon.mjs >> /tmp/openiris-rt-daemon.log 2>&1 &
   if ! wait_for_health "http://127.0.0.1:18889/status" "rt-bus" 15; then
     echo "  Last RT log lines:"
-    tail -n 40 /tmp/opencrew-rt-daemon.log 2>/dev/null || true
+    tail -n 40 /tmp/openiris-rt-daemon.log 2>/dev/null || true
     echo ""
     echo -e "  ${RED}RT bus failed — continuing with remaining services${RESET}"
   fi
@@ -182,27 +182,27 @@ fi
 
 # ── 3. Gateway bridges (agents) ──────────────────────────────────────────────
 echo ""
-echo "Starting gateway bridges (crew-main, crew-pm, crew-coder, etc.)..."
-"$NODE" scripts/start-crew.mjs --force
+echo "Starting gateway bridges (iris-main, iris-pm, iris-coder, etc.)..."
+"$NODE" scripts/start-iris.mjs --force
 svc_set "agents" "up"
 sleep 1
 
-# ── 4. crew-lead (port 5010) — CRITICAL ─────────────────────────────────────
+# ── 4. iris-lead (port 5010) — CRITICAL ─────────────────────────────────────
 echo ""
-echo "Starting crew-lead (port 5010)..."
-# crew-lead is spawned by start-crew.mjs above; this is a safety net only.
+echo "Starting iris-lead (port 5010)..."
+# iris-lead is spawned by start-iris.mjs above; this is a safety net only.
 if ! lsof -ti :5010 >/dev/null 2>&1; then
-  nohup "$NODE" crew-lead.mjs >> /tmp/crew-lead.log 2>&1 &
+  nohup "$NODE" iris-lead.mjs >> /tmp/iris-lead.log 2>&1 &
 fi
-wait_for_health "http://127.0.0.1:5010/health" "crew-lead" 30 || true
+wait_for_health "http://127.0.0.1:5010/health" "iris-lead" 30 || true
 
 # ── 5. Dashboard (port 4319) — CRITICAL ─────────────────────────────────────
 if [[ "$START_DASH" -eq 1 ]]; then
   echo ""
   echo "Starting dashboard (port 4319)..."
-  if launchctl list com.crewswarm.dashboard >/dev/null 2>&1; then
-    launchctl stop com.crewswarm.dashboard 2>/dev/null; sleep 1
-    launchctl start com.crewswarm.dashboard 2>/dev/null
+  if launchctl list com.iris.dashboard >/dev/null 2>&1; then
+    launchctl stop com.iris.dashboard 2>/dev/null; sleep 1
+    launchctl start com.iris.dashboard 2>/dev/null
     echo "  (via launchd)"
   else
     nohup "$NODE" scripts/dashboard.mjs >> /tmp/dashboard.log 2>&1 &
@@ -237,7 +237,7 @@ fi
 echo ""
 echo "Starting MCP + OpenAI-compat server (port 5020)..."
 if ! lsof -ti :5020 >/dev/null 2>&1; then
-  nohup "$NODE" scripts/mcp-server.mjs >> /tmp/crewswarm-mcp.log 2>&1 &
+  nohup "$NODE" scripts/mcp-server.mjs >> /tmp/iris-mcp.log 2>&1 &
   wait_for_health "http://127.0.0.1:5020/health" "mcp-server" 15 || true
 else
   echo "  (already running on :5020)"
@@ -293,7 +293,7 @@ print_status() {
 }
 
 print_status "rt-bus"       18889
-print_status "crew-lead"    5010
+print_status "iris-lead"    5010
 print_status "dashboard"    4319
 print_status "agents"       "--"
 print_status "mcp-server"   5020
@@ -306,7 +306,7 @@ if [[ "$START_BRIDGES" -eq 1 ]]; then
 fi
 
 echo ""
-echo "Logs: /tmp/opencode.log /tmp/opencrew-rt-daemon.log /tmp/crew-lead.log /tmp/dashboard.log /tmp/crewswarm-mcp.log /tmp/studio.log /tmp/studio-watch.log"
+echo "Logs: /tmp/opencode.log /tmp/openiris-rt-daemon.log /tmp/iris-lead.log /tmp/dashboard.log /tmp/iris-mcp.log /tmp/studio.log /tmp/studio-watch.log"
 
 # ── Run health-check if available ────────────────────────────────────────────
 if [[ -f "$REPO_DIR/scripts/health-check.mjs" ]]; then
@@ -317,17 +317,17 @@ if [[ -f "$REPO_DIR/scripts/health-check.mjs" ]]; then
 fi
 
 # ── Exit code: 0 if critical services are up, 1 otherwise ────────────────────
-CREW_LEAD_OK="$(svc_get crew-lead)"
+IRIS_LEAD_OK="$(svc_get iris-lead)"
 DASHBOARD_OK="$(svc_get dashboard)"
 
-if [[ "$CREW_LEAD_OK" == "up" ]] && { [[ "$DASHBOARD_OK" == "up" ]] || [[ "$START_DASH" -eq 0 ]]; }; then
+if [[ "$IRIS_LEAD_OK" == "up" ]] && { [[ "$DASHBOARD_OK" == "up" ]] || [[ "$START_DASH" -eq 0 ]]; }; then
   echo ""
   echo -e "${GREEN}${BOLD}All critical services are up.${RESET}"
   exit 0
 else
   echo ""
   echo -e "${RED}${BOLD}One or more critical services failed to start.${RESET}"
-  [[ "$CREW_LEAD_OK" != "up" ]] && echo -e "  ${RED}crew-lead is not responding — check /tmp/crew-lead.log${RESET}"
+  [[ "$IRIS_LEAD_OK" != "up" ]] && echo -e "  ${RED}iris-lead is not responding — check /tmp/iris-lead.log${RESET}"
   [[ "$DASHBOARD_OK" != "up" && "$START_DASH" -eq 1 ]] && echo -e "  ${RED}dashboard is not responding — check /tmp/dashboard.log${RESET}"
   exit 1
 fi

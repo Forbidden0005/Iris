@@ -37,7 +37,7 @@ import {
 
 describe("AgentIdSchema", () => {
   it("accepts lowercase alphanumeric with dashes", () => {
-    assert.equal(AgentIdSchema.parse("crew-coder"), "crew-coder");
+    assert.equal(AgentIdSchema.parse("iris-coder"), "iris-coder");
     assert.equal(AgentIdSchema.parse("a"), "a");
     assert.equal(AgentIdSchema.parse("agent-123"), "agent-123");
   });
@@ -47,11 +47,11 @@ describe("AgentIdSchema", () => {
   });
 
   it("rejects uppercase letters", () => {
-    assert.throws(() => AgentIdSchema.parse("Crew-Coder"));
+    assert.throws(() => AgentIdSchema.parse("Iris-Coder"));
   });
 
   it("rejects spaces", () => {
-    assert.throws(() => AgentIdSchema.parse("crew coder"));
+    assert.throws(() => AgentIdSchema.parse("iris coder"));
   });
 
   it("rejects strings over 50 chars", () => {
@@ -85,8 +85,8 @@ describe("ModelNameSchema", () => {
 
 describe("SendMessageSchema", () => {
   it("accepts valid message payload", () => {
-    const result = SendMessageSchema.parse({ to: "crew-coder", message: "hello" });
-    assert.equal(result.to, "crew-coder");
+    const result = SendMessageSchema.parse({ to: "iris-coder", message: "hello" });
+    assert.equal(result.to, "iris-coder");
     assert.equal(result.message, "hello");
   });
 
@@ -95,11 +95,11 @@ describe("SendMessageSchema", () => {
   });
 
   it("rejects missing message field", () => {
-    assert.throws(() => SendMessageSchema.parse({ to: "crew-coder" }));
+    assert.throws(() => SendMessageSchema.parse({ to: "iris-coder" }));
   });
 
   it("rejects empty message", () => {
-    assert.throws(() => SendMessageSchema.parse({ to: "crew-coder", message: "" }));
+    assert.throws(() => SendMessageSchema.parse({ to: "iris-coder", message: "" }));
   });
 });
 
@@ -138,16 +138,16 @@ describe("CreateAgentSchema", () => {
 describe("UpdateAgentConfigSchema", () => {
   it("accepts agentId with optional model update", () => {
     const result = UpdateAgentConfigSchema.parse({
-      agentId: "crew-coder",
+      agentId: "iris-coder",
       model: "claude-3-opus",
     });
-    assert.equal(result.agentId, "crew-coder");
+    assert.equal(result.agentId, "iris-coder");
     assert.equal(result.model, "claude-3-opus");
   });
 
   it("validates toolProfile enum", () => {
     const result = UpdateAgentConfigSchema.parse({
-      agentId: "crew-coder",
+      agentId: "iris-coder",
       toolProfile: "basic",
     });
     assert.equal(result.toolProfile, "basic");
@@ -155,7 +155,7 @@ describe("UpdateAgentConfigSchema", () => {
 
   it("rejects invalid toolProfile", () => {
     assert.throws(() =>
-      UpdateAgentConfigSchema.parse({ agentId: "crew-coder", toolProfile: "invalid" })
+      UpdateAgentConfigSchema.parse({ agentId: "iris-coder", toolProfile: "invalid" })
     );
   });
 });
@@ -248,7 +248,7 @@ describe("ReplayDLQSchema", () => {
 
 describe("ServiceActionSchema", () => {
   const validIds = [
-    "rt-bus", "agents", "crew-lead", "telegram", "whatsapp",
+    "rt-bus", "agents", "iris-lead", "telegram", "whatsapp",
     "opencode", "mcp", "openclaw-gateway", "dashboard",
   ];
 
@@ -309,9 +309,9 @@ describe("DeleteSkillSchema", () => {
 
 describe("validate()", () => {
   it("returns { ok: true, data } on valid input", () => {
-    const result = validate(AgentIdSchema, "crew-coder");
+    const result = validate(AgentIdSchema, "iris-coder");
     assert.equal(result.ok, true);
-    assert.equal(result.data, "crew-coder");
+    assert.equal(result.data, "iris-coder");
   });
 
   it("returns { ok: false, error } on invalid input", () => {
@@ -322,11 +322,11 @@ describe("validate()", () => {
   });
 
   it("works with object schemas", () => {
-    const valid = validate(SendMessageSchema, { to: "crew-coder", message: "hi" });
+    const valid = validate(SendMessageSchema, { to: "iris-coder", message: "hi" });
     assert.equal(valid.ok, true);
-    assert.deepEqual(valid.data, { to: "crew-coder", message: "hi" });
+    assert.deepEqual(valid.data, { to: "iris-coder", message: "hi" });
 
-    const invalid = validate(SendMessageSchema, { to: "crew-coder" });
+    const invalid = validate(SendMessageSchema, { to: "iris-coder" });
     assert.equal(invalid.ok, false);
   });
 });

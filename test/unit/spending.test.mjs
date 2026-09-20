@@ -19,7 +19,7 @@ import path from "node:path";
 import os from "node:os";
 
 // Enable test mode so spending.mjs redirects file I/O to /tmp
-process.env.CREWSWARM_TEST_MODE = "1";
+process.env.IRIS_TEST_MODE = "1";
 
 // Dynamic import after env var is set
 const {
@@ -35,7 +35,7 @@ const {
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
-const TEST_DIR = path.join(os.tmpdir(), `crewswarm-test-${process.pid}`);
+const TEST_DIR = path.join(os.tmpdir(), `iris-test-${process.pid}`);
 
 function resetTokenUsageCache() {
   // Reset the module-level _tokenUsage cache so each test starts fresh.
@@ -202,11 +202,11 @@ describe("spending — loadSpending / saveSpending / addAgentSpend", () => {
 
   it("saveSpending + loadSpending round-trips data", () => {
     const today = new Date().toISOString().slice(0, 10);
-    const data = { date: today, global: { tokens: 500, costUSD: 0.05 }, agents: { "crew-coder": { tokens: 500, costUSD: 0.05 } } };
+    const data = { date: today, global: { tokens: 500, costUSD: 0.05 }, agents: { "iris-coder": { tokens: 500, costUSD: 0.05 } } };
     saveSpending(data);
     const loaded = loadSpending();
     assert.equal(loaded.global.tokens, 500);
-    assert.equal(loaded.agents["crew-coder"].tokens, 500);
+    assert.equal(loaded.agents["iris-coder"].tokens, 500);
   });
 
   it("addAgentSpend increments global and per-agent totals", () => {
@@ -214,21 +214,21 @@ describe("spending — loadSpending / saveSpending / addAgentSpend", () => {
     const today = new Date().toISOString().slice(0, 10);
     saveSpending({ date: today, global: { tokens: 0, costUSD: 0 }, agents: {} });
 
-    addAgentSpend("crew-qa", 1000, 0.01);
-    addAgentSpend("crew-qa", 500, 0.005);
-    addAgentSpend("crew-coder", 2000, 0.02);
+    addAgentSpend("iris-qa", 1000, 0.01);
+    addAgentSpend("iris-qa", 500, 0.005);
+    addAgentSpend("iris-coder", 2000, 0.02);
 
     const s = loadSpending();
     assert.equal(s.global.tokens, 3500);
     assert.ok(Math.abs(s.global.costUSD - 0.035) < 0.0001);
-    assert.equal(s.agents["crew-qa"].tokens, 1500);
-    assert.equal(s.agents["crew-coder"].tokens, 2000);
+    assert.equal(s.agents["iris-qa"].tokens, 1500);
+    assert.equal(s.agents["iris-coder"].tokens, 2000);
   });
 });
 
 describe("spending — checkSpendingCap", () => {
   it("returns { exceeded: false } when no config file exists", () => {
-    const result = checkSpendingCap("crew-coder", "openai");
+    const result = checkSpendingCap("iris-coder", "openai");
     assert.equal(result.exceeded, false);
   });
 });

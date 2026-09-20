@@ -1,7 +1,7 @@
 /**
- * E2E tests for the LIVE running crewswarm system.
- * Requires crew-lead running on port 5010. All tests are skipped gracefully
- * if crew-lead is not reachable.
+ * E2E tests for the LIVE running iris system.
+ * Requires iris-lead running on port 5010. All tests are skipped gracefully
+ * if iris-lead is not reachable.
  *
  * Run: node --test test/e2e/live-dispatch.test.mjs
  */
@@ -13,7 +13,7 @@ import os from "node:os";
 import { checkServiceUp, httpRequest } from "../helpers/http.mjs";
 import { logTestEvidence } from "../helpers/test-log.mjs";
 
-const CREW_LEAD_URL = "http://127.0.0.1:5010";
+const IRIS_LEAD_URL = "http://127.0.0.1:5010";
 const DASHBOARD_URL = "http://127.0.0.1:4319";
 const E2E_SESSION = "e2e-test";
 const POLL_MS = 2000;
@@ -23,7 +23,7 @@ let authToken = "";
 let crewLeadUp = false;
 
 function getAuthToken() {
-  const cfgPath = path.join(os.homedir(), ".crewswarm", "config.json");
+  const cfgPath = path.join(os.homedir(), ".iris", "config.json");
   try {
     const cfg = JSON.parse(fs.readFileSync(cfgPath, "utf8"));
     return cfg?.rt?.authToken || "";
@@ -34,15 +34,15 @@ function getAuthToken() {
 
 before(async () => {
   authToken = getAuthToken();
-  crewLeadUp = await checkServiceUp(`${CREW_LEAD_URL}/health`);
+  crewLeadUp = await checkServiceUp(`${IRIS_LEAD_URL}/health`);
   if (!crewLeadUp) {
-    console.log("⚠️ crew-lead not running on 5010 — skipping all e2e tests");
+    console.log("⚠️ iris-lead not running on 5010 — skipping all e2e tests");
   }
 });
 
 function skipIfDown(t) {
   if (!crewLeadUp) {
-    t.skip("crew-lead not running");
+    t.skip("iris-lead not running");
     return true;
   }
   return false;
@@ -64,13 +64,13 @@ describe("Health check", { timeout: 10000 }, () => {
   test("GET /health returns 200 OK", async (t) => {
     if (skipIfDown(t)) return;
     const testName = "GET /health returns 200 OK";
-    const { status, data } = await httpRequest(`${CREW_LEAD_URL}/health`, {
+    const { status, data } = await httpRequest(`${IRIS_LEAD_URL}/health`, {
       timeout: 8000,
       trace: trace(testName, "health-check"),
     });
     assert.equal(status, 200);
     assert.equal(data.ok, true);
-    assert.equal(data.agent, "crew-lead");
+    assert.equal(data.agent, "iris-lead");
   });
 });
 
@@ -80,7 +80,7 @@ describe("Chat round-trip", { timeout: 90000 }, () => {
   test("POST /chat with PONG request returns reply containing PONG", async (t) => {
     if (skipIfDown(t)) return;
     const testName = "POST /chat with PONG request returns reply containing PONG";
-    const { status, data } = await httpRequest(`${CREW_LEAD_URL}/chat`, {
+    const { status, data } = await httpRequest(`${IRIS_LEAD_URL}/chat`, {
       method: "POST",
       headers: authHeaders(),
       body: { message: "reply with exactly: PONG", sessionId: E2E_SESSION },
@@ -105,24 +105,24 @@ describe("Chat round-trip", { timeout: 90000 }, () => {
 
 // ── Direct dispatch ─────────────────────────────────────────────────────────
 
-describe("Direct dispatch to crew-seo", { timeout: 90000 }, () => {
-  test("dispatch crew-seo returns reply within 60s", async (t) => {
+describe("Direct dispatch to iris-seo", { timeout: 90000 }, () => {
+  test("dispatch iris-seo returns reply within 60s", async (t) => {
     if (skipIfDown(t)) return;
-    const testName = "dispatch crew-seo returns reply within 60s";
+    const testName = "dispatch iris-seo returns reply within 60s";
     const sessionId = `e2e-dispatch-${Date.now()}`;
-    const { status, data } = await httpRequest(`${CREW_LEAD_URL}/chat`, {
+    const { status, data } = await httpRequest(`${IRIS_LEAD_URL}/chat`, {
       method: "POST",
       headers: authHeaders(),
-      body: { message: "dispatch crew-seo to say hello in exactly 3 words", sessionId },
+      body: { message: "dispatch iris-seo to say hello in exactly 3 words", sessionId },
       timeout: 80000,
-      trace: trace(testName, "dispatch-via-chat", { sessionId, agent: "crew-seo" }),
+      trace: trace(testName, "dispatch-via-chat", { sessionId, agent: "iris-seo" }),
     });
     logTestEvidence({
       category: "dispatch_context",
       test: testName,
       file: import.meta.filename,
       sessionId,
-      agent: "crew-seo",
+      agent: "iris-seo",
       reply_preview: String(data.reply || "").slice(0, 200),
     });
     assert.equal(status, 200);
@@ -139,7 +139,7 @@ describe("History saved", { timeout: 15000 }, () => {
     const testName = "GET /history?sessionId=e2e-test contains PONG message after chat";
     const authHdrs = authToken ? { authorization: `Bearer ${authToken}` } : {};
     const { status, data } = await httpRequest(
-      `${CREW_LEAD_URL}/history?sessionId=${encodeURIComponent(E2E_SESSION)}`,
+      `${IRIS_LEAD_URL}/history?sessionId=${encodeURIComponent(E2E_SESSION)}`,
       {
         headers: authHdrs,
         trace: trace(testName, "history-fetch", { sessionId: E2E_SESSION }),
@@ -157,11 +157,11 @@ describe("History saved", { timeout: 15000 }, () => {
 // ── Agents online ───────────────────────────────────────────────────────────
 
 describe("Agents online", { timeout: 10000 }, () => {
-  test("GET /api/agents returns agent list with crew-seo", async (t) => {
+  test("GET /api/agents returns agent list with iris-seo", async (t) => {
     if (skipIfDown(t)) return;
-    const testName = "GET /api/agents returns agent list with crew-seo";
+    const testName = "GET /api/agents returns agent list with iris-seo";
     const authHdrs = authToken ? { authorization: `Bearer ${authToken}` } : {};
-    const { status, data } = await httpRequest(`${CREW_LEAD_URL}/api/agents`, {
+    const { status, data } = await httpRequest(`${IRIS_LEAD_URL}/api/agents`, {
       headers: authHdrs,
       trace: trace(testName, "agents-list"),
     });
@@ -170,9 +170,9 @@ describe("Agents online", { timeout: 10000 }, () => {
     const agents = data.agents || data;
     assert.ok(Array.isArray(agents), "agents should be array");
     const seo = agents.find(
-      (a) => (a.id || a).includes("seo") || (a.id || a) === "crew-seo"
+      (a) => (a.id || a).includes("seo") || (a.id || a) === "iris-seo"
     );
-    assert.ok(seo, "crew-seo should be in agent list");
+    assert.ok(seo, "iris-seo should be in agent list");
   });
 });
 
@@ -184,11 +184,11 @@ describe("Wave pipeline", { timeout: 180000 }, () => {
     const testName = "@@PIPELINE with 2 agents returns pipeline result within 120s";
     const sessionId = `e2e-pipeline-${Date.now()}`;
     const pipelineMsg = `@@PIPELINE [
-  {"wave":1,"agent":"crew-seo","task":"say the word APPLE"},
-  {"wave":1,"agent":"crew-main","task":"say the word ORANGE"}
+  {"wave":1,"agent":"iris-seo","task":"say the word APPLE"},
+  {"wave":1,"agent":"iris-main","task":"say the word ORANGE"}
 ]`;
 
-    const { status, data } = await httpRequest(`${CREW_LEAD_URL}/chat`, {
+    const { status, data } = await httpRequest(`${IRIS_LEAD_URL}/chat`, {
       method: "POST",
       headers: authHeaders(),
       body: { message: pipelineMsg, sessionId },
@@ -205,7 +205,7 @@ describe("Wave pipeline", { timeout: 180000 }, () => {
       await new Promise((r) => setTimeout(r, POLL_MS));
       try {
         const hist = await httpRequest(
-          `${CREW_LEAD_URL}/history?sessionId=${encodeURIComponent(sessionId)}`,
+          `${IRIS_LEAD_URL}/history?sessionId=${encodeURIComponent(sessionId)}`,
           {
             headers: authHdrs,
             trace: trace(testName, "pipeline-history-poll", { sessionId }),

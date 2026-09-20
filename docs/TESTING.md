@@ -1,16 +1,16 @@
 # Testing Guide
 
-CrewSwarm has **4,530 test cases** across unit, integration, e2e, and Playwright suites — all passing (1 intentional skip: native macOS folder picker).
+Iris has **4,530 test cases** across unit, integration, e2e, and Playwright suites — all passing (1 intentional skip: native macOS folder picker).
 
 ## Quick Reference
 
 ```bash
-npm test                     # Unit + standalone + crew-cli (offline, ~2min)
+npm test                     # Unit + standalone + iris-cli (offline, ~2min)
 npm run test:unit            # Root unit tests only (~133 files, 3,591 tests)
 npm run test:integration     # Integration tests (needs :4319 + :5010)
 npm run test:e2e             # E2E live tests (needs server + engines)
-npm run test:all             # All root suites combined (sequential: unit → integration → e2e → crew-cli)
-npm --prefix crew-cli test   # Crew-CLI unit tests only (~88 files, 906 tests)
+npm run test:all             # All root suites combined (sequential: unit → integration → e2e → iris-cli)
+npm --prefix iris-cli test   # Iris-CLI unit tests only (~88 files, 906 tests)
 npm run test:report          # Generate summary from last run
 npm run test:stale           # Show tests affected by recent file changes
 ```
@@ -43,30 +43,30 @@ npm run test:stale    # Which tests need re-running after code changes
 The main test suite. Runs offline — no server, no network. Covers:
 - Agent registry, dispatch parsing, classifiers, daemon, permissions, validation, tool instructions
 - Wave dispatcher, pipeline logic, pipeline manager
-- **Quality gates:** question detection, planning/build agent output validation, QA FAIL auto-fix with crew-fixer wave insertion, retry with feedback, halt/advance-on-fail, cursor-wave combined output parsing
+- **Quality gates:** question detection, planning/build agent output validation, QA FAIL auto-fix with iris-fixer wave insertion, retry with feedback, halt/advance-on-fail, cursor-wave combined output parsing
 - Engine routing, selection, fallback, OpenCode engine, LLM-direct engine
-- PM loop logic, synthesis, judge decisions, crew-judge with LLM integration
+- PM loop logic, synthesis, judge decisions, iris-judge with LLM integration
 - RT envelope, DLQ, retry management
 - Session management, shared memory, memory shared-adapter
 - Dashboard validation schemas
 - Background consciousness, autonomous mentions
 - Policy manager, spending caps
 - Chat history, participants, project messages, RAG, unified wrapper
-- Crew-lead prompts, tools, background loop, interval managers
+- Iris-lead prompts, tools, background loop, interval managers
 - Contacts identity linker, bridges integration
 - CLI process tracker, domain planning, preferences extractor
 - Integrations code search, Gemini CLI passthrough noise filtering
 - Root orchestrators (gateway-bridge, telegram/whatsapp bridges, unified/phased/natural-PM orchestrators, continuous-build)
 - Tools executor (file I/O, command execution, permission gates)
 
-### Crew-CLI Unit Tests (`crew-cli/tests/`)
+### Iris-CLI Unit Tests (`iris-cli/tests/`)
 
 | Runner | Files | Cases | Requires server |
 |--------|-------|-------|-----------------|
 | node:test + tsx | 82 | ~765 | No |
 
-- `crew-cli/tests/unit/*.test.js` — sandbox, orchestrator, worker pool, context augmentation, strategies, risk scoring, prompt registry, model policies, etc.
-- `crew-cli/tests/*.test.js` — pipeline, router, REPL, LSP, planner, interface server
+- `iris-cli/tests/unit/*.test.js` — sandbox, orchestrator, worker pool, context augmentation, strategies, risk scoring, prompt registry, model policies, etc.
+- `iris-cli/tests/*.test.js` — pipeline, router, REPL, LSP, planner, interface server
 
 ### Integration Tests (`test/integration/`)
 
@@ -74,7 +74,7 @@ The main test suite. Runs offline — no server, no network. Covers:
 |--------|-------|-------|-----------------|
 | node:test | 17 | ~352 | Yes (:4319 + :5010) |
 
-Tests that hit the live dashboard and crew-lead APIs:
+Tests that hit the live dashboard and iris-lead APIs:
 - **dashboard-api.test.mjs** — Zod schema validation for core endpoints (build, enhance-prompt, pm-loop, services, skills)
 - **dashboard-api-full.test.mjs** — Smoke tests for ALL 147 dashboard endpoints (settings, sessions, providers, config, chat, memory, DLQ, contacts, bridges, workflows, etc.)
 - **workflow-crud.test.mjs** — Full workflow CRUD lifecycle
@@ -148,7 +148,7 @@ Live end-to-end tests with real engines and browser automation:
 - History persistence, agent list, pipeline execution
 
 **Bridge Roundtrips:**
-- **telegram-roundtrip.test.mjs** — Bot info, message delivery, log verification, crew-lead forwarding
+- **telegram-roundtrip.test.mjs** — Bot info, message delivery, log verification, iris-lead forwarding
 - **whatsapp-roundtrip.test.mjs** — Health, phone number match, send/receive, auth persistence, log verification
 
 ## Running E2E Tests
@@ -231,16 +231,16 @@ All 147 dashboard endpoints are tested:
 ## Engine Routing
 
 Tests verify the engine selection logic documented in `docs/ORCHESTRATION-PROTOCOL.md`:
-- Coding keywords → CLI engine (Claude Code, Cursor, Codex, Gemini CLI, OpenCode, crew-cli)
+- Coding keywords → CLI engine (Claude Code, Cursor, Codex, Gemini CLI, OpenCode, iris-cli)
 - Non-coding tasks → direct-llm (API call with @@tool markers)
-- Per-agent engine config from `crewswarm.json` `use*` flags
+- Per-agent engine config from `iris.json` `use*` flags
 
 ## Test Counts Summary
 
 | Suite | Files | Cases | Offline |
 |-------|-------|-------|---------|
 | Root unit | 133 | 2,886 | Yes |
-| Crew-CLI unit | 88 | 906 | Yes |
+| Iris-CLI unit | 88 | 906 | Yes |
 | Integration | 17 | 355 | No |
 | E2E (node:test) | 12 | 120 | No |
 | Playwright | 19 | 244 | No |
@@ -259,7 +259,7 @@ Tests verify the engine selection logic documented in `docs/ORCHESTRATION-PROTOC
 | `test-results/runs/<runId>/summary.json` | Machine-readable run summary |
 | `test-results/runs/<runId>/summary.md` | Human-readable run summary |
 | `test-results/runs/<runId>/<testId>/` | Per-test artifact directory with evidence files |
-| `crew-cli/test-results/test-log.jsonl` | Crew-CLI test results (separate log) |
+| `iris-cli/test-results/test-log.jsonl` | Iris-CLI test results (separate log) |
 
 ### Reading results
 
@@ -331,7 +331,7 @@ Node 25's HTTP connection pooling can reuse closed sockets. The test helpers use
 
 ### Dashboard crashes during tests
 
-The dashboard now survives engine passthrough errors without crashing (`process.exit(1)` replaced with resilient error handling). If you see cascading failures (first test passes, rest get "connection refused"), check `/tmp/crewswarm-dashboard.log` for crash logs and restart with `bash scripts/restart-service.sh dashboard`.
+The dashboard now survives engine passthrough errors without crashing (`process.exit(1)` replaced with resilient error handling). If you see cascading failures (first test passes, rest get "connection refused"), check `/tmp/iris-dashboard.log` for crash logs and restart with `bash scripts/restart-service.sh dashboard`.
 
 ### Engine-specific failures
 
@@ -344,7 +344,7 @@ The dashboard now survives engine passthrough errors without crashing (`process.
 
 ### RT bus "agent unreachable"
 
-If dispatch returns 503 "RT bus not connected", crew-lead's WebSocket reconnected and the publish function is temporarily null. The reconnect delay is 1s with exponential backoff. Wait and retry. Check `grep 'RT disconnected' /tmp/crew-lead.log`.
+If dispatch returns 503 "RT bus not connected", iris-lead's WebSocket reconnected and the publish function is temporarily null. The reconnect delay is 1s with exponential backoff. Wait and retry. Check `grep 'RT disconnected' /tmp/iris-lead.log`.
 
 ## CI
 
@@ -357,6 +357,6 @@ GitHub Actions runs:
 - **Unit tests:** Add to `test/unit/` using `node:test` + `node:assert/strict`
 - **Integration tests:** Add to `test/integration/` — guard with `checkServiceUp`
 - **E2E tests:** Add to `test/e2e/` — use Puppeteer for browser, `httpRequest` for API
-- **Crew-CLI tests:** Add to `crew-cli/tests/unit/` using `node:test`
+- **Iris-CLI tests:** Add to `iris-cli/tests/unit/` using `node:test`
 - **Evidence logging:** Use `logTestEvidence` from `test/helpers/test-log.mjs` for diagnostic data
 - **HTTP tracing:** Pass `trace` option to `httpRequest` for automatic request/response logging

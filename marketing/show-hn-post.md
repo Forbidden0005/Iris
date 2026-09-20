@@ -2,8 +2,8 @@
 
 ## How to submit on news.ycombinator.com/submit
 
-- **Title:** `Show HN: crewswarm – hit a rate limit, switch engines, keep your context`
-- **URL:** `https://crewswarm.ai/`
+- **Title:** `Show HN: iris – hit a rate limit, switch engines, keep your context`
+- **URL:** `https://iris.ai/`
 - **Text:** *(leave blank — the URL is the post, first comment is the explanation)*
 
 Immediately after submitting, post this as the first comment:
@@ -14,7 +14,7 @@ Immediately after submitting, post this as the first comment:
 
 Hit your Claude daily limit mid-refactor again? Switched to Codex, re-explained everything, lost context? Went to Gemini CLI, hit their quota too?
 
-Every AI coding tool locks you into one provider. Claude Code is Anthropic-only. Codex is OpenAI-only. Gemini CLI is Google-only. You can't switch without starting over. That's the problem crewswarm solves.
+Every AI coding tool locks you into one provider. Claude Code is Anthropic-only. Codex is OpenAI-only. Gemini CLI is Google-only. You can't switch without starting over. That's the problem iris solves.
 
 Open source, local-first, MIT.
 
@@ -22,16 +22,16 @@ Open source, local-first, MIT.
 
 The mental model: you're the PM, agents are your engineers. You describe what needs to happen. The system plans it, dispatches to specialist agents, runs them in parallel, verifies output.
 
-- **crew-lead** (Stinki) routes your task: quick answer, single agent, or parallel execution
+- **iris-lead** (Stinki) routes your task: quick answer, single agent, or parallel execution
 - **Wave orchestrator** splits complex work across specialists running simultaneously in isolated git worktrees — backend, frontend, QA, security all moving at once
 - **20+ specialist agents** — each with its own system prompt, tools, and model assignment. Use Claude for your coder, Groq for your PM, a local Ollama model for security. Shared persistent memory per project, fresh context windows
-- **6 coding engines** — Claude Code, Cursor, Codex CLI, Gemini CLI, OpenCode, crew-cli. Rate limited? Next task goes to a different engine. Sessions resume across all of them
+- **6 coding engines** — Claude Code, Cursor, Codex CLI, Gemini CLI, OpenCode, iris-cli. Rate limited? Next task goes to a different engine. Sessions resume across all of them
 - **PM Loop** — reads your ROADMAP.md, dispatches tasks, marks done/failed, keeps going. Has shipped features overnight
-- **8 surfaces** — Vibe (browser IDE with Monaco, terminal, live file sync), Dashboard (control plane), crew-cli, crewchat, Telegram, WhatsApp, OpenClaw plugin, MCP server (64 tools). Same crew, same memory, any interface
+- **8 surfaces** — Vibe (browser IDE with Monaco, terminal, live file sync), Dashboard (control plane), iris-cli, irischat, Telegram, WhatsApp, OpenClaw plugin, MCP server (64 tools). Same iris, same memory, any interface
 
-**crew-cli — the execution engine:**
+**iris-cli — the execution engine:**
 
-Grok has no coding CLI. DeepSeek has no CLI. Qwen, Kimi, Groq, MiniMax, Ollama — nothing. crew-cli gives every model a full agentic coding environment:
+Grok has no coding CLI. DeepSeek has no CLI. Qwen, Kimi, Groq, MiniMax, Ollama — nothing. iris-cli gives every model a full agentic coding environment:
 
 - 45+ built-in tools: file I/O, git operations, LSP diagnostics, shell, web search, Docker sandbox, memory, sub-agent spawning, git worktree isolation
 - 3-tier pipeline: cheap router → expensive planner (only when needed) → tool-using workers
@@ -43,8 +43,8 @@ Grok has no coding CLI. DeepSeek has no CLI. Qwen, Kimi, Groq, MiniMax, Ollama �
 
 Tested with 40+ models across 12+ providers — works with any OpenAI-compatible endpoint. 45+ tools, ~64K LOC TypeScript.
 
-`npm i -g crewswarm && crewswarm` (full platform) or `npm i -g crewswarm-cli && crew doctor` (CLI only)
+`npm i -g iris && iris` (full platform) or `npm i -g iris-cli && iris doctor` (CLI only)
 
 Repo: https://github.com/crewswarm/crewswarm
-Site: https://crewswarm.ai/
-Vibe: https://crewswarm.ai/vibe.html
+Site: https://iris.ai/
+Vibe: https://iris.ai/vibe.html

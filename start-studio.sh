@@ -1,11 +1,11 @@
 #!/bin/bash
-# Quick start script for crewswarm Studio
+# Quick start script for iris Studio
 
 set -e
 
 cd "$(dirname "$0")/apps/vibe"
 
-echo "🐝 crewswarm Studio Setup"
+echo "🐝 iris Studio Setup"
 echo ""
 
 # Check if node_modules exists

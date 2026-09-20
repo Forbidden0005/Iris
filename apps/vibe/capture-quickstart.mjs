@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * CrewSwarm Quickstart Video — Simulated Install + First Run
+ * Iris Quickstart Video — Simulated Install + First Run
  *
  * Creates a terminal-style recording showing the install and first use flow.
  * Uses Playwright to render HTML terminal frames and capture as screenshots,
@@ -26,7 +26,7 @@ for (const f of readdirSync(OUT)) {
   if (f.startsWith("qs-") && f.endsWith(".png")) rmSync(join(OUT, f), { force: true });
 }
 
-function terminalHTML(lines, title = "Terminal — crewswarm") {
+function terminalHTML(lines, title = "Terminal — iris") {
   const content = lines.map(l => {
     if (l.startsWith("$")) return `<span style="color:#4ade80;">${esc(l)}</span>`;
     if (l.startsWith("//")) return `<span style="color:#6b7280;font-style:italic;">${esc(l)}</span>`;
@@ -65,19 +65,19 @@ const frames = [
   {
     title: "Install — real output from Docker",
     lines: [
-      "$ npm install -g crewswarm",
+      "$ npm install -g iris",
       "",
       "added 59 packages in 9s",
       "",
-      "$ crewswarm --version",
+      "$ iris --version",
       "0.8.2-beta",
       "",
-      "$ crewswarm",
+      "$ iris",
       "",
-      "⚡ crewswarm v0.8.2-beta",
+      "⚡ iris v0.8.2-beta",
       "→ Dashboard:  http://localhost:4319",
       "→ Vibe IDE:   http://localhost:3333",
-      "→ crew-lead:  http://localhost:5010",
+      "→ iris-lead:  http://localhost:5010",
       "→ MCP server: http://localhost:5020",
       "",
       "✓ All services ready",
@@ -89,12 +89,12 @@ const frames = [
       "// Open Dashboard → Models tab",
       "// Set a model per agent — or use CLI OAuth (no keys needed)",
       "",
-      "  crew-lead ......... Groq Llama 3.3 70B      Free",
-      "  crew-pm ........... Gemini 2.5 Flash         $0.075/M",
-      "  crew-coder ........ Claude Sonnet 4.6        $3/M",
-      "  crew-coder-front .. Cursor (composer-2)      Cursor sub",
-      "  crew-qa ........... Gemini CLI (OAuth)       Free",
-      "  crew-fixer ........ Codex CLI (OAuth)        Codex sub",
+      "  iris-lead ......... Groq Llama 3.3 70B      Free",
+      "  iris-pm ........... Gemini 2.5 Flash         $0.075/M",
+      "  iris-coder ........ Claude Sonnet 4.6        $3/M",
+      "  iris-coder-front .. Cursor (composer-2)      Cursor sub",
+      "  iris-qa ........... Gemini CLI (OAuth)       Free",
+      "  iris-fixer ........ Codex CLI (OAuth)        Codex sub",
       "",
       "// Or use Claude Code / Cursor / Gemini CLI directly —",
       "// just login once with OAuth, no API keys",
@@ -105,22 +105,22 @@ const frames = [
   {
     title: "Build — one sentence, full feature",
     lines: [
-      '$ crew run "Build a REST API with auth, tests, and docs"',
+      '$ iris run "Build a REST API with auth, tests, and docs"',
       "",
-      "🧠 crew-pm planning...",
+      "🧠 iris-pm planning...",
       "  → Phase MVP: 3 tasks (auth, routes, tests)",
       "  → Phase 1:   2 tasks (docs, error handling)",
       "",
       "📐 Wave 1: dispatching to 3 agents in parallel",
-      "  → crew-coder-back: auth middleware + JWT",
-      "  → crew-coder-back: CRUD routes + validation",
-      "  → crew-qa:         test suite (jest)",
+      "  → iris-coder-back: auth middleware + JWT",
+      "  → iris-coder-back: CRUD routes + validation",
+      "  → iris-qa:         test suite (jest)",
       "",
       "✓ Wave 1 complete (2m 14s)",
       "",
       "📐 Wave 2: dispatching to 2 agents",
-      "  → crew-coder:  API docs (OpenAPI spec)",
-      "  → crew-fixer:  error handling + edge cases",
+      "  → iris-coder:  API docs (OpenAPI spec)",
+      "  → iris-fixer:  error handling + edge cases",
     ],
   },
   {
@@ -128,7 +128,7 @@ const frames = [
     lines: [
       "✓ Wave 2 complete (1m 38s)",
       "",
-      "🧠 crew-pm: all phases complete",
+      "🧠 iris-pm: all phases complete",
       "",
       "  Files created:",
       "    src/middleware/auth.js      ✓",

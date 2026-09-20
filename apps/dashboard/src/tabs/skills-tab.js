@@ -113,7 +113,7 @@ export function renderSkillsList(skills) {
   const el = document.getElementById('skillsList');
   if (!el) return;
   if (!skills.length) {
-    el.innerHTML = '<div style="color:var(--text-3);font-size:12px;padding:8px 0;">No skills match. Add one above or copy JSONs to ~/.crewswarm/skills/</div>';
+    el.innerHTML = '<div style="color:var(--text-3);font-size:12px;padding:8px 0;">No skills match. Add one above or copy JSONs to ~/.iris/skills/</div>';
     return;
   }
 

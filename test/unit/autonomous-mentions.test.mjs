@@ -27,36 +27,36 @@ describe("autonomous-mentions — areAutonomousMentionsEnabled", () => {
   let origEnv;
 
   beforeEach(() => {
-    origEnv = process.env.CREWSWARM_AUTONOMOUS_MENTIONS;
+    origEnv = process.env.IRIS_AUTONOMOUS_MENTIONS;
   });
 
   afterEach(() => {
-    if (origEnv === undefined) delete process.env.CREWSWARM_AUTONOMOUS_MENTIONS;
-    else process.env.CREWSWARM_AUTONOMOUS_MENTIONS = origEnv;
+    if (origEnv === undefined) delete process.env.IRIS_AUTONOMOUS_MENTIONS;
+    else process.env.IRIS_AUTONOMOUS_MENTIONS = origEnv;
   });
 
   it("returns false when env is '0'", () => {
-    process.env.CREWSWARM_AUTONOMOUS_MENTIONS = "0";
+    process.env.IRIS_AUTONOMOUS_MENTIONS = "0";
     assert.equal(areAutonomousMentionsEnabled(), false);
   });
 
   it("returns false when env is 'off'", () => {
-    process.env.CREWSWARM_AUTONOMOUS_MENTIONS = "off";
+    process.env.IRIS_AUTONOMOUS_MENTIONS = "off";
     assert.equal(areAutonomousMentionsEnabled(), false);
   });
 
   it("returns false when env is 'false'", () => {
-    process.env.CREWSWARM_AUTONOMOUS_MENTIONS = "false";
+    process.env.IRIS_AUTONOMOUS_MENTIONS = "false";
     assert.equal(areAutonomousMentionsEnabled(), false);
   });
 
   it("returns true when env is '1'", () => {
-    process.env.CREWSWARM_AUTONOMOUS_MENTIONS = "1";
+    process.env.IRIS_AUTONOMOUS_MENTIONS = "1";
     assert.equal(areAutonomousMentionsEnabled(), true);
   });
 
   it("returns true when env is 'true'", () => {
-    process.env.CREWSWARM_AUTONOMOUS_MENTIONS = "true";
+    process.env.IRIS_AUTONOMOUS_MENTIONS = "true";
     assert.equal(areAutonomousMentionsEnabled(), true);
   });
 });
@@ -66,26 +66,26 @@ describe("autonomous-mentions — areAutonomousMentionsEnabled", () => {
 describe("autonomous-mentions — buildMentionPrompt", () => {
   it("includes sender and channel in prompt", () => {
     const prompt = buildMentionPrompt({
-      agent: "crew-coder",
-      sender: "crew-lead",
+      agent: "iris-coder",
+      sender: "iris-lead",
       channel: "dev",
       content: "fix the bug in main.js",
       chatHistory: [],
     });
-    assert.ok(prompt.includes("crew-lead"), "should mention sender");
+    assert.ok(prompt.includes("iris-lead"), "should mention sender");
     assert.ok(prompt.includes("#dev"), "should mention channel");
     assert.ok(prompt.includes("fix the bug in main.js"), "should include content");
   });
 
   it("includes chat history context", () => {
     const prompt = buildMentionPrompt({
-      agent: "crew-coder",
+      agent: "iris-coder",
       sender: "user",
       channel: "general",
       content: "do something",
       chatHistory: [
-        { sender: "crew-lead", content: "we need to update the API" },
-        { sender: "crew-coder", content: "ok, which endpoint?" },
+        { sender: "iris-lead", content: "we need to update the API" },
+        { sender: "iris-coder", content: "ok, which endpoint?" },
       ],
     });
     assert.ok(prompt.includes("we need to update the API"));
@@ -94,7 +94,7 @@ describe("autonomous-mentions — buildMentionPrompt", () => {
 
   it("shows (no prior context) when chatHistory is empty", () => {
     const prompt = buildMentionPrompt({
-      agent: "crew-coder",
+      agent: "iris-coder",
       sender: "user",
       channel: "general",
       content: "hello",
@@ -105,7 +105,7 @@ describe("autonomous-mentions — buildMentionPrompt", () => {
 
   it("defaults sender/channel gracefully", () => {
     const prompt = buildMentionPrompt({
-      agent: "crew-coder",
+      agent: "iris-coder",
       content: "test",
     });
     assert.ok(prompt.includes("a teammate"), "should have default sender");

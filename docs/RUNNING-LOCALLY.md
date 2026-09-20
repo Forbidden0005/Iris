@@ -52,10 +52,10 @@ override if it performs acceptably for you. `qwen3-coder:30b` does **not** fit
 comfortably in 11GB VRAM; only set `IRIS_MODEL_CODE=qwen3-coder:30b` if you
 explicitly accept slow CPU/RAM offload.
 
-## 4. Install and build crew-cli
+## 4. Install and build iris-cli
 
 ```bash
-cd crew-cli
+cd iris-cli
 npm install
 npm run build
 ```
@@ -69,7 +69,7 @@ npm run iris:run -- "Inspect this repo by listing the project root, read package
 
 `iris:local-smoke` is the fastest end-to-end check. It confirms Ollama is
 reachable, checks the required models, runs a deterministic repo-inspection
-objective, and writes evidence under `crew-cli/.iris/runs/`.
+objective, and writes evidence under `iris-cli/.iris/runs/`.
 
 ## Troubleshooting
 

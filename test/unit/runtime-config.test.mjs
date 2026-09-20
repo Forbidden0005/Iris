@@ -7,10 +7,10 @@
  *  - loadAgentList: returns an array
  *  - PROVIDER_REGISTRY: contains expected providers with baseUrl
  *  - resolveProviderConfig: merges explicit + built-in configs
- *  - CREWSWARM_DIR / CREWSWARM_CONFIG_PATH: correct path shapes
+ *  - IRIS_DIR / IRIS_CONFIG_PATH: correct path shapes
  *  - PROTOCOL_VERSION / CLI_VERSION: expected types
  *  - loadCursorWavesEnabled / loadClaudeCodeEnabled: return booleans
- *  - env var driven constants: CREWSWARM_RT_URL, CREWSWARM_RT_RECONNECT_MS, etc.
+ *  - env var driven constants: IRIS_RT_URL, IRIS_RT_RECONNECT_MS, etc.
  */
 
 import { describe, it } from 'node:test';
@@ -25,38 +25,38 @@ import {
   resolveProvider,
   resolveProviderConfig,
   PROVIDER_REGISTRY,
-  CREWSWARM_DIR,
-  CREWSWARM_CONFIG_PATH,
-  CREWSWARM_SWARM_PATH,
-  CREWSWARM_REPO_ROOT,
+  IRIS_DIR,
+  IRIS_CONFIG_PATH,
+  IRIS_SWARM_PATH,
+  IRIS_REPO_ROOT,
   PROTOCOL_VERSION,
   CLI_VERSION,
-  CREWSWARM_RT_URL,
-  CREWSWARM_RT_RECONNECT_MS,
-  CREWSWARM_RT_DISPATCH_ENABLED,
+  IRIS_RT_URL,
+  IRIS_RT_RECONNECT_MS,
+  IRIS_RT_DISPATCH_ENABLED,
   MEMORY_PROTOCOL_MARKER,
   RUN_ID,
-  CREW_LEAD_PORT,
+  IRIS_LEAD_PORT,
   loadCursorWavesEnabled,
   loadClaudeCodeEnabled,
   loadTmuxBridgeEnabled,
 } from '../../lib/runtime/config.mjs';
 
 describe('runtime/config — path constants', () => {
-  it('CREWSWARM_DIR points to ~/.crewswarm', () => {
-    assert.equal(CREWSWARM_DIR, path.join(os.homedir(), '.crewswarm'));
+  it('IRIS_DIR points to ~/.iris', () => {
+    assert.equal(IRIS_DIR, path.join(os.homedir(), '.iris'));
   });
 
-  it('CREWSWARM_CONFIG_PATH ends with config.json', () => {
-    assert.ok(CREWSWARM_CONFIG_PATH.endsWith('config.json'));
+  it('IRIS_CONFIG_PATH ends with config.json', () => {
+    assert.ok(IRIS_CONFIG_PATH.endsWith('config.json'));
   });
 
-  it('CREWSWARM_SWARM_PATH ends with crewswarm.json', () => {
-    assert.ok(CREWSWARM_SWARM_PATH.endsWith('crewswarm.json'));
+  it('IRIS_SWARM_PATH ends with iris.json', () => {
+    assert.ok(IRIS_SWARM_PATH.endsWith('iris.json'));
   });
 
-  it('CREWSWARM_REPO_ROOT is an absolute path', () => {
-    assert.ok(path.isAbsolute(CREWSWARM_REPO_ROOT));
+  it('IRIS_REPO_ROOT is an absolute path', () => {
+    assert.ok(path.isAbsolute(IRIS_REPO_ROOT));
   });
 });
 
@@ -186,16 +186,16 @@ describe('runtime/config — version and misc constants', () => {
     assert.match(RUN_ID, /^[0-9a-f-]{36}$/);
   });
 
-  it('CREWSWARM_RT_URL is a string', () => {
-    assert.equal(typeof CREWSWARM_RT_URL, 'string');
+  it('IRIS_RT_URL is a string', () => {
+    assert.equal(typeof IRIS_RT_URL, 'string');
   });
 
-  it('CREWSWARM_RT_RECONNECT_MS is a number', () => {
-    assert.equal(typeof CREWSWARM_RT_RECONNECT_MS, 'number');
+  it('IRIS_RT_RECONNECT_MS is a number', () => {
+    assert.equal(typeof IRIS_RT_RECONNECT_MS, 'number');
   });
 
-  it('CREWSWARM_RT_DISPATCH_ENABLED is a boolean', () => {
-    assert.equal(typeof CREWSWARM_RT_DISPATCH_ENABLED, 'boolean');
+  it('IRIS_RT_DISPATCH_ENABLED is a boolean', () => {
+    assert.equal(typeof IRIS_RT_DISPATCH_ENABLED, 'boolean');
   });
 
   it('MEMORY_PROTOCOL_MARKER is a non-empty string', () => {
@@ -203,8 +203,8 @@ describe('runtime/config — version and misc constants', () => {
     assert.ok(MEMORY_PROTOCOL_MARKER.length > 0);
   });
 
-  it('CREW_LEAD_PORT is a number', () => {
-    assert.equal(typeof CREW_LEAD_PORT, 'number');
+  it('IRIS_LEAD_PORT is a number', () => {
+    assert.equal(typeof IRIS_LEAD_PORT, 'number');
   });
 });
 

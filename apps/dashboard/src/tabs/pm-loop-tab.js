@@ -105,7 +105,7 @@ export async function startPmLoop(dryRun = false) {
           extendEveryN:   parseInt(document.getElementById('pmOptExtendN')?.value || '5'),
           pauseSec:       parseInt(document.getElementById('pmOptPause')?.value || '5'),
           maxRetries:     parseInt(document.getElementById('pmOptMaxRetries')?.value || '2'),
-          coderAgent:     document.getElementById('pmOptCoder')?.value.trim() || 'crew-coder',
+          coderAgent:     document.getElementById('pmOptCoder')?.value.trim() || 'iris-coder',
         }
       })
     });

@@ -2,7 +2,7 @@
  * Unit tests for scripts/sync-prompts.mjs
  *
  * This script is a CLI tool with no exports. It syncs prompts from the
- * repo's prompts/ directory into ~/.crewswarm/agent-prompts.json.
+ * repo's prompts/ directory into ~/.iris/agent-prompts.json.
  * We test:
  *  - The file parses without syntax errors (node --check)
  *  - Running with --dry flag completes without writing anything
@@ -23,7 +23,7 @@ const PROJECT_ROOT = path.resolve(__dirname, "../..");
 
 function canonicalKeysFor(key) {
   if (!key) return [];
-  return [key, `crew-${key}`];
+  return [key, `iris-${key}`];
 }
 
 // ── Tests ──────────────────────────────────────────────────────────────────
@@ -55,12 +55,12 @@ describe("scripts/sync-prompts.mjs", () => {
 });
 
 describe("sync-prompts canonicalKeysFor (replicated)", () => {
-  it("returns both bare and crew-prefixed keys", () => {
-    assert.deepEqual(canonicalKeysFor("coder"), ["coder", "crew-coder"]);
+  it("returns both bare and iris-prefixed keys", () => {
+    assert.deepEqual(canonicalKeysFor("coder"), ["coder", "iris-coder"]);
   });
 
   it("returns both keys for pm", () => {
-    assert.deepEqual(canonicalKeysFor("pm"), ["pm", "crew-pm"]);
+    assert.deepEqual(canonicalKeysFor("pm"), ["pm", "iris-pm"]);
   });
 
   it("returns empty array for empty string", () => {

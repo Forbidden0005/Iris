@@ -21,15 +21,15 @@ const WORKFLOW_TEMPLATES = [
     schedule: "0 9 * * 1-5",
     stages: [
       {
-        agent: "crew-researcher",
+        agent: "iris-researcher",
         task: "Research top 5 updates for our current project and summarize key signals.",
       },
       {
-        agent: "crew-pm",
+        agent: "iris-pm",
         task: "Turn the research into a concise daily brief with priorities and risks.",
       },
       {
-        agent: "crew-qa",
+        agent: "iris-qa",
         task: "Review the brief for factual clarity and missing edge cases.",
       },
     ],
@@ -41,15 +41,15 @@ const WORKFLOW_TEMPLATES = [
     schedule: "30 10 * * 1,3,5",
     stages: [
       {
-        agent: "crew-seo",
+        agent: "iris-seo",
         task: "Find one high-intent keyword cluster and propose a short content outline.",
       },
       {
-        agent: "crew-copywriter",
+        agent: "iris-copywriter",
         task: "Write a first draft from the outline. Keep it scannable and conversion-focused.",
       },
       {
-        agent: "crew-main",
+        agent: "iris-main",
         task: "Polish the draft and produce final publish-ready copy.",
       },
     ],
@@ -61,15 +61,15 @@ const WORKFLOW_TEMPLATES = [
     schedule: "0 14 * * 1-5",
     stages: [
       {
-        agent: "crew-pm",
+        agent: "iris-pm",
         task: "Pick one high-value backlog item from project context and define acceptance criteria.",
       },
       {
-        agent: "crew-coder",
+        agent: "iris-coder",
         task: "Implement the scoped item in small safe changes and summarize files touched.",
       },
       {
-        agent: "crew-qa",
+        agent: "iris-qa",
         task: "Audit the changes, run tests, and report any regressions with severity.",
       },
     ],
@@ -83,7 +83,7 @@ function emptyWorkflow(name = "") {
     enabled: false,
     schedule: "",
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    stages: [{ agent: "crew-main", task: "", tool: "" }],
+    stages: [{ agent: "iris-main", task: "", tool: "" }],
   };
 }
 
@@ -211,13 +211,13 @@ async function loadWorkflowItem(name) {
 
 function buildAgentOptions(selected) {
   const defaults = [
-    "crew-main",
-    "crew-pm",
-    "crew-qa",
-    "crew-coder",
-    "crew-coder-front",
-    "crew-coder-back",
-    "crew-copywriter",
+    "iris-main",
+    "iris-pm",
+    "iris-qa",
+    "iris-coder",
+    "iris-coder-front",
+    "iris-coder-back",
+    "iris-copywriter",
   ];
   const merged = Array.from(
     new Set([...(knownAgents || []), ...defaults, selected || ""]),
@@ -595,7 +595,7 @@ function wireWorkflowEditorEvents() {
   document.getElementById("wfAddStageBtn")?.addEventListener("click", (e) => {
     e.preventDefault();
     const current = collectWorkflowFromForm({ includeIncompleteStages: true });
-    current.workflow.stages.push({ agent: "crew-main", task: "", tool: "" });
+    current.workflow.stages.push({ agent: "iris-main", task: "", tool: "" });
     renderWorkflowEditor({ name: current.name, ...current.workflow });
   });
 
@@ -608,7 +608,7 @@ function wireWorkflowEditorEvents() {
         (_, i) => i !== idx,
       );
       if (!current.workflow.stages.length) {
-        current.workflow.stages = [{ agent: "crew-main", task: "", tool: "" }];
+        current.workflow.stages = [{ agent: "iris-main", task: "", tool: "" }];
       }
       renderWorkflowEditor({ name: current.name, ...current.workflow });
     });

@@ -1,17 +1,17 @@
-# CrewSwarm Vibe — Visual Guide
+# Iris Vibe — Visual Guide
 
 ## Vibe Layout
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────┐
-│ 🐝 CrewSwarm Vibe                                        my-todo-app         │
+│ 🐝 Iris Vibe                                        my-todo-app         │
 ├─────────────┬────────────────────────────────┬────────────────────────────────┤
 │             │                                │                                │
 │  EXPLORER   │     MONACO EDITOR              │     CHAT WITH AGENTS          │
 │             │                                │                                │
-│  📁 src/    │  function TodoApp() {          │ 🟢 crew-lead                  │
-│  ├─ 📄 app.js│    const [todos, setTodos]   │ ⚡ crew-coder                  │
-│  ├─ 📄 api.js│      = useState([]);         │ 🔵 crew-qa                     │
+│  📁 src/    │  function TodoApp() {          │ 🟢 iris-lead                  │
+│  ├─ 📄 app.js│    const [todos, setTodos]   │ ⚡ iris-coder                  │
+│  ├─ 📄 api.js│      = useState([]);         │ 🔵 iris-qa                     │
 │  └─ 📁 comp/│                               │                                │
 │  📝 README  │    return (                    │ ────────────────────────       │
 │  📦 package │      <div className="app">   │                                │
@@ -19,14 +19,14 @@
 │             │        {todos.map(todo =>     │ Add input validation for       │
 │             │          <TodoItem            │ the todo form                  │
 │             │            key={todo.id}      │                                │
-│             │            todo={todo}        │ crew-lead:                     │
-│             │          />                   │ I'll have crew-coder add       │
+│             │            todo={todo}        │ iris-lead:                     │
+│             │          />                   │ I'll have iris-coder add       │
 │             │        )}                     │ validation for you.            │
 │             │      </div>                   │                                │
 │             │    );                         │ [14:32] ⚡ Dispatching to      │
-│             │  }                            │ crew-coder...                  │
+│             │  }                            │ iris-coder...                  │
 │             │                                │                                │
-│             │  export default TodoApp;      │ crew-coder:                    │
+│             │  export default TodoApp;      │ iris-coder:                    │
 │             │                                │ ✅ Added validation to         │
 │             │                                │ src/TodoForm.jsx:              │
 │             │                                │ • Required field check         │
@@ -34,17 +34,17 @@
 │             │                                │ • No empty strings             │
 │             │                                │                                │
 │             │                                │ ┌─────────────────────────┐   │
-│             │                                │ │ Ask the crew anything...│   │
+│             │                                │ │ Ask the iris anything...│   │
 │             │                                │ │ (⌘+Enter to send)       │   │
 │             │                                │ └─────────────────────────┘   │
 ├─────────────┴────────────────────────────────┴────────────────────────────────┤
 │ TERMINAL / AGENT OUTPUT                                                       │
 │                                                                                │
 │ [14:32:05] 🔗 Connected to RT message bus                                     │
-│ [14:32:15] ⚡ crew-coder started working on task                              │
-│ [14:32:16] 🔧 crew-coder → write_file src/TodoForm.jsx                        │
-│ [14:32:17] 🔧 crew-coder → write_file src/validation.js                       │
-│ [14:32:18] ✅ crew-coder completed task                                       │
+│ [14:32:15] ⚡ iris-coder started working on task                              │
+│ [14:32:16] 🔧 iris-coder → write_file src/TodoForm.jsx                        │
+│ [14:32:17] 🔧 iris-coder → write_file src/validation.js                       │
+│ [14:32:18] ✅ iris-coder completed task                                       │
 │ [14:32:19] 💾 Saved src/TodoForm.jsx                                          │
 │                                                                                │
 └────────────────────────────────────────────────────────────────────────────────┘
@@ -77,7 +77,7 @@ Warning:        #ffb74d (orange)
 ### 1. Titlebar
 ```
 ┌──────────────────────────────────────────────────────┐
-│ 🐝 CrewSwarm Vibe            my-todo-app             │
+│ 🐝 Iris Vibe            my-todo-app             │
 └──────────────────────────────────────────────────────┘
      ↑ Logo              ↑ Project name (right aligned)
 ```
@@ -122,16 +122,16 @@ EXPLORER
 ┌─────────────────────────────────┐
 │ Chat with Agents                │ ← Header
 ├─────────────────────────────────┤
-│ 🟢 crew-lead                    │ ← Status indicators
-│ ⚡ crew-coder                    │
-│ 🔵 crew-qa                       │
+│ 🟢 iris-lead                    │ ← Status indicators
+│ ⚡ iris-coder                    │
+│ 🔵 iris-qa                       │
 ├─────────────────────────────────┤
 │                                 │
 │ [Chat messages scroll here]    │
 │                                 │
 ├─────────────────────────────────┤
 │ ┌─────────────────────────────┐ │
-│ │ Ask the crew anything...    │ │ ← Input (⌘+Enter)
+│ │ Ask the iris anything...    │ │ ← Input (⌘+Enter)
 │ │                             │ │
 │ └─────────────────────────────┘ │
 └─────────────────────────────────┘
@@ -148,8 +148,8 @@ EXPLORER
 ┌────────────────────────────────────────────────┐
 │ Agent Output                           [Clear] │ ← Header
 ├────────────────────────────────────────────────┤
-│ [14:32:15] ⚡ crew-coder started working       │ ← Info (cyan)
-│ [14:32:18] ✅ crew-coder completed task        │ ← Success (green)
+│ [14:32:15] ⚡ iris-coder started working       │ ← Info (cyan)
+│ [14:32:18] ✅ iris-coder completed task        │ ← Success (green)
 │ [14:32:19] 💾 Saved src/TodoForm.jsx           │ ← Success (green)
 │ [14:32:20] ❌ Failed to save config.json       │ ← Error (red)
 └────────────────────────────────────────────────┘
@@ -272,13 +272,13 @@ Terminal: 150px
 1. Type in chat: "Add error handling to api.js"
    → Press ⌘+Enter
 
-2. crew-lead responds:
-   "I'll have crew-coder add that for you."
+2. iris-lead responds:
+   "I'll have iris-coder add that for you."
 
 3. Terminal shows:
-   [14:45:00] ⚡ crew-coder started working
-   [14:45:05] 🔧 crew-coder → write_file src/api.js
-   [14:45:06] ✅ crew-coder completed task
+   [14:45:00] ⚡ iris-coder started working
+   [14:45:05] 🔧 iris-coder → write_file src/api.js
+   [14:45:06] ✅ iris-coder completed task
 
 4. File tree: "api.js" changes appear
    → Click to open and review
@@ -288,15 +288,15 @@ Terminal: 150px
 ```
 1. Type: "Build a login page with tests"
 
-2. crew-lead coordinates:
-   ⚡ Dispatching to crew-coder-front...
-   ⚡ Dispatching to crew-qa...
+2. iris-lead coordinates:
+   ⚡ Dispatching to iris-coder-front...
+   ⚡ Dispatching to iris-qa...
 
 3. Terminal shows both agents working:
-   [15:00:00] ⚡ crew-coder-front started
-   [15:00:15] ✅ crew-coder-front completed
-   [15:00:16] ⚡ crew-qa started
-   [15:00:30] ✅ crew-qa completed
+   [15:00:00] ⚡ iris-coder-front started
+   [15:00:15] ✅ iris-coder-front completed
+   [15:00:16] ⚡ iris-qa started
+   [15:00:30] ✅ iris-qa completed
 
 4. Result:
    ✅ Created src/LoginPage.jsx
@@ -357,9 +357,9 @@ Terminal: 150px
 ```
 You: Add validation
 
-crew-lead: Sure! Dispatching to crew-coder...
+iris-lead: Sure! Dispatching to iris-coder...
 
-crew-coder: ✅ Added validation.js
+iris-coder: ✅ Added validation.js
             • Required field check
             • Email format validation
             • Password strength check
@@ -368,9 +368,9 @@ crew-coder: ✅ Added validation.js
 **Terminal activity:**
 ```
 [14:32:15] 🔗 Connected to RT bus
-[14:32:20] ⚡ crew-coder started task
-[14:32:25] 🔧 crew-coder → write_file
-[14:32:26] ✅ crew-coder completed task
+[14:32:20] ⚡ iris-coder started task
+[14:32:25] 🔧 iris-coder → write_file
+[14:32:26] ✅ iris-coder completed task
 ```
 
 ---

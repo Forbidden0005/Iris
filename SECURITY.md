@@ -41,7 +41,7 @@ We follow **coordinated disclosure** — we ask that you give us reasonable time
 ### In scope
 
 - Remote code execution via agent tool calls (`@@RUN_CMD`, `@@WRITE_FILE`)
-- Auth bypass on crew-lead API (port 5010) or dashboard (port 4319)
+- Auth bypass on iris-lead API (port 5010) or dashboard (port 4319)
 - RT bus token exposure or forgery
 - Prompt injection attacks that escape the agent sandbox
 - Skill definitions that exfiltrate secrets or make unauthorized external calls
@@ -63,9 +63,9 @@ Iris is designed to run **locally on your machine** — not exposed to the inter
 
 1. **Ports 4319, 5010, 18889 are localhost-only** — do not expose these ports publicly without a reverse proxy and proper authentication.
 2. **Agent tool calls are gated** — `@@RUN_CMD` from untrusted agents requires dashboard approval. Pre-approve only patterns you trust.
-3. **Bearer token auth** — all crew-lead API calls require the RT auth token from `~/.crewswarm/crewswarm.json`. Protect this file.
+3. **Bearer token auth** — all iris-lead API calls require the RT auth token from `~/.iris/iris.json`. Protect this file.
 4. **Skill definitions** — imported skills can make HTTP calls. Review skill JSON before importing from untrusted sources.
-5. **API keys** — stored in `~/.crewswarm/crewswarm.json`. This file should be `chmod 600` and never committed.
+5. **API keys** — stored in `~/.iris/iris.json`. This file should be `chmod 600` and never committed.
 
 ---
 
@@ -75,9 +75,9 @@ If you expose Iris beyond localhost:
 
 - [ ] Put a reverse proxy (nginx/Caddy) with TLS in front of port 4319
 - [ ] Add IP allowlisting or HTTP Basic Auth at the proxy layer
-- [ ] Rotate the RT auth token (`rt.authToken` in `~/.crewswarm/crewswarm.json`) regularly
-- [ ] Review `~/.crewswarm/cmd-allowlist.json` — minimize pre-approved patterns
-- [ ] Never commit `~/.crewswarm/crewswarm.json` (contains API keys)
+- [ ] Rotate the RT auth token (`rt.authToken` in `~/.iris/iris.json`) regularly
+- [ ] Review `~/.iris/cmd-allowlist.json` — minimize pre-approved patterns
+- [ ] Never commit `~/.iris/iris.json` (contains API keys)
 - [ ] Use `WA_ALLOWED_NUMBERS` / `TELEGRAM_ALLOWED_USERNAMES` to restrict messaging bridges
 
 ---

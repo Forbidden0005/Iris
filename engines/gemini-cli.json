@@ -6,7 +6,7 @@
     "runtime": ["gemini", "gemini-cli"],
     "payloadKey": "useGeminiCli",
     "agentConfigKey": "useGeminiCli",
-    "envVar": "CREWSWARM_GEMINI_CLI_ENABLED"
+    "envVar": "IRIS_GEMINI_CLI_ENABLED"
   },
   "bin": "gemini",
   "installCmd": "npm install -g @google/gemini-cli",
@@ -15,7 +15,7 @@
   "color": "#4285f4",
   "icon": "gemini",
   "agentConfigKey": "useGeminiCli",
-  "envToggle": "CREWSWARM_GEMINI_CLI_ENABLED",
+  "envToggle": "IRIS_GEMINI_CLI_ENABLED",
   "authNote": "No API key needed for free tier. Three auth options below — pick one.",
   "requiresAuth": true,
   "authMethods": [
@@ -35,9 +35,9 @@
       "note": "For Google Cloud users — uses your GCP project quota."
     }
   ],
-  "modelEnvVar": "CREWSWARM_GEMINI_CLI_MODEL",
+  "modelEnvVar": "IRIS_GEMINI_CLI_MODEL",
   "modelFlag": "-m",
-  "bestFor": ["crew-coder", "crew-researcher", "crew-main"],
+  "bestFor": ["iris-coder", "iris-researcher", "iris-main"],
   "traits": [
     "Free tier: 60 req/min and 1,000 req/day with personal Google account",
     "Gemini 3 models with 1M token context window",

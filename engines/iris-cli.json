@@ -1,0 +1,42 @@
+{
+  "id": "iris-cli",
+  "label": "iris-cli",
+  "description": "iris's native CLI with intelligent routing, sandbox workflow, and cross-repo context. Full agent orchestration with safety gates, review loops, and persistent memory.",
+  "_note": "iris-cli command integration updated (uses 'iris chat' as of March 2026)",
+  "shouldUse": {
+    "runtime": ["iris-cli", "crewcli"],
+    "payloadKey": "useCrewCLI",
+    "agentConfigKey": "useCrewCLI",
+    "envVar": "IRIS_CREW_CLI_ENABLED"
+  },
+  "bin": "iris",
+  "binAlternate": "~/Iris/iris-cli/bin/iris.js",
+  "installCmd": "cd ~/Iris/iris-cli && npm install && npm run build",
+  "installUrl": "https://github.com/crewswarm/crewswarm/tree/main/iris-cli",
+  "docsUrl": "https://github.com/crewswarm/crewswarm/blob/main/iris-cli/docs/OVERVIEW.md",
+  "color": "#8b5cf6",
+  "icon": "iris",
+  "agentConfigKey": "useCrewCLI",
+  "envToggle": "IRIS_CREW_CLI_ENABLED",
+  "bestFor": ["iris-coder", "iris-coder-front", "iris-coder-back", "iris-fixer"],
+  "traits": [
+    "Intelligent routing to 20+ specialist agents",
+    "Sandbox workflow (preview → branch → apply)",
+    "Cross-repo context injection",
+    "QA loop with fixer integration",
+    "Git-aware context (diffs, branches, status)",
+    "Persistent memory via AgentKeeper",
+    "Cost-optimized 3-tier LLM architecture",
+    "Safety gates (--check flag, blast radius)"
+  ],
+  "args": {
+    "chat": ["chat", "{prompt}"],
+    "plan": ["plan", "{prompt}"],
+    "run": ["run", "-t", "{prompt}"],
+    "dispatch": ["dispatch", "{agent}", "{prompt}"]
+  },
+  "outputMode": "streaming",
+  "requiresEnv": [],
+  "requiresAuth": false,
+  "notes": "iris-cli is iris's native execution engine. Unlike external CLIs (OpenCode, Cursor), it has direct access to the full agent roster, shared memory, and gateway routing. Use for complex multi-agent tasks, planning, and orchestration."
+}

@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 /**
- * crewswarm Gateway Bridge — agent daemon for real-time LLM calls and tool execution.
+ * iris Gateway Bridge — agent daemon for real-time LLM calls and tool execution.
  *
  * Usage:
  *   node gateway-bridge.mjs "your message here"
  *   node gateway-bridge.mjs --status
  *   node gateway-bridge.mjs --reset
  *   node gateway-bridge.mjs --history
- *   CREWSWARM_ONE_SHOT=1 node gateway-bridge.mjs "task"  # Exit after task (fresh context)
+ *   IRIS_ONE_SHOT=1 node gateway-bridge.mjs "task"  # Exit after task (fresh context)
  */
 import { WebSocket } from "ws";
 import crypto from "node:crypto";
@@ -24,7 +24,7 @@ import {
   recallMemoryContext,
   recordTaskMemory,
   rememberFact,
-  CREW_MEMORY_DIR,
+  IRIS_MEMORY_DIR,
 } from "./lib/memory/shared-adapter.mjs";
 import {
   resolveConfig,
@@ -33,7 +33,7 @@ import {
   loadAgentLLMConfig,
   loadLoopBrainConfig,
   loadProviderMap,
-  CREWSWARM_RT_SWARM_AGENTS,
+  IRIS_RT_SWARM_AGENTS,
   RT_TO_GATEWAY_AGENT_MAP,
 } from "./lib/agents/registry.mjs";
 import {
@@ -59,25 +59,25 @@ import {
 } from "./lib/agents/dispatch.mjs";
 
 // ── One-shot mode: exit after task completion (fresh context) ────────────────
-const ONE_SHOT = process.env.CREWSWARM_ONE_SHOT === '1' || process.argv.includes('--one-shot');
+const ONE_SHOT = process.env.IRIS_ONE_SHOT === '1' || process.argv.includes('--one-shot');
 import {
-  CREWSWARM_RT_URL,
-  CREWSWARM_RT_AGENT,
-  CREWSWARM_RT_TOKEN,
-  CREWSWARM_RT_CHANNELS,
-  CREWSWARM_RT_TLS_INSECURE,
-  CREWSWARM_RT_RECONNECT_MS,
-  CREWSWARM_RT_DISPATCH_LEASE_MS,
-  CREWSWARM_RT_DISPATCH_HEARTBEAT_MS,
-  CREWSWARM_RT_DISPATCH_MAX_RETRIES,
-  CREWSWARM_RT_DISPATCH_MAX_RETRIES_CODING,
-  CREWSWARM_RT_DISPATCH_RETRY_BACKOFF_MS,
-  CREWSWARM_OPENCODE_ENABLED,
-  CREWSWARM_OPENCODE_BIN,
-  CREWSWARM_OPENCODE_AGENT,
-  CREWSWARM_OPENCODE_MODEL,
-  CREWSWARM_OPENCODE_FALLBACK_DEFAULT,
-  CREWSWARM_OPENCODE_TIMEOUT_MS,
+  IRIS_RT_URL,
+  IRIS_RT_AGENT,
+  IRIS_RT_TOKEN,
+  IRIS_RT_CHANNELS,
+  IRIS_RT_TLS_INSECURE,
+  IRIS_RT_RECONNECT_MS,
+  IRIS_RT_DISPATCH_LEASE_MS,
+  IRIS_RT_DISPATCH_HEARTBEAT_MS,
+  IRIS_RT_DISPATCH_MAX_RETRIES,
+  IRIS_RT_DISPATCH_MAX_RETRIES_CODING,
+  IRIS_RT_DISPATCH_RETRY_BACKOFF_MS,
+  IRIS_OPENCODE_ENABLED,
+  IRIS_OPENCODE_BIN,
+  IRIS_OPENCODE_AGENT,
+  IRIS_OPENCODE_MODEL,
+  IRIS_OPENCODE_FALLBACK_DEFAULT,
+  IRIS_OPENCODE_TIMEOUT_MS,
   loadGenericEngines,
   SHARED_MEMORY_BASE,
   SHARED_MEMORY_NAMESPACE,
@@ -85,14 +85,14 @@ import {
   SWARM_DISPATCH_DIR,
   SWARM_DLQ_DIR,
   SWARM_RUNTIME_DIR,
-  CREWSWARM_RT_COMMAND_TYPES,
+  IRIS_RT_COMMAND_TYPES,
   PROTOCOL_VERSION,
   CLI_VERSION,
   RUN_ID,
   GATEWAY_URL,
   TELEMETRY_DIR,
   LEGACY_STATE_DIR,
-  CREWSWARM_CONFIG_PATH,
+  IRIS_CONFIG_PATH,
   MEMORY_BOOTSTRAP_AGENT,
   ED25519_SPKI_PREFIX,
   REQUEST_TIMEOUT_MS,
@@ -195,7 +195,7 @@ import {
   runClaudeCodeTask,
   _rtClientForApprovals,
 } from "./lib/engines/runners.mjs";
-import { initCrewCLI, runCrewCLITask } from "./lib/engines/crew-cli.mjs";
+import { initCrewCLI, runCrewCLITask } from "./lib/engines/iris-cli.mjs";
 import { initLlmDirect, callLLMDirect } from "./lib/engines/llm-direct.mjs";
 import { initOpenCode, runOpenCodeTask } from "./lib/engines/opencode.mjs";
 import { initGatewayWs } from "./lib/bridges/gateway-ws.mjs";
@@ -216,7 +216,7 @@ const sharedMemoryInit = initSharedMemory();
 if (sharedMemoryInit.ok) {
   console.log(`[gateway-bridge] Shared memory initialized: ${sharedMemoryInit.path}`);
   if (!isSharedMemoryAvailable()) {
-    console.warn('[gateway-bridge] CLI memory modules not available — run: cd crew-cli && npm run build');
+    console.warn('[gateway-bridge] CLI memory modules not available — run: cd iris-cli && npm run build');
   } else {
     console.log('[gateway-bridge] CLI shared memory integration enabled (AgentKeeper + AgentMemory + MemoryBroker)');
   }
@@ -231,8 +231,8 @@ function getOpencodeProjectDir() {
 // ── Per-agent OpenCode session persistence ─────────────────────────────────
 // Each agent maintains a session ID so `opencode run -s <id>` continues from
 // where the last task left off, rather than starting cold every time.
-// Sessions are stored in ~/.crewswarm/sessions/<agentId>.session
-const OPENCODE_SESSION_DIR = path.join(os.homedir(), ".crewswarm", "sessions");
+// Sessions are stored in ~/.iris/sessions/<agentId>.session
+const OPENCODE_SESSION_DIR = path.join(os.homedir(), ".iris", "sessions");
 
 // Free OpenCode models for fallback rotation when primary hits rate limit
 const OPENCODE_FREE_MODEL_CHAIN = [
@@ -275,7 +275,7 @@ function clearAgentSessionId(agentId) {
 
 
 // Parse the most-recent session ID from `opencode session list` stdout.
-// If agentPrefix is provided (e.g. "[crew-coder]"), only match sessions whose
+// If agentPrefix is provided (e.g. "[iris-coder]"), only match sessions whose
 // title contains that prefix — prevents race conditions when multiple agents
 // finish simultaneously and each would otherwise grab the globally-first session.
 function parseMostRecentSessionId(listOutput, agentPrefix) {
@@ -301,14 +301,14 @@ function isOpencodeRateLimitBanner(output) {
 }
 
 function getOpencodeFallbackModel() {
-  if (process.env.CREWSWARM_OPENCODE_FALLBACK_MODEL) return process.env.CREWSWARM_OPENCODE_FALLBACK_MODEL;
+  if (process.env.IRIS_OPENCODE_FALLBACK_MODEL) return process.env.IRIS_OPENCODE_FALLBACK_MODEL;
   const cfg = loadSystemConfig();
   if (cfg.opencodeFallbackModel && String(cfg.opencodeFallbackModel).trim()) return String(cfg.opencodeFallbackModel).trim();
   const swarm = loadSwarmConfig();
   if (swarm.globalFallbackModel && String(swarm.globalFallbackModel).trim()) return String(swarm.globalFallbackModel).trim();
-  return CREWSWARM_OPENCODE_FALLBACK_DEFAULT;
+  return IRIS_OPENCODE_FALLBACK_DEFAULT;
 }
-console.log(`[bridge] Registered ${CREWSWARM_RT_SWARM_AGENTS.length} RT agents: ${CREWSWARM_RT_SWARM_AGENTS.join(", ")}`);
+console.log(`[bridge] Registered ${IRIS_RT_SWARM_AGENTS.length} RT agents: ${IRIS_RT_SWARM_AGENTS.join(", ")}`);
 
 // callLLMDirect → lib/engines/llm-direct.mjs
 
@@ -588,7 +588,7 @@ function getAgentOpenCodeConfig(agentId) {
   const agents = loadAgentList();
   const cfg = agents.find(a => a.id === agentId);
   const fallback = cfg?.opencodeFallbackModel || getOpencodeFallbackModel();
-  const loop = cfg?.opencodeLoop === true || process.env.CREWSWARM_ENGINE_LOOP === "1";
+  const loop = cfg?.opencodeLoop === true || process.env.IRIS_ENGINE_LOOP === "1";
   const cursorCliModel = cfg?.cursorCliModel || null;
   const claudeCodeModel = cfg?.claudeCodeModel || null;
   const codexModel = cfg?.codexModel || null;
@@ -625,7 +625,7 @@ function getAgentOpenCodeConfig(agentId) {
     assignedEngine === "gemini-cli";
   const useCrewCLI =
     cfg.useCrewCLI === true ||
-    assignedEngine === "crew-cli";
+    assignedEngine === "iris-cli";
 
   if (cfg.useOpenCode === true || assignedEngine === "opencode") {
     return {
@@ -687,13 +687,13 @@ function getAgentOpenCodeConfig(agentId) {
 // Engine runners → lib/engines/runners.mjs
 
 function shouldConnectGateway(args) {
-  if (process.env.CREWSWARM_FORCE_GATEWAY === "1") return true;
+  if (process.env.IRIS_FORCE_GATEWAY === "1") return true;
   if (args.includes("--broadcast")) return false;
   if (args[0] === "--send") return false;
   // In RT-daemon mode: skip legacy gateway unless explicitly forced.
   // Agents use direct LLM calls; legacy gateway is optional.
   if (args.includes("--rt-daemon")) {
-    if (process.env.CREWSWARM_GATEWAY_ENABLED === "1") return true;
+    if (process.env.IRIS_GATEWAY_ENABLED === "1") return true;
     return false;
   }
   return true;
@@ -709,8 +709,8 @@ function createOpenCodeOnlyBridge() {
 
 // ---------------------------------------------------------------------------
 // runCursorWaveTask — dispatch a full wave of tasks to Cursor subagents in
-// parallel via the crew-orchestrator subagent. The orchestrator receives the
-// wave manifest as JSON and fans out to /crew-* subagents simultaneously,
+// parallel via the iris-orchestrator subagent. The orchestrator receives the
+// wave manifest as JSON and fans out to /iris-* subagents simultaneously,
 // returning a combined === WAVE [n] RESULTS === report.
 // ---------------------------------------------------------------------------
 async function runCursorWaveTask(waveIndex, tasks, payload = {}) {
@@ -726,19 +726,19 @@ async function runCursorWaveTask(waveIndex, tasks, payload = {}) {
 
   // Build the orchestrator prompt: instruct it to dispatch all tasks in parallel
   const orchestratorPrompt = [
-    `[crew-orchestrator] Execute this wave manifest — dispatch ALL tasks to subagents in parallel:`,
+    `[iris-orchestrator] Execute this wave manifest — dispatch ALL tasks to subagents in parallel:`,
     "```json",
     JSON.stringify(manifest, null, 2),
     "```",
     `Dispatch all ${tasks.length} task(s) simultaneously using the Task tool. Return combined results.`,
   ].join("\n");
 
-  console.error(`[CursorWave] Wave ${waveIndex + 1}: dispatching ${tasks.length} tasks via crew-orchestrator in parallel`);
+  console.error(`[CursorWave] Wave ${waveIndex + 1}: dispatching ${tasks.length} tasks via iris-orchestrator in parallel`);
   tasks.forEach(t => console.error(`  → ${t.agent}: ${String(t.task).slice(0, 80)}`));
 
   return runCursorCliTask(orchestratorPrompt, {
     ...payload,
-    agentId: "crew-orchestrator",
+    agentId: "iris-orchestrator",
     projectDir,
   });
 }
@@ -769,15 +769,15 @@ async function buildMiniTaskForOpenCode(taskText, agentId, projectDir) {
   const readSafe = (p) => { try { return fs.readFileSync(p, "utf8").trim(); } catch { return ""; } };
   const memParts = [];
 
-  const globalRules = readSafe(path.join(os.homedir(), ".crewswarm", "global-rules.md"));
+  const globalRules = readSafe(path.join(os.homedir(), ".iris", "global-rules.md"));
   if (globalRules) memParts.push(`Global rules:\n${globalRules}`);
 
   // Use CLI's MemoryBroker if available (blends AgentKeeper + AgentMemory + Collections)
-  // crew-cli gets MINIMAL context (it has its own L2 RAG + planning)
+  // iris-cli gets MINIMAL context (it has its own L2 RAG + planning)
   // BUT we DO want to pass project-specific hints (constraints, decisions), not cross-project generic stuff
   const agents = loadAgentList();
   const agentConfig = agents.find(a => a.id === agentId);
-  const usingCrewCLI = agentConfig?.engine === 'crew-cli';
+  const usingCrewCLI = agentConfig?.engine === 'iris-cli';
 
   let sharedMemoryContext = '';
   if (isSharedMemoryAvailable() && !usingCrewCLI) {
@@ -788,30 +788,30 @@ async function buildMiniTaskForOpenCode(taskText, agentId, projectDir) {
         : taskTokens < 150 ? 5   // Medium: "build auth endpoint"
           : 8;                     // Complex: detailed requirements
 
-      // Skip memory recall for chat-only agents (crew-loco)
+      // Skip memory recall for chat-only agents (iris-loco)
       // They should only see their own conversation history, not project work
-      if (agentId !== 'crew-loco') {
+      if (agentId !== 'iris-loco') {
         sharedMemoryContext = await recallMemoryContext(dir, taskForPrompt, {
           maxResults,
           includeDocs: true,
           includeCode: false,
           preferSuccessful: true,
-          crewId: agentId || 'crew-lead'
+          crewId: agentId || 'iris-lead'
         });
       }
     } catch (err) {
       console.warn(`[gateway-bridge] Shared memory recall failed: ${err.message}`);
     }
   } else if (usingCrewCLI && dir) {
-    // For crew-cli: Pass ONLY project-specific hints (decisions/constraints, not full code)
-    // crew-cli's L2 RAG will load the actual files it needs automatically
+    // For iris-cli: Pass ONLY project-specific hints (decisions/constraints, not full code)
+    // iris-cli's L2 RAG will load the actual files it needs automatically
     try {
       const projectHints = await recallMemoryContext(dir, taskForPrompt, {
         maxResults: 2,  // Minimal - just key decisions
-        includeDocs: false,  // crew-cli loads its own docs via L2 RAG
+        includeDocs: false,  // iris-cli loads its own docs via L2 RAG
         includeCode: false,
         preferSuccessful: true,
-        crewId: agentId || 'crew-lead'
+        crewId: agentId || 'iris-lead'
       });
       if (projectHints) {
         // Extract just decision/constraint lines, no code blocks
@@ -823,7 +823,7 @@ async function buildMiniTaskForOpenCode(taskText, agentId, projectDir) {
         );
         sharedMemoryContext = lines.slice(0, 5).join('\n');  // Max 5 hint lines
         if (sharedMemoryContext) {
-          console.log(`[gateway-bridge] crew-cli: passing ${lines.length} project hint lines (${sharedMemoryContext.length} chars)`);
+          console.log(`[gateway-bridge] iris-cli: passing ${lines.length} project hint lines (${sharedMemoryContext.length} chars)`);
         }
       }
     } catch (err) {
@@ -832,7 +832,7 @@ async function buildMiniTaskForOpenCode(taskText, agentId, projectDir) {
   }
 
   // Fallback to legacy brain.md if shared memory not available or empty
-  // Skip for crew-cli (it has its own context management)
+  // Skip for iris-cli (it has its own context management)
   if (!sharedMemoryContext && !usingCrewCLI) {
     const lessons = readSafe(path.join(SHARED_MEMORY_DIR, "lessons.md"));
     if (lessons) memParts.push(`Lessons learned:\n${lessons}`);
@@ -842,7 +842,7 @@ async function buildMiniTaskForOpenCode(taskText, agentId, projectDir) {
 
     // Project-specific brain if projectDir has one
     if (dir) {
-      const projBrain = readSafe(path.join(dir, ".crewswarm", "brain.md")).slice(-1000);
+      const projBrain = readSafe(path.join(dir, ".iris", "brain.md")).slice(-1000);
       if (projBrain) memParts.push(`Project brain:\n${projBrain}`);
 
       const roadmap = readSafe(path.join(dir, "ROADMAP.md")).slice(-1500);
@@ -856,15 +856,15 @@ async function buildMiniTaskForOpenCode(taskText, agentId, projectDir) {
     ? `[Memory context — read before acting]\n${memParts.join("\n\n")}\n[End memory context]\n\n`
     : "";
 
-  // crew-cli gets minimal prompt with optional project hints
-  // crew-cli has its own L2 RAG, memory broker, and context management
-  // We pass project-specific constraints/decisions as hints, but let crew-cli load files itself
+  // iris-cli gets minimal prompt with optional project hints
+  // iris-cli has its own L2 RAG, memory broker, and context management
+  // We pass project-specific constraints/decisions as hints, but let iris-cli load files itself
   if (usingCrewCLI) {
     const contextInfo = sharedMemoryContext
       ? `\n\nProject constraints/decisions:\n${sharedMemoryContext}`
       : '';
-    console.log(`[gateway-bridge] crew-cli: minimal context${contextInfo ? ` + ${sharedMemoryContext.length} char hints` : ' (no hints)'}`);
-    return `[${agentId}] ${taskText}${contextInfo}\n\nProject directory: ${dir}. crew-cli will load relevant files automatically via L2 RAG.`;
+    console.log(`[gateway-bridge] iris-cli: minimal context${contextInfo ? ` + ${sharedMemoryContext.length} char hints` : ' (no hints)'}`);
+    return `[${agentId}] ${taskText}${contextInfo}\n\nProject directory: ${dir}. iris-cli will load relevant files automatically via L2 RAG.`;
   }
 
   return `${memHeader}[${agentId}] ${taskText}\n\nProject directory: ${dir}. Use the project files to complete this task only.`;
@@ -881,8 +881,8 @@ initLlmDirect({ loadAgentLLMConfig, checkSpendingCap, notifyTelegramSpending, re
 
 // runOpenCodeTask → lib/engines/opencode.mjs
 initOpenCode({
-  CREWSWARM_OPENCODE_BIN, CREWSWARM_RT_AGENT, CREWSWARM_OPENCODE_MODEL,
-  CREWSWARM_OPENCODE_TIMEOUT_MS, CREWSWARM_OPENCODE_AGENT,
+  IRIS_OPENCODE_BIN, IRIS_RT_AGENT, IRIS_OPENCODE_MODEL,
+  IRIS_OPENCODE_TIMEOUT_MS, IRIS_OPENCODE_AGENT,
   getAgentOpenCodeConfig, getOpencodeProjectDir,
   extractProjectDirFromTask, readAgentSessionId, writeAgentSessionId,
   parseMostRecentSessionId, isOpencodeRateLimitBanner,
@@ -892,9 +892,9 @@ initOpenCode({
 // Engine runners → lib/engines/runners.mjs
 initRunners({ getAgentOpenCodeConfig, loadAgentList, getOpencodeProjectDir, buildMiniTaskForOpenCode, runOpenCodeTask, loadGenericEngines });
 
-// crew-cli engine → lib/engines/crew-cli.mjs
+// iris-cli engine → lib/engines/iris-cli.mjs
 initCrewCLI({
-  CREWSWARM_RT_AGENT,
+  IRIS_RT_AGENT,
   getAgentOpenCodeConfig,
   getOpencodeProjectDir,
 });
@@ -968,15 +968,15 @@ initRtEnvelope({
   getAgentOpenCodeConfig,
   getOpencodeProjectDir,
   // consts
-  CREWSWARM_RT_AGENT,
-  CREWSWARM_RT_COMMAND_TYPES,
-  CREWSWARM_RT_DISPATCH_LEASE_MS,
-  CREWSWARM_RT_DISPATCH_HEARTBEAT_MS,
-  CREWSWARM_RT_DISPATCH_MAX_RETRIES,
-  CREWSWARM_RT_DISPATCH_MAX_RETRIES_CODING,
-  CREWSWARM_RT_DISPATCH_RETRY_BACKOFF_MS,
-  CREWSWARM_OPENCODE_AGENT,
-  CREWSWARM_OPENCODE_MODEL,
+  IRIS_RT_AGENT,
+  IRIS_RT_COMMAND_TYPES,
+  IRIS_RT_DISPATCH_LEASE_MS,
+  IRIS_RT_DISPATCH_HEARTBEAT_MS,
+  IRIS_RT_DISPATCH_MAX_RETRIES,
+  IRIS_RT_DISPATCH_MAX_RETRIES_CODING,
+  IRIS_RT_DISPATCH_RETRY_BACKOFF_MS,
+  IRIS_OPENCODE_AGENT,
+  IRIS_OPENCODE_MODEL,
   OPENCODE_FREE_MODEL_CHAIN,
   RT_TO_GATEWAY_AGENT_MAP,
   SHARED_MEMORY_DIR,
@@ -1042,7 +1042,7 @@ function printMetrics() {
   const connectRate = connectAttempts ? ((connectSuccess / connectAttempts) * 100).toFixed(1) : "n/a";
   const chatCompletion = chatStarted ? ((chatDone / chatStarted) * 100).toFixed(1) : "n/a";
 
-  console.log("crewswarm Metrics");
+  console.log("iris Metrics");
   console.log(`- Sessions observed: ${byRun.size}`);
   console.log(`- Connect success rate: ${connectRate}${connectRate === "n/a" ? "" : "%"} (${connectSuccess}/${connectAttempts || 0})`);
   console.log(`- Chat completion rate: ${chatCompletion}${chatCompletion === "n/a" ? "" : "%"} (${chatDone}/${chatStarted || 0})`);
@@ -1063,7 +1063,7 @@ function printMetrics() {
 
 function loadCredentials() {
   const dev = JSON.parse(fs.readFileSync(path.join(LEGACY_STATE_DIR, "identity/device.json"), "utf8"));
-  // Try crewswarm.json first, fall back to openclaw.json
+  // Try iris.json first, fall back to openclaw.json
   let cfg = loadSwarmConfig();
   if (!cfg || !Object.keys(cfg).length) {
     try { cfg = JSON.parse(fs.readFileSync(path.join(LEGACY_STATE_DIR, "openclaw.json"), "utf8")); } catch { cfg = {}; }
@@ -1090,16 +1090,16 @@ function loadCredentials() {
 const { createRealtimeClient, createBridge, runRealtimeDaemon } = initGatewayWs({
   WebSocket,
   crypto,
-  CREWSWARM_RT_URL,
-  CREWSWARM_RT_TLS_INSECURE,
-  CREWSWARM_RT_TOKEN,
+  IRIS_RT_URL,
+  IRIS_RT_TLS_INSECURE,
+  IRIS_RT_TOKEN,
   GATEWAY_URL,
   PROTOCOL_VERSION,
   REQUEST_TIMEOUT_MS,
   CHAT_TIMEOUT_MS,
-  CREWSWARM_RT_AGENT,
-  CREWSWARM_RT_CHANNELS,
-  CREWSWARM_RT_RECONNECT_MS,
+  IRIS_RT_AGENT,
+  IRIS_RT_CHANNELS,
+  IRIS_RT_RECONNECT_MS,
   telemetry,
   progress,
   parseJsonSafe,
@@ -1135,22 +1135,22 @@ function printStatusSummary(res) {
 }
 
 async function runRealtimeStatusCheck() {
-  progress(`Connecting to OpenCrew RT ${CREWSWARM_RT_URL}...`);
+  progress(`Connecting to OpenCrew RT ${IRIS_RT_URL}...`);
   const rt = await withRetry(() => createRealtimeClient({ onEnvelope: null }), {
     retries: 2,
     baseDelayMs: 300,
     label: "realtime connect",
   });
-  console.log(`OpenCrew RT connected as ${CREWSWARM_RT_AGENT}`);
-  console.log(`- URL: ${CREWSWARM_RT_URL}`);
-  console.log(`- Channels: ${CREWSWARM_RT_CHANNELS.join(", ")}`);
-  console.log(`- Token configured: ${CREWSWARM_RT_TOKEN ? "yes" : "no"}`);
+  console.log(`OpenCrew RT connected as ${IRIS_RT_AGENT}`);
+  console.log(`- URL: ${IRIS_RT_URL}`);
+  console.log(`- Channels: ${IRIS_RT_CHANNELS.join(", ")}`);
+  console.log(`- Token configured: ${IRIS_RT_TOKEN ? "yes" : "no"}`);
   rt.close();
 }
 
 async function runBroadcastTask(message, { timeoutMs = 25000 } = {}) {
   const taskId = `broadcast-${Date.now()}`;
-  const sender = process.env.CREWSWARM_RT_BROADCAST_SENDER || "orchestrator";
+  const sender = process.env.IRIS_RT_BROADCAST_SENDER || "orchestrator";
   const replies = [];
   let deliveredExpected = 0;
 
@@ -1179,7 +1179,7 @@ async function runBroadcastTask(message, { timeoutMs = 25000 } = {}) {
       payload: {
         action: "run_task",
         prompt: message,
-        source: "crewswarm-broadcast",
+        source: "iris-broadcast",
       },
     });
 
@@ -1223,13 +1223,13 @@ async function runBroadcastTask(message, { timeoutMs = 25000 } = {}) {
 /**
  * Send a task to a specific RT agent (targeted delegation). Only that agent processes it.
  * Use this for PM-led orchestration: PM plan → send each subtask to the assigned agent.
- * When agentId is crew-main and task is synthesis, the crew-main daemon routes to OpenCode
+ * When agentId is iris-main and task is synthesis, the iris-main daemon routes to OpenCode
  * (OPENCODE_AGENTS); pass projectDir so OpenCode runs in the PM output dir.
  */
-async function runSendToAgent(agentId, message, { timeoutMs = Number(process.env.CREWSWARM_RT_SEND_TIMEOUT_MS || "120000"), projectDir } = {}) {
+async function runSendToAgent(agentId, message, { timeoutMs = Number(process.env.IRIS_RT_SEND_TIMEOUT_MS || "120000"), projectDir } = {}) {
   const taskId = `send-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
   const correlationId = crypto.randomUUID();
-  const sender = process.env.CREWSWARM_RT_SEND_SENDER || "orchestrator";
+  const sender = process.env.IRIS_RT_SEND_SENDER || "orchestrator";
   let reply = null;
   let done = false;
 
@@ -1297,7 +1297,7 @@ function syncOpenCodePermissions() {
     const ocCfgPath = path.join(process.cwd(), ".opencode", "opencode.jsonc");
     if (!fs.existsSync(ocCfgPath)) return;
 
-    // crewswarm tool → OpenCode permission keys
+    // iris tool → OpenCode permission keys
     const TOOL_TO_OC = {
       write_file: { write: "allow", edit: "allow" },
       read_file: { read: "allow", glob: "allow", grep: "allow" },
@@ -1306,29 +1306,29 @@ function syncOpenCodePermissions() {
       // git handled separately below — bash allow is too broad
     };
 
-    // crewswarm agent-id → OpenCode agent profile name
+    // iris agent-id → OpenCode agent profile name
     const AGENT_TO_OC_PROFILE = {
-      "crew-coder": "coder",
-      "crew-coder-front": "coder-front",
-      "crew-coder-back": "coder-back",
-      "crew-fixer": "fixer",
-      "crew-frontend": "frontend",
-      "crew-qa": "qa",
-      "crew-security": "security",
-      "crew-pm": "pm",
-      "crew-main": "main",
-      "crew-copywriter": "copywriter",
-      "crew-github": "github",
-      "crew-orchestrator": "orchestrator",
+      "iris-coder": "coder",
+      "iris-coder-front": "coder-front",
+      "iris-coder-back": "coder-back",
+      "iris-fixer": "fixer",
+      "iris-frontend": "frontend",
+      "iris-qa": "qa",
+      "iris-security": "security",
+      "iris-pm": "pm",
+      "iris-main": "main",
+      "iris-copywriter": "copywriter",
+      "iris-github": "github",
+      "iris-orchestrator": "orchestrator",
       "orchestrator": "orchestrator",
     };
 
     const agents = loadAgentList();
     if (!agents?.length) return;
 
-    // Resolve profile name: use static map, fall back to stripping crew- prefix
+    // Resolve profile name: use static map, fall back to stripping iris- prefix
     const resolveProfile = (agentId) =>
-      AGENT_TO_OC_PROFILE[agentId] || agentId.replace(/^crew-/, "");
+      AGENT_TO_OC_PROFILE[agentId] || agentId.replace(/^iris-/, "");
 
     let raw = fs.readFileSync(ocCfgPath, "utf8");
     const stripped = raw.replace(/\/\/[^\n]*/g, "");
@@ -1346,7 +1346,7 @@ function syncOpenCodePermissions() {
       if (!agentId) continue;
       const profile = resolveProfile(agentId);
 
-      const tools = loadAgentToolPermissions(agentId); // reads crewswarm.json → role defaults
+      const tools = loadAgentToolPermissions(agentId); // reads iris.json → role defaults
       const ocPerms = {};
 
       for (const [tool, perms] of Object.entries(TOOL_TO_OC)) {
@@ -1431,7 +1431,7 @@ try {
   } else {
     progress("Starting in OpenCode-only worker mode (no gateway chat bridge)...");
     bridge = createOpenCodeOnlyBridge();
-    telemetry("connect_skipped", { mode: "opencode_only", agent: CREWSWARM_RT_AGENT });
+    telemetry("connect_skipped", { mode: "opencode_only", agent: IRIS_RT_AGENT });
     process.stderr.write("✅ OpenCode-only worker mode enabled\n");
   }
 
@@ -1495,11 +1495,11 @@ try {
     const message = args.slice(2).join(" ").trim();
     if (!message) {
       console.error("Usage: node gateway-bridge.mjs --send <agentId> \"task message\"");
-      console.error("Example: node gateway-bridge.mjs --send crew-coder \"Create server.js with Express\"");
+      console.error("Example: node gateway-bridge.mjs --send iris-coder \"Create server.js with Express\"");
       process.exit(1);
     }
-    if (!CREWSWARM_RT_SWARM_AGENTS.includes(agentId)) {
-      console.error(`Unknown agent: ${agentId}. Known: ${CREWSWARM_RT_SWARM_AGENTS.join(", ")}`);
+    if (!IRIS_RT_SWARM_AGENTS.includes(agentId)) {
+      console.error(`Unknown agent: ${agentId}. Known: ${IRIS_RT_SWARM_AGENTS.join(", ")}`);
       process.exit(1);
     }
     process.stderr.write(`📤 Sending to ${agentId} only (no broadcast)...\n`);
@@ -1535,9 +1535,9 @@ try {
     if (shouldUseOpenCode({}, finalPrompt, null)) {
       console.error("[OpenCode] Routing to OpenCode CLI...");
       // Pass raw message to OpenCode (no memory wrapper)
-      const reply = await runOpenCodeTask(message, { model: CREWSWARM_OPENCODE_MODEL });
+      const reply = await runOpenCodeTask(message, { model: IRIS_OPENCODE_MODEL });
       console.log(reply);
-      telemetry("chat_done_opencode", { sessionKey: CREWSWARM_RT_AGENT, replyChars: reply.length });
+      telemetry("chat_done_opencode", { sessionKey: IRIS_RT_AGENT, replyChars: reply.length });
       process.exit(0);
     }
 
@@ -1548,9 +1548,9 @@ try {
       sharedMemoryBytes: sharedMemory.bytes,
       sharedMemoryMissing: sharedMemory.missing,
     });
-    process.stderr.write(`📤 ${CREWSWARM_RT_AGENT || "main"} ${message.slice(0, 80)}\n`);
+    process.stderr.write(`📤 ${IRIS_RT_AGENT || "main"} ${message.slice(0, 80)}\n`);
     process.stderr.write("⏳ Waiting for assistant reply...\n");
-    const targetAgent = RT_TO_GATEWAY_AGENT_MAP[CREWSWARM_RT_AGENT] || "main";
+    const targetAgent = RT_TO_GATEWAY_AGENT_MAP[IRIS_RT_AGENT] || "main";
     const reply = await bridge.chat(finalPrompt, targetAgent);
 
     telemetry("chat_done", { sessionKey: targetAgent, replyChars: reply.length });

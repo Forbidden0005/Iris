@@ -10,7 +10,7 @@ import path from "node:path";
 import { getStatePath, resetPaths } from "../../lib/runtime/paths.mjs";
 
 // Set test mode BEFORE importing session-manager so it picks up the test state dir
-process.env.CREWSWARM_TEST_MODE = "true";
+process.env.IRIS_TEST_MODE = "true";
 resetPaths();
 
 const {
@@ -31,30 +31,30 @@ describe("session-manager", { concurrency: false }, () => {
   beforeEach(() => {
     // Ensure tmux-bridge is unavailable (no TMUX env)
     delete process.env.TMUX;
-    delete process.env.CREWSWARM_TMUX_BRIDGE;
+    delete process.env.IRIS_TMUX_BRIDGE;
     resetTmuxBridge();
   });
 
   describe("when tmux is unavailable", () => {
     it("create returns null", () => {
-      const sid = create({ workspaceId: "test", agentId: "crew-coder" });
+      const sid = create({ workspaceId: "test", agentId: "iris-coder" });
       assert.equal(sid, null);
     });
 
     it("attach returns null for non-existent session", () => {
-      assert.equal(attach("fake-id", "crew-qa"), null);
+      assert.equal(attach("fake-id", "iris-qa"), null);
     });
 
     it("lock returns false for non-existent session", () => {
-      assert.equal(lock("fake-id", "crew-qa"), false);
+      assert.equal(lock("fake-id", "iris-qa"), false);
     });
 
     it("unlock returns false for non-existent session", () => {
-      assert.equal(unlock("fake-id", "crew-qa"), false);
+      assert.equal(unlock("fake-id", "iris-qa"), false);
     });
 
     it("handoff returns false for non-existent session", () => {
-      assert.equal(handoff("fake-id", "crew-coder", "crew-qa"), false);
+      assert.equal(handoff("fake-id", "iris-coder", "iris-qa"), false);
     });
 
     it("terminate returns false for non-existent session", () => {
@@ -94,8 +94,8 @@ describe("session-manager", { concurrency: false }, () => {
       const meta = {
         sessionId: "test-manual-1",
         sessionName: "test-session",
-        owner: "crew-coder",
-        lockedBy: "crew-coder",
+        owner: "iris-coder",
+        lockedBy: "iris-coder",
         status: "active",
       };
       fs.writeFileSync(
@@ -104,7 +104,7 @@ describe("session-manager", { concurrency: false }, () => {
       );
       const loaded = getSession("test-manual-1");
       assert.equal(loaded.sessionId, "test-manual-1");
-      assert.equal(loaded.owner, "crew-coder");
+      assert.equal(loaded.owner, "iris-coder");
       assert.equal(loaded.status, "active");
     });
 
@@ -112,8 +112,8 @@ describe("session-manager", { concurrency: false }, () => {
       const meta = {
         sessionId: "test-lock-1",
         sessionName: "test-session",
-        owner: "crew-coder",
-        lockedBy: "crew-coder",
+        owner: "iris-coder",
+        lockedBy: "iris-coder",
         status: "active",
       };
       fs.writeFileSync(
@@ -122,18 +122,18 @@ describe("session-manager", { concurrency: false }, () => {
       );
 
       // Different agent should be denied
-      assert.equal(lock("test-lock-1", "crew-qa"), false);
+      assert.equal(lock("test-lock-1", "iris-qa"), false);
 
       // Owner should succeed
-      assert.equal(lock("test-lock-1", "crew-coder"), true);
+      assert.equal(lock("test-lock-1", "iris-coder"), true);
     });
 
     it("unlock only works for current lock holder", () => {
       const meta = {
         sessionId: "test-unlock-1",
         sessionName: "test-session",
-        owner: "crew-coder",
-        lockedBy: "crew-coder",
+        owner: "iris-coder",
+        lockedBy: "iris-coder",
         status: "active",
       };
       fs.writeFileSync(
@@ -141,8 +141,8 @@ describe("session-manager", { concurrency: false }, () => {
         JSON.stringify(meta)
       );
 
-      assert.equal(unlock("test-unlock-1", "crew-qa"), false);
-      assert.equal(unlock("test-unlock-1", "crew-coder"), true);
+      assert.equal(unlock("test-unlock-1", "iris-qa"), false);
+      assert.equal(unlock("test-unlock-1", "iris-coder"), true);
 
       const after = getSession("test-unlock-1");
       assert.equal(after.lockedBy, null);
@@ -152,8 +152,8 @@ describe("session-manager", { concurrency: false }, () => {
       const meta = {
         sessionId: "test-handoff-1",
         sessionName: "test-session",
-        owner: "crew-coder",
-        lockedBy: "crew-coder",
+        owner: "iris-coder",
+        lockedBy: "iris-coder",
         status: "active",
       };
       fs.writeFileSync(
@@ -162,21 +162,21 @@ describe("session-manager", { concurrency: false }, () => {
       );
 
       // Wrong agent can't handoff
-      assert.equal(handoff("test-handoff-1", "crew-qa", "crew-fixer"), false);
+      assert.equal(handoff("test-handoff-1", "iris-qa", "iris-fixer"), false);
 
       // Owner can handoff
-      assert.equal(handoff("test-handoff-1", "crew-coder", "crew-qa"), true);
+      assert.equal(handoff("test-handoff-1", "iris-coder", "iris-qa"), true);
 
       const after = getSession("test-handoff-1");
-      assert.equal(after.owner, "crew-qa");
-      assert.equal(after.lockedBy, "crew-qa");
+      assert.equal(after.owner, "iris-qa");
+      assert.equal(after.lockedBy, "iris-qa");
     });
 
     it("terminate sets status to terminated", () => {
       const meta = {
         sessionId: "test-term-1",
         sessionName: "test-session",
-        owner: "crew-coder",
+        owner: "iris-coder",
         lockedBy: null,
         status: "active",
       };
@@ -194,8 +194,8 @@ describe("session-manager", { concurrency: false }, () => {
       const meta = {
         sessionId: "test-exec-1",
         sessionName: "test-session",
-        owner: "crew-coder",
-        lockedBy: "crew-coder",
+        owner: "iris-coder",
+        lockedBy: "iris-coder",
         paneId: "%99",
         status: "active",
       };
@@ -204,14 +204,14 @@ describe("session-manager", { concurrency: false }, () => {
         JSON.stringify(meta)
       );
 
-      assert.equal(exec("test-exec-1", "echo test", { actorId: "crew-qa" }), null);
+      assert.equal(exec("test-exec-1", "echo test", { actorId: "iris-qa" }), null);
     });
 
     it("attach returns null for terminated sessions", () => {
       const meta = {
         sessionId: "test-attach-1",
         sessionName: "test-session",
-        owner: "crew-coder",
+        owner: "iris-coder",
         status: "terminated",
       };
       fs.writeFileSync(
@@ -219,7 +219,7 @@ describe("session-manager", { concurrency: false }, () => {
         JSON.stringify(meta)
       );
 
-      assert.equal(attach("test-attach-1", "crew-qa"), null);
+      assert.equal(attach("test-attach-1", "iris-qa"), null);
     });
 
     it("listSessions only returns active sessions", () => {

@@ -1,5 +1,5 @@
 /**
- * Unit tests for lib/crew-lead/worktree.mjs
+ * Unit tests for lib/iris-lead/worktree.mjs
  *
  * Tests: createWorktree, mergeWorktree, cleanupPipelineWorktrees, isGitRepo,
  *        worktreePath, worktreeBranch.
@@ -22,7 +22,7 @@ import {
   cleanupPipelineWorktrees,
   worktreePath,
   worktreeBranch,
-} from "../../lib/crew-lead/worktree.mjs";
+} from "../../lib/iris-lead/worktree.mjs";
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -66,10 +66,10 @@ describe("worktree helpers", () => {
   // A fresh git repo created per top-level describe so all nested tests share it.
   let repoDir;
   const pipelineId = "abcdef1234567890"; // 16-char; slice(0,8) → "abcdef12"
-  const agentId = "crew-coder";
+  const agentId = "iris-coder";
 
   before(() => {
-    repoDir = fs.mkdtempSync(path.join(os.tmpdir(), "crewswarm-wt-test-repo-"));
+    repoDir = fs.mkdtempSync(path.join(os.tmpdir(), "iris-wt-test-repo-"));
     initGitRepo(repoDir);
   });
 
@@ -80,7 +80,7 @@ describe("worktree helpers", () => {
 
   afterEach(() => {
     // Ensure worktree paths and branches created during individual tests are removed.
-    for (const a of [agentId, "crew-frontend", "crew-pm"]) {
+    for (const a of [agentId, "iris-frontend", "iris-pm"]) {
       cleanupWt(pipelineId, a);
       // Also remove branches and worktree refs from the test repo
       const branch = worktreeBranch(pipelineId, a);
@@ -97,7 +97,7 @@ describe("worktree helpers", () => {
     });
 
     it("returns false for a plain directory (not a git repo)", () => {
-      const plainDir = fs.mkdtempSync(path.join(os.tmpdir(), "crewswarm-plain-"));
+      const plainDir = fs.mkdtempSync(path.join(os.tmpdir(), "iris-plain-"));
       try {
         assert.equal(isGitRepo(plainDir), false);
       } finally {
@@ -106,7 +106,7 @@ describe("worktree helpers", () => {
     });
 
     it("returns false for a path that doesn't exist", () => {
-      assert.equal(isGitRepo("/tmp/crewswarm-nonexistent-path-xyz-99999"), false);
+      assert.equal(isGitRepo("/tmp/iris-nonexistent-path-xyz-99999"), false);
     });
   });
 
@@ -114,18 +114,18 @@ describe("worktree helpers", () => {
 
   describe("naming helpers", () => {
     it("worktreePath uses first 8 chars of pipelineId", () => {
-      const p = worktreePath("abcdef1234567890", "crew-coder");
-      assert.equal(p, "/tmp/crewswarm-wt-abcdef12-crew-coder");
+      const p = worktreePath("abcdef1234567890", "iris-coder");
+      assert.equal(p, "/tmp/iris-wt-abcdef12-iris-coder");
     });
 
     it("worktreeBranch uses first 8 chars of pipelineId", () => {
-      const b = worktreeBranch("abcdef1234567890", "crew-coder");
-      assert.equal(b, "crewswarm/wave-abcdef12-crew-coder");
+      const b = worktreeBranch("abcdef1234567890", "iris-coder");
+      assert.equal(b, "iris/wave-abcdef12-iris-coder");
     });
 
     it("worktreePath and worktreeBranch are deterministic for same inputs", () => {
       const id = "pipe0001deadbeef";
-      const agent = "crew-qa";
+      const agent = "iris-qa";
       assert.equal(worktreePath(id, agent), worktreePath(id, agent));
       assert.equal(worktreeBranch(id, agent), worktreeBranch(id, agent));
     });
@@ -142,7 +142,7 @@ describe("worktree helpers", () => {
     });
 
     it("returns null when projectDir is not a git repo", () => {
-      const plainDir = fs.mkdtempSync(path.join(os.tmpdir(), "crewswarm-plain-"));
+      const plainDir = fs.mkdtempSync(path.join(os.tmpdir(), "iris-plain-"));
       try {
         const result = createWorktree(plainDir, pipelineId, 0, agentId);
         assert.equal(result, null);
@@ -223,8 +223,8 @@ describe("worktree helpers", () => {
 
   describe("cleanupPipelineWorktrees", () => {
     it("removes all worktrees matching the pipeline ID prefix", () => {
-      const agentA = "crew-coder";
-      const agentB = "crew-frontend";
+      const agentA = "iris-coder";
+      const agentB = "iris-frontend";
       const wtA = createWorktree(repoDir, pipelineId, 0, agentA);
       const wtB = createWorktree(repoDir, pipelineId, 0, agentB);
       assert.ok(wtA, "worktree A should be created");
@@ -243,7 +243,7 @@ describe("worktree helpers", () => {
 
     it("does not remove worktrees for a different pipeline", () => {
       const otherPipelineId = "zzzzzzzz00000000";
-      const wtOther = createWorktree(repoDir, otherPipelineId, 0, "crew-pm");
+      const wtOther = createWorktree(repoDir, otherPipelineId, 0, "iris-pm");
 
       try {
         assert.ok(wtOther, "other worktree should be created");
@@ -252,7 +252,7 @@ describe("worktree helpers", () => {
         // Other pipeline's worktree should still exist.
         assert.ok(fs.existsSync(wtOther), "other pipeline's worktree should not be touched");
       } finally {
-        cleanupWt(otherPipelineId, "crew-pm");
+        cleanupWt(otherPipelineId, "iris-pm");
       }
     });
   });

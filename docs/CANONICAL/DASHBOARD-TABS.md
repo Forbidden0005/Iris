@@ -1,10 +1,10 @@
 # Dashboard Tabs
 
-The crewswarm dashboard at `http://127.0.0.1:4319` is the primary control plane for service management, system configuration, and swarm observation. It currently exposes 24 top-level views in the sidebar.
+The iris dashboard at `http://127.0.0.1:4319` is the primary control plane for service management, system configuration, and swarm observation. It currently exposes 24 top-level views in the sidebar.
 
 ## Core Chat & Observation
-- **Chat** (`chat`): Direct conversation with `crew-lead`.
-- **Swarm Chat** (`swarm-chat-tab.js`): The primary chat interface. Interact with `crew-lead` and use `@mentions` (`@crew-coder`, `@crew-qa`) to autonomously route tasks. All threads are persisted to the active project context.
+- **Chat** (`chat`): Direct conversation with `iris-lead`.
+- **Swarm Chat** (`swarm-chat-tab.js`): The primary chat interface. Interact with `iris-lead` and use `@mentions` (`@iris-coder`, `@iris-qa`) to autonomously route tasks. All threads are persisted to the active project context.
 - **Swarm** (`swarm-tab.js`): Live overview of the RT message bus and the 20+ agents handling workloads.
 - **RT Messages** (`rt`): Live RT bus message stream and transport-level visibility.
 - **Build** (`build`): Build/task execution visibility for active work.

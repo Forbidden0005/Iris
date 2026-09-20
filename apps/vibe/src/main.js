@@ -33,7 +33,7 @@ let activeTab = null;
 let currentProject = null;
 let allProjects = [];
 let allAgents = [];
-let chatMode = "crew-lead"; // 'crew-lead', 'direct', or 'cli'
+let chatMode = "iris-lead"; // 'iris-lead', 'direct', or 'cli'
 let selectedAgent = null;
 let ws = null;
 let watchWs = null; // WebSocket for CLI file changes
@@ -154,8 +154,8 @@ function shouldHideFromExplorer(relativePath) {
     relativePath.startsWith("dist/"),
     relativePath.startsWith("node_modules/"),
     relativePath.startsWith("output/"),
-    relativePath.startsWith(".crew/"),
-    relativePath.startsWith(".crewswarm/"),
+    relativePath.startsWith(".iris/"),
+    relativePath.startsWith(".iris/"),
     relativePath.includes("/dist/"),
   ].some(Boolean);
 }
@@ -588,7 +588,7 @@ function initEditor() {
 
   editor = monaco.editor.create(container, {
     value:
-      "// crewswarm Vibe is ready.\n// Open a project, edit a file, or run cli:codex from chat.\n",
+      "// iris Vibe is ready.\n// Open a project, edit a file, or run cli:codex from chat.\n",
     language: "plaintext",
     theme: getPreferredMonacoTheme(),
     fontSize: 13,
@@ -791,7 +791,7 @@ async function loadAgents() {
       const hasPreferredMode = Array.from(selector.options).some(
         (option) => option.value === preferredMode,
       );
-      selector.value = hasPreferredMode ? preferredMode : "crew-lead";
+      selector.value = hasPreferredMode ? preferredMode : "iris-lead";
       chatMode = selector.value;
     }
 
@@ -819,7 +819,7 @@ window.switchChatMode = function () {
       `⚡ Mode: ${cliName} CLI passthrough - NO LLM, direct execution`,
       "info",
     );
-  } else if (mode !== "crew-lead") {
+  } else if (mode !== "iris-lead") {
     // Direct agent mode
     selectedAgent = mode;
     chatInput.placeholder = `Talk directly to ${mode} (Enter to send)`;
@@ -827,8 +827,8 @@ window.switchChatMode = function () {
   } else {
     selectedAgent = null;
     chatInput.placeholder =
-      "Ask the crew anything... (Enter to send, Shift+Enter for new line)";
-    addTerminalLine(`🧠 Mode: crew-lead (smart routing)`, "info");
+      "Ask the iris anything... (Enter to send, Shift+Enter for new line)";
+    addTerminalLine(`🧠 Mode: iris-lead (smart routing)`, "info");
   }
 };
 
@@ -836,7 +836,7 @@ window.clearCliSession = async function () {
   try {
     const pd = currentProject?.outputDir || "";
     const scope = SESSION_ID || "default";
-    // Clear all engines for this project+session via crew-lead API
+    // Clear all engines for this project+session via iris-lead API
     const res = await fetch(`${STUDIO_API}/api/studio/clear-cli-session`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -1018,7 +1018,7 @@ function appendChatSystemNote(text) {
   const note = document.createElement("div");
   note.className = "message assistant";
   note.innerHTML = `
-    <div class="message-header">⚡ crew-lead</div>
+    <div class="message-header">⚡ iris-lead</div>
     <div class="message-content">${escapeHtml(text)}</div>
   `;
   chatMessages.appendChild(note);
@@ -1047,7 +1047,7 @@ function scheduleProjectReplyRefresh(durationMs = 30000, intervalMs = 3000) {
 
 function connectCrewLeadEvents() {
   if (crewLeadEvents) return;
-  const eventsUrl = `${STUDIO_API}/api/crew-lead/events`;
+  const eventsUrl = `${STUDIO_API}/api/iris-lead/events`;
   crewLeadEvents = new EventSource(eventsUrl);
 
   crewLeadEvents.onmessage = async (event) => {
@@ -1468,17 +1468,17 @@ function getChatModeLabel() {
   if (chatMode.startsWith("cli:")) {
     return chatMode.replace("cli:", "");
   }
-  if (chatMode !== "crew-lead") {
+  if (chatMode !== "iris-lead") {
     return chatMode;
   }
-  return "crew-lead";
+  return "iris-lead";
 }
 
-/** Agent id / label for error bubbles (cli:* must not show as crew-lead). */
+/** Agent id / label for error bubbles (cli:* must not show as iris-lead). */
 function getErrorBubbleAgentId() {
   if (chatMode.startsWith("cli:")) return chatMode.replace("cli:", "");
-  if (chatMode !== "crew-lead") return chatMode;
-  return "crew-lead";
+  if (chatMode !== "iris-lead") return chatMode;
+  return "iris-lead";
 }
 
 async function sendChatMessage() {
@@ -1531,7 +1531,7 @@ async function sendChatMessage() {
     let isSSE = true; // All modes now stream via SSE
 
     if (chatMode.startsWith("cli:")) {
-      // CLI Passthrough mode (cli:crew-cli, cli:cursor, etc.) — SSE STREAM
+      // CLI Passthrough mode (cli:iris-cli, cli:cursor, etc.) — SSE STREAM
       const cliName = chatMode.replace("cli:", "");
       // All CLI engines run locally via Vibe server (uses OAuth from each CLI)
       apiUrl = `${STUDIO_API}/api/studio/chat/unified`;
@@ -1544,7 +1544,7 @@ async function sendChatMessage() {
         projectId: currentProject?.id || "general", // ✅ Added for unified history
         ...fileContext, // ✅ Include active file context
       };
-    } else if (chatMode !== "crew-lead") {
+    } else if (chatMode !== "iris-lead") {
       // Direct agent mode — SSE STREAM via dashboard unified endpoint
       apiUrl = `${DASHBOARD_API}/api/chat/unified`;
       body = {
@@ -1556,10 +1556,10 @@ async function sendChatMessage() {
         ...fileContext,
       };
     } else {
-      // crew-lead mode (default) — SSE STREAM via dashboard unified endpoint
+      // iris-lead mode (default) — SSE STREAM via dashboard unified endpoint
       apiUrl = `${DASHBOARD_API}/api/chat/unified`;
       body = {
-        mode: "crew-lead",
+        mode: "iris-lead",
         message,
         sessionId: SESSION_ID,
         projectId: currentProject?.id || "general",
@@ -1821,7 +1821,7 @@ async function sendChatMessage() {
       }
 
       if (
-        chatMode === "crew-lead" &&
+        chatMode === "iris-lead" &&
         /dispatch(?:ed)?\s+to\b|reply will show here|working/i.test(rawTranscript)
       ) {
         scheduleProjectReplyRefresh();
@@ -1838,7 +1838,7 @@ async function sendChatMessage() {
       const respondingAgent = getErrorBubbleAgentId();
       const agentInfo =
         allAgents.find(
-          (a) => a.id === respondingAgent || a.id === `crew-${respondingAgent}`,
+          (a) => a.id === respondingAgent || a.id === `iris-${respondingAgent}`,
         ) || { emoji: "⚡", agent: respondingAgent };
       const sourceInfo = {
         emoji: agentInfo.emoji || "🤖",
@@ -1873,7 +1873,7 @@ async function sendChatMessage() {
     const respondingAgent = getErrorBubbleAgentId();
     const agentInfo =
       allAgents.find(
-        (a) => a.id === respondingAgent || a.id === `crew-${respondingAgent}`,
+        (a) => a.id === respondingAgent || a.id === `iris-${respondingAgent}`,
       ) || { emoji: "⚡", agent: respondingAgent };
     const errorSourceInfo = {
       emoji: agentInfo.emoji || "🤖",
@@ -1900,7 +1900,7 @@ function appendChatBubble(role, content, sourceInfo = null) {
   const msgDiv = document.createElement("div");
   msgDiv.className = `message ${role}`;
 
-  let header = role === "user" ? "You" : "crew-lead";
+  let header = role === "user" ? "You" : "iris-lead";
   if (sourceInfo) {
     let label = role === "user" ? "You" : null;
     if (!label) {
@@ -1909,7 +1909,7 @@ function appendChatBubble(role, content, sourceInfo = null) {
       else if (sourceInfo.source === "sub-agent") label = "sub-agent";
       else if (sourceInfo.source === "agent")
         label = sourceInfo.targetAgent || "agent";
-      else label = "crew-lead";
+      else label = "iris-lead";
     }
     header = `${sourceInfo.emoji} ${label}`;
   }
@@ -2863,7 +2863,7 @@ window.addEventListener("focus", () => {
 
 async function init() {
   try {
-    addTerminalLine("🐝 crewswarm Vibe starting...", "info");
+    addTerminalLine("🐝 iris Vibe starting...", "info");
 
 renderEditorPlaceholder();
 bindEditorToolbar();

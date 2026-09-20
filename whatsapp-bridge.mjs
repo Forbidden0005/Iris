@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * whatsapp-bridge.mjs — Connects WhatsApp to the crewswarm RT bus.
+ * whatsapp-bridge.mjs — Connects WhatsApp to the iris RT bus.
  *
  * Personal bot approach (WhatsApp Web automation via Baileys).
  * Your phone number becomes a "linked device" — same as the WhatsApp
@@ -8,17 +8,17 @@
  *
  * What it does:
  *   1. On first run: prints a QR code → scan with WhatsApp on your phone
- *   2. Connects to the RT bus (18889) as "crew-whatsapp"
- *   3. Forwards incoming messages → crew-lead
- *   4. Listens for crew-lead responses → sends them back to WhatsApp
+ *   2. Connects to the RT bus (18889) as "iris-whatsapp"
+ *   3. Forwards incoming messages → iris-lead
+ *   4. Listens for iris-lead responses → sends them back to WhatsApp
  *
- * Auth persists in ~/.crewswarm/whatsapp-auth/ — no re-scan after restart.
+ * Auth persists in ~/.iris/whatsapp-auth/ — no re-scan after restart.
  *
  * Usage:
  *   node whatsapp-bridge.mjs
  *
  * Allowed senders (allowlist):
- *   Set WA_ALLOWED_NUMBERS=+15551234567,+15559876543 in env or crewswarm.json
+ *   Set WA_ALLOWED_NUMBERS=+15551234567,+15559876543 in env or iris.json
  *   Leave empty to allow any sender (open bot — not recommended).
  *
  * Commands (same as Telegram bridge):
@@ -44,7 +44,7 @@ import { trackContact, getContact, updatePreferences, saveMessage as saveContact
 import { extractPreferences, shouldExtract, buildPreferencePrompt } from "./lib/preferences/extractor.mjs";
 import { analyzeImage, transcribeAudio, hasVisionProvider, hasAudioProvider } from "./lib/integrations/multimodal.mjs";
 import { textToSpeech, hasTTSProvider, chunkTextForTTS, getVoiceForAgent } from "./lib/integrations/tts.mjs";
-import { execCrewLeadTools } from "./lib/crew-lead/tools.mjs";
+import { execCrewLeadTools } from "./lib/iris-lead/tools.mjs";
 import { buildToolInstructions, hasEngineConfigured, getToolPermissions } from "./lib/agents/tool-instructions.mjs";
 import { getPlatformFormatting } from "./lib/agents/platform-formatting.mjs";
 import { saveBridgeMessage } from "./lib/bridges/integration.mjs";
@@ -55,42 +55,42 @@ const require = createRequire(import.meta.url);
 
 // ── Config ─────────────────────────────────────────────────────────────────────
 
-const CREW_CFG_PATH  = join(homedir(), ".crewswarm", "crewswarm.json");
-const WA_AUTH_DIR    = join(homedir(), ".crewswarm", "whatsapp-auth");
-const LOG_PATH       = join(homedir(), ".crewswarm", "logs", "whatsapp-bridge.jsonl");
-const PID_PATH       = join(homedir(), ".crewswarm", "logs", "whatsapp-bridge.pid");
-const MSG_LOG        = join(homedir(), ".crewswarm", "logs", "whatsapp-messages.jsonl");
+const IRIS_CFG_PATH  = join(homedir(), ".iris", "iris.json");
+const WA_AUTH_DIR    = join(homedir(), ".iris", "whatsapp-auth");
+const LOG_PATH       = join(homedir(), ".iris", "logs", "whatsapp-bridge.jsonl");
+const PID_PATH       = join(homedir(), ".iris", "logs", "whatsapp-bridge.pid");
+const MSG_LOG        = join(homedir(), ".iris", "logs", "whatsapp-messages.jsonl");
 const CONTEXT_FILE   = join(process.cwd(), "memory", "whatsapp-context.md");
 
-mkdirSync(join(homedir(), ".crewswarm", "logs"), { recursive: true });
+mkdirSync(join(homedir(), ".iris", "logs"), { recursive: true });
 mkdirSync(WA_AUTH_DIR, { recursive: true });
 
 function loadCfg() {
-  try { return JSON.parse(readFileSync(CREW_CFG_PATH, "utf8")); } catch {}
+  try { return JSON.parse(readFileSync(IRIS_CFG_PATH, "utf8")); } catch {}
   return {};
 }
 const cfg = loadCfg();
 const env = cfg.env || {};
 
-const RT_URL        = process.env.CREWSWARM_RT_URL        || env.CREWSWARM_RT_URL        || "ws://127.0.0.1:18889";
-const RT_TOKEN      = process.env.CREWSWARM_RT_AUTH_TOKEN || env.CREWSWARM_RT_AUTH_TOKEN || (() => {
-  // Fall back to ~/.crewswarm/crewswarm.json → rt.authToken (canonical location)
+const RT_URL        = process.env.IRIS_RT_URL        || env.IRIS_RT_URL        || "ws://127.0.0.1:18889";
+const RT_TOKEN      = process.env.IRIS_RT_AUTH_TOKEN || env.IRIS_RT_AUTH_TOKEN || (() => {
+  // Fall back to ~/.iris/iris.json → rt.authToken (canonical location)
   try {
-    const c = JSON.parse(readFileSync(join(homedir(), ".crewswarm", "crewswarm.json"), "utf8"));
+    const c = JSON.parse(readFileSync(join(homedir(), ".iris", "iris.json"), "utf8"));
     return c?.rt?.authToken || "";
   } catch { return ""; }
 })();
-const CREW_LEAD_URL = process.env.CREW_LEAD_URL          || "http://127.0.0.1:5010";
+const IRIS_LEAD_URL = process.env.IRIS_LEAD_URL          || "http://127.0.0.1:5010";
 const DASHBOARD_URL = process.env.DASHBOARD_URL          || "http://127.0.0.1:4319";
-const AGENT_NAME    = "crew-whatsapp";
-const TARGET        = process.env.WA_TARGET_AGENT        || env.WA_TARGET_AGENT        || "crew-lead";
+const AGENT_NAME    = "iris-whatsapp";
+const TARGET        = process.env.WA_TARGET_AGENT        || env.WA_TARGET_AGENT        || "iris-lead";
 const HTTP_PORT     = parseInt(process.env.WA_HTTP_PORT  || env.WA_HTTP_PORT           || "5015", 10);
 
 // Allowlist — phone numbers in international format, e.g. "+15551234567"
 // Numbers are normalised to JID format: "15551234567@s.whatsapp.net"
 
 // Contact names — loaded from whatsapp-bridge.json (saved by dashboard)
-const WA_BRIDGE_CFG_PATH = join(homedir(), ".crewswarm", "whatsapp-bridge.json");
+const WA_BRIDGE_CFG_PATH = join(homedir(), ".iris", "whatsapp-bridge.json");
 
 function loadAllowedNumbers() {
   // 1. Check env var first (backward compatibility)
@@ -264,8 +264,8 @@ function shouldSkipDuplicate(jid, text) {
 }
 
 // ── Conversation history — NOW PERSISTENT (uses lib/chat/history.mjs) ─────────
-// History survives restarts and is shared with crew-lead's session system
-// Format: ~/.crewswarm/chat-history/whatsapp/{jid}.jsonl
+// History survives restarts and is shared with iris-lead's session system
+// Format: ~/.iris/chat-history/whatsapp/{jid}.jsonl
 // Each WhatsApp user gets isolated, persistent history (last 2000 messages)
 
 function getHistory(jid) {
@@ -309,7 +309,7 @@ function loadPersistedTurns() {
 function writeContextFile() {
   try {
     const lines = persistedTurns.slice(-MAX_CONTEXT_TURNS).map(t =>
-      `**${t.role === "user" ? (t.name || "User") : "crewswarm"}** (${t.ts.slice(0,16)}): ${t.text}`
+      `**${t.role === "user" ? (t.name || "User") : "iris"}** (${t.ts.slice(0,16)}): ${t.text}`
     ).join("\n\n");
     const content = [
       "# WhatsApp Conversation Context",
@@ -446,9 +446,9 @@ function connectRT(sendToJid) {
                 // Skip - too soon after last reply (debounce)
               } else {
                 lastReplyTime.set(jid, Date.now());
-                log("info", "Forwarding crew-lead reply to WhatsApp", { jid, preview: content.slice(0, 80) });
+                log("info", "Forwarding iris-lead reply to WhatsApp", { jid, preview: content.slice(0, 80) });
                 addToHistory(jid, "assistant", content);
-                persistTurn("assistant", content, "crewswarm");
+                persistTurn("assistant", content, "iris");
                 logMessage({ direction: "outbound", jid, text: content });
                 await sendToJid(jid, content);
               }
@@ -499,10 +499,10 @@ function connectRT(sendToJid) {
   });
 }
 
-// ── SSE listener (crew-lead /events) ─────────────────────────────────────────
+// ── SSE listener (iris-lead /events) ─────────────────────────────────────────
 
 async function listenForAgentReplies(sendToJid) {
-  const EVENTS_URL = `${CREW_LEAD_URL}/events`;
+  const EVENTS_URL = `${IRIS_LEAD_URL}/events`;
   while (true) {
     try {
       const res = await fetch(EVENTS_URL, { signal: AbortSignal.timeout(120000) });
@@ -567,7 +567,7 @@ async function handleCommand(jid, text, sendToJid) {
   if (lower === "/status") {
     const rtOk = rtClient?.isReady() ? "✅ connected" : "⚠️ disconnected";
     const sessions = [...activeSessions.keys()].length;
-    await sendToJid(jid, `*crewswarm WhatsApp Bridge*\n\nRT bus: ${rtOk}\nActive sessions: ${sessions}\nTarget: ${TARGET}\nAllowlist: ${ALLOWLIST_ENABLED ? `${ALLOWED_JIDS.size} numbers` : "open"}`);
+    await sendToJid(jid, `*iris WhatsApp Bridge*\n\nRT bus: ${rtOk}\nActive sessions: ${sessions}\nTarget: ${TARGET}\nAllowlist: ${ALLOWLIST_ENABLED ? `${ALLOWED_JIDS.size} numbers` : "open"}`);
     return true;
   }
 
@@ -772,7 +772,7 @@ async function main() {
         log("info", "Reconnecting in 5s...");
         setTimeout(main, 5000);
       } else {
-        log("error", "Logged out — delete ~/.crewswarm/whatsapp-auth/ and re-run to re-authenticate.");
+        log("error", "Logged out — delete ~/.iris/whatsapp-auth/ and re-run to re-authenticate.");
         process.exit(1);
       }
     }
@@ -882,7 +882,7 @@ async function main() {
           await sock.sendMessage(jid, { text: "🖼️ Analyzing image..." });
           const analysis = await analyzeImage(dataUri, caption);
           
-          // Forward to crew-lead with context
+          // Forward to iris-lead with context
           const displayName = resolveDisplayName(jid, sock);
           const targetAgent = getTargetAgent(jid, sock);
           const fullMessage = `[Image from ${displayName}]\nUser's question: ${caption}\n\nImage analysis:\n${analysis}`;
@@ -900,7 +900,7 @@ async function main() {
           // Get active project for this JID
           const activeProj = activeProjectByJid.get(jid);
           
-          fetch(`${CREW_LEAD_URL}/chat`, {
+          fetch(`${IRIS_LEAD_URL}/chat`, {
             method: "POST",
             headers: { "content-type": "application/json", ...(RT_TOKEN ? { authorization: `Bearer ${RT_TOKEN}` } : {}) },
             body: JSON.stringify({
@@ -908,7 +908,7 @@ async function main() {
               sessionId: `whatsapp-${jid}`,
               firstName: displayName,
               projectId: activeProj?.id || undefined,
-              ...(targetAgent !== "crew-lead" ? { targetAgent } : {}),
+              ...(targetAgent !== "iris-lead" ? { targetAgent } : {}),
             }),
             signal: AbortSignal.timeout(65000),
           }).then(async r => {
@@ -918,7 +918,7 @@ async function main() {
               await sock.sendMessage(jid, { text: d.reply });
             }
           }).catch(async e => {
-            log("error", "crew-lead HTTP error (image)", { error: e.message, targetAgent });
+            log("error", "iris-lead HTTP error (image)", { error: e.message, targetAgent });
             await sock.sendMessage(jid, { text: `⚠️ Error: ${e.message.slice(0, 100)}` });
           });
           continue;
@@ -948,7 +948,7 @@ async function main() {
           
           log("info", "Voice transcribed", { jid, length: transcription.length });
           
-          // Forward transcription to crew-lead
+          // Forward transcription to iris-lead
           const displayName = resolveDisplayName(jid, sock);
           const targetAgent = getTargetAgent(jid, sock);
           const fullMessage = `[Voice message from ${displayName}]\nTranscription: ${transcription}`;
@@ -966,7 +966,7 @@ async function main() {
           // Get active project for this JID
           const activeProj = activeProjectByJid.get(jid);
           
-          fetch(`${CREW_LEAD_URL}/chat`, {
+          fetch(`${IRIS_LEAD_URL}/chat`, {
             method: "POST",
             headers: { "content-type": "application/json", ...(RT_TOKEN ? { authorization: `Bearer ${RT_TOKEN}` } : {}) },
             body: JSON.stringify({
@@ -974,7 +974,7 @@ async function main() {
               sessionId: `whatsapp-${jid}`,
               firstName: displayName,
               projectId: activeProj?.id || undefined,
-              ...(targetAgent !== "crew-lead" ? { targetAgent } : {}),
+              ...(targetAgent !== "iris-lead" ? { targetAgent } : {}),
             }),
             signal: AbortSignal.timeout(65000),
           }).then(async r => {
@@ -984,7 +984,7 @@ async function main() {
               await sock.sendMessage(jid, { text: d.reply });
             }
           }).catch(async e => {
-            log("error", "crew-lead HTTP error (voice)", { error: e.message, targetAgent });
+            log("error", "iris-lead HTTP error (voice)", { error: e.message, targetAgent });
             await sock.sendMessage(jid, { text: `⚠️ Error: ${e.message.slice(0, 100)}` });
           });
           continue;
@@ -1057,10 +1057,10 @@ async function main() {
         hasProject: !!activeProj 
       });
 
-      // FAST PATH: Direct LLM call for non-crew-lead agents (bypasses gateway routing)
-      // crew-lead uses its own chat handler, but other agents (crew-loco, etc.) should
+      // FAST PATH: Direct LLM call for non-iris-lead agents (bypasses gateway routing)
+      // iris-lead uses its own chat handler, but other agents (iris-loco, etc.) should
       // call their LLM directly for instant responses.
-      if (targetAgent !== "crew-lead") {
+      if (targetAgent !== "iris-lead") {
         try {
           const enrichedInput = await enrichTwitterLinks(text, {
             source: "whatsapp:direct-agent",
@@ -1076,7 +1076,7 @@ async function main() {
           const contact = getContact(contactId);
           
           // Load agent config
-          const csSwarm = JSON.parse(readFileSync(join(homedir(), ".crewswarm", "crewswarm.json"), "utf8"));
+          const csSwarm = JSON.parse(readFileSync(join(homedir(), ".iris", "iris.json"), "utf8"));
           const agentCfg = csSwarm.agents.find(a => a.id === targetAgent);
           if (!agentCfg?.model) {
             throw new Error(`Agent ${targetAgent} not found or no model configured`);
@@ -1095,8 +1095,8 @@ async function main() {
           }
           
           // Load system prompt
-          const agentPrompts = JSON.parse(readFileSync(join(homedir(), ".crewswarm", "agent-prompts.json"), "utf8"));
-          const bareId = targetAgent.replace(/^crew-/, "");
+          const agentPrompts = JSON.parse(readFileSync(join(homedir(), ".iris", "agent-prompts.json"), "utf8"));
+          const bareId = targetAgent.replace(/^iris-/, "");
           let sysPrompt = agentPrompts[bareId] || `You are ${targetAgent}.`;
           sysPrompt = applySharedChatPromptOverlay(sysPrompt, targetAgent);
 
@@ -1218,7 +1218,7 @@ async function main() {
               log("info", "Executing @@WEB_SEARCH", { query });
               
               try {
-                // Call Brave search API (same as crew-lead uses)
+                // Call Brave search API (same as iris-lead uses)
                 const braveKey = csSwarm.providers?.brave?.apiKey || process.env.BRAVE_API_KEY;
                 if (braveKey) {
                   const searchRes = await fetch(`https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(query)}`, {
@@ -1273,7 +1273,7 @@ async function main() {
               
               try {
                 const fetchRes = await fetch(url, {
-                  headers: { "User-Agent": "crewswarm/1.0" },
+                  headers: { "User-Agent": "iris/1.0" },
                   signal: AbortSignal.timeout(15000),
                 });
                 if (fetchRes.ok) {
@@ -1375,7 +1375,7 @@ async function main() {
           
           if (reply) {
             addToHistory(jid, "assistant", reply, targetAgent);
-            persistTurn("assistant", reply, "crewswarm");
+            persistTurn("assistant", reply, "iris");
             
             // Save agent reply to project RAG
             const activeProj = activeProjectByJid.get(jid);
@@ -1423,7 +1423,7 @@ async function main() {
                   const data = await res.json();
                   return data.choices?.[0]?.message?.content || '{}';
                 },
-                'food' // Domain: food preferences (for crew-loco)
+                'food' // Domain: food preferences (for iris-loco)
               ).then(prefs => {
                 if (Object.keys(prefs).length > 0) {
                   updatePreferences(contactId, prefs);
@@ -1441,8 +1441,8 @@ async function main() {
           await sendToJid(jid, `⚠️ ${targetAgent} error: ${e.message.slice(0, 80)}`);
         }
       } else {
-        // crew-lead path: use the chat handler
-        fetch(`${CREW_LEAD_URL}/chat`, {
+        // iris-lead path: use the chat handler
+        fetch(`${IRIS_LEAD_URL}/chat`, {
           method: "POST",
           headers: { "content-type": "application/json", ...(RT_TOKEN ? { authorization: `Bearer ${RT_TOKEN}` } : {}) },
           body: JSON.stringify({
@@ -1456,13 +1456,13 @@ async function main() {
           const d = await r.json();
           if (d.reply) {
             addToHistory(jid, "assistant", d.reply);
-            persistTurn("assistant", d.reply, "crewswarm");
+            persistTurn("assistant", d.reply, "iris");
             logMessage({ direction: "outbound", jid, text: d.reply });
             lastReplyTime.set(jid, Date.now());
-            await sendToJid(jid, d.reply, "crew-lead");
+            await sendToJid(jid, d.reply, "iris-lead");
           }
         }).catch(async e => {
-          log("error", "crew-lead HTTP error", { error: e.message });
+          log("error", "iris-lead HTTP error", { error: e.message });
           await sendToJid(jid, `⚠️ Error: ${e.message.slice(0, 100)}`);
         });
       }
@@ -1472,7 +1472,7 @@ async function main() {
   // ── Outbound HTTP API ────────────────────────────────────────────────────────
   // POST /send  { "jid": "15551234567@s.whatsapp.net", "text": "hello" }
   // POST /send  { "phone": "+15551234567", "text": "hello" }
-  // Used by crew-lead @@WHATSAPP tool.
+  // Used by iris-lead @@WHATSAPP tool.
 
   const httpServer = http.createServer(async (req, res) => {
     if (req.method === "POST" && req.url === "/send") {

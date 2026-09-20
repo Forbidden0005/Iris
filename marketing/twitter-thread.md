@@ -1,6 +1,6 @@
 # Twitter/X Launch Thread
 
-Post from @crewswarm. Thread format — post tweet 1, then reply chain.
+Post from @iris. Thread format — post tweet 1, then reply chain.
 
 ---
 
@@ -8,7 +8,7 @@ Post from @crewswarm. Thread format — post tweet 1, then reply chain.
 
 hit your Claude daily limit mid-refactor? switched to Codex, re-explained everything, lost context?
 
-built crewswarm to fix this. multi-agent AI coding platform — 6 engines, 20+ specialist agents, parallel execution. switch engines without losing state.
+built iris to fix this. multi-agent AI coding platform — 6 engines, 20+ specialist agents, parallel execution. switch engines without losing state.
 
 open source. here's how it works 🧵
 
@@ -30,21 +30,21 @@ multiple times a day.
 
 **Tweet 3 (the solution):**
 
-crewswarm sits between you and these tools. Stinki (crew-lead) is your co-founder who talks shit but gets the job done.
+iris sits between you and these tools. Stinki (iris-lead) is your co-founder who talks shit but gets the job done.
 
 you describe the work once. Stinki:
 - routes it to the right specialist agent
-- picks the right engine (Claude, Codex, Gemini, Cursor, OpenCode, or crew-cli)
+- picks the right engine (Claude, Codex, Gemini, Cursor, OpenCode, or iris-cli)
 - runs agents in parallel in isolated git worktrees
 - verifies the output before declaring done
 
 ---
 
-**Tweet 4 (crew-cli):**
+**Tweet 4 (iris-cli):**
 
 Grok has no CLI. DeepSeek has no CLI. Qwen, Kimi, Groq — none of them have agentic coding tools.
 
-crew-cli is the missing CLI for every model that doesn't have one. 45+ tools, 3-tier pipeline, and an execution quality engine that makes $0.0003/task models produce the same verified code as $0.03/task ones.
+iris-cli is the missing CLI for every model that doesn't have one. 45+ tools, 3-tier pipeline, and an execution quality engine that makes $0.0003/task models produce the same verified code as $0.03/task ones.
 
 ---
 
@@ -64,13 +64,13 @@ Work from anywhere:
 
 - Vibe — browser IDE (Monaco + terminal + live file sync)
 - Dashboard — control plane
-- crew-cli — terminal
-- crewchat — native chat
+- iris-cli — terminal
+- irischat — native chat
 - Telegram & WhatsApp — from your phone
 - OpenClaw plugin
 - MCP server (64 tools)
 
-Same crew, same memory, any surface.
+Same iris, same memory, any surface.
 
 ---
 
@@ -88,19 +88,19 @@ has shipped features overnight while we slept. no complaints. some profanity.
 
 open source (MIT). local-first. no cloud.
 
-npm i -g crewswarm && crewswarm
+npm i -g iris && iris
 
-https://crewswarm.ai
+https://iris.ai
 https://github.com/crewswarm/crewswarm
 
 ---
 
 ## Alt: Single tweet version (for retweets/quotes)
 
-open-sourced crewswarm — multi-agent AI coding platform.
+open-sourced iris — multi-agent AI coding platform.
 
-you're the PM. Stinki (crew-lead) is your shit-talking co-founder who runs 20+ specialist agents across 6 coding engines.
+you're the PM. Stinki (iris-lead) is your shit-talking co-founder who runs 20+ specialist agents across 6 coding engines.
 
 hit a rate limit? he switches engines and keeps going. no context lost.
 
-https://crewswarm.ai
+https://iris.ai

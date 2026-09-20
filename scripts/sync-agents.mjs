@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * sync-agents.mjs
- * Reads ~/.crewswarm/crewswarm.json and regenerates the agent table
+ * Reads ~/.iris/iris.json and regenerates the agent table
  * in memory/orchestration-protocol.md + memory/current-state.md
  *
  * Run manually: node scripts/sync-agents.mjs
@@ -12,9 +12,9 @@ import { readFile, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import path from "node:path";
 
-const CREWSWARM_CONFIG = path.join(homedir(), ".crewswarm", "crewswarm.json");
+const IRIS_CONFIG = path.join(homedir(), ".iris", "iris.json");
 const OPENCLAW_CONFIG  = path.join(homedir(), ".openclaw", "openclaw.json");   // legacy fallback
-const AGENT_PROMPTS    = path.join(homedir(), ".crewswarm", "agent-prompts.json");
+const AGENT_PROMPTS    = path.join(homedir(), ".iris", "agent-prompts.json");
 const PROTOCOL_FILE   = new URL("../memory/orchestration-protocol.md", import.meta.url).pathname;
 const STATE_FILE      = new URL("../memory/current-state.md", import.meta.url).pathname;
 
@@ -31,7 +31,7 @@ const ROLE_META = {
   "github":       { emoji: "🐙", label: "Git operations",           best: "Commits, PRs, branches, push" },
   "frontend":     { emoji: "🖥️", label: "Frontend (alt)",           best: "UI implementation" },
   "security":     { emoji: "🛡️", label: "Security review",          best: "Vulnerability audits, hardening" },
-  "lead":         { emoji: "🧠", label: "Crew Lead",                best: "Top-level coordinator, user-facing chat" },
+  "lead":         { emoji: "🧠", label: "Iris Lead",                best: "Top-level coordinator, user-facing chat" },
   "orchestrator": { emoji: "🎯", label: "Orchestrator",             best: "Internal pipeline routing" },
   "seo":          { emoji: "📈", label: "SEO specialist",           best: "Metadata, keywords, site structure" },
   "ml":           { emoji: "🧮", label: "Machine learning",         best: "Models, data pipelines, training" },
@@ -43,18 +43,18 @@ const ROLE_META = {
 };
 
 function normalizeId(id) {
-  // Strip crew- prefix to get the bare role key used in ROLE_META
-  return (id || "").replace(/^crew-/, "");
+  // Strip iris- prefix to get the bare role key used in ROLE_META
+  return (id || "").replace(/^iris-/, "");
 }
 
 function getAgentName(id) {
-  // IDs in crewswarm.json already carry the crew- prefix; preserve them as-is.
-  // Only add crew- prefix for legacy bare IDs that don't have it yet.
-  return (id || "").startsWith("crew-") ? id : `crew-${id}`;
+  // IDs in iris.json already carry the iris- prefix; preserve them as-is.
+  // Only add iris- prefix for legacy bare IDs that don't have it yet.
+  return (id || "").startsWith("iris-") ? id : `iris-${id}`;
 }
 
 async function loadAgents() {
-  for (const cfgPath of [CREWSWARM_CONFIG, OPENCLAW_CONFIG]) {
+  for (const cfgPath of [IRIS_CONFIG, OPENCLAW_CONFIG]) {
     try {
       const raw = await readFile(cfgPath, "utf8");
       const cfg = JSON.parse(raw);
@@ -68,7 +68,7 @@ async function loadAgents() {
       }));
     } catch {}
   }
-  console.error("Could not load agent list from ~/.crewswarm/crewswarm.json (or ~/.openclaw/openclaw.json legacy fallback)");
+  console.error("Could not load agent list from ~/.iris/iris.json (or ~/.openclaw/openclaw.json legacy fallback)");
   return [];
 }
 
@@ -113,7 +113,7 @@ async function updateFile(filePath, table, list) {
 async function main() {
   const agents = await loadAgents();
   if (!agents.length) {
-    console.error("No agents found — check ~/.crewswarm/crewswarm.json");
+    console.error("No agents found — check ~/.iris/iris.json");
     process.exit(1);
   }
 
@@ -136,7 +136,7 @@ Last updated: ${new Date().toISOString()}
 
 ## Dispatch command
 \`\`\`bash
-node ~/CrewSwarm/gateway-bridge.mjs --send <agent-name> "<task>"
+node ~/Iris/gateway-bridge.mjs --send <agent-name> "<task>"
 \`\`\`
 
 ## Available agents

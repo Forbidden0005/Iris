@@ -6,7 +6,7 @@
  * into a temp directory. We verify the file exists and has valid content.
  *
  * WHAT THIS TESTS:
- *   - crew-lead dispatch API accepts and routes tasks to agents
+ *   - iris-lead dispatch API accepts and routes tasks to agents
  *   - Each CLI engine can write files to a specified project directory
  *   - Engine selection routes coding tasks to the correct CLI engine
  *   - Mixed-engine wave: two engines running in parallel via pipeline API
@@ -20,15 +20,15 @@
  *   - "File not found" → engine ran but wrote to wrong path or didn't write.
  *     Check if engine respects projectDir.
  *
- * Agent → Engine mapping (from crewswarm.json use* flags):
- *   crew-coder       → Codex (useCodex)
- *   crew-coder-front → Cursor CLI (useCursorCli)
- *   crew-seo         → Gemini CLI (useGeminiCli)
- *   crew-coder-back  → Cursor CLI (useCursorCli)
- *   crew-fixer       → OpenCode (useOpenCode)
- *   crew-qa          → crew-cli (useCrewCLI)
+ * Agent → Engine mapping (from iris.json use* flags):
+ *   iris-coder       → Codex (useCodex)
+ *   iris-coder-front → Cursor CLI (useCursorCli)
+ *   iris-seo         → Gemini CLI (useGeminiCli)
+ *   iris-coder-back  → Cursor CLI (useCursorCli)
+ *   iris-fixer       → OpenCode (useOpenCode)
+ *   iris-qa          → iris-cli (useCrewCLI)
  *
- * REQUIRES: crew-lead on :5010, engines installed, agents on RT bus.
+ * REQUIRES: iris-lead on :5010, engines installed, agents on RT bus.
  * RUN: node --test test/e2e/multi-engine-dispatch.test.mjs
  * NOTE: Run SOLO — concurrent tests starve engines of resources.
  */
@@ -43,9 +43,9 @@ import { checkServiceUp, httpRequest } from "../helpers/http.mjs";
 import { logEngineTestContext } from "../helpers/test-context.mjs";
 import { logFileVerification, logTestEvidence } from "../helpers/test-log.mjs";
 
-const CREW_LEAD_URL = "http://127.0.0.1:5010";
-const TEST_DIR = join(tmpdir(), `crewswarm-engine-test-${Date.now()}`);
-const CONFIG_PATH = join(homedir(), ".crewswarm", "config.json");
+const IRIS_LEAD_URL = "http://127.0.0.1:5010";
+const TEST_DIR = join(tmpdir(), `iris-engine-test-${Date.now()}`);
+const CONFIG_PATH = join(homedir(), ".iris", "config.json");
 
 let authToken;
 async function getAuthToken() {
@@ -64,7 +64,7 @@ function isInstalled(bin) {
 
 async function dispatch(agent, task) {
   const token = await getAuthToken();
-  const { status, data } = await httpRequest(`${CREW_LEAD_URL}/api/dispatch`, {
+  const { status, data } = await httpRequest(`${IRIS_LEAD_URL}/api/dispatch`, {
     method: "POST",
     headers: { "Authorization": token ? `Bearer ${token}` : "" },
     body: { agent, task, projectDir: TEST_DIR },
@@ -86,7 +86,7 @@ async function pollTask(taskId, maxWaitMs = 120000) {
   let lastData = null;
   while (Date.now() - start < maxWaitMs) {
     try {
-      const { data } = await httpRequest(`${CREW_LEAD_URL}/api/status/${taskId}`, {
+      const { data } = await httpRequest(`${IRIS_LEAD_URL}/api/status/${taskId}`, {
         headers: { "Authorization": token ? `Bearer ${token}` : "" },
         timeout: 10000,
         trace: {
@@ -145,8 +145,8 @@ async function verifyHtmlFile(filename, title) {
 }
 
 // Pre-flight
-const crewLeadUp = await checkServiceUp(`${CREW_LEAD_URL}/health`);
-const SKIP = crewLeadUp ? false : "crew-lead not running on :5010";
+const crewLeadUp = await checkServiceUp(`${IRIS_LEAD_URL}/health`);
+const SKIP = crewLeadUp ? false : "iris-lead not running on :5010";
 
 const engines = {
   claude: isInstalled("claude"),
@@ -168,7 +168,7 @@ after(async () => {
 
 // ─── Individual engine file-creation tests ───────────────────────────────────
 
-describe("engine: Claude Code → crew-coder", {
+describe("engine: Claude Code → iris-coder", {
   skip: SKIP || !engines.claude ? "Claude Code not available" : false,
   timeout: 180000
 }, () => {
@@ -177,12 +177,12 @@ describe("engine: Claude Code → crew-coder", {
       test: "creates an HTML file via Claude Code",
       file: import.meta.filename,
       engine: "claude",
-      agent: "crew-coder",
+      agent: "iris-coder",
       timeout_ms: 180000,
       target_file: join(TEST_DIR, "claude-test.html"),
       project_dir: TEST_DIR,
     });
-    const result = await dispatchFileTask("crew-coder", "claude-test.html", "Claude Code Test");
+    const result = await dispatchFileTask("iris-coder", "claude-test.html", "Claude Code Test");
     console.log(`    Status: ${result.status} | Output: ${(result.result || "").slice(0, 80)}`);
     if (result.status === "done") {
       // File may or may not exist depending on whether Claude Code ran tools
@@ -197,7 +197,7 @@ describe("engine: Claude Code → crew-coder", {
   });
 });
 
-describe("engine: Cursor CLI → crew-coder-front", {
+describe("engine: Cursor CLI → iris-coder-front", {
   skip: SKIP || !engines.cursor ? "Cursor CLI not available" : false,
   timeout: 180000
 }, () => {
@@ -206,12 +206,12 @@ describe("engine: Cursor CLI → crew-coder-front", {
       test: "creates an HTML file via Cursor CLI",
       file: import.meta.filename,
       engine: "cursor",
-      agent: "crew-coder-front",
+      agent: "iris-coder-front",
       timeout_ms: 180000,
       target_file: join(TEST_DIR, "cursor-test.html"),
       project_dir: TEST_DIR,
     });
-    const result = await dispatchFileTask("crew-coder-front", "cursor-test.html", "Cursor CLI Test");
+    const result = await dispatchFileTask("iris-coder-front", "cursor-test.html", "Cursor CLI Test");
     console.log(`    Status: ${result.status} | Output: ${(result.result || "").slice(0, 80)}`);
     if (result.status === "done" && existsSync(join(TEST_DIR, "cursor-test.html"))) {
       await verifyHtmlFile("cursor-test.html", "Cursor CLI Test");
@@ -221,7 +221,7 @@ describe("engine: Cursor CLI → crew-coder-front", {
   });
 });
 
-describe("engine: Gemini CLI → crew-seo", {
+describe("engine: Gemini CLI → iris-seo", {
   skip: SKIP || !engines.gemini ? "Gemini CLI not available" : false,
   timeout: 180000
 }, () => {
@@ -230,12 +230,12 @@ describe("engine: Gemini CLI → crew-seo", {
       test: "creates an HTML file via Gemini CLI",
       file: import.meta.filename,
       engine: "gemini",
-      agent: "crew-seo",
+      agent: "iris-seo",
       timeout_ms: 180000,
       target_file: join(TEST_DIR, "gemini-test.html"),
       project_dir: TEST_DIR,
     });
-    const result = await dispatchFileTask("crew-seo", "gemini-test.html", "Gemini CLI Test");
+    const result = await dispatchFileTask("iris-seo", "gemini-test.html", "Gemini CLI Test");
     console.log(`    Status: ${result.status} | Output: ${(result.result || "").slice(0, 80)}`);
     if (result.status === "done" && existsSync(join(TEST_DIR, "gemini-test.html"))) {
       await verifyHtmlFile("gemini-test.html", "Gemini CLI Test");
@@ -245,7 +245,7 @@ describe("engine: Gemini CLI → crew-seo", {
   });
 });
 
-describe("engine: Codex CLI → crew-coder-back", {
+describe("engine: Codex CLI → iris-coder-back", {
   skip: SKIP || !engines.codex ? "Codex CLI not available" : false,
   timeout: 180000
 }, () => {
@@ -254,12 +254,12 @@ describe("engine: Codex CLI → crew-coder-back", {
       test: "creates an HTML file via Codex CLI",
       file: import.meta.filename,
       engine: "codex",
-      agent: "crew-coder-back",
+      agent: "iris-coder-back",
       timeout_ms: 180000,
       target_file: join(TEST_DIR, "codex-test.html"),
       project_dir: TEST_DIR,
     });
-    const result = await dispatchFileTask("crew-coder-back", "codex-test.html", "Codex CLI Test");
+    const result = await dispatchFileTask("iris-coder-back", "codex-test.html", "Codex CLI Test");
     console.log(`    Status: ${result.status} | Output: ${(result.result || "").slice(0, 80)}`);
     if (result.status === "done" && existsSync(join(TEST_DIR, "codex-test.html"))) {
       await verifyHtmlFile("codex-test.html", "Codex CLI Test");
@@ -269,7 +269,7 @@ describe("engine: Codex CLI → crew-coder-back", {
   });
 });
 
-describe("engine: OpenCode → crew-fixer", {
+describe("engine: OpenCode → iris-fixer", {
   skip: SKIP || !engines.opencode ? "OpenCode not available" : false,
   timeout: 180000
 }, () => {
@@ -278,12 +278,12 @@ describe("engine: OpenCode → crew-fixer", {
       test: "creates an HTML file via OpenCode",
       file: import.meta.filename,
       engine: "opencode",
-      agent: "crew-fixer",
+      agent: "iris-fixer",
       timeout_ms: 180000,
       target_file: join(TEST_DIR, "opencode-test.html"),
       project_dir: TEST_DIR,
     });
-    const result = await dispatchFileTask("crew-fixer", "opencode-test.html", "OpenCode Test");
+    const result = await dispatchFileTask("iris-fixer", "opencode-test.html", "OpenCode Test");
     console.log(`    Status: ${result.status} | Output: ${(result.result || "").slice(0, 80)}`);
     if (result.status === "done" && existsSync(join(TEST_DIR, "opencode-test.html"))) {
       await verifyHtmlFile("opencode-test.html", "OpenCode Test");
@@ -293,24 +293,24 @@ describe("engine: OpenCode → crew-fixer", {
   });
 });
 
-describe("engine: crew-cli → crew-qa", {
+describe("engine: iris-cli → iris-qa", {
   skip: SKIP,
   timeout: 180000
 }, () => {
-  it("creates an HTML file via crew-cli", async () => {
+  it("creates an HTML file via iris-cli", async () => {
     logEngineTestContext({
-      test: "creates an HTML file via crew-cli",
+      test: "creates an HTML file via iris-cli",
       file: import.meta.filename,
-      engine: "crew-cli",
-      agent: "crew-qa",
+      engine: "iris-cli",
+      agent: "iris-qa",
       timeout_ms: 180000,
       target_file: join(TEST_DIR, "crewcli-test.html"),
       project_dir: TEST_DIR,
     });
-    const result = await dispatchFileTask("crew-qa", "crewcli-test.html", "Crew CLI Test");
+    const result = await dispatchFileTask("iris-qa", "crewcli-test.html", "Iris CLI Test");
     console.log(`    Status: ${result.status} | Output: ${(result.result || "").slice(0, 80)}`);
     if (result.status === "done" && existsSync(join(TEST_DIR, "crewcli-test.html"))) {
-      await verifyHtmlFile("crewcli-test.html", "Crew CLI Test");
+      await verifyHtmlFile("crewcli-test.html", "Iris CLI Test");
       console.log("    ✓ File created and verified");
     }
     assert.ok(result.status === "done" || result.status === "completed", `Expected done, got ${result.status}`);
@@ -330,15 +330,15 @@ describe("mixed-engine wave — Claude + Cursor in parallel", {
       engine: "pipeline",
       timeout_ms: 180000,
       project_dir: TEST_DIR,
-      notes: "Wave 1 dispatches crew-coder and crew-coder-front in parallel",
+      notes: "Wave 1 dispatches iris-coder and iris-coder-front in parallel",
     });
     const token = await getAuthToken();
     const pipeline = [
-      { wave: 1, agent: "crew-coder", task: `Create ${TEST_DIR}/wave-claude.html with <h1>Wave Claude</h1>. Write the file only.` },
-      { wave: 1, agent: "crew-coder-front", task: `Create ${TEST_DIR}/wave-cursor.html with <h1>Wave Cursor</h1>. Write the file only.` },
+      { wave: 1, agent: "iris-coder", task: `Create ${TEST_DIR}/wave-claude.html with <h1>Wave Claude</h1>. Write the file only.` },
+      { wave: 1, agent: "iris-coder-front", task: `Create ${TEST_DIR}/wave-cursor.html with <h1>Wave Cursor</h1>. Write the file only.` },
     ];
 
-    const { data } = await httpRequest(`${CREW_LEAD_URL}/api/pipeline`, {
+    const { data } = await httpRequest(`${IRIS_LEAD_URL}/api/pipeline`, {
       method: "POST",
       headers: { "Authorization": token ? `Bearer ${token}` : "" },
       body: { pipeline, projectDir: TEST_DIR },
@@ -357,7 +357,7 @@ describe("mixed-engine wave — Claude + Cursor in parallel", {
     let lastStatus = "unknown";
     while (Date.now() - start < 180000) {
       try {
-        const { data: s } = await httpRequest(`${CREW_LEAD_URL}/api/pipeline/${data.pipelineId}`, {
+        const { data: s } = await httpRequest(`${IRIS_LEAD_URL}/api/pipeline/${data.pipelineId}`, {
           headers: { "Authorization": token ? `Bearer ${token}` : "" },
           timeout: 10000,
         });

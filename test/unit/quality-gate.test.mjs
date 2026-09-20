@@ -21,7 +21,7 @@ import {
   pendingDispatches,
   pendingPipelines,
   dispatchTask,
-} from "../../lib/crew-lead/wave-dispatcher.mjs";
+} from "../../lib/iris-lead/wave-dispatcher.mjs";
 
 function createMockDeps(overrides = {}) {
   const broadcastSSE = (payload) => (broadcastSSE.calls = broadcastSSE.calls || []).push(payload);
@@ -61,8 +61,8 @@ function makePipeline(waveSteps, waveResults, extra = {}) {
 
 describe("checkWaveQualityGate", () => {
   beforeEach(() => {
-    process.env.CREWSWARM_TEST_MODE = "true";
-    delete process.env.CREWSWARM_PIPELINE_ADVANCE_ON_QUALITY_FAIL;
+    process.env.IRIS_TEST_MODE = "true";
+    delete process.env.IRIS_PIPELINE_ADVANCE_ON_QUALITY_FAIL;
     resetPaths();
     pendingDispatches.clear();
     pendingPipelines.clear();
@@ -71,9 +71,9 @@ describe("checkWaveQualityGate", () => {
   afterEach(() => {
     pendingDispatches.clear();
     pendingPipelines.clear();
-    try { fs.rmSync(path.join(os.tmpdir(), `crewswarm-test-${process.pid}`), { recursive: true, force: true }); } catch {}
-    delete process.env.CREWSWARM_TEST_MODE;
-    delete process.env.CREWSWARM_PIPELINE_ADVANCE_ON_QUALITY_FAIL;
+    try { fs.rmSync(path.join(os.tmpdir(), `iris-test-${process.pid}`), { recursive: true, force: true }); } catch {}
+    delete process.env.IRIS_TEST_MODE;
+    delete process.env.IRIS_PIPELINE_ADVANCE_ON_QUALITY_FAIL;
     resetPaths();
   });
 
@@ -83,7 +83,7 @@ describe("checkWaveQualityGate", () => {
     const deps = createMockDeps();
     initWaveDispatcher(deps);
     const pipeline = makePipeline(
-      [{ agent: "crew-coder", task: "build it" }],
+      [{ agent: "iris-coder", task: "build it" }],
       ["@@WRITE_FILE /tmp/test-project/src/index.js\nconsole.log('hi');\n@@END_FILE"],
     );
     const result = checkWaveQualityGate(pipeline, "pipe-1");
@@ -94,7 +94,7 @@ describe("checkWaveQualityGate", () => {
     const deps = createMockDeps();
     initWaveDispatcher(deps);
     const pipeline = makePipeline(
-      [{ agent: "crew-coder", task: "build it" }],
+      [{ agent: "iris-coder", task: "build it" }],
       ["I wrote to /tmp/test-project/src/app.js with the new component."],
     );
     const result = checkWaveQualityGate(pipeline, "pipe-2");
@@ -105,7 +105,7 @@ describe("checkWaveQualityGate", () => {
     const deps = createMockDeps();
     initWaveDispatcher(deps);
     const pipeline = makePipeline(
-      [{ agent: "crew-security", task: "audit" }],
+      [{ agent: "iris-security", task: "audit" }],
       ["Security audit complete. No critical issues found."],
     );
     const result = checkWaveQualityGate(pipeline, "pipe-3");
@@ -116,9 +116,9 @@ describe("checkWaveQualityGate", () => {
     const deps = createMockDeps();
     initWaveDispatcher(deps);
     const pipeline = makePipeline(
-      [{ agent: "crew-pm", task: "plan" }],
+      [{ agent: "iris-pm", task: "plan" }],
       ["Here is the plan:\n- Create /src/components/Header.tsx\n- Update /src/App.tsx\n\nROADMAP.md has been updated."],
-      { nextWaves: [[{ agent: "crew-coder", task: "build" }]] },
+      { nextWaves: [[{ agent: "iris-coder", task: "build" }]] },
     );
     const result = checkWaveQualityGate(pipeline, "pipe-4");
     assert.equal(result.pass, true);
@@ -130,7 +130,7 @@ describe("checkWaveQualityGate", () => {
     const deps = createMockDeps();
     initWaveDispatcher(deps);
     const pipeline = makePipeline(
-      [{ agent: "crew-coder", task: "build it" }],
+      [{ agent: "iris-coder", task: "build it" }],
       ["Should I use React or Vue for this component? Which framework do you want me to use?"],
     );
     const result = checkWaveQualityGate(pipeline, "pipe-q1");
@@ -142,7 +142,7 @@ describe("checkWaveQualityGate", () => {
     const deps = createMockDeps();
     initWaveDispatcher(deps);
     const pipeline = makePipeline(
-      [{ agent: "crew-coder", task: "build" }],
+      [{ agent: "iris-coder", task: "build" }],
       ["Should I add tests? Anyway, here's what I did:\n@@WRITE_FILE /src/app.js\nconsole.log('done');\n@@END_FILE"],
     );
     const result = checkWaveQualityGate(pipeline, "pipe-q2");
@@ -151,35 +151,35 @@ describe("checkWaveQualityGate", () => {
 
   // ── Planning agent checks ──────────────────────────────────────────────
 
-  it("flags crew-pm when no PDD.md or ROADMAP.md mentioned and builders follow", () => {
+  it("flags iris-pm when no PDD.md or ROADMAP.md mentioned and builders follow", () => {
     const deps = createMockDeps();
     initWaveDispatcher(deps);
     const pipeline = makePipeline(
-      [{ agent: "crew-pm", task: "plan this project" }],
+      [{ agent: "iris-pm", task: "plan this project" }],
       ["I think we should build a dashboard with React. It will be great."],
-      { nextWaves: [[{ agent: "crew-coder", task: "build" }]] },
+      { nextWaves: [[{ agent: "iris-coder", task: "build" }]] },
     );
     const result = checkWaveQualityGate(pipeline, "pipe-pm1");
     assert.equal(result.pass, false);
   });
 
-  it("passes crew-pm when PDD.md is mentioned and builders follow", () => {
+  it("passes iris-pm when PDD.md is mentioned and builders follow", () => {
     const deps = createMockDeps();
     initWaveDispatcher(deps);
     const pipeline = makePipeline(
-      [{ agent: "crew-pm", task: "plan this" }],
+      [{ agent: "iris-pm", task: "plan this" }],
       ["Created PDD.md with full spec. Files: /src/index.js, /src/api.js"],
-      { nextWaves: [[{ agent: "crew-coder", task: "build" }]] },
+      { nextWaves: [[{ agent: "iris-coder", task: "build" }]] },
     );
     const result = checkWaveQualityGate(pipeline, "pipe-pm2");
     assert.equal(result.pass, true);
   });
 
-  it("does not check crew-pm for PDD when no builders in next wave", () => {
+  it("does not check iris-pm for PDD when no builders in next wave", () => {
     const deps = createMockDeps();
     initWaveDispatcher(deps);
     const pipeline = makePipeline(
-      [{ agent: "crew-pm", task: "plan" }],
+      [{ agent: "iris-pm", task: "plan" }],
       ["High-level plan: we need a dashboard."],
       // No next wave with builders
     );
@@ -193,7 +193,7 @@ describe("checkWaveQualityGate", () => {
     const deps = createMockDeps();
     initWaveDispatcher(deps);
     const pipeline = makePipeline(
-      [{ agent: "crew-coder", task: "implement the feature" }],
+      [{ agent: "iris-coder", task: "implement the feature" }],
       ["I analyzed the codebase and here is my recommendation for the architecture."],
     );
     const result = checkWaveQualityGate(pipeline, "pipe-build1");
@@ -204,7 +204,7 @@ describe("checkWaveQualityGate", () => {
     const deps = createMockDeps();
     initWaveDispatcher(deps);
     const pipeline = makePipeline(
-      [{ agent: "crew-coder-front", task: "build UI" }],
+      [{ agent: "iris-coder-front", task: "build UI" }],
       ["`src/components/Header.tsx` is in place at: /project/src/components/Header.tsx"],
     );
     const result = checkWaveQualityGate(pipeline, "pipe-build2");
@@ -215,7 +215,7 @@ describe("checkWaveQualityGate", () => {
     const deps = createMockDeps();
     initWaveDispatcher(deps);
     const pipeline = makePipeline(
-      [{ agent: "crew-coder", task: "code it" }],
+      [{ agent: "iris-coder", task: "code it" }],
       ["← Write ../src/main.js\nWrote file successfully"],
     );
     const result = checkWaveQualityGate(pipeline, "pipe-build3");
@@ -226,7 +226,7 @@ describe("checkWaveQualityGate", () => {
     const deps = createMockDeps();
     initWaveDispatcher(deps);
     const pipeline = makePipeline(
-      [{ agent: "crew-coder", task: "code it" }],
+      [{ agent: "iris-coder", task: "code it" }],
       ["Done. Created the prototype with full routing and state management."],
     );
     const result = checkWaveQualityGate(pipeline, "pipe-build4");
@@ -239,7 +239,7 @@ describe("checkWaveQualityGate", () => {
     const deps = createMockDeps();
     initWaveDispatcher(deps);
     const pipeline = makePipeline(
-      [{ agent: "crew-qa", task: "audit the code" }],
+      [{ agent: "iris-qa", task: "audit the code" }],
       ["## QA Report\n\nverdict: FAIL\n\n### CRITICAL\n- SQL injection in auth.js line 42"],
     );
     pendingPipelines.set("pipe-qa1", pipeline);
@@ -248,14 +248,14 @@ describe("checkWaveQualityGate", () => {
     assert.equal(result.qaAutoFix, true);
     // Should have inserted fixer + QA re-run waves
     assert.ok(pipeline.waves.length >= 3, "should insert fixer and QA re-run waves");
-    assert.equal(pipeline.waves[1][0].agent, "crew-fixer");
+    assert.equal(pipeline.waves[1][0].agent, "iris-fixer");
   });
 
   it("triggers auto-fix when QA has 2+ CRITICAL issues", () => {
     const deps = createMockDeps();
     initWaveDispatcher(deps);
     const pipeline = makePipeline(
-      [{ agent: "crew-qa", task: "audit" }],
+      [{ agent: "iris-qa", task: "audit" }],
       ["### CRITICAL\n- XSS in form.js\n### CRITICAL\n- Auth bypass in login.js"],
     );
     pendingPipelines.set("pipe-qa2", pipeline);
@@ -268,7 +268,7 @@ describe("checkWaveQualityGate", () => {
     const deps = createMockDeps();
     initWaveDispatcher(deps);
     const pipeline = makePipeline(
-      [{ agent: "crew-qa", task: "audit" }],
+      [{ agent: "iris-qa", task: "audit" }],
       ["verdict: FAIL\n### CRITICAL\n- still broken"],
     );
     pipeline[`_qa_fix_retries_wave_0`] = 2; // already at max
@@ -284,7 +284,7 @@ describe("checkWaveQualityGate", () => {
     const deps = createMockDeps();
     initWaveDispatcher(deps);
     const pipeline = makePipeline(
-      [{ agent: "crew-coder", task: "build the feature" }],
+      [{ agent: "iris-coder", task: "build the feature" }],
       ["I'm not sure what to do. Can you clarify the requirements?"],
     );
     pendingPipelines.set("pipe-retry1", pipeline);
@@ -301,7 +301,7 @@ describe("checkWaveQualityGate", () => {
     const deps = createMockDeps();
     initWaveDispatcher(deps);
     const pipeline = makePipeline(
-      [{ agent: "crew-coder", task: "build it" }],
+      [{ agent: "iris-coder", task: "build it" }],
       ["I need more context. What framework should I use?"],
     );
     pipeline[`_retries_wave_0`] = 1; // already retried once
@@ -313,12 +313,12 @@ describe("checkWaveQualityGate", () => {
     assert.ok(result.issues.length > 0);
   });
 
-  it("advances anyway when CREWSWARM_PIPELINE_ADVANCE_ON_QUALITY_FAIL=1", () => {
-    process.env.CREWSWARM_PIPELINE_ADVANCE_ON_QUALITY_FAIL = "1";
+  it("advances anyway when IRIS_PIPELINE_ADVANCE_ON_QUALITY_FAIL=1", () => {
+    process.env.IRIS_PIPELINE_ADVANCE_ON_QUALITY_FAIL = "1";
     const deps = createMockDeps();
     initWaveDispatcher(deps);
     const pipeline = makePipeline(
-      [{ agent: "crew-coder", task: "build" }],
+      [{ agent: "iris-coder", task: "build" }],
       ["I'm confused, should I use Python or Node?"],
     );
     pipeline[`_retries_wave_0`] = 1; // already retried once
@@ -332,16 +332,16 @@ describe("checkWaveQualityGate", () => {
     const deps = createMockDeps();
     initWaveDispatcher(deps);
     const combinedResult = `=== WAVE 1 RESULTS ===
-[crew-coder]: @@WRITE_FILE /src/app.js
+[iris-coder]: @@WRITE_FILE /src/app.js
 console.log('hello');
 @@END_FILE
 
-[crew-qa]: All tests passing. No issues found.
+[iris-qa]: All tests passing. No issues found.
 === END WAVE ===`;
     const pipeline = makePipeline(
       [
-        { agent: "crew-coder", task: "code" },
-        { agent: "crew-qa", task: "test" },
+        { agent: "iris-coder", task: "code" },
+        { agent: "iris-qa", task: "test" },
       ],
       [combinedResult], // Single combined result for multiple steps
     );
@@ -353,22 +353,22 @@ console.log('hello');
     const deps = createMockDeps();
     initWaveDispatcher(deps);
     const combinedResult = `=== WAVE 1 RESULTS ===
-[crew-coder]: I think we should restructure the codebase first.
+[iris-coder]: I think we should restructure the codebase first.
 
-[crew-coder-front]: @@WRITE_FILE /src/ui.jsx
+[iris-coder-front]: @@WRITE_FILE /src/ui.jsx
 export default () => <div>Hello</div>;
 @@END_FILE
 === END WAVE ===`;
     const pipeline = makePipeline(
       [
-        { agent: "crew-coder", task: "backend" },
-        { agent: "crew-coder-front", task: "frontend" },
+        { agent: "iris-coder", task: "backend" },
+        { agent: "iris-coder-front", task: "frontend" },
       ],
       [combinedResult],
     );
     const result = checkWaveQualityGate(pipeline, "pipe-cursor2");
     assert.equal(result.pass, false);
-    // crew-coder should be flagged for not writing files
+    // iris-coder should be flagged for not writing files
     assert.ok(result.retried || result.halted);
   });
 
@@ -378,7 +378,7 @@ export default () => <div>Hello</div>;
     const deps = createMockDeps();
     initWaveDispatcher(deps);
     const pipeline = makePipeline(
-      [{ agent: "crew-coder", task: "build" }],
+      [{ agent: "iris-coder", task: "build" }],
       ["What should I build?"],
     );
     pendingPipelines.set("pipe-sse1", pipeline);
@@ -390,7 +390,7 @@ export default () => <div>Hello</div>;
     const deps = createMockDeps();
     initWaveDispatcher(deps);
     const pipeline = makePipeline(
-      [{ agent: "crew-qa", task: "audit" }],
+      [{ agent: "iris-qa", task: "audit" }],
       ["verdict: FAIL\n### CRITICAL\n- broken"],
     );
     pendingPipelines.set("pipe-sse2", pipeline);
@@ -405,8 +405,8 @@ export default () => <div>Hello</div>;
     initWaveDispatcher(deps);
     const pipeline = makePipeline(
       [
-        { agent: "crew-coder", task: "backend" },
-        { agent: "crew-coder-front", task: "frontend" },
+        { agent: "iris-coder", task: "backend" },
+        { agent: "iris-coder-front", task: "frontend" },
       ],
       [
         "@@WRITE_FILE /src/api.js\nmodule.exports = {};\n@@END_FILE",
@@ -422,8 +422,8 @@ export default () => <div>Hello</div>;
     initWaveDispatcher(deps);
     const pipeline = makePipeline(
       [
-        { agent: "crew-coder", task: "backend" },
-        { agent: "crew-coder-front", task: "frontend" },
+        { agent: "iris-coder", task: "backend" },
+        { agent: "iris-coder-front", task: "frontend" },
       ],
       [
         "@@WRITE_FILE /src/api.js\nmodule.exports = {};\n@@END_FILE",

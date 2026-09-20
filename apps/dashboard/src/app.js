@@ -341,7 +341,7 @@ async function pickFolder(inputId) {
 async function loadCrewLeadInfo() {
   try {
     const d = await getJSON("/api/agents-config");
-    const cl = (d.agents || []).find((a) => a.id === "crew-lead");
+    const cl = (d.agents || []).find((a) => a.id === "iris-lead");
     if (!cl) return;
     window._crewLeadInfo = {
       emoji: cl.emoji || "🧠",
@@ -478,7 +478,7 @@ async function showChat() {
     try {
       state.chatActiveProjectId =
         sharedProjectId ||
-        localStorage.getItem("crewswarm_chat_active_project_id") ||
+        localStorage.getItem("iris_chat_active_project_id") ||
         "general";
     } catch {
       state.chatActiveProjectId = sharedProjectId || "general";
@@ -538,7 +538,7 @@ function showFiles() {
   loadFiles();
 }
 
-// ── Chat / crew-lead ──────────────────────────────────────────────────────────
+// ── Chat / iris-lead ──────────────────────────────────────────────────────────
 // Session ID: Always "owner" for dashboard, projectId handles isolation
 function getChatSessionId() {
   return "owner";
@@ -579,21 +579,21 @@ function lastAssistantBubbleText(box) {
 function startAgentReplyListener() {
   if (agentReplySSE) return; // already listening
 
-  // Connect DIRECTLY to crew-lead's SSE endpoint (not via dashboard proxy)
+  // Connect DIRECTLY to iris-lead's SSE endpoint (not via dashboard proxy)
   // This prevents SSE breakage when dashboard restarts
   const crewLeadPort = 5010;
   // Use same hostname as dashboard to avoid CORS issues (localhost vs 127.0.0.1)
   const hostname = window.location.hostname || '127.0.0.1';
   const sseUrl = `http://${hostname}:${crewLeadPort}/events`;
 
-  console.log("[crewswarm] Starting EventSource listener for", sseUrl);
+  console.log("[iris] Starting EventSource listener for", sseUrl);
   agentReplySSE = new EventSource(sseUrl);
   const sseLog =
     typeof localStorage !== "undefined" &&
-    localStorage.getItem("crewswarm_debug_sse") === "1";
+    localStorage.getItem("iris_debug_sse") === "1";
   agentReplySSE.onmessage = (e) => {
     if (!e.data) {
-      console.warn("[crewswarm] SSE message with null/empty data");
+      console.warn("[iris] SSE message with null/empty data");
       return;
     }
     try {
@@ -603,7 +603,7 @@ function startAgentReplyListener() {
       const currentSessionId = getChatSessionId();
 
       if (sseLog) {
-        console.log("[crewswarm] SSE:", d.type, e.data.slice(0, 120));
+        console.log("[iris] SSE:", d.type, e.data.slice(0, 120));
       }
 
       const box = document.getElementById("chatMessages");
@@ -699,31 +699,31 @@ function startAgentReplyListener() {
         const messageProjectId = normalizeProjectId(d.projectId);
 
         if (currentProjectId !== messageProjectId) {
-          console.log("[crewswarm] ❌ SKIP - projectId mismatch:", {
+          console.log("[iris] ❌ SKIP - projectId mismatch:", {
             current: currentProjectId || "(General)",
             message: messageProjectId || "(General)",
           });
           return;
         }
 
-        console.log("[crewswarm] ✅ Displaying message for current session");
+        console.log("[iris] ✅ Displaying message for current session");
 
         if (d.role === "user") {
           // Skip SSE echo of messages we already appended locally via sendChat()
           if (d.content === lastSentContent) {
-            console.log("[crewswarm] Skipping SSE echo of locally-sent message");
+            console.log("[iris] Skipping SSE echo of locally-sent message");
             lastSentContent = null;
             return;
           }
           if (d.content !== lastAppendedUserContent) {
             console.log(
-              "[crewswarm] Appending user bubble:",
+              "[iris] Appending user bubble:",
               d.content.slice(0, 50),
             );
             appendChatBubble("user", d.content);
             lastAppendedUserContent = d.content;
           } else {
-            console.log("[crewswarm] Skipping duplicate user message");
+            console.log("[iris] Skipping duplicate user message");
           }
         } else if (d.role === "assistant") {
           document
@@ -781,7 +781,7 @@ function startAgentReplyListener() {
               d.content === lastAppendedAssistantContent &&
               chatThreadHasAssistantText(box, d.content);
             if (!skipDuplicate) {
-              console.log("[crewswarm] Appending assistant bubble (final)");
+              console.log("[iris] Appending assistant bubble (final)");
               appendChatBubble(
                 "assistant",
                 d.content,
@@ -792,7 +792,7 @@ function startAgentReplyListener() {
               );
               lastAppendedAssistantContent = d.content;
             } else {
-              console.log("[crewswarm] Skipping duplicate assistant message");
+              console.log("[iris] Skipping duplicate assistant message");
             }
           }
         }
@@ -897,7 +897,7 @@ function startAgentReplyListener() {
         feed.scrollTop = feed.scrollHeight;
         return;
       }
-      // agent_working: crew-lead dispatched a task — show a "waiting" indicator
+      // agent_working: iris-lead dispatched a task — show a "waiting" indicator
       if (d.type === "agent_working" && d.agent) {
         const spinnerId = "agent-spinner-" + (d.taskId || d.agent);
         if (box && !document.getElementById(spinnerId)) {
@@ -917,7 +917,7 @@ function startAgentReplyListener() {
         }
         return;
       }
-      // agent_reply: task completion from any crew member — replace spinner, show reply, notify
+      // agent_reply: task completion from any iris member — replace spinner, show reply, notify
       if (d.type === "agent_reply" || (d.from && d.content)) {
         if (!d.from || !d.content) return;
         // Skip passthrough summaries — the dashboard already rendered the live stream
@@ -949,7 +949,7 @@ function startAgentReplyListener() {
         );
         if (agentSpinner) agentSpinner.remove();
         const msg =
-          "[crew-lead] Task to " +
+          "[iris-lead] Task to " +
           d.agent +
           " timed out (no reply in 90s). Consider @@SERVICE restart " +
           d.agent +
@@ -1066,11 +1066,11 @@ function startAgentReplyListener() {
     } catch {}
   };
   agentReplySSE.onopen = () => {
-    console.log("[crewswarm] SSE connection opened");
+    console.log("[iris] SSE connection opened");
     window._sseReconnectDelay = 2000;
   };
   agentReplySSE.onerror = (err) => {
-    console.error("[crewswarm] SSE error:", err);
+    console.error("[iris] SSE error:", err);
     agentReplySSE.close();
     agentReplySSE = null;
     // Reconnect with exponential backoff (2s → 4s → 8s → 30s max)
@@ -1402,7 +1402,7 @@ function appendRoadmapCard(box, { draftId, name, outputDir, roadmapMd }) {
     startBtn.disabled = true;
     startBtn.textContent = "⏳ Launching…";
     try {
-      const r = await postJSON("/api/crew-lead/confirm-project", {
+      const r = await postJSON("/api/iris-lead/confirm-project", {
         draftId,
         roadmapMd: ta.value,
       });
@@ -1436,7 +1436,7 @@ function appendRoadmapCard(box, { draftId, name, outputDir, roadmapMd }) {
   discardBtn.style.cssText =
     "background:none;border:1px solid var(--border);color:var(--text-3);border-radius:8px;padding:8px 14px;font-size:12px;cursor:pointer;";
   discardBtn.onclick = async () => {
-    await postJSON("/api/crew-lead/discard-project", { draftId }).catch(
+    await postJSON("/api/iris-lead/discard-project", { draftId }).catch(
       () => {},
     );
     wrap.remove();
@@ -1569,7 +1569,7 @@ window.selectProjectTab = (projectId) => {
 
   state.chatActiveProjectId = normalizedId;
   try {
-    localStorage.setItem("crewswarm_chat_active_project_id", normalizedId);
+    localStorage.setItem("iris_chat_active_project_id", normalizedId);
   } catch {}
   persistSharedActiveProjectId(normalizedId);
 
@@ -1603,7 +1603,7 @@ async function loadFiles(forceRefresh) {
   const dir =
     document.getElementById("filesDir").value.trim() ||
     window._crewCwd ||
-    (window._crewHome ? window._crewHome + "/CrewSwarm" : "");
+    (window._crewHome ? window._crewHome + "/Iris" : "");
   showLoading(el, "Scanning " + dir + "...");
   try {
     const data = await getJSON("/api/files?dir=" + encodeURIComponent(dir));
@@ -1885,8 +1885,8 @@ async function sendTestWebhook() {
 // ── Pending Approvals ─────────────────────────────────────────────────────────
 async function loadPendingApprovals() {
   const el = document.getElementById("pendingApprovals");
-  // pending-skills.json is at ~/.crewswarm/pending-skills.json — no direct API yet;
-  // crew-lead should expose this but for now show instructions.
+  // pending-skills.json is at ~/.iris/pending-skills.json — no direct API yet;
+  // iris-lead should expose this but for now show instructions.
   el.innerHTML =
     '<div style="color:var(--text-3);font-size:12px;">Pending skill approvals appear here when an agent triggers a skill marked requiresApproval. You will also receive a Telegram notification with inline Approve/Reject buttons if Telegram is configured.</div>';
 }
@@ -1990,7 +1990,7 @@ document.getElementById("npCreateBtn").onclick = async () => {
     showNotification("Failed: " + e.message, true);
   }
 };
-// sendBtn / messageInput removed (replaced by crew-lead chat)
+// sendBtn / messageInput removed (replaced by iris-lead chat)
 
 // PM Loop controls → tabs/pm-loop-tab.js
 // ── Hash routing — persist active view across refresh ────────────────────────
@@ -2393,7 +2393,7 @@ document.addEventListener("click", (e) => {
   const action = el.dataset.action;
   const fn = ACTION_REGISTRY[action];
   if (!fn) {
-    console.warn("[crewswarm] unknown data-action:", action);
+    console.warn("[iris] unknown data-action:", action);
     return;
   }
   const arg = el.dataset.arg ?? null;

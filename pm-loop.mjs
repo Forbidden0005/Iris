@@ -5,7 +5,7 @@
  * How it works:
  *   1. Reads website/ROADMAP.md — finds the next unchecked `- [ ]` item
  *   2. Calls Groq PM to expand that item into a precise, scoped coding task
- *   3. Dispatches to crew-coder via gateway-bridge
+ *   3. Dispatches to iris-coder via gateway-bridge
  *   4. Marks the item `- [x]` in ROADMAP.md when done (or `- [!]` on failure)
  *   5. Every EXTEND_EVERY_N completed items (or when roadmap empties), Groq acts as
  *      "product strategist" — inspects the live website and appends 3–5 new
@@ -20,8 +20,8 @@
  *   node pm-loop.mjs --no-extend              (disable self-extending; stop when roadmap empties)
  *   node pm-loop.mjs --dry-run                (show what PM would do, no actual dispatches)
  *   GROQ_API_KEY=xxx node pm-loop.mjs
- *   PM_USE_SPECIALISTS=1 node pm-loop.mjs     (route HTML/CSS → crew-coder-front, JS → crew-coder-back, git → crew-github)
- *   PM_CODER_AGENT=crew-coder-front node pm-loop.mjs  (force all tasks to one specific agent)
+ *   PM_USE_SPECIALISTS=1 node pm-loop.mjs     (route HTML/CSS → iris-coder-front, JS → iris-coder-back, git → iris-github)
+ *   PM_CODER_AGENT=iris-coder-front node pm-loop.mjs  (force all tasks to one specific agent)
  */
 
 import { spawn } from "node:child_process";
@@ -33,7 +33,7 @@ import { homedir } from "node:os";
 import { fileURLToPath } from "node:url";
 import { COORDINATOR_AGENT_IDS } from "./lib/agent-registry.mjs";
 import { getProjectDir } from "./lib/project-dir.mjs";
-import { judgeNextCycle, heuristicJudge } from "./lib/crew-judge/judge.mjs";
+import { judgeNextCycle, heuristicJudge } from "./lib/iris-judge/judge.mjs";
 import { detectDomain, buildDomainContext, logDomainRouting } from "./lib/domain-planning/detector.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -41,7 +41,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // ── Singleton guard ────────────────────────────────────────────────────────
 // Skip singleton check in test mode (allows multiple test PM loops)
 const SKIP_SINGLETON = process.env.PM_LOOP_TEST_MODE === "1" || process.env.NODE_ENV === "test";
-const LOGS_DIR = join(homedir(), ".crewswarm", "logs");
+const LOGS_DIR = join(homedir(), ".iris", "logs");
 const PM_LOOP_PID_FILE = join(LOGS_DIR, "pm-loop.pid");
 
 async function ensureSingleton() {
@@ -108,13 +108,13 @@ const USE_JUDGE = process.env.PM_USE_JUDGE !== "0" && process.env.PM_USE_JUDGE !
 const JUDGE_EVERY = Number(process.env.PM_JUDGE_EVERY || "5");
 
 // ── Config ────────────────────────────────────────────────────────────────
-const CREWSWARM_DIR = process.env.CREWSWARM_DIR || process.env.OPENCLAW_DIR || __dirname;
+const IRIS_DIR = process.env.IRIS_DIR || process.env.OPENCLAW_DIR || __dirname;
 const OUTPUT_DIR = projDirIdx >= 0 ? args[projDirIdx + 1]
-  : getProjectDir(join(CREWSWARM_DIR, "website"));
+  : getProjectDir(join(IRIS_DIR, "website"));
 const ROADMAP_FILE = process.env.PM_ROADMAP_FILE || join(OUTPUT_DIR, "ROADMAP.md");
-const BRIDGE_PATH = join(CREWSWARM_DIR, "gateway-bridge.mjs");
+const BRIDGE_PATH = join(IRIS_DIR, "gateway-bridge.mjs");
 const FEATURES_DOC = process.env.PM_FEATURES_DOC || null;
-const LOG_DIR = join(CREWSWARM_DIR, "orchestrator-logs");
+const LOG_DIR = join(IRIS_DIR, "orchestrator-logs");
 const PM_LOG = join(LOG_DIR, "pm-loop.jsonl");
 // Per-project PID and STOP files — allows multiple projects to run simultaneously
 const PROJECT_ID = process.env.PM_PROJECT_ID || null;
@@ -132,13 +132,13 @@ if (ONE_SHOT_MODE) {
   console.log("[PM-LOOP] One-shot mode enabled: gateway-bridge will exit after each task (fresh context)");
 }
 if (USE_JUDGE) {
-  console.log(`[PM-LOOP] Judge mode enabled: crew-judge evaluates progress every ${JUDGE_EVERY} items`);
+  console.log(`[PM-LOOP] Judge mode enabled: iris-judge evaluates progress every ${JUDGE_EVERY} items`);
 }
 
 // ── Search Tools ──────────────────────────────────────────────────────────
 function getSearchToolsConfig() {
   const candidates = [
-    homedir() + "/.crewswarm/search-tools.json",
+    homedir() + "/.iris/search-tools.json",
   ];
   for (const p of candidates) {
     try {
@@ -179,7 +179,7 @@ function getOCConfig() {
   const now = Date.now();
   if (_ocCfg && now - _lastConfigRead < CONFIG_CACHE_TTL) return _ocCfg;
   const candidates = [
-    homedir() + "/.crewswarm/crewswarm.json",
+    homedir() + "/.iris/iris.json",
   ];
   for (const p of candidates) {
     try {
@@ -191,7 +191,7 @@ function getOCConfig() {
         return _ocCfg;
       }
     } catch (e) {
-      console.error(`[PM-LOOP] Failed to parse crewswarm config ${p}: ${e.message}`);
+      console.error(`[PM-LOOP] Failed to parse iris config ${p}: ${e.message}`);
     }
   }
   return {};
@@ -215,13 +215,13 @@ function getPMProviderConfig() {
     return { baseUrl: prov.baseUrl || "https://api.openai.com/v1", apiKey: prov.apiKey, model: modelId };
   }
 
-  // 1) Orchestrator agent (dashboard "Orchestrator" role) — use this to set PM loop model separately from crew-pm
+  // 1) Orchestrator agent (dashboard "Orchestrator" role) — use this to set PM loop model separately from iris-pm
   const orchestratorAgent = agents.find(a => a.id === "orchestrator");
   const fromOrchestrator = fromAgent(orchestratorAgent);
   if (fromOrchestrator) return fromOrchestrator;
 
-  // 2) crew-pm agent (dashboard "PM" role) — one place for both loop and PM worker if you don't use orchestrator
-  const fromPm = fromAgent(agents.find(a => a.id === "crew-pm"));
+  // 2) iris-pm agent (dashboard "PM" role) — one place for both loop and PM worker if you don't use orchestrator
+  const fromPm = fromAgent(agents.find(a => a.id === "iris-pm"));
   if (fromPm) return fromPm;
 
   // 3) Fallbacks in priority order — free/local first, then paid APIs
@@ -237,7 +237,7 @@ function getPMProviderConfig() {
   if (GROQ_API_KEY) return { baseUrl: "https://api.groq.com/openai/v1", apiKey: GROQ_API_KEY, model: "llama-3.3-70b-versatile" };
   return null;
 }
-const CODER_AGENT = process.env.PM_CODER_AGENT || "crew-coder";
+const CODER_AGENT = process.env.PM_CODER_AGENT || "iris-coder";
 // Specialists enabled by default — set PM_USE_SPECIALISTS=0 to disable
 const USE_SPECIALISTS = process.env.PM_USE_SPECIALISTS !== "0";
 // QA review after each task — set PM_USE_QA=0 to disable
@@ -248,45 +248,45 @@ const USE_SECURITY = process.env.PM_USE_SECURITY !== "0";
 // Role descriptions + routing keywords for well-known agent IDs.
 // `role` is used in PM prompts; `keywords` drive the regex fallback when LLM routing fails.
 // `nonDoer: true` agents are never assigned implementation tasks.
-// New agents in crewswarm.json without an entry here fall back to their identity.theme.
+// New agents in iris.json without an entry here fall back to their identity.theme.
 const ROLE_HINTS = {
-  "crew-main": { role: "final synthesizer and verifier — reads all output files, checks coherence, writes FINAL_REPORT.md, gives build verdict", nonDoer: true, keywords: [] },
-  "crew-coder": { role: "general code, structure, directories, files, setup, create, implement", nonDoer: false, keywords: ["implement", "create", "build", "file", "module", "class", "function", "script", "python", "ruby", "php", "swift", "kotlin", "go", "rust"] },
-  "crew-coder-front": { role: "HTML, CSS, JS UI, visual design, layout, animations, landing pages", nonDoer: false, keywords: ["html", "css", "style", "section", "design", "layout", "animation", "nav", "hero", "frontend", "ui", "ux", "responsive", "gradient", "transition", "hover", "font", "color", "visual"] },
-  "crew-coder-back": { role: "APIs, Node.js, scripts, databases, backend logic, JSON, server endpoints", nonDoer: false, keywords: ["api", "server", "node", "express", "endpoint", "database", "backend", "mjs", "rest", "graphql", "sql", "postgres", "mongo", "redis", "lambda", "microservice"] },
-  "crew-frontend": { role: "HTML, CSS, JS UI, visual design, layout, animations, landing pages", nonDoer: false, keywords: ["html", "css", "style", "design", "layout", "animation", "frontend", "ui", "ux", "responsive"] },
-  "crew-github": { role: "git commits, branches, pull requests, version control, deployment", nonDoer: false, keywords: ["git", "github", "commit", "push", "pull request", "branch", "merge", "deploy", "release", "tag", "ci", "cd", "workflow"] },
-  "crew-qa": { role: "REVIEW ONLY — testing, validation, QA (never for creating/building)", nonDoer: true, keywords: [] },
-  "crew-security": { role: "REVIEW ONLY — security audits, auth flows, secrets (never for creating)", nonDoer: true, keywords: [] },
-  "crew-copywriter": { role: "marketing copy, headlines, taglines, CTAs, docs, README", nonDoer: false, keywords: ["copy", "headline", "tagline", "cta", "readme", "docs", "documentation", "marketing", "content", "writing", "blog", "landing page text"] },
-  "crew-fixer": { role: "debugging, fixing broken code — dispatched automatically on failure", nonDoer: true, keywords: [] },
-  "crew-pm": { role: "project planning, task breakdown, roadmap management", nonDoer: true, keywords: [] },
-  "crew-telegram": { role: "Telegram messaging, notifications — not a task doer", nonDoer: true, keywords: [] },
-  "crew-lead": { role: "team lead, high-level coordination and delegation", nonDoer: true, keywords: [] },
+  "iris-main": { role: "final synthesizer and verifier — reads all output files, checks coherence, writes FINAL_REPORT.md, gives build verdict", nonDoer: true, keywords: [] },
+  "iris-coder": { role: "general code, structure, directories, files, setup, create, implement", nonDoer: false, keywords: ["implement", "create", "build", "file", "module", "class", "function", "script", "python", "ruby", "php", "swift", "kotlin", "go", "rust"] },
+  "iris-coder-front": { role: "HTML, CSS, JS UI, visual design, layout, animations, landing pages", nonDoer: false, keywords: ["html", "css", "style", "section", "design", "layout", "animation", "nav", "hero", "frontend", "ui", "ux", "responsive", "gradient", "transition", "hover", "font", "color", "visual"] },
+  "iris-coder-back": { role: "APIs, Node.js, scripts, databases, backend logic, JSON, server endpoints", nonDoer: false, keywords: ["api", "server", "node", "express", "endpoint", "database", "backend", "mjs", "rest", "graphql", "sql", "postgres", "mongo", "redis", "lambda", "microservice"] },
+  "iris-frontend": { role: "HTML, CSS, JS UI, visual design, layout, animations, landing pages", nonDoer: false, keywords: ["html", "css", "style", "design", "layout", "animation", "frontend", "ui", "ux", "responsive"] },
+  "iris-github": { role: "git commits, branches, pull requests, version control, deployment", nonDoer: false, keywords: ["git", "github", "commit", "push", "pull request", "branch", "merge", "deploy", "release", "tag", "ci", "cd", "workflow"] },
+  "iris-qa": { role: "REVIEW ONLY — testing, validation, QA (never for creating/building)", nonDoer: true, keywords: [] },
+  "iris-security": { role: "REVIEW ONLY — security audits, auth flows, secrets (never for creating)", nonDoer: true, keywords: [] },
+  "iris-copywriter": { role: "marketing copy, headlines, taglines, CTAs, docs, README", nonDoer: false, keywords: ["copy", "headline", "tagline", "cta", "readme", "docs", "documentation", "marketing", "content", "writing", "blog", "landing page text"] },
+  "iris-fixer": { role: "debugging, fixing broken code — dispatched automatically on failure", nonDoer: true, keywords: [] },
+  "iris-pm": { role: "project planning, task breakdown, roadmap management", nonDoer: true, keywords: [] },
+  "iris-telegram": { role: "Telegram messaging, notifications — not a task doer", nonDoer: true, keywords: [] },
+  "iris-lead": { role: "team lead, high-level coordination and delegation", nonDoer: true, keywords: [] },
   "orchestrator": { role: "PM loop orchestrator — internal routing only, not a task doer", nonDoer: true, keywords: [] },
   // Extended specialist presets — add these via dashboard and they route correctly automatically
-  "crew-devops": { role: "DevOps, CI/CD, Docker, shell scripts, infrastructure, deployment pipelines", nonDoer: false, keywords: ["docker", "ci", "cd", "pipeline", "deploy", "infrastructure", "terraform", "k8s", "kubernetes", "shell", "bash", "nginx", "linux", "server", "cloud", "aws", "gcp", "azure"] },
-  "crew-coder-ios": { role: "iOS/Swift developer (SwiftUI, UIKit, CoreData, Xcode, Apple platforms)", nonDoer: false, keywords: ["swift", "swiftui", "uikit", "ios", "xcode", "apple", "iphone", "ipad", "macos", "watchos", "tvos", "coredata", "combine"] },
-  "crew-coder-android": { role: "Android/Kotlin developer (Jetpack Compose, Android SDK, MVVM)", nonDoer: false, keywords: ["kotlin", "android", "compose", "jetpack", "gradle", "apk", "activity", "fragment", "viewmodel", "coroutine", "flow"] },
-  "crew-data": { role: "Data/analytics specialist (Python, SQL, pandas, data pipelines, charts)", nonDoer: false, keywords: ["pandas", "sql", "data", "analytics", "csv", "dataframe", "plot", "chart", "matplotlib", "numpy", "jupyter", "pipeline", "etl", "postgres", "sqlite"] },
-  "crew-design": { role: "UI/UX design specs, CSS style guides, component design, animations", nonDoer: false, keywords: ["design", "ux", "ui", "figma", "spec", "wireframe", "prototype", "component", "style guide", "color", "typography", "spacing"] },
-  "crew-pm-agent": { role: "product planning, feature breakdown, roadmap tasks, project management", nonDoer: true, keywords: [] },
-  "crew-aiml": { role: "AI/ML engineer — Python, PyTorch, HuggingFace, embeddings, model training", nonDoer: false, keywords: ["model", "train", "embedding", "inference", "pytorch", "tensorflow", "huggingface", "llm", "neural", "dataset", "fine-tune", "rag", "vector", "ml", "ai"] },
-  "crew-api": { role: "API designer — REST/GraphQL, OpenAPI/Swagger specs, endpoint design", nonDoer: false, keywords: ["openapi", "swagger", "graphql", "rest", "endpoint", "route", "spec", "api design", "schema", "http"] },
-  "crew-database": { role: "Database specialist — SQL, migrations, indexes, query optimisation", nonDoer: false, keywords: ["migration", "schema", "index", "postgres", "mysql", "sqlite", "query", "orm", "seed", "table", "column"] },
-  "crew-rn": { role: "React Native specialist — Expo, cross-platform iOS/Android mobile apps", nonDoer: false, keywords: ["react native", "expo", "rn", "mobile", "navigation", "stylesheet", "platform"] },
-  "crew-web3": { role: "Web3/blockchain — Solidity, smart contracts, ERC20/721, Hardhat, Foundry", nonDoer: false, keywords: ["solidity", "contract", "blockchain", "web3", "nft", "erc20", "erc721", "hardhat", "foundry", "wagmi", "ethers"] },
-  "crew-automation": { role: "Automation/scraping — Playwright, Puppeteer, Python scrapers, bots", nonDoer: false, keywords: ["playwright", "puppeteer", "scrape", "scraping", "automation", "bot", "selenium", "crawler", "spider"] },
-  "crew-docs": { role: "Technical docs writer — API docs, README, developer guides, Markdown", nonDoer: false, keywords: ["readme", "documentation", "docs", "api docs", "guide", "markdown", "wiki", "changelog"] },
+  "iris-devops": { role: "DevOps, CI/CD, Docker, shell scripts, infrastructure, deployment pipelines", nonDoer: false, keywords: ["docker", "ci", "cd", "pipeline", "deploy", "infrastructure", "terraform", "k8s", "kubernetes", "shell", "bash", "nginx", "linux", "server", "cloud", "aws", "gcp", "azure"] },
+  "iris-coder-ios": { role: "iOS/Swift developer (SwiftUI, UIKit, CoreData, Xcode, Apple platforms)", nonDoer: false, keywords: ["swift", "swiftui", "uikit", "ios", "xcode", "apple", "iphone", "ipad", "macos", "watchos", "tvos", "coredata", "combine"] },
+  "iris-coder-android": { role: "Android/Kotlin developer (Jetpack Compose, Android SDK, MVVM)", nonDoer: false, keywords: ["kotlin", "android", "compose", "jetpack", "gradle", "apk", "activity", "fragment", "viewmodel", "coroutine", "flow"] },
+  "iris-data": { role: "Data/analytics specialist (Python, SQL, pandas, data pipelines, charts)", nonDoer: false, keywords: ["pandas", "sql", "data", "analytics", "csv", "dataframe", "plot", "chart", "matplotlib", "numpy", "jupyter", "pipeline", "etl", "postgres", "sqlite"] },
+  "iris-design": { role: "UI/UX design specs, CSS style guides, component design, animations", nonDoer: false, keywords: ["design", "ux", "ui", "figma", "spec", "wireframe", "prototype", "component", "style guide", "color", "typography", "spacing"] },
+  "iris-pm-agent": { role: "product planning, feature breakdown, roadmap tasks, project management", nonDoer: true, keywords: [] },
+  "iris-aiml": { role: "AI/ML engineer — Python, PyTorch, HuggingFace, embeddings, model training", nonDoer: false, keywords: ["model", "train", "embedding", "inference", "pytorch", "tensorflow", "huggingface", "llm", "neural", "dataset", "fine-tune", "rag", "vector", "ml", "ai"] },
+  "iris-api": { role: "API designer — REST/GraphQL, OpenAPI/Swagger specs, endpoint design", nonDoer: false, keywords: ["openapi", "swagger", "graphql", "rest", "endpoint", "route", "spec", "api design", "schema", "http"] },
+  "iris-database": { role: "Database specialist — SQL, migrations, indexes, query optimisation", nonDoer: false, keywords: ["migration", "schema", "index", "postgres", "mysql", "sqlite", "query", "orm", "seed", "table", "column"] },
+  "iris-rn": { role: "React Native specialist — Expo, cross-platform iOS/Android mobile apps", nonDoer: false, keywords: ["react native", "expo", "rn", "mobile", "navigation", "stylesheet", "platform"] },
+  "iris-web3": { role: "Web3/blockchain — Solidity, smart contracts, ERC20/721, Hardhat, Foundry", nonDoer: false, keywords: ["solidity", "contract", "blockchain", "web3", "nft", "erc20", "erc721", "hardhat", "foundry", "wagmi", "ethers"] },
+  "iris-automation": { role: "Automation/scraping — Playwright, Puppeteer, Python scrapers, bots", nonDoer: false, keywords: ["playwright", "puppeteer", "scrape", "scraping", "automation", "bot", "selenium", "crawler", "spider"] },
+  "iris-docs": { role: "Technical docs writer — API docs, README, developer guides, Markdown", nonDoer: false, keywords: ["readme", "documentation", "docs", "api docs", "guide", "markdown", "wiki", "changelog"] },
   // Dynamic agents added via dashboard — ensure LLM routing lands correctly
-  "crew-ml": { role: "Machine learning, AI models, Python ML/AI, data science, PyTorch, scikit-learn, embeddings, training", nonDoer: false, keywords: ["ml", "machine learning", "model", "train", "prediction", "classifier", "regression", "scikit", "pytorch", "tensorflow", "huggingface", "embedding", "neural", "dataset", "feature", "accuracy", "precision"] },
-  "crew-mega": { role: "General-purpose versatile agent — handles any task that doesn't fit a specialist role", nonDoer: false, keywords: [] },
-  "crew-researcher": { role: "Research, investigation, analysis, market research, competitor analysis, data gathering", nonDoer: false, keywords: ["research", "investigate", "analysis", "analyze", "report", "survey", "compare", "market", "competitor", "trends", "findings", "study"] },
-  "crew-seo": { role: "SEO, content writing, marketing copy, blog posts, documentation, metadata", nonDoer: false, keywords: ["seo", "meta", "keyword", "blog", "content", "copy", "marketing", "title tag", "description", "sitemap", "canonical"] },
+  "iris-ml": { role: "Machine learning, AI models, Python ML/AI, data science, PyTorch, scikit-learn, embeddings, training", nonDoer: false, keywords: ["ml", "machine learning", "model", "train", "prediction", "classifier", "regression", "scikit", "pytorch", "tensorflow", "huggingface", "embedding", "neural", "dataset", "feature", "accuracy", "precision"] },
+  "iris-mega": { role: "General-purpose versatile agent — handles any task that doesn't fit a specialist role", nonDoer: false, keywords: [] },
+  "iris-researcher": { role: "Research, investigation, analysis, market research, competitor analysis, data gathering", nonDoer: false, keywords: ["research", "investigate", "analysis", "analyze", "report", "survey", "compare", "market", "competitor", "trends", "findings", "study"] },
+  "iris-seo": { role: "SEO, content writing, marketing copy, blog posts, documentation, metadata", nonDoer: false, keywords: ["seo", "meta", "keyword", "blog", "content", "copy", "marketing", "title tag", "description", "sitemap", "canonical"] },
 };
 
 /**
- * Build a live active agent roster from crewswarm.json.
+ * Build a live active agent roster from iris.json.
  * Only includes agents whose provider has a configured API key.
  * Returns: { active: [{id, name, emoji, role, model}], nonDoers: Set<string> }
  */
@@ -402,7 +402,7 @@ ${agentLines}
 Rules:
 - For tasks that CREATE or IMPLEMENT: choose from these doable agents only: ${doableIds}
 - Agents marked [REVIEW ONLY] are dispatched automatically by the system — never choose them
-- Output ONLY the agent ID (e.g. crew-coder-front). No explanation.`,
+- Output ONLY the agent ID (e.g. iris-coder-front). No explanation.`,
         },
         { role: "user", content: `Task: "${itemText}"` },
       ], { maxTokens: 20, temperature: 0 });
@@ -425,9 +425,9 @@ Rules:
   // Fallback: keyword regex
   const t = itemText.toLowerCase();
   let agent;
-  if (/\bgit\b|github|commit|push|pull.request|branch|deploy/.test(t)) agent = "crew-github";
-  else if (/\bapi\b|server|node|express|script|endpoint|json|database|backend|mjs|\.js\b/.test(t)) agent = "crew-coder-back";
-  else if (/html|css|style|section|design|layout|animation|nav|hero|frontend|ui\b|ux\b|responsive/.test(t)) agent = "crew-coder-front";
+  if (/\bgit\b|github|commit|push|pull.request|branch|deploy/.test(t)) agent = "iris-github";
+  else if (/\bapi\b|server|node|express|script|endpoint|json|database|backend|mjs|\.js\b/.test(t)) agent = "iris-coder-back";
+  else if (/html|css|style|section|design|layout|animation|nav|hero|frontend|ui\b|ux\b|responsive/.test(t)) agent = "iris-coder-front";
   else agent = CODER_AGENT;
 
   // Safety: never use non-doer agents as doer via keyword fallback — built dynamically from config
@@ -458,7 +458,7 @@ async function runCopywriterPass(itemText, task) {
   if (!mistral?.apiKey) return task; // no key — skip
 
   const agentPrompts = (() => {
-    for (const p of [homedir() + "/.crewswarm/agent-prompts.json"]) {
+    for (const p of [homedir() + "/.iris/agent-prompts.json"]) {
       try {
         return JSON.parse(readFileSync(p, "utf8"));
       } catch (e) {
@@ -648,7 +648,7 @@ WORKFLOW — follow this every time:
   }
 
   // Load recent progress for context
-  const progressFile = join(OUTPUT_DIR, '.crewswarm', 'progress.txt');
+  const progressFile = join(OUTPUT_DIR, '.iris', 'progress.txt');
   const recentProgress = existsSync(progressFile)
     ? readFileSync(progressFile, 'utf8').slice(-5000)  // Last 5KB
     : '';
@@ -707,7 +707,7 @@ Rules:
 - Every task MUST include acceptance: what file(s) must exist or what behavior must pass for the task to be done
 - Output ONLY the following schema (no preamble, no explanation):
 
-TARGET_AGENT: <agent id from roster, e.g. crew-coder or crew-coder-front>
+TARGET_AGENT: <agent id from roster, e.g. iris-coder or iris-coder-front>
 TASK: <precise task text, under 200 words>
 FILES: <paths to create or modify relative to output dir, e.g. index.html, style.css>
 SUCCESS_CRITERIA: <what file(s) must exist and/or what must pass — e.g. "File X exists with Y; running Z succeeds">${frontendRule}${mainDeliverableRule}${featuresSnippet ? `\n\nProject context:\n${featuresSnippet}` : ""}`;
@@ -790,7 +790,7 @@ async function getProjectContext() {
 // ── Record progress for learning across iterations ────────────────────────
 async function recordProgress(task, result, iteration) {
   try {
-    const progressDir = join(OUTPUT_DIR, '.crewswarm');
+    const progressDir = join(OUTPUT_DIR, '.iris');
     if (!existsSync(progressDir)) {
       await mkdir(progressDir, { recursive: true });
     }
@@ -979,10 +979,10 @@ async function appendGeneratedItems(newItems, round) {
   for (const item of newItems) console.log(`     • ${item.substring(0, 80)}`);
 }
 
-// ── Final synthesis: crew-main audits, then assembles/patches the full build ──
+// ── Final synthesis: iris-main audits, then assembles/patches the full build ──
 async function finalSynthesis(opId, completedItems, doneCount, failedCount) {
   if (doneCount === 0) return;
-  banner("🦊 crew-main (Quill) — Phase 1: Audit");
+  banner("🦊 iris-main (Quill) — Phase 1: Audit");
 
   let filePaths = [];
   try {
@@ -1035,9 +1035,9 @@ Start reading files now. Be exhaustive.`;
   let auditResult = "";
   try {
     console.log("  🦊 Quill auditing all output files...");
-    auditResult = await callAgent("crew-main", auditPrompt, { timeout: TASK_TIMEOUT * 3 });
+    auditResult = await callAgent("iris-main", auditPrompt, { timeout: TASK_TIMEOUT * 3 });
     console.log(`  ✅ Audit done: ${String(auditResult).substring(0, 150)}...`);
-    await log({ op_id: opId, event: "synthesis_audit_done", agent: "crew-main", result: String(auditResult).substring(0, 500) });
+    await log({ op_id: opId, event: "synthesis_audit_done", agent: "iris-main", result: String(auditResult).substring(0, 500) });
   } catch (e) {
     console.log(`  ⚠️  Audit failed: ${e.message.slice(0, 80)}`);
     await log({ op_id: opId, event: "synthesis_audit_failed", error: e.message });
@@ -1056,7 +1056,7 @@ Start reading files now. Be exhaustive.`;
   }
 
   // ── Phase 2: Assembly — fix every disconnect found in Phase 1 ───────────
-  banner("🦊 crew-main (Quill) — Phase 2: Assembly & Patching");
+  banner("🦊 iris-main (Quill) — Phase 2: Assembly & Patching");
 
   const assemblyPrompt = `[SYNTHESIS-ASSEMBLY] You are Quill. Your Phase 1 audit found issues that need fixing before this build ships.
 
@@ -1089,9 +1089,9 @@ Fix everything you can. If a disconnect is too complex to safely patch (e.g., fu
 
   try {
     console.log("  🦊 Quill patching disconnects...");
-    const assemblyResult = await callAgent("crew-main", assemblyPrompt, { timeout: TASK_TIMEOUT * 4 });
+    const assemblyResult = await callAgent("iris-main", assemblyPrompt, { timeout: TASK_TIMEOUT * 4 });
     console.log(`  ✅ Assembly complete:\n  ${String(assemblyResult).substring(0, 200)}`);
-    await log({ op_id: opId, event: "synthesis_assembly_done", agent: "crew-main", result: String(assemblyResult).substring(0, 500) });
+    await log({ op_id: opId, event: "synthesis_assembly_done", agent: "iris-main", result: String(assemblyResult).substring(0, 500) });
   } catch (e) {
     console.log(`  ⚠️  Assembly pass failed: ${e.message.slice(0, 80)}`);
     await log({ op_id: opId, event: "synthesis_assembly_failed", error: e.message });
@@ -1131,10 +1131,10 @@ function _callAgentRaw(agentId, message, { timeout } = {}) {
   const agentTimeout = timeout || (timeoutNonDoers.has(agentId) ? TASK_TIMEOUT * 2 : TASK_TIMEOUT);
   const env = {
     ...process.env,
-    CREWSWARM_RT_SEND_TIMEOUT_MS: String(agentTimeout),
+    IRIS_RT_SEND_TIMEOUT_MS: String(agentTimeout),
   };
   // All coding agents get the project dir so OpenCode runs in the right directory
-  env.CREWSWARM_OPENCODE_PROJECT = OUTPUT_DIR;
+  env.IRIS_OPENCODE_PROJECT = OUTPUT_DIR;
   return new Promise((resolve, reject) => {
     const proc = spawn("node", [BRIDGE_PATH, "--send", agentId, message], {
       stdio: ["inherit", "pipe", "pipe"],
@@ -1188,10 +1188,10 @@ async function main() {
   if (roster) {
     console.log(`Agents (from config):\n${roster.split("\n").map(l => "  " + l).join("\n")}`);
   } else {
-    console.log(`Agents:  ${USE_SPECIALISTS ? "crew-coder-front (HTML/CSS) | crew-coder-back (JS/API) | crew-github (git) | crew-coder (default)" : CODER_AGENT}`);
+    console.log(`Agents:  ${USE_SPECIALISTS ? "iris-coder-front (HTML/CSS) | iris-coder-back (JS/API) | iris-github (git) | iris-coder (default)" : CODER_AGENT}`);
   }
-  console.log(`QA:      ${USE_QA ? "crew-qa reviews after each task" : "disabled (PM_USE_QA=0)"}`);
-  console.log(`Fixer:   crew-fixer auto-repairs failed tasks`);
+  console.log(`QA:      ${USE_QA ? "iris-qa reviews after each task" : "disabled (PM_USE_QA=0)"}`);
+  console.log(`Fixer:   iris-fixer auto-repairs failed tasks`);
   console.log(`Security:${USE_SECURITY ? " security agent reviews auth/key tasks" : " disabled (PM_USE_SECURITY=0)"}`);
   const pmProv = getPMProviderConfig();
   const pmProvLabel = pmProv?.baseUrl?.includes("127.0.0.1") || pmProv?.baseUrl?.includes("localhost")
@@ -1315,7 +1315,7 @@ async function main() {
 
     // If domain detected and we have a specialist PM, delegate expansion to them
     const useDomainPM = !DRY_RUN && domainDetection.domain && domainDetection.confidence > 0.5;
-    if (useDomainPM && domainDetection.pmAgent !== "crew-pm") {
+    if (useDomainPM && domainDetection.pmAgent !== "iris-pm") {
       console.log(`  🎯 Delegating expansion to ${domainDetection.pmAgent} (domain specialist)...`);
       const domainContext = buildDomainContext(domainDetection.domain, item.text);
       const pmTask = `You are the domain PM for ${domainDetection.domain}. Expand this roadmap item into concrete tasks:
@@ -1387,7 +1387,7 @@ WORKFLOW — follow this every time:
     }
 
     // Copywriter pass — runs before coder-front on copy-heavy tasks
-    if (needsCopywriter(item.text) && targetAgent === "crew-coder-front") {
+    if (needsCopywriter(item.text) && targetAgent === "iris-coder-front") {
       task = await runCopywriterPass(item.text, task);
     }
 
@@ -1398,10 +1398,10 @@ WORKFLOW — follow this every time:
       const dur = ((Date.now() - start) / 1000).toFixed(1);
       console.log(`  ✅ Done in ${dur}s`);
 
-      // QA review pass — if QA fails, route issues to crew-fixer
+      // QA review pass — if QA fails, route issues to iris-fixer
       if (USE_QA) {
         try {
-          console.log(`  🔍 QA review via crew-qa...`);
+          console.log(`  🔍 QA review via iris-qa...`);
           const qaFilePaths = await getOutputDirFilePaths();
           const qaFilesHint = qaFilePaths.length > 0
             ? `\n\nOnly these paths exist in the output dir — use @@READ_FILE on these only:\n${qaFilePaths.join("\n")}\n`
@@ -1415,23 +1415,23 @@ WORKFLOW — follow this every time:
               ? "broken HTML/CSS, JS errors, missing files, visual regressions, unknown CSS classes"
               : "syntax errors, missing imports, broken logic, undefined references, missing files";
           const qaPrompt = `[QA-Review] ${targetAgent} just completed this task:\n\n"${task.substring(0, 300)}"\n\nRead the relevant files in ${OUTPUT_DIR} to review the changes. Check for: ${qaChecks}.${qaFilesHint}\nReply with exactly one of:\n- "PASS" if everything looks correct\n- "FAIL: <specific issues>" if there are problems that need fixing`;
-          const qaResult = await callAgent("crew-qa", qaPrompt);
+          const qaResult = await callAgent("iris-qa", qaPrompt);
           const qaText = String(qaResult).trim();
           // Treat empty or non-QA responses (e.g. bridge startup text) as a skip — not a hard fail
           const looksLikeQA = /^(PASS|FAIL)/i.test(qaText) || /issue|error|broken|missing|problem|correct|look/i.test(qaText);
           const qaPass = /^PASS/i.test(qaText) || !looksLikeQA;
           const qaLabel = !looksLikeQA ? "⏭️  SKIP (no verdict)" : qaPass ? "✅ PASS" : "❌ FAIL";
           console.log(`  📋 QA: ${qaLabel} — ${qaText.substring(0, 120)}`);
-          await log({ op_id: opId, item: item.text, agent: "crew-qa", status: qaPass ? "qa_pass" : "qa_fail", qa_result: qaText.substring(0, 300) });
+          await log({ op_id: opId, item: item.text, agent: "iris-qa", status: qaPass ? "qa_pass" : "qa_fail", qa_result: qaText.substring(0, 300) });
 
-          // If QA flagged issues, send them to crew-fixer before marking done
+          // If QA flagged issues, send them to iris-fixer before marking done
           if (!qaPass) {
             try {
-              console.log(`  🔧 QA failed — routing issues to crew-fixer...`);
+              console.log(`  🔧 QA failed — routing issues to iris-fixer...`);
               const fixPrompt = `[QA-Fixer] QA found issues after this task was completed:\n\nOriginal task: "${task.substring(0, 300)}"\n\nQA issues:\n${qaText}\n\nRead the affected files in ${OUTPUT_DIR} first, then fix only what QA flagged — do not rewrite whole files. Confirm what you fixed.`;
-              const fixResult = await callAgent("crew-fixer", fixPrompt);
+              const fixResult = await callAgent("iris-fixer", fixPrompt);
               console.log(`  ✅ Fixer resolved QA issues: ${String(fixResult).substring(0, 80)}`);
-              await log({ op_id: opId, item: item.text, agent: "crew-fixer", status: "qa_fixed", fix_result: String(fixResult).substring(0, 200) });
+              await log({ op_id: opId, item: item.text, agent: "iris-fixer", status: "qa_fixed", fix_result: String(fixResult).substring(0, 200) });
             } catch (fixErr) {
               console.log(`  ⚠️  Fixer couldn't resolve QA issues: ${fixErr.message.slice(0, 60)}`);
             }
@@ -1446,7 +1446,7 @@ WORKFLOW — follow this every time:
         try {
           console.log(`  🔒 Security review via security agent...`);
           const secPrompt = `[Security-Review] Review the recent changes for security issues. Task was: "${task.substring(0, 200)}". Check for exposed secrets, injection risks, insecure patterns. Reply with CLEAR or list vulnerabilities.`;
-          const secResult = await callAgent("crew-security", secPrompt);
+          const secResult = await callAgent("iris-security", secPrompt);
           console.log(`  🛡️  Security: ${String(secResult).substring(0, 80)}`);
           await log({ op_id: opId, item: item.text, agent: "security", status: "security_reviewed", sec_result: String(secResult).substring(0, 200) });
         } catch (secErr) {
@@ -1473,7 +1473,7 @@ WORKFLOW — follow this every time:
 
       // One-shot mode: set env for next gateway spawn
       if (ONE_SHOT_MODE) {
-        process.env.CREWSWARM_ONE_SHOT = '1';
+        process.env.IRIS_ONE_SHOT = '1';
       }
     } catch (e) {
       const dur = ((Date.now() - start) / 1000).toFixed(1);
@@ -1482,26 +1482,26 @@ WORKFLOW — follow this every time:
       failedCount++;
       failedItems.push(item.text);
 
-      // Ask crew-fixer to attempt a repair
+      // Ask iris-fixer to attempt a repair
       try {
-        console.log(`  🔧 Asking crew-fixer to repair...`);
+        console.log(`  🔧 Asking iris-fixer to repair...`);
         // Extract clean error signal - don't echo full failure context
         const errorSignal = e.message.slice(0, 150);  // Just the error message
         const taskDescription = task.substring(0, 100);  // Brief task context
 
         const fixPrompt = `Fix the following error:\n\nTask: ${taskDescription}\nError: ${errorSignal}\n\nContext: Working in ${OUTPUT_DIR}\n\nInstructions:\n1. Read relevant files to understand current state\n2. Make targeted fixes - do not rewrite entire files\n3. Focus on the error cause, not symptoms\n4. Verify fix resolves the specific error above`;
 
-        await callAgent("crew-fixer", fixPrompt);
+        await callAgent("iris-fixer", fixPrompt);
         console.log(`  🔧 Fixer done — marking as done`);
-        await markItem(item.lineIdx, "done", "crew-fixer");
-        await log({ op_id: opId, item: item.text, task: task.substring(0, 120), agent: "crew-fixer", status: "fixed", duration_s: parseFloat(dur) });
+        await markItem(item.lineIdx, "done", "iris-fixer");
+        await log({ op_id: opId, item: item.text, task: task.substring(0, 120), agent: "iris-fixer", status: "fixed", duration_s: parseFloat(dur) });
         doneCount++;
         completedItems.push(item.text);
 
         // Record progress for failed->fixed items
         await recordProgress(
           { description: item.text },
-          { status: 'fixed', learnings: `Initially failed, fixed by crew-fixer: ${e.message.slice(0, 100)}` },
+          { status: 'fixed', learnings: `Initially failed, fixed by iris-fixer: ${e.message.slice(0, 100)}` },
           itemCount
         );
       } catch (fixErr) {
@@ -1523,7 +1523,7 @@ WORKFLOW — follow this every time:
   const failed = finalItems.filter(i => i.status === "failed").length;
   const pending = finalItems.filter(i => i.status === "pending").length;
 
-  // crew-main synthesizes and verifies the full build before we close out
+  // iris-main synthesizes and verifies the full build before we close out
   if (!DRY_RUN) {
     await finalSynthesis(opId, completedItems, done, failed);
   }
@@ -1538,7 +1538,7 @@ WORKFLOW — follow this every time:
 // ── Judge decision — evaluate cycle and decide CONTINUE/SHIP/RESET ────────
 async function runJudgeDecision(opId, doneCount, failedCount, completedItems, failedItems) {
   try {
-    banner("⚖️  crew-judge — Cycle Evaluation");
+    banner("⚖️  iris-judge — Cycle Evaluation");
 
     const roadmapContent = await readFile(ROADMAP_FILE, "utf8");
     const { items } = parseRoadmap(roadmapContent);

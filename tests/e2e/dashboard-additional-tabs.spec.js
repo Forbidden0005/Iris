@@ -178,7 +178,7 @@ test.describe("PM Loop tab", () => {
 test.describe("Memory tab", () => {
   const MEMORY_STATS_FIXTURE = {
     available: true,
-    storageDir: "/tmp/.crewswarm/memory",
+    storageDir: "/tmp/.iris/memory",
     agentMemory: {
       totalFacts: 42,
       criticalFacts: 5,
@@ -190,7 +190,7 @@ test.describe("Memory tab", () => {
       entries: 128,
       bytes: 65536,
       byTier: { hot: 30, warm: 60, cold: 38 },
-      byAgent: { "crew-coder": 80, "crew-pm": 48 },
+      byAgent: { "iris-coder": 80, "iris-pm": 48 },
     },
   };
 
@@ -297,7 +297,7 @@ test.describe("Engines tab (additional)", () => {
         ready: false,
         installed: false,
         requiresAuth: false,
-        installCmd: "docker pull crewswarm/sandbox",
+        installCmd: "docker pull iris/sandbox",
         traits: [],
         source: "builtin",
       },
@@ -389,8 +389,8 @@ test.describe("Spending tab", () => {
             date: "2026-03-28",
             global: { tokens: 150000, costUSD: 2.3456 },
             agents: {
-              "crew-coder": { tokens: 80000, costUSD: 1.2 },
-              "crew-pm": { tokens: 70000, costUSD: 1.1456 },
+              "iris-coder": { tokens: 80000, costUSD: 1.2 },
+              "iris-pm": { tokens: 70000, costUSD: 1.1456 },
             },
           },
           caps: {
@@ -459,10 +459,10 @@ test.describe("Spending tab", () => {
     // Verify the spending data rendered from our mock
     await expect(spendingWidget).toContainText("Global", { timeout: 8_000 });
     await expect(spendingWidget).toContainText("$2.3456", { timeout: 8_000 });
-    await expect(spendingWidget).toContainText("crew-coder", {
+    await expect(spendingWidget).toContainText("iris-coder", {
       timeout: 8_000,
     });
-    await expect(spendingWidget).toContainText("crew-pm", { timeout: 8_000 });
+    await expect(spendingWidget).toContainText("iris-pm", { timeout: 8_000 });
   });
 
   test("grand total elements and spending days selector exist", async ({
@@ -493,12 +493,12 @@ test.describe("Spending tab", () => {
 test.describe("Prompts tab", () => {
   const PROMPTS_FIXTURE = {
     prompts: {
-      "crew-coder":
-        "You are crew-coder, a full-stack coding specialist for CrewSwarm. You write clean, tested code.",
-      "crew-pm":
-        "You are crew-pm, the project manager agent. You plan work and track progress.",
-      "crew-qa":
-        "You are crew-qa, a quality assurance agent. You review code for correctness and security.",
+      "iris-coder":
+        "You are iris-coder, a full-stack coding specialist for Iris. You write clean, tested code.",
+      "iris-pm":
+        "You are iris-pm, the project manager agent. You plan work and track progress.",
+      "iris-qa":
+        "You are iris-qa, a quality assurance agent. You review code for correctness and security.",
     },
   };
 
@@ -544,9 +544,9 @@ test.describe("Prompts tab", () => {
     await expect(list).toBeVisible({ timeout: 8_000 });
 
     // All three agents should appear
-    await expect(list).toContainText("crew-coder", { timeout: 8_000 });
-    await expect(list).toContainText("crew-pm", { timeout: 8_000 });
-    await expect(list).toContainText("crew-qa", { timeout: 8_000 });
+    await expect(list).toContainText("iris-coder", { timeout: 8_000 });
+    await expect(list).toContainText("iris-pm", { timeout: 8_000 });
+    await expect(list).toContainText("iris-qa", { timeout: 8_000 });
 
     // Prompt cards should render
     const cards = list.locator(".prompt-card");

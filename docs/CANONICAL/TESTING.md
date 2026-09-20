@@ -47,14 +47,14 @@ node --test test/integration/*.test.mjs
 npm run smoke:static
 # or: bash scripts/smoke.sh
 
-# Live smoke (requires stack running: crew-lead, agents)
+# Live smoke (requires stack running: iris-lead, agents)
 npm run smoke
 # or: node scripts/smoke-dispatch.mjs
 
-# Node E2E (requires crew-lead on 5010)
+# Node E2E (requires iris-lead on 5010)
 node --test test/e2e/*.test.mjs
 
-# Browser E2E (requires dashboard + vibe + crew-lead)
+# Browser E2E (requires dashboard + vibe + iris-lead)
 node node_modules/playwright/cli.js test tests/e2e --reporter=list
 
 # Dashboard-focused browser regression file
@@ -70,18 +70,18 @@ node scripts/live-provider-failover-matrix.mjs
 node scripts/live-cli-matrix.mjs
 node scripts/live-cli-matrix.mjs --smoke
 node scripts/live-bridge-matrix.mjs
-node scripts/live-crewchat-check.mjs
+node scripts/live-irischat-check.mjs
 ```
 
 ## Live smoke (npm run smoke)
 
 When the full stack is running (`npm run restart-all`), `npm run smoke` runs `scripts/smoke-dispatch.mjs`:
 
-- Dispatches to crew-coder (writes a test file)
-- Dispatches to crew-main (simple reply)
+- Dispatches to iris-coder (writes a test file)
+- Dispatches to iris-main (simple reply)
 - Verifies both complete successfully
 
-Used by CI integration job on push. Requires `GROQ_API_KEY` and `CREWSWARM_RT_TOKEN` in secrets.
+Used by CI integration job on push. Requires `GROQ_API_KEY` and `IRIS_RT_TOKEN` in secrets.
 
 ## Browser automation (Playwright)
 
@@ -134,10 +134,10 @@ Legacy root verification scripts were archived under `docs/archive/legacy-tests/
 ## Coverage notes
 
 - Root repo coverage is reported by `npm run test:coverage:root` using Node's built-in test coverage.
-- `crew-cli` coverage is reported by `cd crew-cli && npm run test:coverage`.
+- `iris-cli` coverage is reported by `cd iris-cli && npm run test:coverage`.
 - `npm run test:coverage` at repo root runs both and writes a combined markdown report to `coverage/coverage-report.md`.
 - The current coverage report is strongest for hermetic unit/integration surfaces. Live services, messaging bridges, and browser flows still rely partly on smoke and E2E checks rather than a single unified percentage.
-- `crewchat` runtime decisions, bridge contracts, startup guard behavior, and restart/health script failure paths now have dedicated automated tests in `test/unit/`.
+- `irischat` runtime decisions, bridge contracts, startup guard behavior, and restart/health script failure paths now have dedicated automated tests in `test/unit/`.
 - Provider failover classification now has a bounded integration matrix in `test/integration/llm-failover-matrix.test.mjs`.
 - External/provider/native surfaces now also have explicit live harnesses documented in `docs/CANONICAL/LIVE-VERIFICATION.md`.
 - See `docs/CANONICAL/COVERAGE-MATRIX.md` for a feature-by-feature status view instead of treating one percentage as universal truth.

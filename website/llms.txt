@@ -1,9 +1,9 @@
-# crewswarm — local-first multi-engine AI coding platform
+# iris — local-first multi-engine AI coding platform
 
-crewswarm is an open-source AI coding platform with 6 CLI engines (Claude Code, Cursor, Gemini CLI, Codex CLI, OpenCode, crew-cli), 20+ specialist agents, and a built-in execution engine that works with 40+ models across 16 providers.
+iris is an open-source AI coding platform with 6 CLI engines (Claude Code, Cursor, Gemini CLI, Codex CLI, OpenCode, iris-cli), 20+ specialist agents, and a built-in execution engine that works with 40+ models across 16 providers.
 
-## crew-cli execution engine
-crew-cli is the built-in execution engine. It runs standalone or as one of crewswarm's 6 engines.
+## iris-cli execution engine
+iris-cli is the built-in execution engine. It runs standalone or as one of iris's 6 engines.
 - 5 models pass all tests solo (including 2 free local models), tested across 16+ providers
 - 14 models benchmarked at 90/100 on L2 task planning
 - 16 providers: OpenAI, Anthropic, Google, xAI, DeepSeek, Groq, Fireworks, Cerebras, NVIDIA, Mistral, OpenCode/Zen, OpenRouter, Ollama, Perplexity
@@ -26,29 +26,29 @@ crew-cli is the built-in execution engine. It runs standalone or as one of crews
 - Keeps services, agents, memory, and project history in one inspectable local stack
 
 ## Primary pages
-- Main website: https://crewswarm.ai/
-- CLI Guide: https://crewswarm.ai/cli.html
-- Benchmarks: https://crewswarm.ai/benchmarks.html
-- AI Models board: https://crewswarm.ai/models.html
-- Vibe IDE: https://crewswarm.ai/vibe.html
-- Deploy: https://crewswarm.ai/deploy.html
-- Security: https://crewswarm.ai/security.html
-- API Docs: https://crewswarm.ai/api.html
-- Documentation: https://crewswarm.ai/docs.html
-- PM Loop: https://crewswarm.ai/pm-loop.html
-- PM Loop Walkthrough: https://crewswarm.ai/pm-loop-walkthrough.html
-- Engine Comparison: https://crewswarm.ai/engine-comparison.html
-- ATAT Protocol: https://crewswarm.ai/atat.html
+- Main website: https://iris.ai/
+- CLI Guide: https://iris.ai/cli.html
+- Benchmarks: https://iris.ai/benchmarks.html
+- AI Models board: https://iris.ai/models.html
+- Vibe IDE: https://iris.ai/vibe.html
+- Deploy: https://iris.ai/deploy.html
+- Security: https://iris.ai/security.html
+- API Docs: https://iris.ai/api.html
+- Documentation: https://iris.ai/docs.html
+- PM Loop: https://iris.ai/pm-loop.html
+- PM Loop Walkthrough: https://iris.ai/pm-loop-walkthrough.html
+- Engine Comparison: https://iris.ai/engine-comparison.html
+- ATAT Protocol: https://iris.ai/atat.html
 - GitHub repo: https://github.com/crewswarm/crewswarm
-- npm: https://www.npmjs.com/package/crewswarm
+- npm: https://www.npmjs.com/package/iris
 
 ## Search-oriented summary
 - multi-engine AI coding platform
 - 5 models pass all tests, free models match Claude Opus
-- crew-cli execution engine 40+ models 16 providers
+- iris-cli execution engine 40+ models 16 providers
 - local-first AI workspace
 - parallel AI agents for coding
-- Claude Code vs Codex vs Cursor vs Gemini vs OpenCode vs crew-cli
+- Claude Code vs Codex vs Cursor vs Gemini vs OpenCode vs iris-cli
 - best ai models for coding agents 2026
 - cheapest ai coding models benchmark
 - L2 planner task decomposition benchmark

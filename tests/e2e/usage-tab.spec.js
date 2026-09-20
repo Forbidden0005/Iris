@@ -128,14 +128,14 @@ const HEALTH_FIXTURE = {
   ok: true,
   agents: [
     {
-      id: "crew-main",
-      name: "Crew Main",
+      id: "iris-main",
+      name: "Iris Main",
       emoji: "🤖",
       tools: ["read_file", "write_file", "run_cmd", "dispatch"],
     },
     {
-      id: "crew-pm",
-      name: "Crew PM",
+      id: "iris-pm",
+      name: "Iris PM",
       emoji: "📋",
       tools: ["read_file", "dispatch", "skill"],
     },
@@ -143,11 +143,11 @@ const HEALTH_FIXTURE = {
   telemetry: [
     {
       occurredAt: "2026-04-02T10:15:30",
-      data: { phase: "completed", agentId: "crew-main", taskId: "task-abc123" },
+      data: { phase: "completed", agentId: "iris-main", taskId: "task-abc123" },
     },
     {
       occurredAt: "2026-04-02T09:55:12",
-      data: { phase: "failed", agentId: "crew-pm", taskId: "task-def456" },
+      data: { phase: "failed", agentId: "iris-pm", taskId: "task-def456" },
     },
   ],
 };
@@ -183,7 +183,7 @@ test.describe("Usage tab", () => {
         body: JSON.stringify(HEALTH_FIXTURE),
       });
     });
-    await page.route("**/api/crew-lead/status", async (route) => {
+    await page.route("**/api/iris-lead/status", async (route) => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -298,7 +298,7 @@ test.describe("Usage tab", () => {
     expect(Number(val)).toBeGreaterThanOrEqual(1);
   });
 
-  test("crew-lead status badge reflects online state", async ({ page }) => {
+  test("iris-lead status badge reflects online state", async ({ page }) => {
     // crewLeadBadge lives in chatView (the main header), not in settingsView
     await openTab(page, "navChat", "chatView");
 
@@ -315,9 +315,9 @@ test.describe("Usage tab", () => {
 
     const matrix = page.locator("#toolMatrixContainer");
     await expect(matrix).toBeVisible({ timeout: 8_000 });
-    // The matrix renders agent display names (e.g. "Crew Main") not raw IDs
-    await expect(matrix).toContainText("Crew Main", { timeout: 8_000 });
-    await expect(matrix).toContainText("Crew PM", { timeout: 8_000 });
+    // The matrix renders agent display names (e.g. "Iris Main") not raw IDs
+    await expect(matrix).toContainText("Iris Main", { timeout: 8_000 });
+    await expect(matrix).toContainText("Iris PM", { timeout: 8_000 });
   });
 
   test("tool matrix shows checkmarks for tools each agent has", async ({
@@ -341,7 +341,7 @@ test.describe("Usage tab", () => {
     const restartBtns = matrix.locator(
       'button[data-action="restartAgentFromUI"]'
     );
-    await expect(restartBtns).toHaveCount(3, { timeout: 8_000 }); // crew-lead + 2 agents
+    await expect(restartBtns).toHaveCount(3, { timeout: 8_000 }); // iris-lead + 2 agents
   });
 
   test("Restart agent button calls POST /api/agents/:id/restart", async ({
@@ -363,7 +363,7 @@ test.describe("Usage tab", () => {
     await expect(matrix).toBeVisible({ timeout: 8_000 });
 
     const restartBtn = matrix
-      .locator('button[data-action="restartAgentFromUI"][data-arg="crew-main"]')
+      .locator('button[data-action="restartAgentFromUI"][data-arg="iris-main"]')
       .first();
     await expect(restartBtn).toBeVisible({ timeout: 8_000 });
     await restartBtn.click();
@@ -371,7 +371,7 @@ test.describe("Usage tab", () => {
     await page.waitForTimeout(600);
 
     expect(restartRequests.length).toBe(1);
-    expect(restartRequests[0]).toContain("crew-main");
+    expect(restartRequests[0]).toContain("iris-main");
   });
 
   test("task lifecycle table renders completed and failed events", async ({
@@ -384,15 +384,15 @@ test.describe("Usage tab", () => {
     await expect(lifecycle).toBeVisible({ timeout: 8_000 });
     await expect(lifecycle).toContainText("completed", { timeout: 8_000 });
     await expect(lifecycle).toContainText("failed", { timeout: 8_000 });
-    await expect(lifecycle).toContainText("crew-main", { timeout: 8_000 });
+    await expect(lifecycle).toContainText("iris-main", { timeout: 8_000 });
   });
 });
 
 // ---------------------------------------------------------------------------
-// Suite: Usage tab — offline crew-lead
+// Suite: Usage tab — offline iris-lead
 // ---------------------------------------------------------------------------
 
-test.describe("Usage tab — offline crew-lead", () => {
+test.describe("Usage tab — offline iris-lead", () => {
   test.beforeEach(async ({ page }) => {
     setupConsoleErrorCapture(page);
     await disableDashboardSSE(page);
@@ -419,7 +419,7 @@ test.describe("Usage tab — offline crew-lead", () => {
         body: JSON.stringify({ ok: false, error: "Unauthorized" }),
       });
     });
-    await page.route("**/api/crew-lead/status", async (route) => {
+    await page.route("**/api/iris-lead/status", async (route) => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -448,7 +448,7 @@ test.describe("Usage tab — offline crew-lead", () => {
     expectNoConsoleErrors();
   });
 
-  test("crew-lead badge shows offline when status reports offline", async ({
+  test("iris-lead badge shows offline when status reports offline", async ({
     page,
   }) => {
     // crewLeadBadge lives in chatView — navigate there to see it

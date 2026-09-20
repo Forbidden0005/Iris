@@ -17,7 +17,7 @@ import { logEngineTestContext } from "../helpers/test-context.mjs";
 import { logTestEvidence } from "../helpers/test-log.mjs";
 
 // Use a temp directory so planner engines don't clobber the repo
-const TEST_DIR = join(tmpdir(), `crewswarm-planner-test-${Date.now()}`);
+const TEST_DIR = join(tmpdir(), `iris-planner-test-${Date.now()}`);
 mkdirSync(TEST_DIR, { recursive: true });
 
 const DASHBOARD_BASE = process.env.DASHBOARD_BASE || "http://127.0.0.1:4319";
@@ -78,7 +78,7 @@ describe("dashboard build planner", { skip: SKIP, concurrency: 1, timeout: 90000
     { name: "Codex", engine: "codex", bin: "codex" },
     { name: "Cursor CLI", engine: "cursor", bin: "agent" },
     { name: "Gemini CLI", engine: "gemini", bin: "gemini" },
-    { name: "crew-cli", engine: "crew-cli", bin: "crew" },
+    { name: "iris-cli", engine: "iris-cli", bin: "iris" },
     { name: "OpenCode", engine: "opencode", bin: "opencode" },
   ];
 

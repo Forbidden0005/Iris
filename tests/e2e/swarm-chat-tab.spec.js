@@ -89,17 +89,17 @@ const HISTORY_FIXTURE = {
       source: "dashboard",
       role: "assistant",
       content: "Sure! Here is the sprint plan...",
-      agent: "crew-lead",
-      metadata: { agentName: "crew-lead", agentEmoji: "🧠" },
+      agent: "iris-lead",
+      metadata: { agentName: "iris-lead", agentEmoji: "🧠" },
     },
   ],
 };
 
 const PARTICIPANTS_FIXTURE = {
   participants: [
-    { id: "crew-lead", kind: "agent", runtime: null },
-    { id: "crew-coder", kind: "agent", runtime: null },
-    { id: "crew-qa", kind: "agent", runtime: null },
+    { id: "iris-lead", kind: "agent", runtime: null },
+    { id: "iris-coder", kind: "agent", runtime: null },
+    { id: "iris-qa", kind: "agent", runtime: null },
     { id: "codex", kind: "cli", runtime: "codex" },
   ],
 };
@@ -109,8 +109,8 @@ const AUTONOMY_DISABLED_FIXTURE = { enabled: false };
 
 const UNIFIED_REPLY_FIXTURE = {
   reply: "I understand. Let me coordinate the team.",
-  agent: "crew-lead",
-  agentName: "crew-lead",
+  agent: "iris-lead",
+  agentName: "iris-lead",
   agentEmoji: "🧠",
 };
 
@@ -133,7 +133,7 @@ test.describe("Swarm Chat tab", () => {
     });
 
     await page.route(
-      "**/api/crew-lead/project-messages**",
+      "**/api/iris-lead/project-messages**",
       async (route) => {
         await route.fulfill({
           status: 200,
@@ -371,15 +371,15 @@ test.describe("Swarm Chat tab", () => {
 
     const input = page.locator("#swarmChatInput");
     await expect(input).toBeVisible({ timeout: 8_000 });
-    await input.fill("@crew");
+    await input.fill("@iris");
     // Trigger the input event so autocomplete fires
     await input.dispatchEvent("input");
     await page.waitForTimeout(600);
 
     const menu = page.locator("#swarmMentionMenu");
     await expect(menu).toBeVisible({ timeout: 6_000 });
-    // crew-lead, crew-coder, crew-qa should show up
-    await expect(menu).toContainText("crew-lead", { timeout: 4_000 });
+    // iris-lead, iris-coder, iris-qa should show up
+    await expect(menu).toContainText("iris-lead", { timeout: 4_000 });
   });
 
   test("selecting an @mention autocomplete item fills the input", async ({
@@ -389,25 +389,25 @@ test.describe("Swarm Chat tab", () => {
 
     const input = page.locator("#swarmChatInput");
     await expect(input).toBeVisible({ timeout: 8_000 });
-    await input.fill("@crew-l");
+    await input.fill("@iris-l");
     await input.dispatchEvent("input");
     await page.waitForTimeout(600);
 
     const menu = page.locator("#swarmMentionMenu");
     await expect(menu).toBeVisible({ timeout: 6_000 });
 
-    const leadOption = menu.locator("div", { hasText: "@crew-lead" }).first();
+    const leadOption = menu.locator("div", { hasText: "@iris-lead" }).first();
     await expect(leadOption).toBeVisible({ timeout: 4_000 });
     await leadOption.click();
 
-    // Input should now contain @crew-lead
-    await expect(input).toHaveValue(/^@crew-lead\s/, { timeout: 4_000 });
+    // Input should now contain @iris-lead
+    await expect(input).toHaveValue(/^@iris-lead\s/, { timeout: 4_000 });
   });
 
   test("switching projects reloads swarm history", async ({ page }) => {
     const historyUrls = [];
     await page.route(
-      "**/api/crew-lead/project-messages**",
+      "**/api/iris-lead/project-messages**",
       async (route) => {
         historyUrls.push(route.request().url());
         await route.fulfill({
@@ -434,7 +434,7 @@ test.describe("Swarm Chat tab", () => {
   test("refresh button reloads projects and history", async ({ page }) => {
     let callCount = 0;
     await page.route(
-      "**/api/crew-lead/project-messages**",
+      "**/api/iris-lead/project-messages**",
       async (route) => {
         callCount++;
         await route.fulfill({
@@ -466,14 +466,14 @@ test.describe("Swarm Chat tab", () => {
         body: JSON.stringify({
           replies: [
             {
-              agent: "crew-lead",
-              agentName: "crew-lead",
+              agent: "iris-lead",
+              agentName: "iris-lead",
               agentEmoji: "🧠",
               reply: "Lead acknowledges the request.",
             },
             {
-              agent: "crew-coder",
-              agentName: "crew-coder",
+              agent: "iris-coder",
+              agentName: "iris-coder",
               agentEmoji: "🤖",
               reply: "Coder will start the implementation.",
             },
@@ -486,7 +486,7 @@ test.describe("Swarm Chat tab", () => {
 
     const input = page.locator("#swarmChatInput");
     await expect(input).toBeVisible({ timeout: 8_000 });
-    await input.fill("@crew-lead @crew-coder build the feature");
+    await input.fill("@iris-lead @iris-coder build the feature");
     await page.locator("#swarmChatSend").click();
     await page.waitForTimeout(1_000);
 

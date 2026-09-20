@@ -26,10 +26,10 @@ const {
   executeSkill,
 } = await import("../../lib/skills/index.mjs");
 
-const SKILLS_DIR = path.join(os.homedir(), ".crewswarm", "skills");
+const SKILLS_DIR = path.join(os.homedir(), ".iris", "skills");
 const TEST_SKILL_DIR = path.join(SKILLS_DIR, "test-skill-unit");
 const TEST_SKILL_JSON = path.join(SKILLS_DIR, "test-skill-json-unit.json");
-const PENDING_FILE = path.join(os.homedir(), ".crewswarm", "pending-skills.json");
+const PENDING_FILE = path.join(os.homedir(), ".iris", "pending-skills.json");
 
 let pendingBackup = null;
 

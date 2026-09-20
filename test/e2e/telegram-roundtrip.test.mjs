@@ -2,9 +2,9 @@
  * E2E tests for the Telegram bridge round-trip.
  *
  * Prerequisites:
- *   - TELEGRAM_BOT_TOKEN in ~/.crewswarm/crewswarm.json
+ *   - TELEGRAM_BOT_TOKEN in ~/.iris/iris.json
  *   - telegram-bridge.mjs running
- *   - crew-lead running on port 5010
+ *   - iris-lead running on port 5010
  *
  * What is tested:
  *   1. Telegram Bot API reachability (getMe)
@@ -21,19 +21,19 @@ import path from "node:path";
 import os from "node:os";
 import https from "node:https";
 
-const CREWSWARM_DIR = path.join(os.homedir(), ".crewswarm");
-const LOGS_DIR = path.join(CREWSWARM_DIR, "logs");
+const IRIS_DIR = path.join(os.homedir(), ".iris");
+const LOGS_DIR = path.join(IRIS_DIR, "logs");
 const TG_LOG = path.join(LOGS_DIR, "telegram-bridge.jsonl");
 
 // Load bot token — mirrors telegram-bridge.mjs lookup order
 function loadTgToken() {
   if (process.env.TELEGRAM_BOT_TOKEN) return process.env.TELEGRAM_BOT_TOKEN;
   try {
-    const cfg = JSON.parse(fs.readFileSync(path.join(CREWSWARM_DIR, "crewswarm.json"), "utf8"));
+    const cfg = JSON.parse(fs.readFileSync(path.join(IRIS_DIR, "iris.json"), "utf8"));
     if (cfg?.env?.TELEGRAM_BOT_TOKEN) return cfg.env.TELEGRAM_BOT_TOKEN;
   } catch {}
   try {
-    const tgCfg = JSON.parse(fs.readFileSync(path.join(CREWSWARM_DIR, "telegram-bridge.json"), "utf8"));
+    const tgCfg = JSON.parse(fs.readFileSync(path.join(IRIS_DIR, "telegram-bridge.json"), "utf8"));
     if (tgCfg?.token) return tgCfg.token;
   } catch {}
   return null;
@@ -43,7 +43,7 @@ const TOKEN = loadTgToken();
 // Load owner chat ID from config (not hardcoded)
 const OWNER_CHAT_ID = (() => {
   try {
-    const tgCfg = JSON.parse(fs.readFileSync(path.join(os.homedir(), ".crewswarm", "telegram-bridge.json"), "utf8"));
+    const tgCfg = JSON.parse(fs.readFileSync(path.join(os.homedir(), ".iris", "telegram-bridge.json"), "utf8"));
     return tgCfg?.allowedChatIds?.[0] || parseInt(process.env.TELEGRAM_CHAT_ID || "0", 10);
   } catch { return parseInt(process.env.TELEGRAM_CHAT_ID || "0", 10); }
 })();
@@ -79,7 +79,7 @@ describe("Telegram — bot API reachability", { skip: SKIP ? "No TELEGRAM_BOT_TO
     const data = await tgApi("getMe");
     assert.ok(data.ok, `getMe failed: ${JSON.stringify(data)}`);
     assert.ok(data.result.username, "Bot has no username");
-    assert.match(data.result.username, /crewswarm|crewswarm/i);
+    assert.match(data.result.username, /iris|iris/i);
   });
 
   it("bot is marked as a bot (not a user)", async () => {
@@ -95,7 +95,7 @@ describe("Telegram — message delivery (bot → owner chat)", { skip: SKIP ? "N
     const ts = Date.now();
     const data = await tgApi("sendMessage", {
       chat_id: OWNER_CHAT_ID,
-      text: `[crewswarm test] round-trip ping ${ts}`,
+      text: `[iris test] round-trip ping ${ts}`,
     });
     assert.ok(data.ok, `sendMessage failed: ${JSON.stringify(data)}`);
     assert.ok(data.result.message_id, "No message_id returned");
@@ -106,7 +106,7 @@ describe("Telegram — message delivery (bot → owner chat)", { skip: SKIP ? "N
     if (!sentMsgId) return; // dependent on previous test
     const data = await tgApi("sendMessage", {
       chat_id: OWNER_CHAT_ID,
-      text: `[crewswarm test] confirming chat=${OWNER_CHAT_ID}`,
+      text: `[iris test] confirming chat=${OWNER_CHAT_ID}`,
     });
     assert.equal(data.result?.chat?.id, OWNER_CHAT_ID);
   });
@@ -174,16 +174,16 @@ describe("Telegram — getUpdates (bridge polling)", { skip: SKIP ? "No TELEGRAM
   });
 });
 
-describe("Telegram — bridge → crew-lead forwarding", { skip: SKIP ? "No token" : false }, () => {
-  it("crew-lead is reachable (required for bridge forwarding)", async () => {
+describe("Telegram — bridge → iris-lead forwarding", { skip: SKIP ? "No token" : false }, () => {
+  it("iris-lead is reachable (required for bridge forwarding)", async () => {
     const { checkServiceUp } = await import("../helpers/http.mjs");
     let reachable = await checkServiceUp("http://127.0.0.1:5010/health");
 
     if (!reachable) {
-      // crew-lead not running — skip rather than fail
+      // iris-lead not running — skip rather than fail
       return;
     }
-    assert.ok(reachable, "crew-lead not reachable on :5010");
+    assert.ok(reachable, "iris-lead not reachable on :5010");
   });
 
   it("telegram-messages.jsonl records incoming user messages", () => {

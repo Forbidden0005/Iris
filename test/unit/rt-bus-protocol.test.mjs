@@ -2,7 +2,7 @@
  * Unit tests for the RT bus WebSocket protocol contract.
  *
  * Validates message shapes, required fields, and protocol flows
- * as implemented by ws-router.mjs (crew-lead) and gateway-ws.mjs (agent).
+ * as implemented by ws-router.mjs (iris-lead) and gateway-ws.mjs (agent).
  *
  * Pure unit tests — no WebSocket connections, no I/O.
  *
@@ -74,10 +74,10 @@ describe("RT bus protocol — message format validation", () => {
   });
 
   it("hello has type, agent, and token fields", () => {
-    const msg = buildHello("crew-coder", "tok_abc");
+    const msg = buildHello("iris-coder", "tok_abc");
     assertHasFields(msg, ["type", "agent", "token"], "hello");
     assert.equal(msg.type, "hello");
-    assert.equal(msg.agent, "crew-coder");
+    assert.equal(msg.agent, "iris-coder");
     assert.equal(msg.token, "tok_abc");
   });
 
@@ -97,7 +97,7 @@ describe("RT bus protocol — message format validation", () => {
     const msg = buildPublish({
       channel: "command",
       messageType: "command.run_task",
-      to: "crew-coder",
+      to: "iris-coder",
       taskId: "task-123",
       priority: "high",
       payload: { content: "fix the bug" },
@@ -127,14 +127,14 @@ describe("RT bus protocol — publish payload structure", () => {
     const msg = buildPublish({
       channel: "command",
       messageType: "command.run_task",
-      to: "crew-fixer",
+      to: "iris-fixer",
       taskId: "uuid-1",
       priority: "high",
       payload: { prompt: "refactor module" },
     });
     assert.equal(msg.channel, "command");
     assert.equal(msg.messageType, "command.run_task");
-    assert.equal(msg.to, "crew-fixer");
+    assert.equal(msg.to, "iris-fixer");
     assert.equal(msg.taskId, "uuid-1");
     assert.equal(msg.priority, "high");
     assert.deepEqual(msg.payload, { prompt: "refactor module" });
@@ -172,9 +172,9 @@ describe("RT bus protocol — hello handshake flow", () => {
     assert.equal(step1.type, "server.hello");
 
     // Step 2: client responds with hello (agent name + token)
-    const step2 = buildHello("crew-lead", "secret-token");
+    const step2 = buildHello("iris-lead", "secret-token");
     assert.equal(step2.type, "hello");
-    assert.equal(step2.agent, "crew-lead");
+    assert.equal(step2.agent, "iris-lead");
     assert.equal(step2.token, "secret-token");
 
     // Step 3: server confirms with hello.ack
@@ -187,7 +187,7 @@ describe("RT bus protocol — hello handshake flow", () => {
     assert.deepEqual(step4.channels, ["done", "events", "command", "issues", "status"]);
   });
 
-  it("crew-lead subscribes to done, events, command, issues, status channels", () => {
+  it("iris-lead subscribes to done, events, command, issues, status channels", () => {
     // From ws-router.mjs line 155
     const msg = buildSubscribe(["done", "events", "command", "issues", "status"]);
     assert.equal(msg.channels.length, 5);
@@ -245,7 +245,7 @@ describe("RT bus protocol — error format", () => {
     assert.equal(typeof msg.message, "string");
   });
 
-  it("auth-related error messages match crew-lead detection pattern", () => {
+  it("auth-related error messages match iris-lead detection pattern", () => {
     // ws-router.mjs line 225: /token|auth|unauthorized/i
     const pattern = /token|auth|unauthorized/i;
     assert.ok(pattern.test("invalid token"));
@@ -280,7 +280,7 @@ describe("RT bus protocol — task dispatch format (command.run_task)", () => {
     const msg = buildPublish({
       channel: "command",
       messageType: "command.run_task",
-      to: "crew-coder",
+      to: "iris-coder",
       taskId: "task-abc",
       priority: "high",
       payload: {
@@ -300,12 +300,12 @@ describe("RT bus protocol — task dispatch format (command.run_task)", () => {
     const msg = buildPublish({
       channel: "command",
       messageType: "command.run_task",
-      to: "crew-frontend",
+      to: "iris-frontend",
       taskId: "task-def",
       priority: "high",
       payload: { content: "build sidebar", prompt: "build sidebar", correlationId: "c-1" },
     });
-    assert.equal(msg.to, "crew-frontend");
+    assert.equal(msg.to, "iris-frontend");
     assert.notEqual(msg.to, "broadcast");
   });
 
@@ -313,7 +313,7 @@ describe("RT bus protocol — task dispatch format (command.run_task)", () => {
     const msg = buildPublish({
       channel: "command",
       messageType: "command.run_task",
-      to: "crew-coder",
+      to: "iris-coder",
       taskId: "task-ghi",
       priority: "high",
       payload: { content: "fix bug", prompt: "fix bug", correlationId: "c-2" },
@@ -327,13 +327,13 @@ describe("RT bus protocol — task done format", () => {
     const msg = buildPublish({
       channel: "done",
       messageType: "task.done",
-      to: "crew-lead",
+      to: "iris-lead",
       taskId: "task-completed",
       priority: "medium",
       payload: {
         reply: "Implemented the login form with email validation.",
         content: "Implemented the login form with email validation.",
-        source: "crew-coder",
+        source: "iris-coder",
       },
     });
     assert.equal(msg.messageType, "task.done");
@@ -345,19 +345,19 @@ describe("RT bus protocol — task done format", () => {
     const msg = buildPublish({
       channel: "done",
       messageType: "task.done",
-      to: "crew-lead",
+      to: "iris-lead",
       taskId: "task-eng",
       priority: "medium",
       payload: {
         reply: "Done.",
-        source: "crew-coder",
+        source: "iris-coder",
         engineUsed: "claude",
       },
     });
     assert.equal(msg.payload.engineUsed, "claude");
   });
 
-  it("task.done on the done channel is recognized as isDone by crew-lead", () => {
+  it("task.done on the done channel is recognized as isDone by iris-lead", () => {
     // ws-router.mjs line 315: isDone = msgType === "task.done" || env.channel === "done"
     const envelope = { channel: "done", messageType: "task.done" };
     const isDone = envelope.messageType === "task.done" || envelope.channel === "done";
@@ -382,7 +382,7 @@ describe("RT bus protocol — heartbeat format", () => {
       taskId: "hb-1",
       priority: "low",
       payload: {
-        agent: "crew-lead",
+        agent: "iris-lead",
         ts: "2026-03-30T12:00:00.000Z",
       },
     });
@@ -401,13 +401,13 @@ describe("RT bus protocol — heartbeat format", () => {
       to: "broadcast",
       taskId: "hb-2",
       priority: "low",
-      payload: { agent: "crew-coder", ts },
+      payload: { agent: "iris-coder", ts },
     });
     // ISO 8601 pattern check
     assert.ok(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(msg.payload.ts));
   });
 
-  it("crew-lead heartbeat uses low priority", () => {
+  it("iris-lead heartbeat uses low priority", () => {
     // ws-router.mjs line 208
     const msg = buildPublish({
       channel: "status",
@@ -415,7 +415,7 @@ describe("RT bus protocol — heartbeat format", () => {
       to: "broadcast",
       taskId: "hb-3",
       priority: "low",
-      payload: { agent: "crew-lead", ts: new Date().toISOString() },
+      payload: { agent: "iris-lead", ts: new Date().toISOString() },
     });
     assert.equal(msg.priority, "low");
   });
@@ -428,7 +428,7 @@ describe("RT bus protocol — heartbeat format", () => {
       to: "broadcast",
       taskId: "hb-4",
       priority: "medium",
-      payload: { agent: "crew-coder", ts: new Date().toISOString() },
+      payload: { agent: "iris-coder", ts: new Date().toISOString() },
     });
     assert.equal(msg.priority, "medium");
   });
@@ -448,7 +448,7 @@ describe("RT bus protocol — gateway-ws client.publish contract", () => {
       taskId: "t-1",
       correlationId: "corr-1",
       priority: "high",
-      payload: { agent: "crew-coder" },
+      payload: { agent: "iris-coder" },
     };
     // Reproduce the sendFrame call from gateway-ws.mjs line 50-58
     mockSendFrame({
@@ -488,15 +488,15 @@ describe("RT bus protocol — message envelope (server wraps in envelope)", () =
       id: "env-1",
       channel: "done",
       messageType: "task.done",
-      from: "crew-coder",
-      to: "crew-lead",
+      from: "iris-coder",
+      to: "iris-lead",
       taskId: "task-42",
-      payload: { reply: "Fixed the bug.", source: "crew-coder" },
+      payload: { reply: "Fixed the bug.", source: "iris-coder" },
     };
     assertHasFields(envelope, ["id", "channel", "messageType", "from", "to", "taskId", "payload"], "envelope");
   });
 
-  it("crew-lead acks envelope by id", () => {
+  it("iris-lead acks envelope by id", () => {
     // ws-router.mjs line 234
     const envelope = { id: "env-2", channel: "command", messageType: "task", payload: {} };
     const ack = buildAck(envelope.id, "received");
@@ -508,8 +508,8 @@ describe("RT bus protocol — message envelope (server wraps in envelope)", () =
       id: "env-3",
       channel: "status",
       messageType: "task.in_progress",
-      from: "crew-fixer",
-      to: "crew-lead",
+      from: "iris-fixer",
+      to: "iris-lead",
       taskId: "task-77",
       correlationId: "task-77",
       payload: {},

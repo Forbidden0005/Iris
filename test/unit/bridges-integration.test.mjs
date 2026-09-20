@@ -36,7 +36,7 @@ describe("bridges-integration — getEnabledPlatforms", () => {
 
   it("includes all expected default platforms", () => {
     const platforms = getEnabledPlatforms();
-    for (const p of ["telegram", "whatsapp", "slack", "discord", "crew-chat"]) {
+    for (const p of ["telegram", "whatsapp", "slack", "discord", "iris-chat"]) {
       assert.ok(platforms.includes(p), `Missing platform: ${p}`);
     }
   });
@@ -58,13 +58,13 @@ describe("bridges-integration — shouldSaveToProjectRAG", () => {
   });
 
   it("returns true for known platform with allowed agent", () => {
-    assert.equal(shouldSaveToProjectRAG("telegram", "crew-pm"), true);
-    assert.equal(shouldSaveToProjectRAG("whatsapp", "crew-coder"), true);
+    assert.equal(shouldSaveToProjectRAG("telegram", "iris-pm"), true);
+    assert.equal(shouldSaveToProjectRAG("whatsapp", "iris-coder"), true);
   });
 
   it("returns false for excluded agents on telegram and whatsapp", () => {
-    assert.equal(shouldSaveToProjectRAG("telegram", "crew-loco"), false);
-    assert.equal(shouldSaveToProjectRAG("whatsapp", "crew-loco"), false);
+    assert.equal(shouldSaveToProjectRAG("telegram", "iris-loco"), false);
+    assert.equal(shouldSaveToProjectRAG("whatsapp", "iris-loco"), false);
   });
 
   it("returns false for unknown platform", () => {
@@ -72,9 +72,9 @@ describe("bridges-integration — shouldSaveToProjectRAG", () => {
     assert.equal(shouldSaveToProjectRAG(""), false);
   });
 
-  it("returns true for slack and discord with crew-loco (not excluded there)", () => {
-    assert.equal(shouldSaveToProjectRAG("slack", "crew-loco"), true);
-    assert.equal(shouldSaveToProjectRAG("discord", "crew-loco"), true);
+  it("returns true for slack and discord with iris-loco (not excluded there)", () => {
+    assert.equal(shouldSaveToProjectRAG("slack", "iris-loco"), true);
+    assert.equal(shouldSaveToProjectRAG("discord", "iris-loco"), true);
   });
 });
 
@@ -92,9 +92,9 @@ describe("bridges-integration — registerPlatform", () => {
   });
 
   it("excludeAgents config is respected after registration", () => {
-    registerPlatform("test-platform-b", { excludeAgents: ["crew-loco"] });
-    assert.equal(shouldSaveToProjectRAG("test-platform-b", "crew-loco"), false);
-    assert.equal(shouldSaveToProjectRAG("test-platform-b", "crew-pm"), true);
+    registerPlatform("test-platform-b", { excludeAgents: ["iris-loco"] });
+    assert.equal(shouldSaveToProjectRAG("test-platform-b", "iris-loco"), false);
+    assert.equal(shouldSaveToProjectRAG("test-platform-b", "iris-pm"), true);
   });
 
   it("defaults sourcePrefix to platform name when not provided", () => {
@@ -131,7 +131,7 @@ describe("bridges-integration — saveBridgeMessage skip conditions", () => {
   });
 
   it("returns false for excluded agent", () => {
-    const result = saveBridgeMessage("telegram", "proj-1", "chat-1", "assistant", "hello", "crew-loco");
+    const result = saveBridgeMessage("telegram", "proj-1", "chat-1", "assistant", "hello", "iris-loco");
     assert.equal(result, false);
   });
 
@@ -155,7 +155,7 @@ describe("bridges-integration — saveBridgeMessage skip conditions", () => {
   it("includes extra metadata fields in message", () => {
     // Just verify no throw with metadata
     assert.doesNotThrow(() =>
-      saveBridgeMessage("discord", "proj-discord", "ch-999", "assistant", "resp", "crew-pm", {
+      saveBridgeMessage("discord", "proj-discord", "ch-999", "assistant", "resp", "iris-pm", {
         threadId: "thread-1",
         username: "testuser"
       })
@@ -183,7 +183,7 @@ describe("bridges-integration — saveBridgeMessages", () => {
   it("returns a number for valid batch", () => {
     const result = saveBridgeMessages("telegram", "proj-batch-test", [
       { chatId: "chat-1", role: "user", content: "msg 1" },
-      { chatId: "chat-1", role: "assistant", content: "msg 2", agent: "crew-pm" }
+      { chatId: "chat-1", role: "assistant", content: "msg 2", agent: "iris-pm" }
     ]);
     assert.equal(typeof result, "number");
     assert.ok(result >= 0);
@@ -196,7 +196,7 @@ describe("bridges-integration — saveBridgeMessages", () => {
 
   it("skips messages with excluded agents", () => {
     const result = saveBridgeMessages("telegram", "proj-1", [
-      { chatId: "1", role: "assistant", content: "skip", agent: "crew-loco" }
+      { chatId: "1", role: "assistant", content: "skip", agent: "iris-loco" }
     ]);
     assert.equal(result, 0);
   });
@@ -229,7 +229,7 @@ describe("bridges-integration — detectProjectFromMessage", () => {
 
   it("detects project from dispatch pattern", () => {
     const result = detectProjectFromMessage(
-      "dispatch crew-coder to website project: improve hero",
+      "dispatch iris-coder to website project: improve hero",
       projects
     );
     assert.equal(result, "website");
@@ -266,7 +266,7 @@ describe("bridges-integration — detectProjectFromMessage", () => {
 
   it("is case-insensitive for dispatch pattern", () => {
     const result = detectProjectFromMessage(
-      "DISPATCH crew-coder to WEBSITE project: fix bug",
+      "DISPATCH iris-coder to WEBSITE project: fix bug",
       projects
     );
     assert.equal(result, "website");

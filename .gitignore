@@ -2,9 +2,9 @@
 node_modules/
 
 # User config and state
-.crewswarm/
-crew-cli/.iris/
-.crew/
+.iris/
+iris-cli/.iris/
+.iris/
 .gemini/
 .claude/
 telegram-bridge.json
@@ -35,8 +35,8 @@ test-scratch/
 
 # Internal planning docs and local operating notes
 ROADMAP.md
-crew-cli/ROADMAP.md
-crew-cli/docs/ROADMAP.md
+iris-cli/ROADMAP.md
+iris-cli/docs/ROADMAP.md
 apps/vibe/ROADMAP.md
 docs/ROADMAP-PRIVATE.md
 docs/LAUNCH-PLAN.md
@@ -54,7 +54,7 @@ docs/OPENCLAW-REFERENCES-AUDIT.md
 docs/OPENCLAW-REFS-ONE-BY-ONE.md
 docs/SESSION-SUMMARY.md
 docs/IMPROVEMENT-PLAN.md
-docs/MIGRATION-CREW-IDS.md
+docs/MIGRATION-IRIS-IDS.md
 docs/OPENAI-CHATGPT-VS-API.md
 docs/OPENCODE-INTEGRATION-STATUS.md
 
@@ -63,24 +63,24 @@ polymarket_ai_strat/
 marketing/
 
 # Stray symlinks / duplicates
-crew-cli/gateway-bridge 2.mjs
+iris-cli/gateway-bridge 2.mjs
 
 # Scripts
 scripts/test-openrouter.mjs
-crew-chat.html
+iris-chat.html
 Modelfile
 stinky-favicon.png
 openai-codex-oauth.json
 openai-oauth-vs-api.json
 
 # External CLI repos (cloned locally, not shipped)
-crew-cli/external/
+iris-cli/external/
 
 # Generated agent notes and temporary proof files
-crew-cli/_crew-*
-crew-cli/*-COMPLETE.md
-crew-cli/*-VERIFIED.md
-crew-cli/*-PROOF.md
+iris-cli/_iris-*
+iris-cli/*-COMPLETE.md
+iris-cli/*-VERIFIED.md
+iris-cli/*-PROOF.md
 
 # Common stray files from local experiments
 *.pyc
@@ -152,9 +152,9 @@ token.json
 
 # Stray runtime files
 frontend/memory/
-apps/dashboard/.crew/
+apps/dashboard/.iris/
 apps/dashboard/memory/
-apps/vibe/.crew/
+apps/vibe/.iris/
 apps/vibe/.studio-data/
 apps/vibe/output/
 apps/vibe/codex-output.txt
@@ -163,7 +163,7 @@ apps/vibe/gemini-workspace-test.txt
 apps/vibe/studio-cli-test.txt
 apps/vibe/studio-cursor-test.txt
 apps/vibe/studio-gemini-test.txt
-apps/vibe/test/.crew/
+apps/vibe/test/.iris/
 apps/vibe/test/AUTO-REFRESH-TEST.md
 apps/vibe/test/REFRESH-VERIFICATION.md
 apps/vibe/test/refresh-created-file.md
@@ -182,7 +182,7 @@ Thumbs.db
 *.swo
 
 # API key setup scripts
-crew-cli/setup-keys.sh
+iris-cli/setup-keys.sh
 */setup-keys.sh
 
 # Top-level archive folder only (keep `docs/archive/` trackable for doc redirects)

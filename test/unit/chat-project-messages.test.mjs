@@ -1,8 +1,8 @@
 /**
  * Unit tests for lib/chat/project-messages.mjs
  *
- * Uses CREWSWARM_STATE_DIR + resetPaths() so every test runs against an
- * isolated temp directory and never touches ~/.crewswarm.
+ * Uses IRIS_STATE_DIR + resetPaths() so every test runs against an
+ * isolated temp directory and never touches ~/.iris.
  */
 
 import { describe, it, before, beforeEach, afterEach } from "node:test";
@@ -13,7 +13,7 @@ import os from "node:os";
 
 // Point all path resolution at a per-process temp dir before any module loads.
 const TEST_DIR = path.join(os.tmpdir(), `chat-pm-test-${process.pid}`);
-process.env.CREWSWARM_STATE_DIR = TEST_DIR;
+process.env.IRIS_STATE_DIR = TEST_DIR;
 
 import { resetPaths } from "../../lib/runtime/paths.mjs";
 
@@ -112,13 +112,13 @@ describe("saveProjectMessage", () => {
 
   it("persists optional fields when provided", () => {
     saveProjectMessage("proj-opt", makeMsg({
-      agent: "crew-coder",
+      agent: "iris-coder",
       threadId: "t-1",
       parentId: "p-1",
       metadata: { directChat: true },
     }));
     const msgs = loadProjectMessages("proj-opt");
-    assert.equal(msgs[0].agent, "crew-coder");
+    assert.equal(msgs[0].agent, "iris-coder");
     assert.equal(msgs[0].threadId, "t-1");
     assert.equal(msgs[0].parentId, "p-1");
     assert.deepEqual(msgs[0].metadata, { directChat: true });
@@ -163,11 +163,11 @@ describe("loadProjectMessages", () => {
 
   it("filters by agent", () => {
     const proj = "proj-fagent";
-    saveProjectMessage(proj, makeMsg({ agent: "crew-coder", source: "sub-agent" }));
-    saveProjectMessage(proj, makeMsg({ agent: "crew-qa", source: "sub-agent" }));
-    const msgs = loadProjectMessages(proj, { agent: "crew-coder" });
+    saveProjectMessage(proj, makeMsg({ agent: "iris-coder", source: "sub-agent" }));
+    saveProjectMessage(proj, makeMsg({ agent: "iris-qa", source: "sub-agent" }));
+    const msgs = loadProjectMessages(proj, { agent: "iris-coder" });
     assert.equal(msgs.length, 1);
-    assert.equal(msgs[0].agent, "crew-coder");
+    assert.equal(msgs[0].agent, "iris-coder");
   });
 
   it("filters by since timestamp", () => {
@@ -210,12 +210,12 @@ describe("loadProjectMessages", () => {
 
   it("filters by mentionedAgent", () => {
     const proj = "proj-fmention";
-    saveProjectMessage(proj, makeMsg({ metadata: { mentions: ["crew-qa"] } }));
-    saveProjectMessage(proj, makeMsg({ metadata: { mentions: ["crew-coder"] } }));
+    saveProjectMessage(proj, makeMsg({ metadata: { mentions: ["iris-qa"] } }));
+    saveProjectMessage(proj, makeMsg({ metadata: { mentions: ["iris-coder"] } }));
     saveProjectMessage(proj, makeMsg()); // no mentions
-    const msgs = loadProjectMessages(proj, { mentionedAgent: "crew-qa" });
+    const msgs = loadProjectMessages(proj, { mentionedAgent: "iris-qa" });
     assert.equal(msgs.length, 1);
-    assert.ok(msgs[0].metadata.mentions.includes("crew-qa"));
+    assert.ok(msgs[0].metadata.mentions.includes("iris-qa"));
   });
 
   it("applies limit from end of list", () => {
@@ -270,29 +270,29 @@ describe("formatProjectMessages", () => {
     const proj = "proj-fmtagt";
     saveProjectMessage(proj, makeMsg({
       source: "sub-agent",
-      agent: "crew-qa",
+      agent: "iris-qa",
       content: "qa output",
     }));
     const formatted = formatProjectMessages(proj);
-    assert.ok(formatted[0].content.startsWith("[crew-qa]"));
+    assert.ok(formatted[0].content.startsWith("[iris-qa]"));
   });
 
   it("does not prepend agent name when includeAgent is false", () => {
     const proj = "proj-fmtnoagt";
     saveProjectMessage(proj, makeMsg({
       source: "sub-agent",
-      agent: "crew-qa",
+      agent: "iris-qa",
       content: "qa output",
     }));
     const formatted = formatProjectMessages(proj, { includeAgent: false });
-    assert.ok(!formatted[0].content.startsWith("[crew-qa]"));
+    assert.ok(!formatted[0].content.startsWith("[iris-qa]"));
   });
 
   it("does not prepend agent name for non-sub-agent sources", () => {
     const proj = "proj-fmtdash";
-    saveProjectMessage(proj, makeMsg({ source: "dashboard", agent: "crew-lead", content: "from lead" }));
+    saveProjectMessage(proj, makeMsg({ source: "dashboard", agent: "iris-lead", content: "from lead" }));
     const formatted = formatProjectMessages(proj);
-    assert.ok(!formatted[0].content.startsWith("[crew-lead]"));
+    assert.ok(!formatted[0].content.startsWith("[iris-lead]"));
   });
 
   it("respects limit option", () => {
@@ -344,11 +344,11 @@ describe("getProjectMessageStats", () => {
 
   it("groups messages by agent in byAgent", () => {
     const proj = "proj-stats-agent";
-    saveProjectMessage(proj, makeMsg({ agent: "crew-qa", source: "sub-agent" }));
-    saveProjectMessage(proj, makeMsg({ agent: "crew-coder", source: "sub-agent" }));
+    saveProjectMessage(proj, makeMsg({ agent: "iris-qa", source: "sub-agent" }));
+    saveProjectMessage(proj, makeMsg({ agent: "iris-coder", source: "sub-agent" }));
     const stats = getProjectMessageStats(proj);
-    assert.equal(stats.byAgent["crew-qa"], 1);
-    assert.equal(stats.byAgent["crew-coder"], 1);
+    assert.equal(stats.byAgent["iris-qa"], 1);
+    assert.equal(stats.byAgent["iris-coder"], 1);
   });
 
   it("sets oldest and newest message timestamps", () => {
@@ -661,9 +661,9 @@ describe("exportProjectMessages", () => {
 
   it("txt format includes agent label when present", () => {
     const proj = "proj-export-txt-agent";
-    saveProjectMessage(proj, makeMsg({ agent: "crew-qa", content: "qa says hi" }));
+    saveProjectMessage(proj, makeMsg({ agent: "iris-qa", content: "qa says hi" }));
     const out = exportProjectMessages(proj, "txt");
-    assert.ok(out.includes("[crew-qa]"));
+    assert.ok(out.includes("[iris-qa]"));
   });
 
   it("returns empty string for unrecognised format", () => {

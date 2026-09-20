@@ -34,17 +34,17 @@ describe("TaskManager", () => {
 
   describe("registerTask", () => {
     it("adds a task to activeTasks", () => {
-      tm.registerTask("t1", { agent: "crew-coder", type: "build" });
+      tm.registerTask("t1", { agent: "iris-coder", type: "build" });
       const tasks = tm.getActiveTasks();
       assert.equal(tasks.length, 1);
       assert.equal(tasks[0].id, "t1");
-      assert.equal(tasks[0].agent, "crew-coder");
+      assert.equal(tasks[0].agent, "iris-coder");
       assert.equal(tasks[0].status, "running");
     });
 
     it("sets startTime automatically", () => {
       const before = Date.now();
-      tm.registerTask("t1", { agent: "crew-pm" });
+      tm.registerTask("t1", { agent: "iris-pm" });
       const task = tm.getActiveTasks()[0];
       assert.ok(task.startTime >= before);
       assert.ok(task.startTime <= Date.now());
@@ -57,7 +57,7 @@ describe("TaskManager", () => {
     it("aborts controller and removes the task", () => {
       let aborted = false;
       const controller = { abort() { aborted = true; } };
-      tm.registerTask("t1", { agent: "crew-coder", controller });
+      tm.registerTask("t1", { agent: "iris-coder", controller });
 
       const result = tm.stopTask("t1");
       assert.equal(result, true);
@@ -66,7 +66,7 @@ describe("TaskManager", () => {
     });
 
     it("works when task has no controller", () => {
-      tm.registerTask("t1", { agent: "crew-coder" });
+      tm.registerTask("t1", { agent: "iris-coder" });
       const result = tm.stopTask("t1");
       assert.equal(result, true);
       assert.equal(tm.getActiveTasks().length, 0);
@@ -81,7 +81,7 @@ describe("TaskManager", () => {
 
   describe("completeTask", () => {
     it("removes task from activeTasks", () => {
-      tm.registerTask("t1", { agent: "crew-coder" });
+      tm.registerTask("t1", { agent: "iris-coder" });
       tm.completeTask("t1");
       assert.equal(tm.getActiveTasks().length, 0);
     });
@@ -96,7 +96,7 @@ describe("TaskManager", () => {
 
   describe("failTask", () => {
     it("removes task from activeTasks", () => {
-      tm.registerTask("t1", { agent: "crew-coder" });
+      tm.registerTask("t1", { agent: "iris-coder" });
       tm.failTask("t1", "timeout");
       assert.equal(tm.getActiveTasks().length, 0);
     });
@@ -115,8 +115,8 @@ describe("TaskManager", () => {
     });
 
     it("returns all active tasks with their IDs", () => {
-      tm.registerTask("t1", { agent: "crew-coder" });
-      tm.registerTask("t2", { agent: "crew-pm" });
+      tm.registerTask("t1", { agent: "iris-coder" });
+      tm.registerTask("t2", { agent: "iris-pm" });
       const tasks = tm.getActiveTasks();
       assert.equal(tasks.length, 2);
       const ids = tasks.map((t) => t.id);
@@ -129,18 +129,18 @@ describe("TaskManager", () => {
 
   describe("isAgentBusy", () => {
     it("returns true when agent has a running task", () => {
-      tm.registerTask("t1", { agent: "crew-coder" });
-      assert.equal(tm.isAgentBusy("crew-coder"), true);
+      tm.registerTask("t1", { agent: "iris-coder" });
+      assert.equal(tm.isAgentBusy("iris-coder"), true);
     });
 
     it("returns false when agent has no tasks", () => {
-      assert.equal(tm.isAgentBusy("crew-coder"), false);
+      assert.equal(tm.isAgentBusy("iris-coder"), false);
     });
 
     it("returns false after agent task is stopped", () => {
-      tm.registerTask("t1", { agent: "crew-coder" });
+      tm.registerTask("t1", { agent: "iris-coder" });
       tm.stopTask("t1");
-      assert.equal(tm.isAgentBusy("crew-coder"), false);
+      assert.equal(tm.isAgentBusy("iris-coder"), false);
     });
   });
 
@@ -151,9 +151,9 @@ describe("TaskManager", () => {
       let abortCount = 0;
       const mkController = () => ({ abort() { abortCount++; } });
 
-      tm.registerTask("t1", { agent: "crew-coder", controller: mkController() });
-      tm.registerTask("t2", { agent: "crew-pm", controller: mkController() });
-      tm.registerTask("t3", { agent: "crew-qa", controller: mkController() });
+      tm.registerTask("t1", { agent: "iris-coder", controller: mkController() });
+      tm.registerTask("t2", { agent: "iris-pm", controller: mkController() });
+      tm.registerTask("t3", { agent: "iris-qa", controller: mkController() });
 
       tm.stopAll();
       assert.equal(tm.getActiveTasks().length, 0);
@@ -170,15 +170,15 @@ describe("TaskManager", () => {
 
   describe("stopAgent", () => {
     it("stops only tasks for the specified agent", () => {
-      tm.registerTask("t1", { agent: "crew-coder" });
-      tm.registerTask("t2", { agent: "crew-pm" });
-      tm.registerTask("t3", { agent: "crew-coder" });
+      tm.registerTask("t1", { agent: "iris-coder" });
+      tm.registerTask("t2", { agent: "iris-pm" });
+      tm.registerTask("t3", { agent: "iris-coder" });
 
-      tm.stopAgent("crew-coder");
+      tm.stopAgent("iris-coder");
 
       const remaining = tm.getActiveTasks();
       assert.equal(remaining.length, 1);
-      assert.equal(remaining[0].agent, "crew-pm");
+      assert.equal(remaining[0].agent, "iris-pm");
     });
   });
 
@@ -188,12 +188,12 @@ describe("TaskManager", () => {
     it("calls listener on task registration", () => {
       let called = false;
       tm.subscribe(() => { called = true; });
-      tm.registerTask("t1", { agent: "crew-coder" });
+      tm.registerTask("t1", { agent: "iris-coder" });
       assert.equal(called, true);
     });
 
     it("calls listener on task stop", () => {
-      tm.registerTask("t1", { agent: "crew-coder" });
+      tm.registerTask("t1", { agent: "iris-coder" });
       let callCount = 0;
       tm.subscribe(() => { callCount++; });
       tm.stopTask("t1");
@@ -203,11 +203,11 @@ describe("TaskManager", () => {
     it("returns unsubscribe function", () => {
       let callCount = 0;
       const unsub = tm.subscribe(() => { callCount++; });
-      tm.registerTask("t1", { agent: "crew-coder" });
+      tm.registerTask("t1", { agent: "iris-coder" });
       assert.equal(callCount, 1);
 
       unsub();
-      tm.registerTask("t2", { agent: "crew-pm" });
+      tm.registerTask("t2", { agent: "iris-pm" });
       assert.equal(callCount, 1, "should not be called after unsubscribe");
     });
 
@@ -216,7 +216,7 @@ describe("TaskManager", () => {
         throw new Error("listener boom");
       });
       // Should not throw
-      tm.registerTask("t1", { agent: "crew-coder" });
+      tm.registerTask("t1", { agent: "iris-coder" });
       assert.equal(tm.getActiveTasks().length, 1);
     });
   });

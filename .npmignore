@@ -12,8 +12,8 @@ apps/vibe/dist/**/*.gz
 # Test files
 test/
 tests/
-crew-cli/tests/
-crew-cli/test/
+iris-cli/tests/
+iris-cli/test/
 **/*.test.*
 **/*.spec.*
 
@@ -30,8 +30,8 @@ reports/
 .env
 .env.*
 !.env.example
-apps/vibe/.crew/
-apps/vibe/.crewswarm/
+apps/vibe/.iris/
+apps/vibe/.iris/
 apps/vibe/.studio-data/
 
 # Large assets

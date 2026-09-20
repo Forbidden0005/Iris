@@ -5,7 +5,7 @@ import { DOMAINS, detectDomain, buildDomainContext, logDomainRouting } from '../
 describe('DOMAINS', () => {
   it('exports an object with known domain keys', () => {
     assert.ok(typeof DOMAINS === 'object');
-    assert.ok('crew-cli' in DOMAINS);
+    assert.ok('iris-cli' in DOMAINS);
     assert.ok('frontend' in DOMAINS);
     assert.ok('core' in DOMAINS);
     assert.ok('integrations' in DOMAINS);
@@ -23,23 +23,23 @@ describe('DOMAINS', () => {
 });
 
 describe('detectDomain', () => {
-  it('detects crew-cli domain from CLI keywords', () => {
-    const result = detectDomain('Add new CLI command for crew exec with pipeline support');
-    assert.equal(result.domain, 'crew-cli');
-    assert.equal(result.pmAgent, 'crew-pm-cli');
+  it('detects iris-cli domain from CLI keywords', () => {
+    const result = detectDomain('Add new CLI command for iris exec with pipeline support');
+    assert.equal(result.domain, 'iris-cli');
+    assert.equal(result.pmAgent, 'iris-pm-cli');
     assert.ok(result.confidence > 0);
   });
 
   it('detects frontend domain from dashboard keywords', () => {
     const result = detectDomain('Fix the dashboard UI tab navigation and CSS styles');
     assert.equal(result.domain, 'frontend');
-    assert.equal(result.pmAgent, 'crew-pm-frontend');
+    assert.equal(result.pmAgent, 'iris-pm-frontend');
   });
 
   it('detects core domain from orchestration keywords', () => {
-    const result = detectDomain('Fix gateway-bridge WebSocket reconnect in crew-lead dispatch');
+    const result = detectDomain('Fix gateway-bridge WebSocket reconnect in iris-lead dispatch');
     assert.equal(result.domain, 'core');
-    assert.equal(result.pmAgent, 'crew-pm-core');
+    assert.equal(result.pmAgent, 'iris-pm-core');
   });
 
   it('detects integrations domain from Telegram keyword', () => {
@@ -55,19 +55,19 @@ describe('detectDomain', () => {
   it('returns null domain with default PM when no strong match', () => {
     const result = detectDomain('fix a typo');
     assert.equal(result.domain, null);
-    assert.equal(result.pmAgent, 'crew-pm');
+    assert.equal(result.pmAgent, 'iris-pm');
     assert.equal(result.confidence, 0);
   });
 
   it('returns null domain when score is below threshold', () => {
     // Single very short keyword match should score < 2
     const result = detectDomain('CLI');
-    // 'CLI' scores 1 for crew-cli; threshold is 2, so domain should be null
+    // 'CLI' scores 1 for iris-cli; threshold is 2, so domain should be null
     assert.equal(result.domain, null);
   });
 
   it('confidence is between 0 and 1', () => {
-    const result = detectDomain('Add new crew-cli command with TypeScript executor support');
+    const result = detectDomain('Add new iris-cli command with TypeScript executor support');
     if (result.domain !== null) {
       assert.ok(result.confidence >= 0 && result.confidence <= 1);
     }
@@ -96,9 +96,9 @@ describe('buildDomainContext', () => {
   });
 
   it('returns a non-empty string for valid domain', () => {
-    const ctx = buildDomainContext('crew-cli', 'add executor command');
+    const ctx = buildDomainContext('iris-cli', 'add executor command');
     assert.ok(ctx.length > 0);
-    assert.ok(ctx.includes('crew-cli'));
+    assert.ok(ctx.includes('iris-cli'));
   });
 
   it('includes domain description in context', () => {
@@ -120,12 +120,12 @@ describe('buildDomainContext', () => {
 
 describe('logDomainRouting', () => {
   it('logs without throwing for matched domain', () => {
-    const detection = { domain: 'crew-cli', pmAgent: 'crew-pm-cli', confidence: 0.75 };
+    const detection = { domain: 'iris-cli', pmAgent: 'iris-pm-cli', confidence: 0.75 };
     assert.doesNotThrow(() => logDomainRouting('fix CLI executor', detection));
   });
 
   it('logs without throwing for unmatched domain', () => {
-    const detection = { domain: null, pmAgent: 'crew-pm', confidence: 0 };
+    const detection = { domain: null, pmAgent: 'iris-pm', confidence: 0 };
     assert.doesNotThrow(() => logDomainRouting('general task', detection));
   });
 });

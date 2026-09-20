@@ -9,12 +9,12 @@ describe("engine registry", () => {
   it("matches agent.engine='codex' via selectEngine", async () => {
     const { initEngineRegistry, selectEngine } = await loadRegistry();
     initEngineRegistry({
-      loadAgentList: () => [{ id: "crew-fixer", engine: "codex" }],
+      loadAgentList: () => [{ id: "iris-fixer", engine: "codex" }],
       engineRunners: { codex: async () => "ok" },
     });
 
     const selected = selectEngine(
-      { agentId: "crew-fixer", agent: "crew-fixer", engine: "codex", prompt: "fix the broken build script" },
+      { agentId: "iris-fixer", agent: "iris-fixer", engine: "codex", prompt: "fix the broken build script" },
       "command.run_task",
     );
 

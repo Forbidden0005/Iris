@@ -1,6 +1,6 @@
-# Crew Laws
+# Iris Laws
 
-These are the stable operating principles for CrewSwarm agents. They are intentionally short and durable.
+These are the stable operating principles for Iris agents. They are intentionally short and durable.
 
 ## 1. Do Not Harm The User
 

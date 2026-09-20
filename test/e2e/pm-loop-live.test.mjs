@@ -1,7 +1,7 @@
 /**
  * E2E tests for PM loop execution against a live project.
  *
- * Prerequisites: npm run restart-all (crew-lead :5010, dashboard :4319, RT bus :18889)
+ * Prerequisites: npm run restart-all (iris-lead :5010, dashboard :4319, RT bus :18889)
  *
  * What is tested:
  *   1. Dashboard API can create a test project with a 1-item roadmap
@@ -13,7 +13,7 @@
  *   7. PM loop status endpoint reflects running/stopped state
  *   8. Cleanup: project dir + PID file are removed after stop
  *
- * SKIP: if crew-lead is not running on :5010.
+ * SKIP: if iris-lead is not running on :5010.
  */
 import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
@@ -27,13 +27,13 @@ import { logTestEvidence, logFileVerification } from "../helpers/test-log.mjs";
 
 const DASH_BASE = "http://127.0.0.1:4319";
 const CL_BASE   = "http://127.0.0.1:5010";
-// Dashboard resolves CREWSWARM_DIR to the project root (not ~/.crewswarm).
+// Dashboard resolves IRIS_DIR to the project root (not ~/.iris).
 // PID and stop files live under <project-root>/orchestrator-logs/.
 const PROJECT_ROOT = path.resolve(new URL("../..", import.meta.url).pathname);
 const LOGS_DIR = path.join(PROJECT_ROOT, "orchestrator-logs");
 
-// Auth token for crew-lead
-const CFG_DIR = path.join(os.homedir(), ".crewswarm");
+// Auth token for iris-lead
+const CFG_DIR = path.join(os.homedir(), ".iris");
 function loadAuthToken() {
   try {
     const cfg = JSON.parse(fs.readFileSync(path.join(CFG_DIR, "config.json"), "utf8"));
@@ -60,7 +60,7 @@ const dashReachable = await checkServiceUp(`${DASH_BASE}/api/health`);
 const crewLeadReachable = await checkServiceUp(`${CL_BASE}/health`);
 
 const SKIP_FULL = (!dashReachable || !crewLeadReachable)
-  ? "Requires dashboard (:4319) and crew-lead (:5010) — run npm run restart-all"
+  ? "Requires dashboard (:4319) and iris-lead (:5010) — run npm run restart-all"
   : false;
 
 // Temp dir for test project
@@ -74,7 +74,7 @@ describe("PM loop E2E", { concurrency: 1, timeout: 120000 }, () => {
   describe("project creation via dashboard API", { skip: SKIP_FULL }, () => {
     it("POST /api/projects creates a test project with ROADMAP.md", async () => {
       const testName = "POST /api/projects creates a test project with ROADMAP.md";
-      testDir = await mkdtemp(path.join(tmpdir(), "crewswarm-pm-test-"));
+      testDir = await mkdtemp(path.join(tmpdir(), "iris-pm-test-"));
       const { status, body } = await apiPost(DASH_BASE, "/api/projects", {
         name: "PM Loop E2E Test",
         description: "Automated test project — safe to delete",
@@ -136,7 +136,7 @@ describe("PM loop E2E", { concurrency: 1, timeout: 120000 }, () => {
         pmOptions: {
           selfExtend: true,
           extendEveryN: 1,
-          coderAgent: "crew-copywriter", // fast agent for testing
+          coderAgent: "iris-copywriter", // fast agent for testing
           maxItems: 3,
           taskTimeoutMin: 1,
         },
@@ -192,7 +192,7 @@ describe("PM loop E2E", { concurrency: 1, timeout: 120000 }, () => {
         dryRun: true,
         projectId: testProjectId,
         pmOptions: {
-          coderAgent: "crew-mega", // override from default crew-coder
+          coderAgent: "iris-mega", // override from default iris-coder
           maxItems: 1,
         },
       });

@@ -3,15 +3,15 @@ import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 
-const CREW_LEAD_URL = process.env.CREW_LEAD_URL || "http://127.0.0.1:5010";
-const CFG = path.join(os.homedir(), ".crewswarm", "crewswarm.json");
-const timeoutMs = Number(process.env.CREWSWARM_SMOKE_TIMEOUT_MS || "120000");
-const pollMs = Number(process.env.CREWSWARM_SMOKE_POLL_MS || "1500");
+const IRIS_LEAD_URL = process.env.IRIS_LEAD_URL || "http://127.0.0.1:5010";
+const CFG = path.join(os.homedir(), ".iris", "iris.json");
+const timeoutMs = Number(process.env.IRIS_SMOKE_TIMEOUT_MS || "120000");
+const pollMs = Number(process.env.IRIS_SMOKE_POLL_MS || "1500");
 
 function getToken() {
   try {
     const c = JSON.parse(fs.readFileSync(CFG, "utf8"));
-    return c.rt?.authToken || c.env?.CREWSWARM_RT_AUTH_TOKEN || "";
+    return c.rt?.authToken || c.env?.IRIS_RT_AUTH_TOKEN || "";
   } catch {
     return "";
   }
@@ -19,9 +19,9 @@ function getToken() {
 
 async function dispatch(agent, task) {
   const token = getToken();
-  if (!token) throw new Error("Missing RT token in ~/.crewswarm/crewswarm.json (rt.authToken)");
+  if (!token) throw new Error("Missing RT token in ~/.iris/iris.json (rt.authToken)");
 
-  const res = await fetch(`${CREW_LEAD_URL}/api/dispatch`, {
+  const res = await fetch(`${IRIS_LEAD_URL}/api/dispatch`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -40,7 +40,7 @@ async function dispatch(agent, task) {
 }
 
 async function getHealth() {
-  const res = await fetch(`${CREW_LEAD_URL}/health`);
+  const res = await fetch(`${IRIS_LEAD_URL}/health`);
   if (!res.ok) {
     throw new Error(`health ${res.status}`);
   }
@@ -49,8 +49,8 @@ async function getHealth() {
 
 async function chat(message, sessionId) {
   const token = getToken();
-  if (!token) throw new Error("Missing RT token in ~/.crewswarm/crewswarm.json (rt.authToken)");
-  const res = await fetch(`${CREW_LEAD_URL}/chat`, {
+  if (!token) throw new Error("Missing RT token in ~/.iris/iris.json (rt.authToken)");
+  const res = await fetch(`${IRIS_LEAD_URL}/chat`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -67,7 +67,7 @@ async function chat(message, sessionId) {
 
 async function getStatus(taskId) {
   const token = getToken();
-  const res = await fetch(`${CREW_LEAD_URL}/api/status/${taskId}`, {
+  const res = await fetch(`${IRIS_LEAD_URL}/api/status/${taskId}`, {
     headers: { "Authorization": `Bearer ${token}` },
   });
   if (!res.ok) throw new Error(`status ${res.status}`);
@@ -125,23 +125,23 @@ async function run() {
     `Do not add extra text to the file.`,
   ].join("\n");
 
-  console.log("[2/4] dispatch crew-coder...");
-  const coderTaskId = await dispatch("crew-coder", coderTask);
-  await waitDone(coderTaskId, "crew-coder smoke task");
+  console.log("[2/4] dispatch iris-coder...");
+  const coderTaskId = await dispatch("iris-coder", coderTask);
+  await waitDone(coderTaskId, "iris-coder smoke task");
   assert(fs.existsSync(outFile), `expected output file missing: ${outFile}`);
   const fileBody = fs.readFileSync(outFile, "utf8").trim();
   assert(fileBody === marker, `unexpected file content: ${fileBody}`);
-  console.log(`[ok] crew-coder done (${coderTaskId})`);
+  console.log(`[ok] iris-coder done (${coderTaskId})`);
 
   const mainMarker = `MAIN_OK_${runId}`;
   const mainTask = `Reply with exactly: ${mainMarker}`;
 
-  console.log("[3/4] dispatch crew-main...");
-  const mainTaskId = await dispatch("crew-main", mainTask);
-  const mainResult = await waitDone(mainTaskId, "crew-main smoke task");
+  console.log("[3/4] dispatch iris-main...");
+  const mainTaskId = await dispatch("iris-main", mainTask);
+  const mainResult = await waitDone(mainTaskId, "iris-main smoke task");
   const text = String(mainResult?.result || "");
-  assert(text.includes(mainMarker), `crew-main result missing marker (${mainMarker})`);
-  console.log(`[ok] crew-main done (${mainTaskId})`);
+  assert(text.includes(mainMarker), `iris-main result missing marker (${mainMarker})`);
+  console.log(`[ok] iris-main done (${mainTaskId})`);
 
   console.log("[smoke-dispatch] PASS");
 }

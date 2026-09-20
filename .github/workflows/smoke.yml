@@ -1,9 +1,9 @@
-# crewswarm CI
+# iris CI
 # Job 1 (static): syntax + build + dashboard check - no secrets, always runs, ~2 min
 # Job 2 (integration): full stack smoke with LLM dispatch - needs GROQ_API_KEY, push only
 #
 # Secrets required for integration job:
-#   CREWSWARM_RT_TOKEN  - any random string for the RT bus auth token
+#   IRIS_RT_TOKEN  - any random string for the RT bus auth token
 #   GROQ_API_KEY        - Groq API key (free at console.groq.com/keys)
 
 name: Smoke
@@ -41,7 +41,7 @@ jobs:
 
       - name: Syntax check main entrypoints
         run: |
-          node --check crew-lead.mjs
+          node --check iris-lead.mjs
           node --check gateway-bridge.mjs
           node --check scripts/dashboard.mjs
 
@@ -53,11 +53,11 @@ jobs:
 
       - name: Bootstrap minimal CI config
         run: |
-          mkdir -p ~/.crewswarm
-          echo '{"rt":{"authToken":"ci-static-token"}}' > ~/.crewswarm/crewswarm.json
-          echo '{"agents":[],"providers":{}}' > ~/.crewswarm/crewswarm.json
-          echo '[]' > ~/.crewswarm/cmd-allowlist.json
-          echo '{}' > ~/.crewswarm/agent-prompts.json
+          mkdir -p ~/.iris
+          echo '{"rt":{"authToken":"ci-static-token"}}' > ~/.iris/iris.json
+          echo '{"agents":[],"providers":{}}' > ~/.iris/iris.json
+          echo '[]' > ~/.iris/cmd-allowlist.json
+          echo '{}' > ~/.iris/agent-prompts.json
 
       - name: Health check static mode
         run: node scripts/health-check.mjs --no-services
@@ -87,61 +87,61 @@ jobs:
 
       - name: Bootstrap CI config
         env:
-          CREWSWARM_RT_TOKEN: ${{ secrets.CREWSWARM_RT_TOKEN }}
+          IRIS_RT_TOKEN: ${{ secrets.IRIS_RT_TOKEN }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: |
-          mkdir -p ~/.crewswarm
-          TOKEN=$(echo -n "${CREWSWARM_RT_TOKEN:-ci-test-token}" | tr -d ' ')
+          mkdir -p ~/.iris
+          TOKEN=$(echo -n "${IRIS_RT_TOKEN:-ci-test-token}" | tr -d ' ')
           node -e "
             const fs = require('fs');
             const path = require('path');
             const groqKey = (process.env.GROQ_API_KEY || '').trim();
-            const token = (process.env.CREWSWARM_RT_TOKEN || 'ci-test-token').trim();
+            const token = (process.env.IRIS_RT_TOKEN || 'ci-test-token').trim();
             const cfg = {
               rt: { authToken: token },
               agents: [
-                { id: 'crew-lead',        model: 'groq/llama-3.3-70b-versatile' },
-                { id: 'crew-main',        model: 'groq/llama-3.3-70b-versatile' },
-                { id: 'crew-coder',       model: 'groq/llama-3.3-70b-versatile' },
-                { id: 'crew-qa',          model: 'groq/llama-3.3-70b-versatile' },
-                { id: 'crew-fixer',       model: 'groq/llama-3.3-70b-versatile' },
-                { id: 'crew-pm',          model: 'groq/llama-3.3-70b-versatile' },
-                { id: 'crew-orchestrator',model: 'groq/llama-3.3-70b-versatile' },
-                { id: 'crew-judge',       model: 'groq/llama-3.3-70b-versatile' }
+                { id: 'iris-lead',        model: 'groq/llama-3.3-70b-versatile' },
+                { id: 'iris-main',        model: 'groq/llama-3.3-70b-versatile' },
+                { id: 'iris-coder',       model: 'groq/llama-3.3-70b-versatile' },
+                { id: 'iris-qa',          model: 'groq/llama-3.3-70b-versatile' },
+                { id: 'iris-fixer',       model: 'groq/llama-3.3-70b-versatile' },
+                { id: 'iris-pm',          model: 'groq/llama-3.3-70b-versatile' },
+                { id: 'iris-orchestrator',model: 'groq/llama-3.3-70b-versatile' },
+                { id: 'iris-judge',       model: 'groq/llama-3.3-70b-versatile' }
               ],
               providers: { groq: { apiKey: groqKey, baseUrl: 'https://api.groq.com/openai/v1' } }
             };
-            fs.writeFileSync(path.join(process.env.HOME, '.crewswarm', 'crewswarm.json'), JSON.stringify(cfg, null, 2));
+            fs.writeFileSync(path.join(process.env.HOME, '.iris', 'iris.json'), JSON.stringify(cfg, null, 2));
           "
-          echo '["npm *","node *","npx *"]' > ~/.crewswarm/cmd-allowlist.json
-          echo '{}' > ~/.crewswarm/agent-prompts.json
+          echo '["npm *","node *","npx *"]' > ~/.iris/cmd-allowlist.json
+          echo '{}' > ~/.iris/agent-prompts.json
 
       - name: Start stack
         env:
-          CREWSWARM_OPENCODE_ENABLED: "0"
-          CREWSWARM_RT_URL: "ws://127.0.0.1:18889"
+          IRIS_OPENCODE_ENABLED: "0"
+          IRIS_RT_URL: "ws://127.0.0.1:18889"
         run: |
-          export CREWSWARM_RT_AUTH_TOKEN=$(node -e "const c=JSON.parse(require('fs').readFileSync(process.env.HOME+'/.crewswarm/crewswarm.json')); console.log((c.rt&&c.rt.authToken||'').trim())")
-          export CREWSWARM_RT_REQUIRE_TOKEN=1
-          node scripts/opencrew-rt-daemon.mjs &
+          export IRIS_RT_AUTH_TOKEN=$(node -e "const c=JSON.parse(require('fs').readFileSync(process.env.HOME+'/.iris/iris.json')); console.log((c.rt&&c.rt.authToken||'').trim())")
+          export IRIS_RT_REQUIRE_TOKEN=1
+          node scripts/openiris-rt-daemon.mjs &
           sleep 3
-          node crew-lead.mjs >> /tmp/crew-lead.log 2>&1 &
+          node iris-lead.mjs >> /tmp/iris-lead.log 2>&1 &
           sleep 2
           node scripts/dashboard.mjs >> /tmp/dashboard.log 2>&1 &
           sleep 2
-          node scripts/start-crew.mjs >> /tmp/start-crew.log 2>&1
+          node scripts/start-iris.mjs >> /tmp/start-iris.log 2>&1
           sleep 30
 
-      - name: Wait for crew-lead
+      - name: Wait for iris-lead
         run: |
           for i in $(seq 1 30); do
             if curl -sf http://127.0.0.1:5010/health >/dev/null; then
-              echo "crew-lead healthy after ${i}s"
+              echo "iris-lead healthy after ${i}s"
               break
             fi
             if [ "$i" -eq 30 ]; then
-              echo "ERROR: crew-lead never became healthy"
-              cat /tmp/crew-lead.log || true
+              echo "ERROR: iris-lead never became healthy"
+              cat /tmp/iris-lead.log || true
               exit 1
             fi
             sleep 1
@@ -152,14 +152,14 @@ jobs:
           for i in $(seq 1 60); do
             s=$(curl -s http://127.0.0.1:18889/status || true)
             [ $((i % 10)) -eq 0 ] && echo "RT status (attempt $i): $s"
-            if echo "$s" | grep -q '"crew-coder"' && echo "$s" | grep -q '"crew-main"'; then
+            if echo "$s" | grep -q '"iris-coder"' && echo "$s" | grep -q '"iris-main"'; then
               echo "Agents connected: $s"
               break
             fi
             if [ "$i" -eq 60 ]; then
               echo "ERROR: agents did not connect to RT"
               echo "Final RT status: $(curl -s http://127.0.0.1:18889/status || true)"
-              for f in /tmp/bridge-crew-*.log /tmp/opencrew-rt-daemon.log /tmp/crew-lead.log; do
+              for f in /tmp/bridge-iris-*.log /tmp/openiris-rt-daemon.log /tmp/iris-lead.log; do
                 [ -f "$f" ] && echo "=== $f ===" && tail -100 "$f"
               done
               exit 1
@@ -169,12 +169,12 @@ jobs:
 
       - name: Run smoke tests
         env:
-          CREW_LEAD_URL: "http://127.0.0.1:5010"
-          CREWSWARM_SMOKE_TIMEOUT_MS: "180000"
+          IRIS_LEAD_URL: "http://127.0.0.1:5010"
+          IRIS_SMOKE_TIMEOUT_MS: "180000"
         run: |
           npm run smoke || {
             echo "--- Bridge logs (failure) ---"
-            for f in /tmp/bridge-crew-*.log /tmp/opencrew-rt-daemon.log /tmp/crew-lead.log; do
+            for f in /tmp/bridge-iris-*.log /tmp/openiris-rt-daemon.log /tmp/iris-lead.log; do
               [ -f "$f" ] && echo "=== $f ===" && tail -200 "$f"
             done
             exit 1
@@ -182,14 +182,14 @@ jobs:
 
       - name: Run e2e dispatch tests
         env:
-          CREW_LEAD_URL: "http://127.0.0.1:5010"
-          CREWSWARM_SMOKE_TIMEOUT_MS: "180000"
+          IRIS_LEAD_URL: "http://127.0.0.1:5010"
+          IRIS_SMOKE_TIMEOUT_MS: "180000"
         run: npm run test:e2e:dispatch || true
 
       - name: Run e2e pipeline tests
         env:
-          CREW_LEAD_URL: "http://127.0.0.1:5010"
-          CREWSWARM_SMOKE_TIMEOUT_MS: "180000"
+          IRIS_LEAD_URL: "http://127.0.0.1:5010"
+          IRIS_SMOKE_TIMEOUT_MS: "180000"
         run: npm run test:e2e:pipeline || true
 
       - name: Run health check full

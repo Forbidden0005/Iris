@@ -1,17 +1,17 @@
 #!/usr/bin/env node
 /**
- * telegram-bridge.mjs — Connects Telegram to the crewswarm RT bus.
+ * telegram-bridge.mjs — Connects Telegram to the iris RT bus.
  *
  * What it does:
  *   1. Long-polls the Telegram Bot API for incoming messages
- *   2. Connects to the RT bus (18889) as "crew-telegram"
- *   3. Forwards user messages → crew-main via the RT bus
- *   4. Listens for crew-main responses → sends them back to Telegram
+ *   2. Connects to the RT bus (18889) as "iris-telegram"
+ *   3. Forwards user messages → iris-main via the RT bus
+ *   4. Listens for iris-main responses → sends them back to Telegram
  *
  * Usage:
  *   TELEGRAM_BOT_TOKEN=123:abc node telegram-bridge.mjs
  *
- * Or set in ~/.crewswarm/crewswarm.json env block:
+ * Or set in ~/.iris/iris.json env block:
  *   "TELEGRAM_BOT_TOKEN": "123:abc..."
  */
 
@@ -24,7 +24,7 @@ import { trackContact, getContact, updatePreferences, saveMessage as saveContact
 import { extractPreferences, shouldExtract, buildPreferencePrompt } from "./lib/preferences/extractor.mjs";
 import { analyzeImage, transcribeAudio, downloadToBuffer, hasVisionProvider, hasAudioProvider } from "./lib/integrations/multimodal.mjs";
 import { textToSpeech, hasTTSProvider, chunkTextForTTS, getVoiceForAgent } from "./lib/integrations/tts.mjs";
-import { execCrewLeadTools } from "./lib/crew-lead/tools.mjs";
+import { execCrewLeadTools } from "./lib/iris-lead/tools.mjs";
 import { buildToolInstructions, hasEngineConfigured, getToolPermissions } from "./lib/agents/tool-instructions.mjs";
 import { getPlatformFormatting } from "./lib/agents/platform-formatting.mjs";
 import { saveBridgeMessage, detectProjectFromMessage } from "./lib/bridges/integration.mjs";
@@ -35,15 +35,15 @@ import { acquireStartupLock } from "./lib/runtime/startup-guard.mjs";
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
-const CREW_CFG_PATH      = join(homedir(), ".crewswarm", "crewswarm.json");
+const IRIS_CFG_PATH      = join(homedir(), ".iris", "iris.json");
 const OPENCLAW_CFG       = join(homedir(), ".openclaw", "openclaw.json");   // legacy fallback
-const TG_BRIDGE_CFG_PATH = join(homedir(), ".crewswarm", "telegram-bridge.json");
-const LOG_PATH        = join(homedir(), ".crewswarm", "logs", "telegram-bridge.jsonl");
-const PID_PATH        = join(homedir(), ".crewswarm", "logs", "telegram-bridge.pid");
+const TG_BRIDGE_CFG_PATH = join(homedir(), ".iris", "telegram-bridge.json");
+const LOG_PATH        = join(homedir(), ".iris", "logs", "telegram-bridge.jsonl");
+const PID_PATH        = join(homedir(), ".iris", "logs", "telegram-bridge.pid");
 
 function loadCfg() {
-  // Prefer ~/.crewswarm/crewswarm.json, fall back to ~/.openclaw/openclaw.json
-  try { return JSON.parse(readFileSync(CREW_CFG_PATH, "utf8")); } catch {}
+  // Prefer ~/.iris/iris.json, fall back to ~/.openclaw/openclaw.json
+  try { return JSON.parse(readFileSync(IRIS_CFG_PATH, "utf8")); } catch {}
   try { return JSON.parse(readFileSync(OPENCLAW_CFG, "utf8")); } catch {}
   return {};
 }
@@ -59,21 +59,21 @@ const BOT_TOKEN   = process.env.TELEGRAM_BOT_TOKEN || env.TELEGRAM_BOT_TOKEN || 
     return "";
   }
 })();
-const RT_URL      = process.env.CREWSWARM_RT_URL    || env.CREWSWARM_RT_URL    || "ws://127.0.0.1:18889";
-const RT_TOKEN    = process.env.CREWSWARM_RT_AUTH_TOKEN || env.CREWSWARM_RT_AUTH_TOKEN || (() => {
-  // Fall back to ~/.crewswarm/crewswarm.json → rt.authToken (canonical location)
+const RT_URL      = process.env.IRIS_RT_URL    || env.IRIS_RT_URL    || "ws://127.0.0.1:18889";
+const RT_TOKEN    = process.env.IRIS_RT_AUTH_TOKEN || env.IRIS_RT_AUTH_TOKEN || (() => {
+  // Fall back to ~/.iris/iris.json → rt.authToken (canonical location)
   try {
-    const configPath = join(homedir(), ".crewswarm", "crewswarm.json");
+    const configPath = join(homedir(), ".iris", "iris.json");
     const config = JSON.parse(readFileSync(configPath, "utf8"));
     return config?.rt?.authToken || "";
   } catch {
     return "";
   }
 })();
-const AGENT_NAME  = "crew-telegram";
-const TELEGRAM_CONTEXT_PATH = process.env.TELEGRAM_CONTEXT_PATH || join(homedir(), "Desktop", "crewswarm", "memory", "telegram-context.md");
-const TARGET      = process.env.TELEGRAM_TARGET_AGENT || env.TELEGRAM_TARGET_AGENT || "crew-lead";
-const CREW_LEAD_URL = process.env.CREW_LEAD_URL || "http://127.0.0.1:5010";
+const AGENT_NAME  = "iris-telegram";
+const TELEGRAM_CONTEXT_PATH = process.env.TELEGRAM_CONTEXT_PATH || join(homedir(), "Desktop", "iris", "memory", "telegram-context.md");
+const TARGET      = process.env.TELEGRAM_TARGET_AGENT || env.TELEGRAM_TARGET_AGENT || "iris-lead";
+const IRIS_LEAD_URL = process.env.IRIS_LEAD_URL || "http://127.0.0.1:5010";
 const POLL_TIMEOUT = 30; // seconds
 
 // Allowlist — comma-separated chat IDs. Empty = allow all (open bot).
@@ -178,7 +178,7 @@ function getTargetAgent(chatId, threadId = null) {
 
 if (!BOT_TOKEN) {
   console.error("[telegram-bridge] ❌ TELEGRAM_BOT_TOKEN not set.");
-  console.error("  Set TELEGRAM_BOT_TOKEN=... in your environment or in ~/.crewswarm/crewswarm.json env block.");
+  console.error("  Set TELEGRAM_BOT_TOKEN=... in your environment or in ~/.iris/iris.json env block.");
   process.exit(1);
 }
 
@@ -382,7 +382,7 @@ function splitMessage(text, maxLen) {
 function mainReplyKeyboard() {
   return {
     keyboard: [
-      [{ text: "Chat crew-main" }, { text: "Direct engine" }, { text: "Projects" }],
+      [{ text: "Chat iris-main" }, { text: "Direct engine" }, { text: "Projects" }],
       [{ text: "Set engine" }, { text: "Models" }, { text: "Voice" }],
       [{ text: "Status" }, { text: "Help" }]
     ],
@@ -422,7 +422,7 @@ function modeInline() {
 function errorInline() {
   return {
     inline_keyboard: [
-      [{ text: "Retry", callback_data: "retry:last" }, { text: "Fallback crew-main", callback_data: "fallback:main" }],
+      [{ text: "Retry", callback_data: "retry:last" }, { text: "Fallback iris-main", callback_data: "fallback:main" }],
       [{ text: "Set engine", callback_data: "open:engine" }, { text: "Set mode", callback_data: "open:mode" }]
     ]
   };
@@ -480,10 +480,10 @@ async function handleCallback(q) {
       const config = JSON.parse(readFileSync(TG_BRIDGE_CFG_PATH, "utf8"));
       if (!config.tts) config.tts = { enabled: false, provider: "auto", perUserOverrides: {}, voiceMap: {} };
       
-      // Handle provider switch (voice:provider:elevenlabs:crew-pm)
+      // Handle provider switch (voice:provider:elevenlabs:iris-pm)
       if (action === "provider") {
         const provider = parts[2]; // "elevenlabs" or "google"
-        const agentId = parts[3]; // "crew-pm", etc.
+        const agentId = parts[3]; // "iris-pm", etc.
         
         if (!config.tts.voiceMap) config.tts.voiceMap = {};
         if (!config.tts.voiceMap[agentId]) config.tts.voiceMap[agentId] = {};
@@ -501,7 +501,7 @@ async function handleCallback(q) {
         return;
       }
       
-      // Handle on/off toggle (voice:on:crew-pm or voice:off:crew-pm)
+      // Handle on/off toggle (voice:on:iris-pm or voice:off:iris-pm)
       const enable = action === "on";
       const agentId = parts[2] || "global";
       
@@ -536,7 +536,7 @@ async function handleCallback(q) {
       return;
     }
     if (projectId === "new") {
-      if (messageId) await tgEdit(chatId, messageId, "📝 To create a new project, tell crew-lead:\n\n_\"Create a new project called X in directory Y\"_");
+      if (messageId) await tgEdit(chatId, messageId, "📝 To create a new project, tell iris-lead:\n\n_\"Create a new project called X in directory Y\"_");
       return;
     }
     
@@ -568,9 +568,9 @@ async function handleCallback(q) {
   }
 
   if (data.startsWith("fallback:main")) {
-    setState(chatId, { mode: "chat", agent: "crew-main" });
+    setState(chatId, { mode: "chat", agent: "iris-main" });
     const st = getState(chatId);
-    await tgSend(chatId, "Switched to chat → crew-main fallback.");
+    await tgSend(chatId, "Switched to chat → iris-main fallback.");
     if (st.lastPrompt) await routeByState(chatId, st.lastPrompt);
     return;
   }
@@ -599,8 +599,8 @@ async function handleCallback(q) {
 }
 
 // ── Conversation history — NOW PERSISTENT (same as WhatsApp) ──────────────────
-// History survives restarts and is shared with crew-lead's session system
-// Format: ~/.crewswarm/chat-history/telegram/{chatId}.jsonl
+// History survives restarts and is shared with iris-lead's session system
+// Format: ~/.iris/chat-history/telegram/{chatId}.jsonl
 import { loadHistory, appendHistory } from "./lib/chat/history.mjs";
 import { shouldUseUnifiedHistory, formatUnifiedHistory } from "./lib/chat/unified-history.mjs";
 
@@ -671,7 +671,7 @@ const TELEGRAM_CHAT_COMPLETION_TIMEOUT_MS = 60000;
 // Track active chat sessions (chatId → {username, firstName, lastSeen})
 const activeSessions = new Map();
 
-// Track last crew-main reply time to debounce rapid messages
+// Track last iris-main reply time to debounce rapid messages
 const lastReplyTime = new Map();
 
 // ── Per-chat state for mode, engine, agent selection ─────────────────────────
@@ -682,7 +682,7 @@ const DEFAULT_STATE = {
   mode: "chat",          // chat | direct | bypass
   engine: "cursor",      // cursor | claude | codex | opencode | gemini
   model: null,           // optional model override for engine
-  agent: "crew-main",
+  agent: "iris-main",
   projectId: null,
   lastPrompt: "",
   lastEngine: "",
@@ -705,10 +705,10 @@ const activeProjectByChatId = new Map(); // chatId → { id, name, outputDir }
 
 const DASHBOARD_URL = process.env.DASHBOARD_URL || "http://127.0.0.1:4319";
 
-// Auth token for crew-lead API calls (engine passthrough requires Bearer auth)
+// Auth token for iris-lead API calls (engine passthrough requires Bearer auth)
 function getAuthToken() {
   try {
-    const configPath = join(homedir(), ".crewswarm", "crewswarm.json");
+    const configPath = join(homedir(), ".iris", "iris.json");
     const c = JSON.parse(readFileSync(configPath, "utf8"));
     return c.rt?.authToken || "";
   } catch { return ""; }
@@ -721,14 +721,14 @@ async function fetchProjects() {
 }
 
 // ── Engine passthrough from Telegram ─────────────────────────────────────────
-// /claude <msg>, /cursor <msg>, /opencode <msg>, /codex <msg>, /crew <msg>, /gemini <msg>
+// /claude <msg>, /cursor <msg>, /opencode <msg>, /codex <msg>, /iris <msg>, /gemini <msg>
 // Streams the response back to TG in chunks as it arrives.
 const ENGINE_COMMANDS = { 
   "/claude": "claude", 
   "/cursor": "cursor", 
   "/opencode": "opencode", 
   "/codex": "codex", 
-  "/crew": "crew-cli", 
+  "/iris": "iris-cli", 
   "/gemini": "gemini" 
 };
 const ENGINE_LABELS = { 
@@ -736,7 +736,7 @@ const ENGINE_LABELS = {
   "cursor": "🖱 Cursor CLI", 
   "opencode": "⚡ OpenCode", 
   "codex": "🟣 Codex CLI", 
-  "crew-cli": "🐝 Crew CLI", 
+  "iris-cli": "🐝 Iris CLI", 
   "gemini": "✨ Gemini CLI" 
 };
 
@@ -761,7 +761,7 @@ async function handleEnginePassthrough(chatId, engine, message) {
     const sessionId = `telegram-${chatId}`;
     const payload = { engine, message, projectDir, sessionId };
     if (st.model) payload.model = st.model;
-    const res = await fetch(`${CREW_LEAD_URL}/api/engine-passthrough`, {
+    const res = await fetch(`${IRIS_LEAD_URL}/api/engine-passthrough`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
       body: JSON.stringify(payload),
@@ -829,7 +829,7 @@ async function handleCommand(chatId, text, threadId = null) {
   const lower = text.toLowerCase().trim();
 
   const buttonAliases = new Map([
-    ["chat crew-main", "/home"],
+    ["chat iris-main", "/home"],
     ["direct engine", "/engine"],
     ["set engine", "/engine"],
     ["projects", "/projects"],
@@ -868,7 +868,7 @@ async function handleCommand(chatId, text, threadId = null) {
 
     // For now, show instructions - actual Mini App button requires hosting the HTML
     const projectsJson = JSON.stringify(projects.map(p => ({ id: p.id, name: p.name })));
-    await tgSend(chatId, `🎛 *crewswarm Mini App Control Deck*
+    await tgSend(chatId, `🎛 *iris Mini App Control Deck*
 
 Current state:
 • Mode: ${st.mode}
@@ -877,7 +877,7 @@ Current state:
 ${activeProj ? `• Project: ${activeProj.name}` : '• Project: none'}
 
 To enable Mini App button:
-1. Host \`crew-cli/docs/telegram-miniapp/\` on a public HTTPS URL
+1. Host \`iris-cli/docs/telegram-miniapp/\` on a public HTTPS URL
 2. Set bot menu button via \`setChatMenuButton\`
 3. Projects will auto-populate from /api/projects
 
@@ -946,19 +946,19 @@ For now, use /menu for button controls or direct commands.`);
   // /voice — show voice control for CURRENT AGENT (context-aware)
   if (lower === "/voice") {
     // Determine current agent based on topic routing or mode
-    let currentAgent = "crew-lead";
+    let currentAgent = "iris-lead";
     
     // Check topic routing first
     if (threadId) {
       const topicRouting = getTopicRouting();
       const groupConfig = topicRouting[String(chatId)];
       if (groupConfig) {
-        currentAgent = groupConfig[String(threadId)] || groupConfig.main || groupConfig.default || "crew-lead";
+        currentAgent = groupConfig[String(threadId)] || groupConfig.main || groupConfig.default || "iris-lead";
       }
     } else {
       // Use per-user routing or state
       const userRouting = getUserRouting();
-      currentAgent = userRouting[String(chatId)] || getState(chatId).agent || "crew-lead";
+      currentAgent = userRouting[String(chatId)] || getState(chatId).agent || "iris-lead";
     }
     
     // Get current voice config for this agent
@@ -1027,13 +1027,13 @@ For now, use /menu for button controls or direct commands.`);
   // /engines — list available engines + usage
   if (lower === "/engines" || lower === "/cli" || lower === "/direct") {
     const lines = Object.entries(ENGINE_COMMANDS).map(([cmd, engine]) => `${ENGINE_LABELS[engine]} → \`${cmd} <message>\``);
-    await tgSend(chatId, `*Direct engine passthrough:*\n\n${lines.join("\n")}\n\n_Bypasses crew-lead — sends directly to the CLI tool and streams the reply._`);
+    await tgSend(chatId, `*Direct engine passthrough:*\n\n${lines.join("\n")}\n\n_Bypasses iris-lead — sends directly to the CLI tool and streams the reply._`);
     return true;
   }
 
   if (lower === "/help") {
     await tgSend(chatId, [
-      "*crewswarm Telegram*",
+      "*iris Telegram*",
       "",
       "`/menu` quick buttons",
       "`/mode` choose chat/direct mode",
@@ -1054,7 +1054,7 @@ For now, use /menu for button controls or direct commands.`);
     try {
       const projects = await fetchProjects();
       if (!projects.length) {
-        await tgSend(chatId, "No projects registered yet. Create one via the dashboard or by chatting with crew-lead.");
+        await tgSend(chatId, "No projects registered yet. Create one via the dashboard or by chatting with iris-lead.");
         return true;
       }
       const current = activeProjectByChatId.get(chatId);
@@ -1089,10 +1089,10 @@ For now, use /menu for button controls or direct commands.`);
     return true;
   }
 
-  // /home or /project off — clear active project, back to general crew-lead mode
+  // /home or /project off — clear active project, back to general iris-lead mode
   if (lower === "/home" || lower === "/project off" || lower === "/project none" || lower === "/project clear") {
     activeProjectByChatId.delete(chatId);
-    await tgSend(chatId, "✅ Back to general mode — no active project. crew-lead will act as director.");
+    await tgSend(chatId, "✅ Back to general mode — no active project. iris-lead will act as director.");
     return true;
   }
 
@@ -1192,7 +1192,7 @@ function connectRT() {
         const from    = env.from || env.sender_agent_id || "";
         const content = env.payload?.content ? String(env.payload.content).trim() : "";
 
-        // Forward any substantive reply from crew-lead (or TARGET) to active Telegram sessions
+        // Forward any substantive reply from iris-lead (or TARGET) to active Telegram sessions
         const isChatReply = env.messageType === "chat.reply" || env.type === "chat.reply";
         const sessionId = env.payload?.sessionId;
         if ((from === TARGET || isChatReply) && content && content.length > 2) {
@@ -1219,9 +1219,9 @@ function connectRT() {
                 const lastReply = lastReplyTime.get(chatId) || 0;
                 if (Date.now() - lastReply >= 2000) { // Only send if not too recent
                   lastReplyTime.set(chatId, Date.now());
-                log("info", "Forwarding crew-lead reply to Telegram", { chatId, threadId, preview: content.slice(0, 80) });
+                log("info", "Forwarding iris-lead reply to Telegram", { chatId, threadId, preview: content.slice(0, 80) });
                 addToHistory(chatId, "assistant", content, threadId);
-                persistTurn("assistant", content, "crewswarm");
+                persistTurn("assistant", content, "iris");
                 logMessage({ direction: "outbound", chatId, text: content });
                 await tgSend(chatId, content, threadId);
                 
@@ -1237,7 +1237,7 @@ function connectRT() {
                   extractPreferences(
                     getHistory(chatId, threadId),
                     async (msgs) => {
-                      const res = await fetch(`${CREW_LEAD_URL}/chat`, {
+                      const res = await fetch(`${IRIS_LEAD_URL}/chat`, {
                         method: "POST",
                         headers: { 
                           "content-type": "application/json",
@@ -1270,7 +1270,7 @@ function connectRT() {
                   extractAndSaveProfile(
                     getHistory(chatId, threadId),
                     async (msgs) => {
-                      const res = await fetch(`${CREW_LEAD_URL}/chat`, {
+                      const res = await fetch(`${IRIS_LEAD_URL}/chat`, {
                         method: "POST",
                         headers: { 
                           "content-type": "application/json",
@@ -1375,7 +1375,7 @@ function connectRT() {
 
 // ── Message log (for dashboard) ───────────────────────────────────────────────
 
-const MSG_LOG = join(homedir(), ".crewswarm", "logs", "telegram-messages.jsonl");
+const MSG_LOG = join(homedir(), ".iris", "logs", "telegram-messages.jsonl");
 
 function logMessage({ direction, chatId, username, text, firstName }) {
   const entry = { ts: new Date().toISOString(), direction, chatId, username, firstName, text };
@@ -1395,13 +1395,13 @@ async function routeByState(chatId, text, threadId = null) {
   if (st.mode === "bypass") {
     // Bypass dispatch not yet wired — falls back to chat mode
     await tgSend(chatId, `⚠️ Bypass mode not yet implemented. Falling back to chat mode.`);
-    await dispatchChat(chatId, text, st.agent || "crew-main", threadId);
+    await dispatchChat(chatId, text, st.agent || "iris-main", threadId);
     return;
   }
-  await dispatchChat(chatId, text, st.agent || "crew-main", threadId);
+  await dispatchChat(chatId, text, st.agent || "iris-main", threadId);
 }
 
-async function dispatchChat(chatId, text, agent = "crew-main", threadId = null) {
+async function dispatchChat(chatId, text, agent = "iris-main", threadId = null) {
   const taskId = randomUUID();
   const history = formatHistory(chatId, threadId);
   const activeProj = activeProjectByChatId.get(chatId);
@@ -1432,8 +1432,8 @@ async function dispatchChat(chatId, text, agent = "crew-main", threadId = null) 
   const targetAgent = getTargetAgent(chatId, threadId);
   log("info", `Target agent from routing`, { chatId, threadId, targetAgent });
   
-  // If target is not crew-lead, call LLM directly (same as WhatsApp fast path)
-  if (targetAgent !== "crew-lead") {
+  // If target is not iris-lead, call LLM directly (same as WhatsApp fast path)
+  if (targetAgent !== "iris-lead") {
     log("info", `Direct routing to ${targetAgent}`, { chatId, threadId });
     
     try {
@@ -1441,7 +1441,7 @@ async function dispatchChat(chatId, text, agent = "crew-main", threadId = null) 
         source: "telegram:direct-agent",
       });
       // Load agent config
-      const csSwarm = JSON.parse(readFileSync(join(homedir(), ".crewswarm", "crewswarm.json"), "utf8"));
+      const csSwarm = JSON.parse(readFileSync(join(homedir(), ".iris", "iris.json"), "utf8"));
       const agentCfg = csSwarm.agents.find(a => a.id === targetAgent);
       if (!agentCfg?.model) {
         await tgSend(chatId, `⚠️ Agent ${targetAgent} not configured`);
@@ -1463,11 +1463,11 @@ async function dispatchChat(chatId, text, agent = "crew-main", threadId = null) 
       }
       
       // Load system prompt
-      const promptPath = join(homedir(), ".crewswarm", "agent-prompts.json");
+      const promptPath = join(homedir(), ".iris", "agent-prompts.json");
       let systemPrompt = `You are ${targetAgent}.`;
       try {
         const prompts = JSON.parse(readFileSync(promptPath, "utf8"));
-        const bareAgentName = targetAgent.replace(/^crew-/, "");
+        const bareAgentName = targetAgent.replace(/^iris-/, "");
         systemPrompt = prompts[bareAgentName] || prompts[targetAgent] || systemPrompt;
       } catch {}
       systemPrompt = applySharedChatPromptOverlay(systemPrompt, targetAgent);
@@ -1529,7 +1529,7 @@ You: Let me search for that. @@WEB_SEARCH best restaurants Toronto 2026 reviews`
       
       if (permissions.cli) {
         // PM agents should use direct tools, not CLI commands
-        const isPMAgent = targetAgent.includes('crew-pm');
+        const isPMAgent = targetAgent.includes('iris-pm');
         
         if (isPMAgent) {
           toolsSection += `\n\n**Direct file tools:**
@@ -1552,7 +1552,7 @@ Your content here
           
           if (preferredCLI) {
             const cliLabels = {
-              'crew-cli': 'TypeScript specialist',
+              'iris-cli': 'TypeScript specialist',
               'opencode': 'Full workspace context, file editing',
               'cursor': 'Complex reasoning, multi-file refactors',
               'claude': 'Multi-file refactors (Claude Code)',
@@ -1568,7 +1568,7 @@ Your content here
             toolsSection += `\n\n**Coding CLIs for file operations:**
 - @@CLI opencode <task> — Full workspace context, file editing
 - @@CLI cursor <task> — Complex reasoning, multi-file refactors
-- @@CLI crew-cli <task> — TypeScript specialist`;
+- @@CLI iris-cli <task> — TypeScript specialist`;
           }
         }
       }
@@ -1577,10 +1577,10 @@ Your content here
         toolsSection += `\n\n**Delegation:**
 - @@DISPATCH agent-id task — Delegate to another specialist agent
 
-Example: "I'll create that for you. @@DISPATCH crew-coder Create /src/auth.js with JWT login endpoint"`;
+Example: "I'll create that for you. @@DISPATCH iris-coder Create /src/auth.js with JWT login endpoint"`;
       }
       
-      if (targetAgent === "crew-loco") {
+      if (targetAgent === "iris-loco") {
         toolsSection += `\n\n**IMPORTANT:** You are a conversational assistant only. You have NO access to:
 - File system operations (no @@CLI)
 - Task delegation (no @@DISPATCH)
@@ -1729,7 +1729,7 @@ Keep responses conversational and use @@WEB_SEARCH when you need current informa
             // Fallback: check search-tools.json (where dashboard saves it)
             if (!braveKey) {
               try {
-                const searchTools = JSON.parse(readFileSync(join(homedir(), ".crewswarm", "search-tools.json"), "utf8"));
+                const searchTools = JSON.parse(readFileSync(join(homedir(), ".iris", "search-tools.json"), "utf8"));
                 braveKey = searchTools.brave?.apiKey;
               } catch {}
             }
@@ -1788,7 +1788,7 @@ Keep responses conversational and use @@WEB_SEARCH when you need current informa
           
           try {
             const fetchRes = await fetch(url, {
-              headers: { "User-Agent": "crewswarm/1.0" },
+              headers: { "User-Agent": "iris/1.0" },
               signal: AbortSignal.timeout(15000),
             });
             if (fetchRes.ok) {
@@ -1985,8 +1985,8 @@ Keep responses conversational and use @@WEB_SEARCH when you need current informa
     return;
   }
 
-  // Otherwise, send to crew-lead HTTP server
-  fetch(`${CREW_LEAD_URL}/chat`, {
+  // Otherwise, send to iris-lead HTTP server
+  fetch(`${IRIS_LEAD_URL}/chat`, {
     method: "POST",
     headers: { "content-type": "application/json", ...(RT_TOKEN ? { authorization: `Bearer ${RT_TOKEN}` } : {}) },
     body: JSON.stringify({
@@ -2001,10 +2001,10 @@ Keep responses conversational and use @@WEB_SEARCH when you need current informa
     const d = await r.json();
     if (d.reply) {
       addToHistory(chatId, "assistant", d.reply, threadId);
-      persistTurn("assistant", d.reply, "crewswarm");
+      persistTurn("assistant", d.reply, "iris");
       logMessage({ direction: "outbound", chatId, text: d.reply });
       lastReplyTime.set(chatId, Date.now());
-      await tgSend(chatId, d.reply, threadId, "crew-lead");
+      await tgSend(chatId, d.reply, threadId, "iris-lead");
       if (d.dispatched) {
         const targets = Array.isArray(d.dispatched)
           ? d.dispatched.map((item) => item?.agent || item?.id).filter(Boolean)
@@ -2015,8 +2015,8 @@ Keep responses conversational and use @@WEB_SEARCH when you need current informa
       }
     }
   }).catch(async e => {
-    log("error", "crew-lead HTTP error", { error: e.message });
-    await tgSend(chatId, `⚠️ crew-lead error: ${e.message.slice(0,100)}`, threadId);
+    log("error", "iris-lead HTTP error", { error: e.message });
+    await tgSend(chatId, `⚠️ iris-lead error: ${e.message.slice(0,100)}`, threadId);
   });
 }
 
@@ -2058,7 +2058,7 @@ async function handleMiniAppData(msg) {
   setState(chatId, {
     mode: payload.mode || "chat",
     engine: payload.engine || "cursor",
-    agent: payload.agent || "crew-main",
+    agent: payload.agent || "iris-main",
     projectId: payload.projectId || null
   });
 
@@ -2113,7 +2113,7 @@ function loadPersistedTurns() {
 function writeContextFile() {
   try {
     const lines = persistedTurns.slice(-TG_CONTEXT_MAX_TURNS).map(t =>
-      `**${t.role === "user" ? (t.name || "User") : "crewswarm"}** (${t.ts.slice(0,16)}): ${t.text}`
+      `**${t.role === "user" ? (t.name || "User") : "iris"}** (${t.ts.slice(0,16)}): ${t.text}`
     ).join("\n\n");
     const content = `# Telegram Conversation Context\n\nLast updated: ${new Date().toISOString()}\n\nThis file contains recent Telegram chat history. Use it to maintain continuity across sessions.\n\n---\n\n${lines}\n\n<!-- turns:${JSON.stringify(persistedTurns.slice(-TG_CONTEXT_MAX_TURNS))} -->`;
     writeFileSync(TG_CONTEXT_FILE, content);
@@ -2121,9 +2121,9 @@ function writeContextFile() {
 }
 
 function persistTurn(role, text, name) {
-  // Exclude crew-loco (food bot) from persistent memory - it's a segregated test bot
-  if (name === 'crew-loco' || text.includes('¡Órale') || text.includes('CrewLoco')) {
-    return; // Skip crew-loco conversations
+  // Exclude iris-loco (food bot) from persistent memory - it's a segregated test bot
+  if (name === 'iris-loco' || text.includes('¡Órale') || text.includes('CrewLoco')) {
+    return; // Skip iris-loco conversations
   }
   
   persistedTurns.push({ role, text: text.slice(0, 500), name, ts: new Date().toISOString() });
@@ -2148,9 +2148,9 @@ function writeTelegramContext(chatId, username, firstName) {
     ``,
     `## Recent conversation`,
     ``,
-    ...recentTurns.map(h => `**${h.role === "user" ? displayName : "You (crew-main)"}:** ${h.content}`),
+    ...recentTurns.map(h => `**${h.role === "user" ? displayName : "You (iris-main)"}:** ${h.content}`),
     ``,
-    `> This context is from the active Telegram conversation via @crewswarm_bot. Use it to maintain continuity.`,
+    `> This context is from the active Telegram conversation via @iris_bot. Use it to maintain continuity.`,
   ];
   try { writeFileSync(TELEGRAM_CONTEXT_PATH, lines.join("\n"), "utf8"); } catch {}
 }
@@ -2160,10 +2160,10 @@ function writeTelegramContext(chatId, username, firstName) {
 let offset = 0;
 
 async function listenForAgentReplies() {
-  const CREW_LEAD_EVENTS = `${CREW_LEAD_URL}/events`;
+  const IRIS_LEAD_EVENTS = `${IRIS_LEAD_URL}/events`;
   while (true) {
     try {
-      const res = await fetch(CREW_LEAD_EVENTS, { signal: AbortSignal.timeout(120000) });
+      const res = await fetch(IRIS_LEAD_EVENTS, { signal: AbortSignal.timeout(120000) });
       if (!res.body) { await new Promise(r => setTimeout(r, 5000)); continue; }
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
@@ -2295,8 +2295,8 @@ async function handleTelegramUpdate(update) {
       trackContact(contactId, "telegram", firstName || username || String(chatId), { username });
       saveContactMessage(contactId, "user", fullMessage);
       const mediaAgent = getTargetAgent(chatId, threadId);
-      const finalAgent = mediaAgent === "crew-lead" ? "crew-main" : mediaAgent;
-      log("info", "Image routing (direct, bypass crew-lead)", { chatId, threadId, from: mediaAgent, to: finalAgent });
+      const finalAgent = mediaAgent === "iris-lead" ? "iris-main" : mediaAgent;
+      log("info", "Image routing (direct, bypass iris-lead)", { chatId, threadId, from: mediaAgent, to: finalAgent });
       addToHistory(chatId, "user", fullMessage, threadId);
       await dispatchChat(chatId, fullMessage, finalAgent, threadId);
       return;
@@ -2328,8 +2328,8 @@ async function handleTelegramUpdate(update) {
       trackContact(contactId, "telegram", firstName || username || String(chatId), { username });
       saveContactMessage(contactId, "user", fullMessage);
       const mediaAgent = getTargetAgent(chatId, threadId);
-      const finalAgent = mediaAgent === "crew-lead" ? "crew-main" : mediaAgent;
-      log("info", "Voice routing (direct, bypass crew-lead)", { chatId, threadId, from: mediaAgent, to: finalAgent });
+      const finalAgent = mediaAgent === "iris-lead" ? "iris-main" : mediaAgent;
+      log("info", "Voice routing (direct, bypass iris-lead)", { chatId, threadId, from: mediaAgent, to: finalAgent });
       addToHistory(chatId, "user", fullMessage, threadId);
       await dispatchChat(chatId, fullMessage, finalAgent, threadId);
       return;
@@ -2363,7 +2363,7 @@ async function handleTelegramUpdate(update) {
   saveContactMessage(contactId, "user", text);
   activeSessions.set(chatId, { username, firstName, userId, lastSeen: Date.now() });
 
-  // Try handleCommand for both /commands and reply-keyboard button text (e.g. "Chat crew-main" → /home)
+  // Try handleCommand for both /commands and reply-keyboard button text (e.g. "Chat iris-main" → /home)
   const handled = await handleCommand(chatId, text, threadId);
   if (handled) return;
 
@@ -2411,7 +2411,7 @@ async function main() {
     log("warn", "RT bus unavailable at startup — will retry", { error: e.message });
   });
 
-  // Listen for agent replies from crew-lead SSE and forward to Telegram
+  // Listen for agent replies from iris-lead SSE and forward to Telegram
   listenForAgentReplies();
 
   // Start polling immediately regardless of RT status

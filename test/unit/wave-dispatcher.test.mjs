@@ -21,7 +21,7 @@ import {
   dispatchPipelineWave,
   pendingDispatches,
   pendingPipelines,
-} from "../../lib/crew-lead/wave-dispatcher.mjs";
+} from "../../lib/iris-lead/wave-dispatcher.mjs";
 
 function getPipelineStateDir() {
   return getStatePath("pipelines");
@@ -49,7 +49,7 @@ function createMockDeps(overrides = {}) {
 
 describe("wave-dispatcher", () => {
   beforeEach(() => {
-    process.env.CREWSWARM_TEST_MODE = "true";
+    process.env.IRIS_TEST_MODE = "true";
     resetPaths();
     pendingDispatches.clear();
     pendingPipelines.clear();
@@ -58,8 +58,8 @@ describe("wave-dispatcher", () => {
   afterEach(() => {
     pendingDispatches.clear();
     pendingPipelines.clear();
-    try { fs.rmSync(path.join(os.tmpdir(), `crewswarm-test-${process.pid}`), { recursive: true, force: true }); } catch {}
-    delete process.env.CREWSWARM_TEST_MODE;
+    try { fs.rmSync(path.join(os.tmpdir(), `iris-test-${process.pid}`), { recursive: true, force: true }); } catch {}
+    delete process.env.IRIS_TEST_MODE;
     resetPaths();
   });
 
@@ -72,12 +72,12 @@ describe("wave-dispatcher", () => {
       });
       initWaveDispatcher(deps);
 
-      const result = dispatchTask("crew-coder", "write a hello world", "owner");
+      const result = dispatchTask("iris-coder", "write a hello world", "owner");
 
       assert.equal(result, taskId);
       assert.ok(pendingDispatches.has(taskId));
       const d = pendingDispatches.get(taskId);
-      assert.equal(d.agent, "crew-coder");
+      assert.equal(d.agent, "iris-coder");
       assert.equal(d.sessionId, "owner");
       assert.equal(d.task, "write a hello world");
     });
@@ -87,7 +87,7 @@ describe("wave-dispatcher", () => {
       initWaveDispatcher(deps);
 
       assert.doesNotThrow(() => {
-        const result = dispatchTask("crew-coder", "write hello", "owner");
+        const result = dispatchTask("iris-coder", "write hello", "owner");
         assert.ok(result === true || result === false, "returns boolean when no RT");
       });
     });
@@ -100,7 +100,7 @@ describe("wave-dispatcher", () => {
       });
       initWaveDispatcher(deps);
 
-      const result = dispatchTask("crew-coder", { task: "write hello from object" }, "owner");
+      const result = dispatchTask("iris-coder", { task: "write hello from object" }, "owner");
 
       assert.equal(result, taskId);
       assert.equal(pendingDispatches.get(taskId).task, "write hello from object");
@@ -114,13 +114,13 @@ describe("wave-dispatcher", () => {
 
       const p1 = {
         sessionId: "owner",
-        waves: [[{ agent: "crew-coder", task: "x" }]],
+        waves: [[{ agent: "iris-coder", task: "x" }]],
         currentWave: 0,
         pendingTaskIds: new Set(),
       };
       const p2 = {
         sessionId: "owner",
-        waves: [[{ agent: "crew-qa", task: "y" }]],
+        waves: [[{ agent: "iris-qa", task: "y" }]],
         currentWave: 0,
         pendingTaskIds: new Set(),
       };
@@ -153,7 +153,7 @@ describe("wave-dispatcher", () => {
       const taskId = "stale-task";
       pendingDispatches.set(taskId, {
         sessionId: "owner",
-        agent: "crew-coder",
+        agent: "iris-coder",
         task: "x",
         ts: Date.now() - 99999,
         _autoExtended: true,
@@ -172,7 +172,7 @@ describe("wave-dispatcher", () => {
       const taskId = "fresh-task";
       pendingDispatches.set(taskId, {
         sessionId: "owner",
-        agent: "crew-coder",
+        agent: "iris-coder",
         task: "x",
         ts: Date.now(),
       });
@@ -191,8 +191,8 @@ describe("wave-dispatcher", () => {
       const pipelineId = `test-pipeline-${Date.now()}`;
       pendingPipelines.set(pipelineId, {
         sessionId: "owner",
-        steps: [{ agent: "crew-coder", task: "x" }],
-        waves: [[{ agent: "crew-coder", task: "x" }]],
+        steps: [{ agent: "iris-coder", task: "x" }],
+        waves: [[{ agent: "iris-coder", task: "x" }]],
         currentWave: 0,
         completedWaveResults: [],
       });
@@ -238,13 +238,13 @@ describe("wave-dispatcher", () => {
       const taskId = "claim-me";
       const d = {
         sessionId: "owner",
-        agent: "crew-coder",
+        agent: "iris-coder",
         task: "x",
         ts: Date.now(),
       };
       pendingDispatches.set(taskId, d);
 
-      markDispatchClaimed(taskId, "crew-coder");
+      markDispatchClaimed(taskId, "iris-coder");
 
       assert.equal(d.claimed, true);
       assert.ok(typeof d.claimedAt === "number");

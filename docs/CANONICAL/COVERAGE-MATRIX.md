@@ -23,7 +23,7 @@ This document tracks what is genuinely covered by automated tests.
   - `test/unit/rt-envelope.test.mjs`, `test/unit/dlq.test.mjs`, `test/unit/retry-manager.test.mjs`
 - PM loop logic, synthesis, judge decisions
   - `test/unit/pm-loop-routing.test.mjs`, `test/unit/pm-synthesis.test.mjs`, `test/unit/pm-judge-decisions.test.mjs`
-  - `test/unit/crew-judge.test.mjs` — heuristic + LLM judge decisions, fail-open behavior
+  - `test/unit/iris-judge.test.mjs` — heuristic + LLM judge decisions, fail-open behavior
 - Agent registry, validation, permissions, daemon, tool instructions
   - `test/unit/agent-registry.test.mjs`, `test/unit/agent-validation.test.mjs`, `test/unit/agent-permissions.test.mjs`
   - `test/unit/agents-daemon.test.mjs` — PID management, heartbeat, spawn targets
@@ -42,15 +42,15 @@ This document tracks what is genuinely covered by automated tests.
   - `test/unit/policy-manager.test.mjs`, `test/unit/spending.test.mjs`
 - Chat and conversation history
   - `test/unit/chat-history.test.mjs` — sanitization, JSONL persistence, MAX_HISTORY limits
-  - `test/unit/chat-participants.test.mjs` — canonical IDs, @crew-all broadcast, deduplication
+  - `test/unit/chat-participants.test.mjs` — canonical IDs, @iris-all broadcast, deduplication
   - `test/unit/chat-project-messages.test.mjs` — project-scoped messages, filtering, tree building
   - `test/unit/chat-project-messages-rag.test.mjs` — RAG context, search result mapping
   - `test/unit/chat-unified-wrapper.test.mjs` — linked/unlinked user history paths
-- Crew-lead internals
-  - `test/unit/crew-lead-prompts.test.mjs` — system prompt building, memoization, agent roster
-  - `test/unit/crew-lead-tools.test.mjs` — file I/O, command execution, blocked commands, web/telegram tools
-  - `test/unit/crew-lead-background.test.mjs` — rate limit fallback, timeout recording, background loop
-  - `test/unit/crew-lead-interval-manager.test.mjs` — SSE throttle, stale agent eviction
+- Iris-lead internals
+  - `test/unit/iris-lead-prompts.test.mjs` — system prompt building, memoization, agent roster
+  - `test/unit/iris-lead-tools.test.mjs` — file I/O, command execution, blocked commands, web/telegram tools
+  - `test/unit/iris-lead-background.test.mjs` — rate limit fallback, timeout recording, background loop
+  - `test/unit/iris-lead-interval-manager.test.mjs` — SSE throttle, stale agent eviction
 - Engine implementations
   - `test/unit/engines-opencode.test.mjs` — agent mapping, model priority, session continuity, noise filtering
   - `test/unit/engines-llm-direct.test.mjs` — OpenAI/Gemini paths, 429 retry, per-agent + Groq fallback
@@ -76,7 +76,7 @@ This document tracks what is genuinely covered by automated tests.
   - `test/unit/deprecated-orchestrators.test.mjs` — exit code 1, deprecation message verification
 - Startup guard and health contracts
   - `test/unit/startup-guard.test.mjs`, `test/unit/restart-health-contract.test.mjs`
-- `crew-cli` runtime (88 files, 906 tests)
+- `iris-cli` runtime (88 files, 906 tests)
   - Sandbox, orchestrator, worker pool, context augmentation, strategies, risk scoring, prompt registry, model policies
 
 ## Integration / Bounded Verification (needs :4319 + :5010)
@@ -141,7 +141,7 @@ All specs capture `console.error` and `pageerror` via shared `helpers.mjs` — a
 
 **~98 tests across 13 files**
 
-- **All 6 CLI engines** respond via passthrough (Claude Code, Cursor, Gemini CLI, OpenCode, Codex, crew-cli)
+- **All 6 CLI engines** respond via passthrough (Claude Code, Cursor, Gemini CLI, OpenCode, Codex, iris-cli)
   - `test/e2e/chat-passthrough-engines.test.mjs`
 - **All 6 engines** create files on disk with content verification
   - `test/e2e/multi-engine-dispatch.test.mjs`
@@ -166,7 +166,7 @@ All specs capture `console.error` and `pageerror` via shared `helpers.mjs` — a
   - DLQ read and conditional replay
   - Memory search and compact
   - File browser (directory listing + file content)
-  - Services status (crew-lead + dashboard running)
+  - Services status (iris-lead + dashboard running)
   - RT message bus visibility
   - SSE event streaming verification
   - Engine runtime status
@@ -179,7 +179,7 @@ All specs capture `console.error` and `pageerror` via shared `helpers.mjs` — a
 
 ## Manual QA Still Required
 
-- Full native macOS `crewchat` interaction
+- Full native macOS `irischat` interaction
 - Full Dashboard/Vibe visual and responsive polish pass
 - Provider billing and real vendor quota edge cases
 - Production deploy health for external services
@@ -199,7 +199,7 @@ Every test run generates:
 ## Interpretation
 
 - `Hermetic Coverage` = runs offline in CI without any services
-- `Integration / Bounded` = needs dashboard + crew-lead running locally
+- `Integration / Bounded` = needs dashboard + iris-lead running locally
 - `UI / Browser` = needs Chrome + dashboard
 - `Live / Engine-Dependent` = needs CLI engines installed + all services running
 - See `docs/TESTING.md` for run commands and detailed descriptions

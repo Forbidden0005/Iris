@@ -5,7 +5,7 @@ import {
   inferDispatchEngine,
   getNextCoderEngine,
   buildEngineFallbackMeta,
-} from "../../lib/crew-lead/ws-router.mjs";
+} from "../../lib/iris-lead/ws-router.mjs";
 
 describe("ws-router engine fallback helpers", () => {
   it("detects Claude from dispatch flags", () => {

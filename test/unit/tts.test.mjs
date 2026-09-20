@@ -46,7 +46,7 @@ describe("stripMarkdownForTTS", () => {
   });
 
   it("removes @@COMMANDS", () => {
-    const result = stripMarkdownForTTS("Output: @@DISPATCH crew-coder fix bug\nDone");
+    const result = stripMarkdownForTTS("Output: @@DISPATCH iris-coder fix bug\nDone");
     assert.ok(!result.includes("@@DISPATCH"));
     assert.ok(result.includes("Done"));
   });
@@ -170,7 +170,7 @@ describe("getActiveTTSProviders", () => {
 
 describe("getVoiceForAgent", () => {
   it("returns default voice for unknown agent with empty voiceMap", () => {
-    const voice = getVoiceForAgent("crew-unknown", {});
+    const voice = getVoiceForAgent("iris-unknown", {});
     assert.equal(voice.provider, "auto");
     assert.ok(voice.voiceId);
     assert.ok(voice.voice);
@@ -178,24 +178,24 @@ describe("getVoiceForAgent", () => {
   });
 
   it("returns default voice when voiceMap is undefined", () => {
-    const voice = getVoiceForAgent("crew-coder");
+    const voice = getVoiceForAgent("iris-coder");
     assert.equal(voice.provider, "auto");
   });
 
   it("uses voiceMap entry when provided", () => {
     const voiceMap = {
-      "crew-coder": { voiceId: "custom-voice-id", provider: "elevenlabs" },
+      "iris-coder": { voiceId: "custom-voice-id", provider: "elevenlabs" },
     };
-    const voice = getVoiceForAgent("crew-coder", voiceMap);
+    const voice = getVoiceForAgent("iris-coder", voiceMap);
     assert.equal(voice.voiceId, "custom-voice-id");
     assert.equal(voice.provider, "elevenlabs");
   });
 
   it("uses voice from voiceMap (Google-style voice name)", () => {
     const voiceMap = {
-      "crew-pm": { voice: "en-US-Neural2-F", provider: "google" },
+      "iris-pm": { voice: "en-US-Neural2-F", provider: "google" },
     };
-    const voice = getVoiceForAgent("crew-pm", voiceMap);
+    const voice = getVoiceForAgent("iris-pm", voiceMap);
     assert.equal(voice.voice, "en-US-Neural2-F");
     assert.equal(voice.provider, "google");
   });

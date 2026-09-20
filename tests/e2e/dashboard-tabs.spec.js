@@ -108,9 +108,9 @@ test.describe("Services tab", () => {
         contentType: "application/json",
         body: JSON.stringify([
           {
-            id: "crew-lead",
-            label: "crew-lead",
-            description: "Crew-lead orchestrator",
+            id: "iris-lead",
+            label: "iris-lead",
+            description: "Iris-lead orchestrator",
             running: true,
             pid: 12345,
             optional: false,
@@ -118,8 +118,8 @@ test.describe("Services tab", () => {
             port: 3000,
           },
           {
-            id: "crew-pm",
-            label: "crew-pm",
+            id: "iris-pm",
+            label: "iris-pm",
             description: "Project manager agent",
             running: false,
             optional: true,
@@ -146,8 +146,8 @@ test.describe("Services tab", () => {
         contentType: "application/json",
         body: JSON.stringify([
           {
-            id: "crew-lead",
-            label: "crew-lead",
+            id: "iris-lead",
+            label: "iris-lead",
             description: "Orchestrator",
             running: true,
             pid: 99,
@@ -166,7 +166,7 @@ test.describe("Services tab", () => {
     await expect(grid).toContainText("● running", { timeout: 8_000 });
   });
 
-  test("crew-lead card shows as running when API reports it running", async ({
+  test("iris-lead card shows as running when API reports it running", async ({
     page,
   }) => {
     await page.route("**/api/services/status", async (route) => {
@@ -175,8 +175,8 @@ test.describe("Services tab", () => {
         contentType: "application/json",
         body: JSON.stringify([
           {
-            id: "crew-lead",
-            label: "crew-lead",
+            id: "iris-lead",
+            label: "iris-lead",
             description: "Orchestrator",
             running: true,
             pid: 42,
@@ -191,7 +191,7 @@ test.describe("Services tab", () => {
 
     const grid = page.locator("#servicesGrid");
     // Card label
-    await expect(grid).toContainText("crew-lead", { timeout: 8_000 });
+    await expect(grid).toContainText("iris-lead", { timeout: 8_000 });
     // Running status indicator
     await expect(grid).toContainText("● running", { timeout: 8_000 });
   });
@@ -205,8 +205,8 @@ test.describe("Services tab", () => {
         contentType: "application/json",
         body: JSON.stringify([
           {
-            id: "crew-lead",
-            label: "crew-lead",
+            id: "iris-lead",
+            label: "iris-lead",
             description: "Orchestrator",
             running: false,
             optional: false,
@@ -416,9 +416,9 @@ test.describe("Workflows tab", () => {
       enabled: true,
       schedule: "0 9 * * 1-5",
       stages: [
-        { agent: "crew-researcher", task: "Research and summarize." },
-        { agent: "crew-pm", task: "Create daily brief." },
-        { agent: "crew-qa", task: "Review the brief." },
+        { agent: "iris-researcher", task: "Research and summarize." },
+        { agent: "iris-pm", task: "Create daily brief." },
+        { agent: "iris-qa", task: "Review the brief." },
       ],
     },
     runState: { running: false },
@@ -441,7 +441,7 @@ test.describe("Workflows tab", () => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify(["crew-main", "crew-pm", "crew-qa"]),
+        body: JSON.stringify(["iris-main", "iris-pm", "iris-qa"]),
       });
     });
     await page.route("**/api/skills", async (route) => {
@@ -619,7 +619,7 @@ test.describe("Workflow run wiring", () => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify(["crew-main"]),
+        body: JSON.stringify(["iris-main"]),
       });
     });
     await page.route("**/api/skills", async (route) => {
@@ -670,7 +670,7 @@ test.describe("Workflow run wiring", () => {
             description: "",
             enabled: true,
             schedule: "0 9 * * *",
-            stages: [{ agent: "crew-main", task: "Do something." }],
+            stages: [{ agent: "iris-main", task: "Do something." }],
           },
           runState: { running: false },
         }),

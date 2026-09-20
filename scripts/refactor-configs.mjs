@@ -19,15 +19,15 @@ for (const file of filesRaw) {
   const og = content;
   
   // Replace direct string paths
-  content = content.replace(/\.crewswarm[\/\\]config\.json/g, '.crewswarm/crewswarm.json');
+  content = content.replace(/\.iris[\/\\]config\.json/g, '.iris/iris.json');
   
-  // Replace path.join(..., "config.json") -> path.join(..., "crewswarm.json")
+  // Replace path.join(..., "config.json") -> path.join(..., "iris.json")
   // We only replace "config.json" exactly.
-  content = content.replace(/"config\.json"/g, '"crewswarm.json"');
-  content = content.replace(/'config\.json'/g, "'crewswarm.json'");
+  content = content.replace(/"config\.json"/g, '"iris.json"');
+  content = content.replace(/'config\.json'/g, "'iris.json'");
   
   // Also handle `config.json` in markdown text
-  content = content.replace(/`~\/\.crewswarm\/config\.json`/g, '`~/.crewswarm/crewswarm.json`');
+  content = content.replace(/`~\/\.iris\/config\.json`/g, '`~/.iris/iris.json`');
   
   if (content !== og) {
     fs.writeFileSync(fullPath, content);
@@ -36,4 +36,4 @@ for (const file of filesRaw) {
   }
 }
 
-console.log(`Successfully updated ${updatedCount} files to use crewswarm.json contextually.`);
+console.log(`Successfully updated ${updatedCount} files to use iris.json contextually.`);

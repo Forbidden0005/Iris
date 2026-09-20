@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# crewswarm Network Firewall Rules (iptables)
+# iris Network Firewall Rules (iptables)
 # Blocks cloud metadata endpoints and restricts outbound traffic to LLM APIs only
 #
 # Based on: AI agent exfiltration research, Docker network security best practices
@@ -9,7 +9,7 @@
 set -e
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  crewswarm Network Firewall Setup"
+echo "  iris Network Firewall Setup"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 
@@ -20,7 +20,7 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 # Detect Docker network subnet
-DOCKER_SUBNET=$(docker network inspect crewswarm_net -f '{{range .IPAM.Config}}{{.Subnet}}{{end}}' 2>/dev/null || echo "172.20.0.0/16")
+DOCKER_SUBNET=$(docker network inspect iris_net -f '{{range .IPAM.Config}}{{.Subnet}}{{end}}' 2>/dev/null || echo "172.20.0.0/16")
 echo "✓ Docker subnet detected: ${DOCKER_SUBNET}"
 
 # ── Block Cloud Metadata Endpoints ────────────────────────────────────────────

@@ -6,7 +6,7 @@ import {
   detectReturnedPlan,
   detectBailedOut,
   isFinalCompletionReply,
-} from "../../lib/crew-lead/ws-router.mjs";
+} from "../../lib/iris-lead/ws-router.mjs";
 
 describe("ws-router completion detection (Iris evidence bridge gating)", () => {
   it("treats a real completion reply as final", () => {

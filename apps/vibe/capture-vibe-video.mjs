@@ -10,8 +10,8 @@ const OUT = join(__dirname, "..", "..", "website", "vibe-assets");
 const VIDEO_NAME = "vibe-demo.webm";
 const OUTPUT_PATH = join(OUT, VIDEO_NAME);
 
-const DASHBOARD_URL = process.env.CREWSWARM_DASHBOARD_URL || "http://127.0.0.1:4319";
-const VIBE_URL = process.env.CREWSWARM_VIBE_URL || "http://127.0.0.1:3333";
+const DASHBOARD_URL = process.env.IRIS_DASHBOARD_URL || "http://127.0.0.1:4319";
+const VIBE_URL = process.env.IRIS_VIBE_URL || "http://127.0.0.1:3333";
 
 const VIEWPORT = { width: 1440, height: 900 };
 const SPLIT_SCENE_MS = 18_000;
@@ -48,7 +48,7 @@ function buildSplitSceneHtml() {
   <html>
     <head>
       <meta charset="utf-8" />
-      <title>CrewSwarm Demo Scene</title>
+      <title>Iris Demo Scene</title>
       <style>
         :root {
           color-scheme: dark;
@@ -166,7 +166,7 @@ function buildSplitSceneHtml() {
       <div class="wrap">
         <div class="header">
           <section class="hero">
-            <h1>CrewSwarm in one fast pass</h1>
+            <h1>Iris in one fast pass</h1>
             <p>
               Launch the stack, code in Vibe, and keep the runtime visible in the dashboard.
               This cut is recorded from the live local surfaces, not mocked marketing panels.

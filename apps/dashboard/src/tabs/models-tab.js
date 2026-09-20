@@ -20,14 +20,14 @@ export function initModelsTab({ hideAllViews, setNavActive, loadAgents } = {}) {
 // ── Constants ──────────────────────────────────────────────────────────────────
 
 const BUILTIN_PROVIDERS = [
-  { id:'groq',         label:'Groq',              icon:'⚡', url:'https://console.groq.com/keys',              hint:'Fast inference — great for crew-coder, crew-fixer' },
+  { id:'groq',         label:'Groq',              icon:'⚡', url:'https://console.groq.com/keys',              hint:'Fast inference — great for iris-coder, iris-fixer' },
   { id:'fireworks',    label:'Fireworks AI',      icon:'🎆', url:'https://fireworks.ai/',                       hint:'OpenAI-compatible inference platform — fast serverless models, custom deployments, and easy model discovery' },
   { id:'anthropic',    label:'Anthropic',          icon:'🟣', url:'https://console.anthropic.com/',              hint:'Claude models — best for complex reasoning tasks' },
   { id:'openai',       label:'OpenAI (API)',        icon:'🟢', url:'https://platform.openai.com/api-keys',        hint:'GPT-4o and o-series — pay per use with API key' },
   { id:'cerebras',     label:'Cerebras',            icon:'🧠', url:'https://cloud.cerebras.ai/',                  hint:'Ultra-fast inference on Cerebras hardware — llama-3.3-70b at 2,000 tok/s' },
   { id:'nvidia',       label:'NVIDIA NIM',          icon:'🎮', url:'https://build.nvidia.com/explore/discover',   hint:'NVIDIA NIM microservices — Llama, Mistral, Phi and more' },
   { id:'openrouter',   label:'OpenRouter',           icon:'🔀', url:'https://openrouter.ai/keys',                  hint:'One API key for 400+ models — Claude, GPT-4, Gemini, Hunter Alpha, Llama and more' },
-  { id:'perplexity',   label:'Perplexity',          icon:'🔍', url:'https://www.perplexity.ai/settings/api',      hint:'Sonar Pro — ideal for crew-pm research tasks' },
+  { id:'perplexity',   label:'Perplexity',          icon:'🔍', url:'https://www.perplexity.ai/settings/api',      hint:'Sonar Pro — ideal for iris-pm research tasks' },
   { id:'mistral',      label:'Mistral',             icon:'🌀', url:'https://console.mistral.ai/',                 hint:'Open-weight models, efficient mid-tier tasks' },
   { id:'deepseek',     label:'DeepSeek',            icon:'🌊', url:'https://platform.deepseek.com/',              hint:'Low cost, strong coding performance' },
   { id:'together',     label:'Together AI',         icon:'🤝', url:'https://api.together.ai/',                    hint:'OpenAI-compatible access to strong open models like Qwen, DeepSeek, Llama, and more' },
@@ -45,7 +45,7 @@ const BUILTIN_PROVIDERS = [
 ];
 
 const SEARCH_TOOLS = [
-  { id:'parallel', label:'Parallel',    icon:'🔬', url:'https://platform.parallel.ai/signup', hint:'Deep research & web synthesis — used by crew-pm for project planning', envKey:'PARALLEL_API_KEY' },
+  { id:'parallel', label:'Parallel',    icon:'🔬', url:'https://platform.parallel.ai/signup', hint:'Deep research & web synthesis — used by iris-pm for project planning', envKey:'PARALLEL_API_KEY' },
   { id:'brave',    label:'Brave Search', icon:'🦁', url:'https://api.search.brave.com/',       hint:'Fast web search (~700ms) — best for quick agent lookups',            envKey:'BRAVE_API_KEY'    },
 ];
 
@@ -470,7 +470,7 @@ export async function loadProviders() {
   try {
     const data = await getJSON('/api/providers');
     const providers = data.providers || [];
-    if (!providers.length) { showEmpty(list, 'No providers found. Check ~/.crewswarm/crewswarm.json'); return; }
+    if (!providers.length) { showEmpty(list, 'No providers found. Check ~/.iris/iris.json'); return; }
     list.innerHTML = '';
     providers.forEach(p => {
       const icon = PROVIDER_ICONS[p.id] || '🔌';

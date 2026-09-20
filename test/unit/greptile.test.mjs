@@ -15,8 +15,8 @@ import {
   getRepositoryStatus,
   queryRepositories,
   searchRepositories,
-  indexcrewswarm,
-  searchcrewswarm,
+  indexiris,
+  searchiris,
 } from "../../lib/integrations/greptile.mjs";
 
 describe("greptile – exports", () => {
@@ -32,12 +32,12 @@ describe("greptile – exports", () => {
     assert.ok(typeof queryRepositories === "function");
   });
 
-  it("indexcrewswarm is a function", () => {
-    assert.ok(typeof indexcrewswarm === "function");
+  it("indexiris is a function", () => {
+    assert.ok(typeof indexiris === "function");
   });
 
-  it("searchcrewswarm is a function", () => {
-    assert.ok(typeof searchcrewswarm === "function");
+  it("searchiris is a function", () => {
+    assert.ok(typeof searchiris === "function");
   });
 });
 

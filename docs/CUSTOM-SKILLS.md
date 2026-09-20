@@ -4,7 +4,7 @@ Skills extend what agents can do. There are two types: **API skills** (call exte
 
 ## API Skills (JSON)
 
-API skills call HTTP endpoints. Create a `.json` file in `~/.crewswarm/skills/`:
+API skills call HTTP endpoints. Create a `.json` file in `~/.iris/skills/`:
 
 ```json
 {
@@ -25,7 +25,7 @@ API skills call HTTP endpoints. Create a `.json` file in `~/.crewswarm/skills/`:
 }
 ```
 
-Save as `~/.crewswarm/skills/deepl-translate.json`. The filename (minus `.json`) becomes the skill name.
+Save as `~/.iris/skills/deepl-translate.json`. The filename (minus `.json`) becomes the skill name.
 
 ### API Skill Fields
 
@@ -58,10 +58,10 @@ Save as `~/.crewswarm/skills/deepl-translate.json`. The filename (minus `.json`)
 
 Knowledge skills inject context into agent prompts. They teach agents *when and how* to do something without calling an external API.
 
-Create a folder in `~/.crewswarm/skills/` with a `SKILL.md` file:
+Create a folder in `~/.iris/skills/` with a `SKILL.md` file:
 
 ```
-~/.crewswarm/skills/code-review/SKILL.md
+~/.iris/skills/code-review/SKILL.md
 ```
 
 Example `SKILL.md`:
@@ -111,7 +111,7 @@ Agents invoke skills automatically when relevant, or explicitly via:
 
 ## Built-in Skills
 
-CrewSwarm ships with several built-in skills including `code-search` (ripgrep-based codebase search) and `read-log` (tail service logs). View the full list in the Skills tab or via `/api/skills`.
+Iris ships with several built-in skills including `code-search` (ripgrep-based codebase search) and `read-log` (tail service logs). View the full list in the Skills tab or via `/api/skills`.
 
 ## Tips
 

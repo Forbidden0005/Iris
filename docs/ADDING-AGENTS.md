@@ -1,6 +1,6 @@
 # How to Add a New Agent
 
-CrewSwarm agents are entries in `~/.crewswarm/crewswarm.json`. Each agent gets its own model, tools, and personality.
+Iris agents are entries in `~/.iris/iris.json`. Each agent gets its own model, tools, and personality.
 
 ## Quick: Dashboard UI
 
@@ -12,13 +12,13 @@ CrewSwarm agents are entries in `~/.crewswarm/crewswarm.json`. Each agent gets i
 
 The agent appears immediately — no restart needed.
 
-## Manual: Edit crewswarm.json
+## Manual: Edit iris.json
 
-Add an entry to the `agents` array in `~/.crewswarm/crewswarm.json`:
+Add an entry to the `agents` array in `~/.iris/iris.json`:
 
 ```json
 {
-  "id": "crew-devops",
+  "id": "iris-devops",
   "name": "DevOps",
   "emoji": "🚀",
   "model": "groq/llama-3.3-70b-versatile",
@@ -30,7 +30,7 @@ Add an entry to the `agents` array in `~/.crewswarm/crewswarm.json`:
 
 | Field | Description |
 |-------|-------------|
-| `id` | Unique ID, must start with `crew-` (auto-prefixed if not) |
+| `id` | Unique ID, must start with `iris-` (auto-prefixed if not) |
 | `model` | `provider/model-id` format (e.g. `groq/llama-3.3-70b-versatile`) |
 
 ### Optional fields
@@ -44,7 +44,7 @@ Add an entry to the `agents` array in `~/.crewswarm/crewswarm.json`:
 
 ## Agent Tools
 
-Each agent gets a set of allowed tools. Configure via the Dashboard (Agents tab → expand agent → Tools) or in `~/.crewswarm/agent-tools/<agent-id>.json`:
+Each agent gets a set of allowed tools. Configure via the Dashboard (Agents tab → expand agent → Tools) or in `~/.iris/agent-tools/<agent-id>.json`:
 
 ```json
 {
@@ -68,20 +68,20 @@ Once configured, the agent automatically gets a gateway bridge process that:
 - Executes them using the configured model + engine
 - Returns results
 
-No additional setup needed — `scripts/start-crew.mjs` spawns bridges for all configured agents.
+No additional setup needed — `scripts/start-iris.mjs` spawns bridges for all configured agents.
 
 ## Dispatching to Your Agent
 
 ```bash
 # From the dashboard chat
-@crew-devops set up GitHub Actions for this repo
+@iris-devops set up GitHub Actions for this repo
 
 # Via API
 curl -X POST http://127.0.0.1:5010/api/dispatch \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"agent":"crew-devops","task":"Set up CI/CD pipeline"}'
+  -d '{"agent":"iris-devops","task":"Set up CI/CD pipeline"}'
 
-# Via crew-cli
-crew chat --agent crew-devops "Deploy to staging"
+# Via iris-cli
+iris chat --agent iris-devops "Deploy to staging"
 ```

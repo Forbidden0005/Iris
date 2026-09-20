@@ -35,7 +35,7 @@ const ALL_PROVIDERS = [
 const CLI_ENGINES = [
   { id: "claude-code", cmd: "claude",   label: "Claude Code",  desc: "Anthropic's CLI agent. Best for complex reasoning and multi-file refactors.", installUrl: "https://docs.anthropic.com/en/docs/claude-code/overview", authCmd: "claude auth",  keyProvider: "anthropic" },
   { id: "codex",       cmd: "codex",    label: "Codex CLI",    desc: "OpenAI's CLI agent. Sandboxed execution with full file write access.",        installUrl: "https://github.com/openai/codex",                        authCmd: "codex auth",   keyProvider: "openai" },
-  { id: "crew-cli",    cmd: "crew",     label: "crew-cli",     desc: "Iris's inherited 3-tier pipeline. Supports Anthropic, OpenAI, Gemini, Groq, DeepSeek, and more.", installUrl: null,                                                      authCmd: null,           keyProvider: null },
+  { id: "iris-cli",    cmd: "iris",     label: "iris-cli",     desc: "Iris's inherited 3-tier pipeline. Supports Anthropic, OpenAI, Gemini, Groq, DeepSeek, and more.", installUrl: null,                                                      authCmd: null,           keyProvider: null },
   { id: "opencode",    cmd: "opencode", label: "OpenCode",     desc: "Multi-provider CLI agent. Supports OpenAI, Anthropic, Google, and more.",     installUrl: "https://github.com/opencode-ai/opencode",                authCmd: null,           keyProvider: null },
   { id: "gemini-cli",  cmd: "gemini",   label: "Gemini CLI",   desc: "Google's CLI agent. Fast inference with Gemini models.",                      installUrl: "https://github.com/google-gemini/gemini-cli",            authCmd: "gemini auth",  keyProvider: "google" },
   { id: "cursor",      cmd: "cursor",   label: "Cursor CLI",   desc: "Cursor's agent mode via CLI. Requires Cursor IDE installed.",                 installUrl: "https://www.cursor.com/",                                authCmd: null,           keyProvider: null },
@@ -425,8 +425,8 @@ function _buildEnginesStep() {
 
   for (const engine of CLI_ENGINES) {
     const detected = _detectedEngines[engine.id] === true;
-    // crew-cli is always available (it's part of this repo)
-    const available = engine.id === "crew-cli" || detected;
+    // iris-cli is always available (it's part of this repo)
+    const available = engine.id === "iris-cli" || detected;
 
     const card = document.createElement("div");
     card.className = "setup-wizard-engine-card";
@@ -501,7 +501,7 @@ function _buildEnginesStep() {
   if (detectedCount === 0 && Object.keys(_detectedEngines).length > 0) {
     const hint = document.createElement("p");
     hint.className = "setup-wizard-engine-hint";
-    hint.innerHTML = "No external CLI engines detected. <strong>crew-cli</strong> is built in and always available.";
+    hint.innerHTML = "No external CLI engines detected. <strong>iris-cli</strong> is built in and always available.";
     frag.appendChild(hint);
   }
 

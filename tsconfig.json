@@ -22,7 +22,7 @@
   ],
   "exclude": [
     "node_modules",
-    "crew-cli",
+    "iris-cli",
     "apps/dashboard/node_modules",
     "apps/vibe/node_modules"
   ]

@@ -3,11 +3,11 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { _callLLMOnce } from "../lib/crew-lead/llm-caller.mjs";
+import { _callLLMOnce } from "../lib/iris-lead/llm-caller.mjs";
 
 const jsonMode = process.argv.includes("--json");
 const smokeMode = process.argv.includes("--smoke");
-const configPath = path.join(os.homedir(), ".crewswarm", "crewswarm.json");
+const configPath = path.join(os.homedir(), ".iris", "iris.json");
 const SMOKE_PROMPT = "Reply with exactly PROVIDER_MATRIX_OK and nothing else.";
 
 function readConfig() {
@@ -137,10 +137,10 @@ async function smokeProvider(providerId, providerCfg, modelId) {
   try {
     const timeoutMs =
       providerId === "ollama"
-        ? Number(process.env.CREWSWARM_LIVE_OLLAMA_TIMEOUT_MS || 90000)
+        ? Number(process.env.IRIS_LIVE_OLLAMA_TIMEOUT_MS || 90000)
         : providerId === "openai-local"
-          ? Number(process.env.CREWSWARM_LIVE_OPENAI_LOCAL_TIMEOUT_MS || 45000)
-          : Number(process.env.CREWSWARM_LIVE_PROVIDER_TIMEOUT_MS || 20000);
+          ? Number(process.env.IRIS_LIVE_OPENAI_LOCAL_TIMEOUT_MS || 45000)
+          : Number(process.env.IRIS_LIVE_PROVIDER_TIMEOUT_MS || 20000);
     const reply = await _callLLMOnce(
       providerCfg.baseUrl,
       providerCfg.apiKey,
@@ -206,7 +206,7 @@ if (jsonMode) {
   process.exit(0);
 }
 
-console.log("CrewSwarm live provider matrix");
+console.log("Iris live provider matrix");
 console.log("");
 for (const provider of configuredProviders) {
   console.log(

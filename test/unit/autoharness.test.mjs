@@ -22,11 +22,11 @@ const origNodeEnv = process.env.NODE_ENV;
 delete process.env.NODE_ENV;
 
 // Redirect autoharness root to a temp directory
-const TEST_ROOT = path.join(os.tmpdir(), `crewswarm-autoharness-test-${process.pid}-${Date.now()}`);
+const TEST_ROOT = path.join(os.tmpdir(), `iris-autoharness-test-${process.pid}-${Date.now()}`);
 fs.mkdirSync(TEST_ROOT, { recursive: true });
 
 // Patch getStatePath so resolveAutoHarnessRoot uses our temp dir
-process.env.CREWSWARM_STATE_DIR = TEST_ROOT;
+process.env.IRIS_STATE_DIR = TEST_ROOT;
 
 const {
   extractToolActions,
@@ -111,7 +111,7 @@ describe("autoharness — extractToolActions", () => {
 
 describe("autoharness — getAutoHarnessPaths", () => {
   it("returns path structure for valid agentId", () => {
-    const paths = getAutoHarnessPaths("crew-coder");
+    const paths = getAutoHarnessPaths("iris-coder");
     assert.ok(paths, "should not be null");
     assert.ok(paths.rootDir);
     assert.ok(paths.rulesDir);
@@ -135,7 +135,7 @@ describe("autoharness — evaluateHarnessAction", () => {
   });
 
   it("returns allowed:true when action has no tool", () => {
-    const result = evaluateHarnessAction("crew-coder", "global", {});
+    const result = evaluateHarnessAction("iris-coder", "global", {});
     assert.equal(result.allowed, true);
   });
 });

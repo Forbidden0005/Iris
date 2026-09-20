@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
-# crewswarm Docker Installer — one-line setup for cloud VMs and dedicated servers
+# iris Docker Installer — one-line setup for cloud VMs and dedicated servers
 # Usage: curl -fsSL https://raw.githubusercontent.com/crewswarm/crewswarm/main/scripts/install-docker.sh | bash
 
 set -e
 
-CREWSWARM_VERSION="${CREWSWARM_VERSION:-latest}"
-CREWSWARM_CONFIG_DIR="${HOME}/.crewswarm"
-INSTALL_DIR="${CREWSWARM_INSTALL_DIR:-${HOME}/crewswarm}"
+IRIS_VERSION="${IRIS_VERSION:-latest}"
+IRIS_CONFIG_DIR="${HOME}/.iris"
+INSTALL_DIR="${IRIS_INSTALL_DIR:-${HOME}/iris}"
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  crewswarm Docker Installer"
-echo "  Version: ${CREWSWARM_VERSION}"
+echo "  iris Docker Installer"
+echo "  Version: ${IRIS_VERSION}"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 
@@ -104,14 +104,14 @@ fi
 echo "✓ Docker Compose available ($(docker compose version))"
 echo ""
 
-# ── Clone or update crewswarm repo ────────────────────────────────────────────
+# ── Clone or update iris repo ────────────────────────────────────────────
 if [[ -d "${INSTALL_DIR}/.git" ]]; then
-  echo "✓ crewswarm already cloned at ${INSTALL_DIR}"
+  echo "✓ iris already cloned at ${INSTALL_DIR}"
   echo "  Updating to latest..."
   cd "${INSTALL_DIR}"
   git pull -q
 else
-  echo "Cloning crewswarm repository..."
+  echo "Cloning iris repository..."
   git clone https://github.com/crewswarm/crewswarm.git "${INSTALL_DIR}"
   cd "${INSTALL_DIR}"
 fi
@@ -120,17 +120,17 @@ echo "✓ Repository ready at ${INSTALL_DIR}"
 echo ""
 
 # ── Initialize config directory ───────────────────────────────────────────────
-if [[ ! -d "${CREWSWARM_CONFIG_DIR}" ]]; then
-  echo "Creating config directory at ${CREWSWARM_CONFIG_DIR}..."
-  mkdir -p "${CREWSWARM_CONFIG_DIR}"
+if [[ ! -d "${IRIS_CONFIG_DIR}" ]]; then
+  echo "Creating config directory at ${IRIS_CONFIG_DIR}..."
+  mkdir -p "${IRIS_CONFIG_DIR}"
   
   # Bootstrap minimal config
-  cat > "${CREWSWARM_CONFIG_DIR}/crewswarm.json" <<'EOF'
+  cat > "${IRIS_CONFIG_DIR}/iris.json" <<'EOF'
 {
   "agents": [
-    { "id": "crew-main", "model": "groq/llama-3.3-70b-versatile" },
-    { "id": "crew-coder", "model": "groq/llama-3.3-70b-versatile" },
-    { "id": "crew-pm", "model": "groq/llama-3.3-70b-versatile" }
+    { "id": "iris-main", "model": "groq/llama-3.3-70b-versatile" },
+    { "id": "iris-coder", "model": "groq/llama-3.3-70b-versatile" },
+    { "id": "iris-pm", "model": "groq/llama-3.3-70b-versatile" }
   ],
   "providers": {},
   "env": {}
@@ -139,7 +139,7 @@ EOF
   
   # Generate RT auth token
   RT_TOKEN=$(openssl rand -hex 32 2>/dev/null || head -c 32 /dev/urandom | xxd -p -c 32)
-  cat > "${CREWSWARM_CONFIG_DIR}/config.json" <<EOF
+  cat > "${IRIS_CONFIG_DIR}/config.json" <<EOF
 {
   "rt": {
     "authToken": "${RT_TOKEN}"
@@ -148,23 +148,23 @@ EOF
 EOF
   
   # Create empty allowlist
-  echo '{"allowed": []}' > "${CREWSWARM_CONFIG_DIR}/cmd-allowlist.json"
+  echo '{"allowed": []}' > "${IRIS_CONFIG_DIR}/cmd-allowlist.json"
   
   echo "✓ Config directory initialized"
 else
-  echo "✓ Config directory already exists at ${CREWSWARM_CONFIG_DIR}"
+  echo "✓ Config directory already exists at ${IRIS_CONFIG_DIR}"
 fi
 
 echo ""
 
 # ── Pull/build Docker image ───────────────────────────────────────────────────
-echo "Building crewswarm Docker image (this may take a few minutes)..."
+echo "Building iris Docker image (this may take a few minutes)..."
 docker compose build --quiet 2>&1 | grep -v "^#" || true
 echo "✓ Docker image built"
 echo ""
 
 # ── Start services ────────────────────────────────────────────────────────────
-echo "Starting crewswarm services..."
+echo "Starting iris services..."
 docker compose up -d
 
 # Wait for health check
@@ -182,11 +182,11 @@ done
 echo ""
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  🎉 crewswarm is now running!"
+echo "  🎉 iris is now running!"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 echo "  Dashboard:   http://localhost:4319"
-echo "  crew-lead:   http://localhost:5010"
+echo "  iris-lead:   http://localhost:5010"
 echo "  MCP server:  http://localhost:5020"
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -196,11 +196,11 @@ echo ""
 echo "  1. Open dashboard and add an API key (Providers tab)"
 echo "     → Groq is free: https://console.groq.com/keys"
 echo ""
-echo "  2. Start chatting with your crew (Chat tab)"
+echo "  2. Start chatting with your iris (Chat tab)"
 echo ""
-echo "  3. Test the crew CLI:"
-echo "     $ docker compose exec crewswarm crew --version"
-echo "     $ docker compose exec crewswarm crew doctor"
+echo "  3. Test the iris CLI:"
+echo "     $ docker compose exec iris iris --version"
+echo "     $ docker compose exec iris iris doctor"
 echo ""
 echo "Useful commands:"
 echo ""

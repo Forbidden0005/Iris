@@ -32,12 +32,12 @@ describe("getPreferredCLI – null / empty input", () => {
 });
 
 describe("getPreferredCLI – flag-based detection", () => {
-  it("returns crew-cli when useCrewCLI is true", () => {
-    assert.equal(getPreferredCLI({ useCrewCLI: true }), "crew-cli");
+  it("returns iris-cli when useCrewCLI is true", () => {
+    assert.equal(getPreferredCLI({ useCrewCLI: true }), "iris-cli");
   });
 
-  it("returns crew-cli when engine is 'crew-cli'", () => {
-    assert.equal(getPreferredCLI({ engine: "crew-cli" }), "crew-cli");
+  it("returns iris-cli when engine is 'iris-cli'", () => {
+    assert.equal(getPreferredCLI({ engine: "iris-cli" }), "iris-cli");
   });
 
   it("returns opencode when useOpenCode is true", () => {
@@ -81,8 +81,8 @@ describe("getPreferredCLI – flag-based detection", () => {
   });
 
   it("useCrewCLI takes priority over engine: opencode", () => {
-    // Priority order: crew-cli > opencode > cursor > claude > codex > gemini
-    assert.equal(getPreferredCLI({ useCrewCLI: true, engine: "opencode" }), "crew-cli");
+    // Priority order: iris-cli > opencode > cursor > claude > codex > gemini
+    assert.equal(getPreferredCLI({ useCrewCLI: true, engine: "opencode" }), "iris-cli");
   });
 
   it("useOpenCode takes priority over engine: cursor", () => {
@@ -153,118 +153,118 @@ describe("hasEngineConfigured – positive cases", () => {
 // ── getToolPermissions ──────────────────────────────────────────────────────
 
 describe("getToolPermissions – built-in agent defaults", () => {
-  it("crew-pm gets cli, dispatch, and web", () => {
-    const p = getToolPermissions("crew-pm", null);
+  it("iris-pm gets cli, dispatch, and web", () => {
+    const p = getToolPermissions("iris-pm", null);
     assert.equal(p.cli, true);
     assert.equal(p.dispatch, true);
     assert.equal(p.web, true);
   });
 
-  it("crew-coder gets cli, dispatch, and web", () => {
-    const p = getToolPermissions("crew-coder", null);
+  it("iris-coder gets cli, dispatch, and web", () => {
+    const p = getToolPermissions("iris-coder", null);
     assert.equal(p.cli, true);
     assert.equal(p.dispatch, true);
     assert.equal(p.web, true);
   });
 
-  it("crew-security gets no cli, no dispatch, only web", () => {
-    const p = getToolPermissions("crew-security", null);
+  it("iris-security gets no cli, no dispatch, only web", () => {
+    const p = getToolPermissions("iris-security", null);
     assert.equal(p.cli, false);
     assert.equal(p.dispatch, false);
     assert.equal(p.web, true);
   });
 
-  it("crew-researcher gets no cli, no dispatch, only web", () => {
-    const p = getToolPermissions("crew-researcher", null);
+  it("iris-researcher gets no cli, no dispatch, only web", () => {
+    const p = getToolPermissions("iris-researcher", null);
     assert.equal(p.cli, false);
     assert.equal(p.dispatch, false);
     assert.equal(p.web, true);
   });
 
-  it("crew-loco gets no cli, no dispatch, only web", () => {
-    const p = getToolPermissions("crew-loco", null);
+  it("iris-loco gets no cli, no dispatch, only web", () => {
+    const p = getToolPermissions("iris-loco", null);
     assert.equal(p.cli, false);
     assert.equal(p.dispatch, false);
     assert.equal(p.web, true);
   });
 
-  it("crew-copywriter gets cli and web but no dispatch", () => {
-    const p = getToolPermissions("crew-copywriter", null);
+  it("iris-copywriter gets cli and web but no dispatch", () => {
+    const p = getToolPermissions("iris-copywriter", null);
     assert.equal(p.cli, true);
     assert.equal(p.dispatch, false);
     assert.equal(p.web, true);
   });
 
-  it("crew-lead gets full permissions", () => {
-    const p = getToolPermissions("crew-lead", null);
+  it("iris-lead gets full permissions", () => {
+    const p = getToolPermissions("iris-lead", null);
     assert.equal(p.cli, true);
     assert.equal(p.dispatch, true);
     assert.equal(p.web, true);
   });
 
   it("unknown agent id falls back to full permissions", () => {
-    const p = getToolPermissions("crew-does-not-exist-xyz", null);
+    const p = getToolPermissions("iris-does-not-exist-xyz", null);
     assert.equal(p.cli, true);
     assert.equal(p.dispatch, true);
     assert.equal(p.web, true);
   });
 });
 
-describe("getToolPermissions – crewswarmAllow config overrides", () => {
-  it("crewswarmAllow with run_cmd grants cli", () => {
-    const p = getToolPermissions("crew-security", {
-      tools: { crewswarmAllow: ["run_cmd"] },
+describe("getToolPermissions – irisAllow config overrides", () => {
+  it("irisAllow with run_cmd grants cli", () => {
+    const p = getToolPermissions("iris-security", {
+      tools: { irisAllow: ["run_cmd"] },
     });
     assert.equal(p.cli, true);
   });
 
-  it("crewswarmAllow with write_file grants cli", () => {
-    const p = getToolPermissions("crew-security", {
-      tools: { crewswarmAllow: ["write_file"] },
+  it("irisAllow with write_file grants cli", () => {
+    const p = getToolPermissions("iris-security", {
+      tools: { irisAllow: ["write_file"] },
     });
     assert.equal(p.cli, true);
   });
 
-  it("crewswarmAllow with dispatch grants dispatch", () => {
-    const p = getToolPermissions("crew-security", {
-      tools: { crewswarmAllow: ["dispatch"] },
+  it("irisAllow with dispatch grants dispatch", () => {
+    const p = getToolPermissions("iris-security", {
+      tools: { irisAllow: ["dispatch"] },
     });
     assert.equal(p.dispatch, true);
   });
 
-  it("crewswarmAllow with web_search grants web", () => {
-    const p = getToolPermissions("crew-security", {
-      tools: { crewswarmAllow: ["web_search"] },
+  it("irisAllow with web_search grants web", () => {
+    const p = getToolPermissions("iris-security", {
+      tools: { irisAllow: ["web_search"] },
     });
     assert.equal(p.web, true);
   });
 
-  it("crewswarmAllow with web_fetch grants web", () => {
-    const p = getToolPermissions("crew-security", {
-      tools: { crewswarmAllow: ["web_fetch"] },
+  it("irisAllow with web_fetch grants web", () => {
+    const p = getToolPermissions("iris-security", {
+      tools: { irisAllow: ["web_fetch"] },
     });
     assert.equal(p.web, true);
   });
 
-  it("crewswarmAllow with only read_file grants no cli, no dispatch, no web", () => {
-    const p = getToolPermissions("crew-coder", {
-      tools: { crewswarmAllow: ["read_file"] },
+  it("irisAllow with only read_file grants no cli, no dispatch, no web", () => {
+    const p = getToolPermissions("iris-coder", {
+      tools: { irisAllow: ["read_file"] },
     });
     assert.equal(p.cli, false);
     assert.equal(p.dispatch, false);
     assert.equal(p.web, false);
   });
 
-  it("empty crewswarmAllow array falls back to defaults", () => {
-    const p = getToolPermissions("crew-coder", {
-      tools: { crewswarmAllow: [] },
+  it("empty irisAllow array falls back to defaults", () => {
+    const p = getToolPermissions("iris-coder", {
+      tools: { irisAllow: [] },
     });
-    // Empty array means no override — use default (crew-coder: all true)
+    // Empty array means no override — use default (iris-coder: all true)
     assert.equal(p.cli, true);
   });
 
   it("null agentConfig falls back to defaults", () => {
-    const p = getToolPermissions("crew-pm", null);
+    const p = getToolPermissions("iris-pm", null);
     assert.equal(p.cli, true);
     assert.equal(p.dispatch, true);
   });
@@ -274,33 +274,33 @@ describe("getToolPermissions – crewswarmAllow config overrides", () => {
 
 describe("buildToolInstructions – returns a string", () => {
   it("always returns a non-empty string", () => {
-    const result = buildToolInstructions({ agentId: "crew-coder", permissions: {}, hasEngine: false });
+    const result = buildToolInstructions({ agentId: "iris-coder", permissions: {}, hasEngine: false });
     assert.equal(typeof result, "string");
     assert.ok(result.length > 0);
   });
 
   it("always includes the ## Available Tools heading", () => {
-    const result = buildToolInstructions({ agentId: "crew-coder", permissions: {}, hasEngine: false });
+    const result = buildToolInstructions({ agentId: "iris-coder", permissions: {}, hasEngine: false });
     assert.ok(result.includes("## Available Tools"));
   });
 
   it("always includes the @@READ_FILE direct tool", () => {
-    const result = buildToolInstructions({ agentId: "crew-qa", permissions: {}, hasEngine: false });
+    const result = buildToolInstructions({ agentId: "iris-qa", permissions: {}, hasEngine: false });
     assert.ok(result.includes("@@READ_FILE"));
   });
 
   it("always includes @@WRITE_FILE direct tool", () => {
-    const result = buildToolInstructions({ agentId: "crew-qa", permissions: {}, hasEngine: false });
+    const result = buildToolInstructions({ agentId: "iris-qa", permissions: {}, hasEngine: false });
     assert.ok(result.includes("@@WRITE_FILE"));
   });
 
   it("always includes @@RUN_CMD direct tool", () => {
-    const result = buildToolInstructions({ agentId: "crew-coder", permissions: {}, hasEngine: false });
+    const result = buildToolInstructions({ agentId: "iris-coder", permissions: {}, hasEngine: false });
     assert.ok(result.includes("@@RUN_CMD"));
   });
 
   it("always includes the Hard Protocol section", () => {
-    const result = buildToolInstructions({ agentId: "crew-coder", permissions: {}, hasEngine: false });
+    const result = buildToolInstructions({ agentId: "iris-coder", permissions: {}, hasEngine: false });
     assert.ok(result.includes("## Hard Protocol"));
   });
 });
@@ -308,7 +308,7 @@ describe("buildToolInstructions – returns a string", () => {
 describe("buildToolInstructions – CLI section gating", () => {
   it("includes @@CLI section when permissions.cli AND hasEngine are both true", () => {
     const result = buildToolInstructions({
-      agentId: "crew-coder",
+      agentId: "iris-coder",
       permissions: { cli: true },
       hasEngine: true,
     });
@@ -317,17 +317,17 @@ describe("buildToolInstructions – CLI section gating", () => {
 
   it("omits @@CLI section when hasEngine is false even if permissions.cli is true", () => {
     const result = buildToolInstructions({
-      agentId: "crew-coder",
+      agentId: "iris-coder",
       permissions: { cli: true },
       hasEngine: false,
     });
-    assert.ok(!result.includes("@@CLI crew-cli"));
+    assert.ok(!result.includes("@@CLI iris-cli"));
     assert.ok(!result.includes("@@CLI opencode"));
   });
 
   it("shows 'not configured' note when cli permission set but no engine", () => {
     const result = buildToolInstructions({
-      agentId: "crew-coder",
+      agentId: "iris-coder",
       permissions: { cli: true },
       hasEngine: false,
     });
@@ -336,69 +336,69 @@ describe("buildToolInstructions – CLI section gating", () => {
 
   it("omits CLI Tools section header when permissions.cli is false", () => {
     const result = buildToolInstructions({
-      agentId: "crew-researcher",
+      agentId: "iris-researcher",
       permissions: { cli: false },
       hasEngine: true,
     });
     // The Hard Protocol footer always mentions @@CLI as a format example,
-    // but the CLI Tools section itself (with crew-cli / opencode / cursor)
+    // but the CLI Tools section itself (with iris-cli / opencode / cursor)
     // should not appear.
     assert.ok(!result.includes("### CLI Tools"));
-    assert.ok(!result.includes("@@CLI crew-cli"));
+    assert.ok(!result.includes("@@CLI iris-cli"));
     assert.ok(!result.includes("@@CLI opencode"));
   });
 });
 
 describe("buildToolInstructions – preferred CLI logic", () => {
-  it("shows only crew-cli when agentConfig.useCrewCLI is true", () => {
+  it("shows only iris-cli when agentConfig.useCrewCLI is true", () => {
     const result = buildToolInstructions({
-      agentId: "crew-coder",
+      agentId: "iris-coder",
       permissions: { cli: true },
       hasEngine: true,
       agentConfig: { useCrewCLI: true },
     });
-    assert.ok(result.includes("@@CLI crew-cli"));
+    assert.ok(result.includes("@@CLI iris-cli"));
     assert.ok(!result.includes("@@CLI opencode"));
   });
 
   it("shows only opencode when agentConfig.engine is opencode", () => {
     const result = buildToolInstructions({
-      agentId: "crew-coder",
+      agentId: "iris-coder",
       permissions: { cli: true },
       hasEngine: true,
       agentConfig: { engine: "opencode" },
     });
     assert.ok(result.includes("@@CLI opencode"));
-    assert.ok(!result.includes("@@CLI crew-cli"));
+    assert.ok(!result.includes("@@CLI iris-cli"));
   });
 
   it("shows all CLIs when no preference is set", () => {
     const result = buildToolInstructions({
-      agentId: "crew-coder",
+      agentId: "iris-coder",
       permissions: { cli: true },
       hasEngine: true,
       agentConfig: {},
     });
-    assert.ok(result.includes("@@CLI crew-cli"));
+    assert.ok(result.includes("@@CLI iris-cli"));
     assert.ok(result.includes("@@CLI opencode"));
     assert.ok(result.includes("@@CLI cursor"));
   });
 
   it("shows all CLIs when agentConfig is null but hasEngine true", () => {
     const result = buildToolInstructions({
-      agentId: "crew-coder",
+      agentId: "iris-coder",
       permissions: { cli: true },
       hasEngine: true,
       agentConfig: null,
     });
-    assert.ok(result.includes("@@CLI crew-cli"));
+    assert.ok(result.includes("@@CLI iris-cli"));
   });
 });
 
 describe("buildToolInstructions – web tools section", () => {
   it("includes @@WEB_SEARCH when permissions.web is true", () => {
     const result = buildToolInstructions({
-      agentId: "crew-researcher",
+      agentId: "iris-researcher",
       permissions: { web: true },
       hasEngine: false,
     });
@@ -408,7 +408,7 @@ describe("buildToolInstructions – web tools section", () => {
 
   it("omits web tools when permissions.web is false", () => {
     const result = buildToolInstructions({
-      agentId: "crew-coder",
+      agentId: "iris-coder",
       permissions: { web: false },
       hasEngine: false,
     });
@@ -417,7 +417,7 @@ describe("buildToolInstructions – web tools section", () => {
 
   it("omits web tools when permissions is empty object (no web key)", () => {
     const result = buildToolInstructions({
-      agentId: "crew-coder",
+      agentId: "iris-coder",
       permissions: {},
       hasEngine: false,
     });
@@ -428,7 +428,7 @@ describe("buildToolInstructions – web tools section", () => {
 describe("buildToolInstructions – dispatch section", () => {
   it("includes @@DISPATCH when permissions.dispatch is true", () => {
     const result = buildToolInstructions({
-      agentId: "crew-pm",
+      agentId: "iris-pm",
       permissions: { dispatch: true },
       hasEngine: false,
     });
@@ -437,7 +437,7 @@ describe("buildToolInstructions – dispatch section", () => {
 
   it("omits Delegation Tools section when permissions.dispatch is false", () => {
     const result = buildToolInstructions({
-      agentId: "crew-researcher",
+      agentId: "iris-researcher",
       permissions: { dispatch: false },
       hasEngine: false,
     });
@@ -449,72 +449,72 @@ describe("buildToolInstructions – dispatch section", () => {
 });
 
 describe("buildToolInstructions – agent-specific guidance", () => {
-  it("includes PM guidance for crew-pm agent", () => {
+  it("includes PM guidance for iris-pm agent", () => {
     const result = buildToolInstructions({
-      agentId: "crew-pm",
+      agentId: "iris-pm",
       permissions: {},
       hasEngine: false,
     });
     assert.ok(result.includes("As a PM agent"));
   });
 
-  it("includes PM guidance for crew-pm-frontend variant", () => {
+  it("includes PM guidance for iris-pm-frontend variant", () => {
     const result = buildToolInstructions({
-      agentId: "crew-pm-frontend",
+      agentId: "iris-pm-frontend",
       permissions: {},
       hasEngine: false,
     });
     assert.ok(result.includes("As a PM agent"));
   });
 
-  it("includes PM guidance for crew-pm-core variant", () => {
+  it("includes PM guidance for iris-pm-core variant", () => {
     const result = buildToolInstructions({
-      agentId: "crew-pm-core",
+      agentId: "iris-pm-core",
       permissions: {},
       hasEngine: false,
     });
     assert.ok(result.includes("As a PM agent"));
   });
 
-  it("includes coder guidance for crew-coder agent", () => {
+  it("includes coder guidance for iris-coder agent", () => {
     const result = buildToolInstructions({
-      agentId: "crew-coder",
+      agentId: "iris-coder",
       permissions: {},
       hasEngine: false,
     });
     assert.ok(result.includes("As a coding agent"));
   });
 
-  it("includes coder guidance for crew-coder-front", () => {
+  it("includes coder guidance for iris-coder-front", () => {
     const result = buildToolInstructions({
-      agentId: "crew-coder-front",
+      agentId: "iris-coder-front",
       permissions: {},
       hasEngine: false,
     });
     assert.ok(result.includes("As a coding agent"));
   });
 
-  it("includes coder guidance for crew-coder-back", () => {
+  it("includes coder guidance for iris-coder-back", () => {
     const result = buildToolInstructions({
-      agentId: "crew-coder-back",
+      agentId: "iris-coder-back",
       permissions: {},
       hasEngine: false,
     });
     assert.ok(result.includes("As a coding agent"));
   });
 
-  it("includes coder guidance for crew-fixer", () => {
+  it("includes coder guidance for iris-fixer", () => {
     const result = buildToolInstructions({
-      agentId: "crew-fixer",
+      agentId: "iris-fixer",
       permissions: {},
       hasEngine: false,
     });
     assert.ok(result.includes("As a coding agent"));
   });
 
-  it("includes coder guidance for crew-frontend", () => {
+  it("includes coder guidance for iris-frontend", () => {
     const result = buildToolInstructions({
-      agentId: "crew-frontend",
+      agentId: "iris-frontend",
       permissions: {},
       hasEngine: false,
     });
@@ -523,7 +523,7 @@ describe("buildToolInstructions – agent-specific guidance", () => {
 
   it("does NOT include PM guidance for non-PM agents", () => {
     const result = buildToolInstructions({
-      agentId: "crew-coder",
+      agentId: "iris-coder",
       permissions: {},
       hasEngine: false,
     });
@@ -532,16 +532,16 @@ describe("buildToolInstructions – agent-specific guidance", () => {
 
   it("does NOT include coder guidance for non-coder agents", () => {
     const result = buildToolInstructions({
-      agentId: "crew-pm",
+      agentId: "iris-pm",
       permissions: {},
       hasEngine: false,
     });
     assert.ok(!result.includes("As a coding agent"));
   });
 
-  it("generic agent (crew-lead) gets neither PM nor coder guidance", () => {
+  it("generic agent (iris-lead) gets neither PM nor coder guidance", () => {
     const result = buildToolInstructions({
-      agentId: "crew-lead",
+      agentId: "iris-lead",
       permissions: {},
       hasEngine: false,
     });
@@ -553,7 +553,7 @@ describe("buildToolInstructions – agent-specific guidance", () => {
 describe("buildToolInstructions – defaults", () => {
   it("hasEngine defaults to false when not provided", () => {
     const result = buildToolInstructions({
-      agentId: "crew-coder",
+      agentId: "iris-coder",
       permissions: { cli: true },
     });
     // With hasEngine=false (default), CLI section should show "not configured" note
@@ -561,26 +561,26 @@ describe("buildToolInstructions – defaults", () => {
   });
 
   it("permissions defaults to empty object when not provided", () => {
-    const result = buildToolInstructions({ agentId: "crew-coder" });
+    const result = buildToolInstructions({ agentId: "iris-coder" });
     assert.ok(typeof result === "string");
     assert.ok(result.length > 0);
   });
 
   it("agentConfig defaults to null when not provided", () => {
     const result = buildToolInstructions({
-      agentId: "crew-coder",
+      agentId: "iris-coder",
       permissions: { cli: true },
       hasEngine: true,
     });
     // null agentConfig -> no preference -> show all CLIs
-    assert.ok(result.includes("@@CLI crew-cli"));
+    assert.ok(result.includes("@@CLI iris-cli"));
   });
 });
 
 describe("buildToolInstructions – full permissions integration", () => {
   it("produces all sections when all permissions are true with engine configured", () => {
     const result = buildToolInstructions({
-      agentId: "crew-pm",
+      agentId: "iris-pm",
       permissions: { cli: true, dispatch: true, web: true },
       hasEngine: true,
       agentConfig: { useCrewCLI: true },
@@ -588,7 +588,7 @@ describe("buildToolInstructions – full permissions integration", () => {
     assert.ok(result.includes("@@READ_FILE"));
     assert.ok(result.includes("@@WRITE_FILE"));
     assert.ok(result.includes("@@RUN_CMD"));
-    assert.ok(result.includes("@@CLI crew-cli"));
+    assert.ok(result.includes("@@CLI iris-cli"));
     assert.ok(result.includes("@@WEB_SEARCH"));
     assert.ok(result.includes("@@DISPATCH"));
     assert.ok(result.includes("## Hard Protocol"));
@@ -596,7 +596,7 @@ describe("buildToolInstructions – full permissions integration", () => {
 
   it("produces minimal output when all permissions are false, no engine", () => {
     const result = buildToolInstructions({
-      agentId: "crew-loco",
+      agentId: "iris-loco",
       permissions: { cli: false, dispatch: false, web: false },
       hasEngine: false,
     });
@@ -604,7 +604,7 @@ describe("buildToolInstructions – full permissions integration", () => {
     // Sections that should be absent (Hard Protocol footer references these
     // as format examples but the actual tool sections should not appear)
     assert.ok(!result.includes("### CLI Tools"));
-    assert.ok(!result.includes("@@CLI crew-cli"));
+    assert.ok(!result.includes("@@CLI iris-cli"));
     assert.ok(!result.includes("@@WEB_SEARCH"));
     assert.ok(!result.includes("### Delegation Tools"));
   });

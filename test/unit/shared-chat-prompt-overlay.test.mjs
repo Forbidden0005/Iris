@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { getSharedChatPromptOverlay } from "../../lib/chat/shared-chat-prompt-overlay.mjs";
 
 test("shared chat overlay tells agents to use literal @mentions for mention-system tests", () => {
-  const overlay = getSharedChatPromptOverlay("crew-lead");
+  const overlay = getSharedChatPromptOverlay("iris-lead");
 
   assert.match(overlay, /use the @mention system/i);
   assert.match(overlay, /literal `@participant` message/i);

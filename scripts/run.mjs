@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Entrypoint for crewswarm orchestration.
+ * Entrypoint for iris orchestration.
  * Delegates to unified-orchestrator.mjs.
  */
 
@@ -9,13 +9,13 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
-const CREWSWARM_DIR = process.env.CREWSWARM_DIR || process.env.OPENCLAW_DIR || join(__dirname, '..');
-const ORCHESTRATOR = join(CREWSWARM_DIR, 'unified-orchestrator.mjs');
+const IRIS_DIR = process.env.IRIS_DIR || process.env.OPENCLAW_DIR || join(__dirname, '..');
+const ORCHESTRATOR = join(IRIS_DIR, 'unified-orchestrator.mjs');
 
 const requirement = process.argv.slice(2).join(' ');
 if (!requirement) {
   console.log(`
-crewswarm — Multi-agent orchestration
+iris — Multi-agent orchestration
 
 Usage:
   node scripts/run.mjs "<requirement>"
@@ -29,7 +29,7 @@ Prerequisites: openswitchctl status (rt:up, agents:7/7)
 }
 
 const proc = spawn('node', [ORCHESTRATOR, requirement], {
-  cwd: CREWSWARM_DIR,
+  cwd: IRIS_DIR,
   stdio: 'inherit',
   env: { ...process.env },
 });

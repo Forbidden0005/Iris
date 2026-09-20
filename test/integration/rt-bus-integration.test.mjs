@@ -193,26 +193,26 @@ describe("RT bus integration", () => {
     const frames = [];
     server.on("frame", (f) => frames.push(f));
 
-    const client = await createTestClient(`ws://127.0.0.1:${PORT}`, "crew-test");
+    const client = await createTestClient(`ws://127.0.0.1:${PORT}`, "iris-test");
 
     assert.ok(client.isReady());
     // Small delay for subscribe frame to arrive at server
     await new Promise(r => setTimeout(r, 50));
-    assert.ok(frames.some(f => f.type === "hello" && f.agent === "crew-test"));
+    assert.ok(frames.some(f => f.type === "hello" && f.agent === "iris-test"));
     assert.ok(frames.some(f => f.type === "subscribe"));
 
     client.close();
   });
 
   it("delivers broadcast message to all connected agents", async () => {
-    const agent1 = await createTestClient(`ws://127.0.0.1:${PORT}`, "crew-coder");
-    const agent2 = await createTestClient(`ws://127.0.0.1:${PORT}`, "crew-qa");
-    const lead = await createTestClient(`ws://127.0.0.1:${PORT}`, "crew-lead");
+    const agent1 = await createTestClient(`ws://127.0.0.1:${PORT}`, "iris-coder");
+    const agent2 = await createTestClient(`ws://127.0.0.1:${PORT}`, "iris-qa");
+    const lead = await createTestClient(`ws://127.0.0.1:${PORT}`, "iris-lead");
 
     // Small delay for connections to settle
     await new Promise(r => setTimeout(r, 50));
 
-    // crew-lead broadcasts a task
+    // iris-lead broadcasts a task
     lead.publish({
       channel: "command",
       messageType: "command.run_task",
@@ -224,11 +224,11 @@ describe("RT bus integration", () => {
     const env1 = await agent1.waitForEnvelope();
     const env2 = await agent2.waitForEnvelope();
 
-    assert.equal(env1.from, "crew-lead");
+    assert.equal(env1.from, "iris-lead");
     assert.equal(env1.taskId, "task-001");
     assert.equal(env1.payload.prompt, "Build a hello world app");
 
-    assert.equal(env2.from, "crew-lead");
+    assert.equal(env2.from, "iris-lead");
     assert.equal(env2.taskId, "task-001");
 
     // Lead should NOT receive its own broadcast
@@ -240,28 +240,28 @@ describe("RT bus integration", () => {
   });
 
   it("delivers targeted message only to the specified agent", async () => {
-    const coder = await createTestClient(`ws://127.0.0.1:${PORT}`, "crew-coder");
-    const qa = await createTestClient(`ws://127.0.0.1:${PORT}`, "crew-qa");
-    const lead = await createTestClient(`ws://127.0.0.1:${PORT}`, "crew-lead");
+    const coder = await createTestClient(`ws://127.0.0.1:${PORT}`, "iris-coder");
+    const qa = await createTestClient(`ws://127.0.0.1:${PORT}`, "iris-qa");
+    const lead = await createTestClient(`ws://127.0.0.1:${PORT}`, "iris-lead");
 
     await new Promise(r => setTimeout(r, 50));
 
-    // Send targeted message to crew-coder only
+    // Send targeted message to iris-coder only
     lead.publish({
       channel: "command",
       messageType: "command.run_task",
-      to: "crew-coder",
+      to: "iris-coder",
       taskId: "task-002",
       payload: { prompt: "Fix the bug in auth.js" },
     });
 
     const env = await coder.waitForEnvelope();
-    assert.equal(env.to, "crew-coder");
+    assert.equal(env.to, "iris-coder");
     assert.equal(env.taskId, "task-002");
 
-    // crew-qa should NOT receive the targeted message
+    // iris-qa should NOT receive the targeted message
     await new Promise(r => setTimeout(r, 100));
-    assert.equal(qa.received.length, 0, "crew-qa should not receive targeted message");
+    assert.equal(qa.received.length, 0, "iris-qa should not receive targeted message");
 
     coder.close();
     qa.close();
@@ -269,8 +269,8 @@ describe("RT bus integration", () => {
   });
 
   it("agent can ACK a received message", async () => {
-    const coder = await createTestClient(`ws://127.0.0.1:${PORT}`, "crew-coder");
-    const lead = await createTestClient(`ws://127.0.0.1:${PORT}`, "crew-lead");
+    const coder = await createTestClient(`ws://127.0.0.1:${PORT}`, "iris-coder");
+    const lead = await createTestClient(`ws://127.0.0.1:${PORT}`, "iris-lead");
 
     await new Promise(r => setTimeout(r, 50));
 
@@ -280,7 +280,7 @@ describe("RT bus integration", () => {
     lead.publish({
       channel: "command",
       messageType: "task",
-      to: "crew-coder",
+      to: "iris-coder",
       taskId: "task-003",
       payload: { prompt: "test" },
     });
@@ -289,29 +289,29 @@ describe("RT bus integration", () => {
     coder.ack({ messageId: env.id, status: "done", note: "completed" });
 
     await new Promise(r => setTimeout(r, 50));
-    assert.ok(acks.some(a => a.from === "crew-coder" && a.status === "done"));
+    assert.ok(acks.some(a => a.from === "iris-coder" && a.status === "done"));
 
     coder.close();
     lead.close();
   });
 
-  it("agent publishes done result back to crew-lead", async () => {
-    const coder = await createTestClient(`ws://127.0.0.1:${PORT}`, "crew-coder");
-    const lead = await createTestClient(`ws://127.0.0.1:${PORT}`, "crew-lead");
+  it("agent publishes done result back to iris-lead", async () => {
+    const coder = await createTestClient(`ws://127.0.0.1:${PORT}`, "iris-coder");
+    const lead = await createTestClient(`ws://127.0.0.1:${PORT}`, "iris-lead");
 
     await new Promise(r => setTimeout(r, 50));
 
-    // crew-coder sends result back to crew-lead
+    // iris-coder sends result back to iris-lead
     coder.publish({
       channel: "done",
       messageType: "task.done",
-      to: "crew-lead",
+      to: "iris-lead",
       taskId: "task-004",
       payload: { reply: "Built the app successfully", exitCode: 0 },
     });
 
     const result = await lead.waitForEnvelope();
-    assert.equal(result.from, "crew-coder");
+    assert.equal(result.from, "iris-coder");
     assert.equal(result.type, "task.done");
     assert.equal(result.payload.reply, "Built the app successfully");
     assert.equal(result.taskId, "task-004");
@@ -323,7 +323,7 @@ describe("RT bus integration", () => {
   it("handles multiple agents connecting and disconnecting", async () => {
     const agents = [];
     for (let i = 0; i < 5; i++) {
-      agents.push(await createTestClient(`ws://127.0.0.1:${PORT}`, `crew-agent-${i}`));
+      agents.push(await createTestClient(`ws://127.0.0.1:${PORT}`, `iris-agent-${i}`));
     }
 
     assert.equal(server.agents.size, 5);
@@ -352,33 +352,33 @@ describe("RT bus integration", () => {
   });
 
   it("full dispatch round-trip: lead → agent → result → lead", async () => {
-    const lead = await createTestClient(`ws://127.0.0.1:${PORT}`, "crew-lead");
-    const coder = await createTestClient(`ws://127.0.0.1:${PORT}`, "crew-coder");
+    const lead = await createTestClient(`ws://127.0.0.1:${PORT}`, "iris-lead");
+    const coder = await createTestClient(`ws://127.0.0.1:${PORT}`, "iris-coder");
 
     await new Promise(r => setTimeout(r, 50));
 
-    // 1. crew-lead dispatches task to crew-coder
+    // 1. iris-lead dispatches task to iris-coder
     lead.publish({
       channel: "command",
       messageType: "command.run_task",
-      to: "crew-coder",
+      to: "iris-coder",
       taskId: "task-roundtrip",
       payload: { prompt: "Create hello.js" },
     });
 
-    // 2. crew-coder receives task
+    // 2. iris-coder receives task
     const task = await coder.waitForEnvelope();
     assert.equal(task.type, "command.run_task");
     assert.equal(task.payload.prompt, "Create hello.js");
 
-    // 3. crew-coder ACKs receipt
+    // 3. iris-coder ACKs receipt
     coder.ack({ messageId: task.id, status: "received" });
 
-    // 4. crew-coder sends result back
+    // 4. iris-coder sends result back
     coder.publish({
       channel: "done",
       messageType: "task.done",
-      to: "crew-lead",
+      to: "iris-lead",
       taskId: "task-roundtrip",
       payload: {
         reply: "Created hello.js with console.log('hello')",
@@ -387,7 +387,7 @@ describe("RT bus integration", () => {
       },
     });
 
-    // 5. crew-lead receives result
+    // 5. iris-lead receives result
     const result = await lead.waitForEnvelope();
     assert.equal(result.type, "task.done");
     assert.equal(result.taskId, "task-roundtrip");

@@ -7,13 +7,13 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 
 // ── routeAgent keyword fallback (pure, extracted from pm-loop.mjs) ────────
-const CODER_AGENT = "crew-coder";
+const CODER_AGENT = "iris-coder";
 function keywordRoute(itemText, nonDoers = new Set()) {
   const t = itemText.toLowerCase();
   let agent;
-  if (/\bgit\b|github|commit|push|pull.request|branch|deploy/.test(t)) agent = "crew-github";
-  else if (/\bapi\b|server|node|express|script|endpoint|json|database|backend|mjs|\.js\b/.test(t)) agent = "crew-coder-back";
-  else if (/html|css|style|section|design|layout|animation|nav|hero|frontend|ui\b|ux\b|responsive/.test(t)) agent = "crew-coder-front";
+  if (/\bgit\b|github|commit|push|pull.request|branch|deploy/.test(t)) agent = "iris-github";
+  else if (/\bapi\b|server|node|express|script|endpoint|json|database|backend|mjs|\.js\b/.test(t)) agent = "iris-coder-back";
+  else if (/html|css|style|section|design|layout|animation|nav|hero|frontend|ui\b|ux\b|responsive/.test(t)) agent = "iris-coder-front";
   else agent = CODER_AGENT;
   if (nonDoers.has(agent)) agent = CODER_AGENT;
   return agent;
@@ -44,36 +44,36 @@ function pickNextItem(roadmapContent) {
 // ── tests ──────────────────────────────────────────────────────────────────
 
 describe("pm-loop — keyword agent routing", () => {
-  it("routes git/github tasks to crew-github", () => {
-    assert.equal(keywordRoute("commit the changes to github"), "crew-github");
-    assert.equal(keywordRoute("create a pull request on the repo"), "crew-github");
-    assert.equal(keywordRoute("deploy the app to production"), "crew-github");
+  it("routes git/github tasks to iris-github", () => {
+    assert.equal(keywordRoute("commit the changes to github"), "iris-github");
+    assert.equal(keywordRoute("create a pull request on the repo"), "iris-github");
+    assert.equal(keywordRoute("deploy the app to production"), "iris-github");
   });
 
-  it("routes backend/API tasks to crew-coder-back", () => {
-    assert.equal(keywordRoute("add a REST API endpoint for user login"), "crew-coder-back");
-    assert.equal(keywordRoute("write a Node.js server script"), "crew-coder-back");
-    assert.equal(keywordRoute("update the database schema"), "crew-coder-back");
+  it("routes backend/API tasks to iris-coder-back", () => {
+    assert.equal(keywordRoute("add a REST API endpoint for user login"), "iris-coder-back");
+    assert.equal(keywordRoute("write a Node.js server script"), "iris-coder-back");
+    assert.equal(keywordRoute("update the database schema"), "iris-coder-back");
   });
 
-  it("routes frontend/CSS tasks to crew-coder-front", () => {
-    assert.equal(keywordRoute("add a hero section with CSS animation"), "crew-coder-front");
-    assert.equal(keywordRoute("make the nav responsive for mobile"), "crew-coder-front");
-    assert.equal(keywordRoute("update the UI layout for the dashboard"), "crew-coder-front");
+  it("routes frontend/CSS tasks to iris-coder-front", () => {
+    assert.equal(keywordRoute("add a hero section with CSS animation"), "iris-coder-front");
+    assert.equal(keywordRoute("make the nav responsive for mobile"), "iris-coder-front");
+    assert.equal(keywordRoute("update the UI layout for the dashboard"), "iris-coder-front");
   });
 
-  it("routes unrecognized tasks to default crew-coder", () => {
+  it("routes unrecognized tasks to default iris-coder", () => {
     assert.equal(keywordRoute("improve error handling in the auth flow"), CODER_AGENT);
     assert.equal(keywordRoute("write tests for the billing module"), CODER_AGENT);
   });
 
-  it("falls back to crew-coder when preferred agent is in nonDoers set", () => {
-    const nonDoers = new Set(["crew-github"]);
+  it("falls back to iris-coder when preferred agent is in nonDoers set", () => {
+    const nonDoers = new Set(["iris-github"]);
     assert.equal(keywordRoute("commit and push to git", nonDoers), CODER_AGENT);
   });
 
   it("does not fall back when nonDoers is empty", () => {
-    assert.equal(keywordRoute("push to github", new Set()), "crew-github");
+    assert.equal(keywordRoute("push to github", new Set()), "iris-github");
   });
 });
 
@@ -89,13 +89,13 @@ describe("pm-loop — markItem marker logic", () => {
   });
 
   it("appends agent name on done when agent provided", () => {
-    const result = applyMarkDone("- [ ] Build the login page", "crew-coder-front");
-    assert.ok(result.includes("(crew-coder-front)"), `expected agent in: ${result}`);
+    const result = applyMarkDone("- [ ] Build the login page", "iris-coder-front");
+    assert.ok(result.includes("(iris-coder-front)"), `expected agent in: ${result}`);
   });
 
   it("does not append agent when not provided", () => {
     const result = applyMarkDone("- [ ] Build the login page");
-    assert.ok(!result.includes("crew-"), `unexpected agent in: ${result}`);
+    assert.ok(!result.includes("iris-"), `unexpected agent in: ${result}`);
   });
 
   it("replaces [ ] with [!] on failure", () => {

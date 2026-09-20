@@ -1,6 +1,6 @@
 # Canonical Docs Map
 
-These docs are the source of truth for crewswarm behavior. Prefer them over legacy or scattered references.
+These docs are the source of truth for iris behavior. Prefer them over legacy or scattered references.
 
 ## Core canonical docs
 
@@ -18,7 +18,7 @@ These docs are the source of truth for crewswarm behavior. Prefer them over lega
 |-----|-------------|
 | [INSTALL.md](INSTALL.md) | Setup and installation |
 | [DEMO-SCRIPT.md](DEMO-SCRIPT.md) | 90-second demo script |
-| [SURFACES.md](SURFACES.md) | Dashboard, Vibe, crewchat, SwiftBar |
+| [SURFACES.md](SURFACES.md) | Dashboard, Vibe, irischat, SwiftBar |
 | [DASHBOARD-TABS.md](DASHBOARD-TABS.md) | Comprehensive overview of the 19 dashboard tabs |
 
 ## Root docs (also canonical)

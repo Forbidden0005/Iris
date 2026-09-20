@@ -18,7 +18,7 @@ import os from "node:os";
 
 // Enable test mode BEFORE importing spending module
 // MUST be "true" (not "1") — paths.mjs checks === "true" for temp dir redirect
-process.env.CREWSWARM_TEST_MODE = "true";
+process.env.IRIS_TEST_MODE = "true";
 
 import { getConfigPath, resetPaths } from "../../lib/runtime/paths.mjs";
 
@@ -32,10 +32,10 @@ const {
   initSpending,
 } = await import("../../lib/runtime/spending.mjs");
 
-const TEST_DIR = path.join(os.tmpdir(), `crewswarm-test-${process.pid}`);
+const TEST_DIR = path.join(os.tmpdir(), `iris-test-${process.pid}`);
 
 function writeCrewswarmConfig(config) {
-  const configPath = getConfigPath("crewswarm.json");
+  const configPath = getConfigPath("iris.json");
   fs.mkdirSync(path.dirname(configPath), { recursive: true });
   fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
 }
@@ -46,7 +46,7 @@ function cleanTestDir() {
 
 describe("spending cap enforcement — full flow", () => {
   beforeEach(() => {
-    process.env.CREWSWARM_TEST_MODE = "true";
+    process.env.IRIS_TEST_MODE = "true";
     resetPaths();
     cleanTestDir();
     initSpending({});
@@ -54,7 +54,7 @@ describe("spending cap enforcement — full flow", () => {
 
   afterEach(() => {
     cleanTestDir();
-    delete process.env.CREWSWARM_TEST_MODE;
+    delete process.env.IRIS_TEST_MODE;
     resetPaths();
   });
 
@@ -67,10 +67,10 @@ describe("spending cap enforcement — full flow", () => {
     });
 
     // Accumulate 1200 tokens
-    addAgentSpend("crew-coder", 600, 0.10);
-    addAgentSpend("crew-qa", 600, 0.10);
+    addAgentSpend("iris-coder", 600, 0.10);
+    addAgentSpend("iris-qa", 600, 0.10);
 
-    const result = checkSpendingCap("crew-coder", "groq");
+    const result = checkSpendingCap("iris-coder", "groq");
     assert.equal(result.exceeded, true);
     assert.equal(result.action, "stop");
     assert.ok(result.message.includes("1,000"));
@@ -82,9 +82,9 @@ describe("spending cap enforcement — full flow", () => {
       agents: [],
     });
 
-    addAgentSpend("crew-coder", 500, 0.05);
+    addAgentSpend("iris-coder", 500, 0.05);
 
-    const result = checkSpendingCap("crew-coder", "groq");
+    const result = checkSpendingCap("iris-coder", "groq");
     assert.equal(result.exceeded, false);
   });
 
@@ -96,10 +96,10 @@ describe("spending cap enforcement — full flow", () => {
       agents: [],
     });
 
-    addAgentSpend("crew-coder", 100000, 3.50);
-    addAgentSpend("crew-qa", 50000, 2.00);
+    addAgentSpend("iris-coder", 100000, 3.50);
+    addAgentSpend("iris-qa", 50000, 2.00);
 
-    const result = checkSpendingCap("crew-coder", "anthropic");
+    const result = checkSpendingCap("iris-coder", "anthropic");
     assert.equal(result.exceeded, true);
     assert.equal(result.action, "stop");
     assert.ok(result.message.includes("$5"));
@@ -110,30 +110,30 @@ describe("spending cap enforcement — full flow", () => {
   it("enforces per-agent token limit with 'stop' action", () => {
     writeCrewswarmConfig({
       agents: [{
-        id: "crew-coder",
+        id: "iris-coder",
         spending: { dailyTokenLimit: 500, onExceed: "stop" },
       }],
     });
 
-    addAgentSpend("crew-coder", 600, 0.10);
+    addAgentSpend("iris-coder", 600, 0.10);
 
-    const result = checkSpendingCap("crew-coder", "groq");
+    const result = checkSpendingCap("iris-coder", "groq");
     assert.equal(result.exceeded, true);
     assert.equal(result.action, "stop");
-    assert.ok(result.message.includes("crew-coder"));
+    assert.ok(result.message.includes("iris-coder"));
   });
 
   it("enforces per-agent cost limit with 'notify' action (default)", () => {
     writeCrewswarmConfig({
       agents: [{
-        id: "crew-coder",
+        id: "iris-coder",
         spending: { dailyCostLimitUSD: 1.0 },
       }],
     });
 
-    addAgentSpend("crew-coder", 50000, 1.50);
+    addAgentSpend("iris-coder", 50000, 1.50);
 
-    const result = checkSpendingCap("crew-coder", "anthropic");
+    const result = checkSpendingCap("iris-coder", "anthropic");
     assert.equal(result.exceeded, true);
     assert.equal(result.action, "notify"); // default onExceed
   });
@@ -141,14 +141,14 @@ describe("spending cap enforcement — full flow", () => {
   it("enforces per-agent limit with 'pause' action", () => {
     writeCrewswarmConfig({
       agents: [{
-        id: "crew-qa",
+        id: "iris-qa",
         spending: { dailyTokenLimit: 200, onExceed: "pause" },
       }],
     });
 
-    addAgentSpend("crew-qa", 300, 0.05);
+    addAgentSpend("iris-qa", 300, 0.05);
 
-    const result = checkSpendingCap("crew-qa", "groq");
+    const result = checkSpendingCap("iris-qa", "groq");
     assert.equal(result.exceeded, true);
     assert.equal(result.action, "pause");
   });
@@ -158,15 +158,15 @@ describe("spending cap enforcement — full flow", () => {
   it("does not enforce caps for agents not in config", () => {
     writeCrewswarmConfig({
       agents: [{
-        id: "crew-coder",
+        id: "iris-coder",
         spending: { dailyTokenLimit: 100, onExceed: "stop" },
       }],
     });
 
-    // crew-qa has no spending config
-    addAgentSpend("crew-qa", 99999, 99.0);
+    // iris-qa has no spending config
+    addAgentSpend("iris-qa", 99999, 99.0);
 
-    const result = checkSpendingCap("crew-qa", "groq");
+    const result = checkSpendingCap("iris-qa", "groq");
     assert.equal(result.exceeded, false);
   });
 
@@ -176,17 +176,17 @@ describe("spending cap enforcement — full flow", () => {
     writeCrewswarmConfig({
       globalSpendingCaps: { dailyTokenLimit: 1000 },
       agents: [{
-        id: "crew-coder",
+        id: "iris-coder",
         spending: { dailyTokenLimit: 5000, onExceed: "notify" },
       }],
     });
 
-    // crew-coder: 500 tokens (under agent cap of 5000)
+    // iris-coder: 500 tokens (under agent cap of 5000)
     // but total: 1200 tokens (over global cap of 1000)
-    addAgentSpend("crew-coder", 500, 0.10);
-    addAgentSpend("crew-qa", 700, 0.10);
+    addAgentSpend("iris-coder", 500, 0.10);
+    addAgentSpend("iris-qa", 700, 0.10);
 
-    const result = checkSpendingCap("crew-coder", "groq");
+    const result = checkSpendingCap("iris-coder", "groq");
     assert.equal(result.exceeded, true);
     assert.equal(result.action, "stop"); // global uses "stop"
   });
@@ -196,26 +196,26 @@ describe("spending cap enforcement — full flow", () => {
   it("recordTokenUsage accumulates spending that checkSpendingCap reads", () => {
     writeCrewswarmConfig({
       agents: [{
-        id: "crew-coder",
+        id: "iris-coder",
         spending: { dailyTokenLimit: 500, onExceed: "stop" },
       }],
     });
 
     // Simulate LLM responses that accumulate tokens
-    recordTokenUsage("groq/llama-3.3-70b", { prompt_tokens: 200, completion_tokens: 100 }, "crew-coder");
-    recordTokenUsage("groq/llama-3.3-70b", { prompt_tokens: 150, completion_tokens: 100 }, "crew-coder");
+    recordTokenUsage("groq/llama-3.3-70b", { prompt_tokens: 200, completion_tokens: 100 }, "iris-coder");
+    recordTokenUsage("groq/llama-3.3-70b", { prompt_tokens: 150, completion_tokens: 100 }, "iris-coder");
 
     // Total: 550 tokens → exceeds 500 limit
-    const result = checkSpendingCap("crew-coder", "groq");
+    const result = checkSpendingCap("iris-coder", "groq");
     assert.equal(result.exceeded, true);
     assert.equal(result.action, "stop");
   });
 
   // ── No config file → always allows ──────────────────────────────────────
 
-  it("returns exceeded=false when no crewswarm.json config", () => {
+  it("returns exceeded=false when no iris.json config", () => {
     // Don't write any config file
-    const result = checkSpendingCap("crew-coder", "groq");
+    const result = checkSpendingCap("iris-coder", "groq");
     assert.equal(result.exceeded, false);
   });
 
@@ -232,7 +232,7 @@ describe("spending cap enforcement — full flow", () => {
     const spendingFile = path.join(TEST_DIR, "spending.json");
     fs.mkdirSync(path.dirname(spendingFile), { recursive: true });
     // loadSpending checks date — if it's yesterday, returns fresh object
-    addAgentSpend("crew-coder", 5000, 10.0); // would exceed today...
+    addAgentSpend("iris-coder", 5000, 10.0); // would exceed today...
 
     // But loadSpending returns today's date — so the spending above IS today
     const s = loadSpending();
@@ -240,7 +240,7 @@ describe("spending cap enforcement — full flow", () => {
     assert.equal(s.global.tokens, 5000);
 
     // Verify cap enforcement works with today's data
-    const result = checkSpendingCap("crew-coder", "groq");
+    const result = checkSpendingCap("iris-coder", "groq");
     assert.equal(result.exceeded, true);
   });
 });

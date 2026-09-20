@@ -3,15 +3,15 @@
  * Run a scheduled workflow or skill pipeline from cron.
  *
  * WORKFLOW (agent + task per stage):
- *   Pipeline config: ~/.crewswarm/pipelines/<name>.json
+ *   Pipeline config: ~/.iris/pipelines/<name>.json
  *   {
  *     "stages": [
- *       { "agent": "crew-copywriter", "task": "Draft a 280-char tweet about …", "tool": "write_file" },
- *       { "agent": "crew-main", "task": "Post the tweet using @@SKILL twitter.post with …", "tool": "skill" }
+ *       { "agent": "iris-copywriter", "task": "Draft a 280-char tweet about …", "tool": "write_file" },
+ *       { "agent": "iris-main", "task": "Post the tweet using @@SKILL twitter.post with …", "tool": "skill" }
  *     ]
  *   }
  *   Stages run in order; each stage's reply is passed to the next as [Previous step output].
- *   Requires crew-lead + RT bus so dispatch returns a taskId for polling.
+ *   Requires iris-lead + RT bus so dispatch returns a taskId for polling.
  *
  * LEGACY (skill-only steps):
  *   { "steps": [ { "skill": "twitter.post", "params": { "text": "…" } }, ... ] }
@@ -21,7 +21,7 @@
  *   node scripts/run-scheduled-pipeline.mjs --skill twitter.post [--params '{"text":"..."}']
  *
  * Crontab example:
- *   0 9 * * * cd /path/to/crewswarm && node scripts/run-scheduled-pipeline.mjs social >> ~/.crewswarm/logs/cron.log 2>&1
+ *   0 9 * * * cd /path/to/iris && node scripts/run-scheduled-pipeline.mjs social >> ~/.iris/logs/cron.log 2>&1
  */
 
 import fs from "fs";
@@ -29,16 +29,16 @@ import path from "path";
 import os from "os";
 import { fileURLToPath } from "node:url";
 
-const CREW_LEAD_PORT = process.env.CREW_LEAD_PORT || "5010";
-const CREW_LEAD_URL = `http://127.0.0.1:${CREW_LEAD_PORT}`;
-const CONFIG_DIR = process.env.CREWSWARM_CONFIG_DIR || path.join(os.homedir(), ".crewswarm");
+const IRIS_LEAD_PORT = process.env.IRIS_LEAD_PORT || "5010";
+const IRIS_LEAD_URL = `http://127.0.0.1:${IRIS_LEAD_PORT}`;
+const CONFIG_DIR = process.env.IRIS_CONFIG_DIR || path.join(os.homedir(), ".iris");
 const PIPELINES_DIR = path.join(CONFIG_DIR, "pipelines");
 const POLL_INTERVAL_MS = 2000;
 const WORKFLOW_STAGE_TIMEOUT_MS = 600000;
 
 export function getToken() {
   try {
-    const cfg = JSON.parse(fs.readFileSync(path.join(CONFIG_DIR, "crewswarm.json"), "utf8"));
+    const cfg = JSON.parse(fs.readFileSync(path.join(CONFIG_DIR, "iris.json"), "utf8"));
     return cfg?.rt?.authToken || "";
   } catch {
     return "";
@@ -52,7 +52,7 @@ export function authHeaders(token) {
 }
 
 export async function runSkill(skillName, params, token) {
-  const url = `${CREW_LEAD_URL}/api/skills/${encodeURIComponent(skillName)}/run`;
+  const url = `${IRIS_LEAD_URL}/api/skills/${encodeURIComponent(skillName)}/run`;
   const res = await fetch(url, {
     method: "POST",
     headers: authHeaders(token),
@@ -64,7 +64,7 @@ export async function runSkill(skillName, params, token) {
 }
 
 export async function dispatch(agent, task, token, sessionId = "owner") {
-  const res = await fetch(`${CREW_LEAD_URL}/api/dispatch`, {
+  const res = await fetch(`${IRIS_LEAD_URL}/api/dispatch`, {
     method: "POST",
     headers: authHeaders(token),
     body: JSON.stringify({ agent, task, sessionId }),
@@ -75,7 +75,7 @@ export async function dispatch(agent, task, token, sessionId = "owner") {
 }
 
 export async function pollStatus(taskId, token) {
-  const url = `${CREW_LEAD_URL}/api/status/${encodeURIComponent(taskId)}`;
+  const url = `${IRIS_LEAD_URL}/api/status/${encodeURIComponent(taskId)}`;
   const res = await fetch(url, {
     method: "GET",
     headers: authHeaders(token),
@@ -181,7 +181,7 @@ async function main() {
   if (!name) {
     console.error("Usage: run-scheduled-pipeline.mjs <pipeline-name>");
     console.error("       run-scheduled-pipeline.mjs --skill <skill.name> [--params '{}']");
-    console.error("Pipeline config: ~/.crewswarm/pipelines/<name>.json");
+    console.error("Pipeline config: ~/.iris/pipelines/<name>.json");
     console.error("  Workflow: { \"stages\": [ { \"agent\", \"task\", \"tool?\" }, ... ] }");
     console.error("  Skills:   { \"steps\": [ { \"skill\", \"params\" }, ... ] }");
     process.exit(1);

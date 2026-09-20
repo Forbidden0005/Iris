@@ -6,19 +6,19 @@ import assert from "node:assert/strict";
 import { agentMustNotUseEngineLlmFallback } from "../../lib/agent-registry.mjs";
 
 describe("agentMustNotUseEngineLlmFallback", () => {
-  test("crew-qa and crew-security require engine (no LLM-only fallback)", () => {
-    assert.equal(agentMustNotUseEngineLlmFallback("crew-qa"), true);
+  test("iris-qa and iris-security require engine (no LLM-only fallback)", () => {
+    assert.equal(agentMustNotUseEngineLlmFallback("iris-qa"), true);
     assert.equal(agentMustNotUseEngineLlmFallback("qa"), true);
-    assert.equal(agentMustNotUseEngineLlmFallback("crew-security"), true);
+    assert.equal(agentMustNotUseEngineLlmFallback("iris-security"), true);
   });
 
-  test("crew-main may use conversational fallback", () => {
-    assert.equal(agentMustNotUseEngineLlmFallback("crew-main"), false);
-    assert.equal(agentMustNotUseEngineLlmFallback("crew-lead"), false);
+  test("iris-main may use conversational fallback", () => {
+    assert.equal(agentMustNotUseEngineLlmFallback("iris-main"), false);
+    assert.equal(agentMustNotUseEngineLlmFallback("iris-lead"), false);
   });
 
-  test("crew-pm variants require engine", () => {
-    assert.equal(agentMustNotUseEngineLlmFallback("crew-pm"), true);
-    assert.equal(agentMustNotUseEngineLlmFallback("crew-pm-cli"), true);
+  test("iris-pm variants require engine", () => {
+    assert.equal(agentMustNotUseEngineLlmFallback("iris-pm"), true);
+    assert.equal(agentMustNotUseEngineLlmFallback("iris-pm-cli"), true);
   });
 });

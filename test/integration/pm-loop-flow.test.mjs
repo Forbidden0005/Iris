@@ -4,14 +4,14 @@
  * These tests verify the ACTUAL behavior that was broken:
  *   1. PM loop reads ROADMAP.md and finds next unchecked item
  *   2. PM expands the item into a task with LLM
- *   3. PM routes the task to the correct agent (crew-coder, crew-coder-front, etc.)
+ *   3. PM routes the task to the correct agent (iris-coder, iris-coder-front, etc.)
  *   4. PM dispatches via gateway-bridge --send (spawns child process)
  *   5. PM WAITS for the agent to complete
  *   6. PM marks the item [x] DONE in ROADMAP.md (THIS WAS BROKEN — tests passed but logic failed)
  *   7. PM picks the NEXT item (not the same one again)
  *   8. PM self-extends when roadmap is empty (generates new items)
  *
- * Prerequisites: npm run restart-all (RT bus :18889, crew-lead :5010, dashboard :4319)
+ * Prerequisites: npm run restart-all (RT bus :18889, iris-lead :5010, dashboard :4319)
  *
  * Run: node --test test/integration/pm-loop-flow.test.mjs
  */
@@ -24,10 +24,10 @@ import { spawn } from "node:child_process";
 import { mkdtemp, rm, writeFile, readFile, mkdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
 
-const CREWSWARM_DIR = path.resolve(".");
-const PM_LOOP_SCRIPT = path.join(CREWSWARM_DIR, "pm-loop.mjs");
-const LOGS_DIR = path.join(CREWSWARM_DIR, "orchestrator-logs"); // Use repo-local logs, matching pm-loop.mjs
-const PM_PID_FILE = path.join(os.homedir(), ".crewswarm", "logs", "pm-loop.pid");
+const IRIS_DIR = path.resolve(".");
+const PM_LOOP_SCRIPT = path.join(IRIS_DIR, "pm-loop.mjs");
+const LOGS_DIR = path.join(IRIS_DIR, "orchestrator-logs"); // Use repo-local logs, matching pm-loop.mjs
+const PM_PID_FILE = path.join(os.homedir(), ".iris", "logs", "pm-loop.pid");
 
 /** Kill any pm-loop processes and remove PID file — call before/after each test block */
 async function killPmLoop() {
@@ -144,7 +144,7 @@ describe("PM loop — ROADMAP.md parsing", () => {
 ## Phase 1
 
 - [ ] Build homepage
-- [x] Setup project  ✓ 10:30:00 (crew-coder)
+- [x] Setup project  ✓ 10:30:00 (iris-coder)
 - [!] Fix deployment  ✗ 10:35:00
 - [ ] Write README
 `;
@@ -199,17 +199,17 @@ describe("PM loop — markItem function behavior", () => {
 - [ ] Write tests
 `, "utf8");
     
-    // Simulate markItem(0, "done", "crew-coder")
+    // Simulate markItem(0, "done", "iris-coder")
     let content = await readFile(roadmapPath, "utf8");
     let lines = content.split("\n");
     const ts = new Date().toLocaleTimeString();
     lines[1] = lines[1].replace(/\[[ !]\]/, "[x]");
-    lines[1] += `  ✓ ${ts} (crew-coder)`;
+    lines[1] += `  ✓ ${ts} (iris-coder)`;
     await writeFile(roadmapPath, lines.join("\n"), "utf8");
     
     content = await readFile(roadmapPath, "utf8");
     assert.match(content, /\[x\] Build feature\s+✓/);
-    assert.match(content, /\(crew-coder\)/);
+    assert.match(content, /\(iris-coder\)/);
     assert.match(content, /\[ \] Write tests/);  // Second item still pending
   });
   
@@ -232,7 +232,7 @@ describe("PM loop — markItem function behavior", () => {
   
   it("does NOT re-mark an already done item", async () => {
     await writeFile(roadmapPath, `# Test
-- [x] Already done  ✓ 10:00:00 (crew-coder)
+- [x] Already done  ✓ 10:00:00 (iris-coder)
 - [ ] Next task
 `, "utf8");
     
@@ -467,28 +467,28 @@ describe("PM loop — stop file halts execution gracefully", { skip: SKIP_LIVE, 
 });
 
 describe("PM loop — agent routing logic", () => {
-  it("routes HTML/CSS tasks to crew-coder-front", () => {
+  it("routes HTML/CSS tasks to iris-coder-front", () => {
     const task = "Build a responsive hero section with CSS animations";
     const pattern = /html|css|style|section|design|layout|animation|frontend|ui\b|ux\b|responsive/i;
     
     assert.match(task.toLowerCase(), pattern);
   });
   
-  it("routes API/backend tasks to crew-coder-back", () => {
+  it("routes API/backend tasks to iris-coder-back", () => {
     const task = "Add REST API endpoint for user authentication";
     const pattern = /\bapi\b|server|node|express|endpoint|database|backend|mjs/i;
     
     assert.match(task.toLowerCase(), pattern);
   });
   
-  it("routes git tasks to crew-github", () => {
+  it("routes git tasks to iris-github", () => {
     const task = "Commit changes and create pull request";
     const pattern = /\bgit\b|github|commit|push|pull.request|branch|deploy/i;
     
     assert.match(task.toLowerCase(), pattern);
   });
   
-  it("falls back to crew-coder for generic tasks", () => {
+  it("falls back to iris-coder for generic tasks", () => {
     const task = "Refactor the error handling logic";
     const patterns = [
       /\bgit\b|github|commit|push|pull.request|branch|deploy/i,

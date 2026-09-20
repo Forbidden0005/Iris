@@ -1,12 +1,12 @@
-# crewswarm Documentation
+# Iris Documentation
 
-Documentation index for the crewswarm multi-agent orchestration stack.
+Documentation index for the Iris multi-agent orchestration stack.
 
-## Iris fork
+## Iris product docs
 
 | Doc | Description |
 |-----|-------------|
-| [IRIS_FOUNDATION.md](IRIS_FOUNDATION.md) | Iris product direction, inherited crewswarm runtime, first moves, and phase-1 non-goals |
+| [IRIS_FOUNDATION.md](IRIS_FOUNDATION.md) | Iris product direction, runtime overview, first moves, and phase-1 non-goals |
 | [IRIS_CAPABILITY_MAP.md](IRIS_CAPABILITY_MAP.md) | Iris plan/task/evidence/review capability map and next implementation slices |
 | [RUNNING-LOCALLY.md](RUNNING-LOCALLY.md) | Run Iris locally with Ollama: install, pull models, troubleshoot failures |
 

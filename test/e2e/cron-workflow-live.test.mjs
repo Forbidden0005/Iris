@@ -8,7 +8,7 @@
  *   4. Verify the workflow produced output
  *   5. Clean up
  *
- * REQUIRES: crew-lead on :5010 (dashboard API handles workflows).
+ * REQUIRES: iris-lead on :5010 (dashboard API handles workflows).
  */
 import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
@@ -19,8 +19,8 @@ import { checkServiceUp, httpRequest } from "../helpers/http.mjs";
 import { logTestEvidence } from "../helpers/test-log.mjs";
 
 const DASHBOARD_URL = "http://127.0.0.1:4319";
-const CREW_LEAD_URL = "http://127.0.0.1:5010";
-const CONFIG_PATH = join(homedir(), ".crewswarm", "config.json");
+const IRIS_LEAD_URL = "http://127.0.0.1:5010";
+const CONFIG_PATH = join(homedir(), ".iris", "config.json");
 
 const WF_NAME = `e2e-cron-test-${Date.now()}`;
 
@@ -47,11 +47,11 @@ async function api(endpoint, method = "GET", body = null, trace = null) {
 
 // Pre-flight
 const dashboardUp = await checkServiceUp(`${DASHBOARD_URL}/api/health`);
-const crewLeadUp = await checkServiceUp(`${CREW_LEAD_URL}/health`);
+const crewLeadUp = await checkServiceUp(`${IRIS_LEAD_URL}/health`);
 const SKIP = !dashboardUp
   ? "Dashboard not running on :4319"
   : !crewLeadUp
-    ? "crew-lead not running on :5010"
+    ? "iris-lead not running on :5010"
     : false;
 
 describe("cron workflow lifecycle", { skip: SKIP, timeout: 120000 }, () => {
@@ -71,7 +71,7 @@ describe("cron workflow lifecycle", { skip: SKIP, timeout: 120000 }, () => {
       schedule: "0 * * * *", // hourly (won't fire during test)
       stages: [
         {
-          agent: "crew-coder",
+          agent: "iris-coder",
           task: "Reply with WORKFLOW_CRON_OK",
         }
       ],

@@ -7,7 +7,7 @@ import { execSync } from "node:child_process";
 const RESULTS_DIR = process.env.TEST_RESULTS_DIR || path.join(process.cwd(), "test-results");
 const LOG_PATH = path.join(RESULTS_DIR, "test-log.jsonl");
 const CURRENT_RUN_PATH = path.join(RESULTS_DIR, ".current-run.json");
-const DEFAULT_CONFIG_PATH = path.join(os.homedir(), ".crewswarm", "crewswarm.json");
+const DEFAULT_CONFIG_PATH = path.join(os.homedir(), ".iris", "iris.json");
 
 function ensureResultsDir() {
   fs.mkdirSync(RESULTS_DIR, { recursive: true });
@@ -123,7 +123,7 @@ export function getCliEngineMetadata(engine) {
     gemini: { provider: "google", binary: getBinaryMetadata("gemini") },
     codex: { provider: "openai", binary: getBinaryMetadata("codex") },
     opencode: { provider: "opencode", binary: getBinaryMetadata("opencode") },
-    "crew-cli": { provider: "openai", binary: getBinaryMetadata("crew") },
+    "iris-cli": { provider: "openai", binary: getBinaryMetadata("iris") },
   };
   return { engine, ...(map[engine] || {}) };
 }

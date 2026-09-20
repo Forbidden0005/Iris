@@ -9,23 +9,23 @@
  * This is a safety harness, not a product feature — no dashboard, no
  * server, no LLM, no dispatch/RT bus/engine adapter involvement.
  *
- * State dir: uses CREWSWARM_STATE_DIR as-is if the caller set it (real or
+ * State dir: uses IRIS_STATE_DIR as-is if the caller set it (real or
  * shared state — nothing here bulk-deletes in that case, only the plan id
  * and file path are printed). Otherwise creates a private temp directory
  * for this run only and removes it when done, so normal user state under
- * ~/.crewswarm is never touched by default.
+ * ~/.iris is never touched by default.
  */
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-const usingCallerStateDir = Boolean(process.env.CREWSWARM_STATE_DIR);
+const usingCallerStateDir = Boolean(process.env.IRIS_STATE_DIR);
 let tempStateDir = null;
 
 if (!usingCallerStateDir) {
   tempStateDir = fs.mkdtempSync(path.join(os.tmpdir(), "iris-smoke-plan-stack-"));
-  process.env.CREWSWARM_STATE_DIR = tempStateDir;
+  process.env.IRIS_STATE_DIR = tempStateDir;
 }
 
 const { resetPaths, getStatePath } = await import("../lib/runtime/paths.mjs");

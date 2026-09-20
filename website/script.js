@@ -6,13 +6,13 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initMobileNav() {
-  if (window.__crewswarmNavInit) return;
+  if (window.__irisNavInit) return;
 
   const btn = document.getElementById('navHamburger');
   const links = document.getElementById('navLinks');
   if (!btn || !links) return;
 
-  window.__crewswarmNavInit = true;
+  window.__irisNavInit = true;
 
   const closeNav = () => {
     links.classList.remove('open');
@@ -161,7 +161,7 @@ function initDocsFeed() {
       description: 'Understand shared memory layers, migration, retrieval, and project message search behavior.',
       links: [
         { label: 'Memory (canonical)', href: 'https://github.com/crewswarm/crewswarm/blob/main/docs/CANONICAL/MEMORY.md' },
-        { label: 'crew-cli shared memory', href: 'https://github.com/crewswarm/crewswarm/blob/main/crew-cli/docs/SHARED-MEMORY.md' },
+        { label: 'iris-cli shared memory', href: 'https://github.com/crewswarm/crewswarm/blob/main/iris-cli/docs/SHARED-MEMORY.md' },
         { label: 'Unified API overview', href: 'https://github.com/crewswarm/crewswarm/blob/main/docs/UNIFIED-API.md' }
       ]
     },
@@ -188,10 +188,10 @@ function initDocsFeed() {
     {
       icon: '📋',
       title: 'API & Integrations',
-      description: 'OpenAPI spec for dashboard, crew-lead, and headless integrations.',
+      description: 'OpenAPI spec for dashboard, iris-lead, and headless integrations.',
       links: [
-        { label: 'OpenAPI Spec (JSON)', href: 'https://github.com/crewswarm/crewswarm/blob/main/crew-cli/docs/openapi.unified.v1.json' },
-        { label: 'API-UNIFIED-v1', href: 'https://github.com/crewswarm/crewswarm/blob/main/crew-cli/docs/API-UNIFIED-v1.md' }
+        { label: 'OpenAPI Spec (JSON)', href: 'https://github.com/crewswarm/crewswarm/blob/main/iris-cli/docs/openapi.unified.v1.json' },
+        { label: 'API-UNIFIED-v1', href: 'https://github.com/crewswarm/crewswarm/blob/main/iris-cli/docs/API-UNIFIED-v1.md' }
       ]
     }
   ];

@@ -8,7 +8,7 @@ Use this when you want to verify real installed CLIs, real provider keys, and re
 node scripts/live-engine-matrix.mjs
 ```
 
-This prints the configured route and model for each agent from `~/.crewswarm/crewswarm.json`.
+This prints the configured route and model for each agent from `~/.iris/iris.json`.
 
 ## What this proves
 
@@ -37,7 +37,7 @@ For each engine you care about:
 - `claude-code`
 - `codex`
 - `cursor`
-- `crew-cli`
+- `iris-cli`
 - `gemini-cli`
 - `opencode`
 

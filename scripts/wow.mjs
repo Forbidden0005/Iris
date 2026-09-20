@@ -4,8 +4,8 @@ import os from 'os';
 import readline from 'readline';
 import { spawn } from 'child_process';
 
-const configDir = path.join(os.homedir(), '.crewswarm');
-const configPath = path.join(configDir, 'crewswarm.json');
+const configDir = path.join(os.homedir(), '.iris');
+const configPath = path.join(configDir, 'iris.json');
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -15,7 +15,7 @@ const rl = readline.createInterface({
 const askQuestion = (query) => new Promise(resolve => rl.question(query, resolve));
 
 async function main() {
-  console.log('🚀 Welcome to the CrewSwarm Wow Factor Demo!\n');
+  console.log('🚀 Welcome to the Iris Wow Factor Demo!\n');
   
   // 1. Check API Keys
   let config = { providers: {} };
@@ -23,7 +23,7 @@ async function main() {
     try {
       config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
     } catch (e) {
-      console.error('Failed to parse crewswarm.json');
+      console.error('Failed to parse iris.json');
     }
   }
 
@@ -40,7 +40,7 @@ async function main() {
       config.providers.groq = key.trim();
       if (!fs.existsSync(configDir)) fs.mkdirSync(configDir, { recursive: true });
       fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
-      console.log('✅ Key saved to ~/.crewswarm/crewswarm.json\n');
+      console.log('✅ Key saved to ~/.iris/iris.json\n');
     } else {
       console.log('No key provided. Exiting.');
       process.exit(1);
@@ -57,8 +57,8 @@ async function main() {
 
   const prompt = `Build a stunning, modern single-page portfolio website. Include glassmorphism CSS effects, a beautiful gradient background, a dark mode toggle, and smooth JavaScript scroll animations. Save the index.html, styles.css, and script.js files to a new folder called 'wow-demo'.`;
 
-  // Provide exactly the right path to crew-cli.mjs
-  const cliPath = path.join(process.cwd(), 'crew-cli.mjs');
+  // Provide exactly the right path to iris-cli.mjs
+  const cliPath = path.join(process.cwd(), 'iris-cli.mjs');
   
   const crewProcess = spawn('node', [cliPath, prompt], {
     stdio: 'inherit',

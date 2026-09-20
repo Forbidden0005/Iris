@@ -8,7 +8,7 @@
  * - Direct agent chat vs. room chat separation (directChat metadata flag)
  * - Thread binding (threadId preserves conversation threads)
  *
- * Uses temp directories so no real ~/.crewswarm data is touched.
+ * Uses temp directories so no real ~/.iris data is touched.
  */
 
 import { describe, it, before, after, beforeEach } from "node:test";
@@ -24,13 +24,13 @@ let tmpBase;
 before(async () => {
   tmpBase = await mkdtemp(join(tmpdir(), "cs-hybrid-test-"));
   // Point the runtime paths module at the temp dir before any other import
-  process.env.CREWSWARM_STATE_DIR = tmpBase;
-  process.env.CREWSWARM_CONFIG_DIR = tmpBase;
+  process.env.IRIS_STATE_DIR = tmpBase;
+  process.env.IRIS_CONFIG_DIR = tmpBase;
 });
 
 after(async () => {
-  delete process.env.CREWSWARM_STATE_DIR;
-  delete process.env.CREWSWARM_CONFIG_DIR;
+  delete process.env.IRIS_STATE_DIR;
+  delete process.env.IRIS_CONFIG_DIR;
   await rm(tmpBase, { recursive: true, force: true });
 });
 
@@ -58,7 +58,7 @@ describe("message write-back from dispatch completions", () => {
       source: "sub-agent",
       role: "assistant",
       content: "Task complete. I wrote hello.js.",
-      agent: "crew-coder",
+      agent: "iris-coder",
       metadata: { triggeredBy: "dispatch", taskId: "task-42" },
     });
 
@@ -67,7 +67,7 @@ describe("message write-back from dispatch completions", () => {
     const msgs = loadProjectMessages(channel);
     assert.equal(msgs.length, 1);
     assert.equal(msgs[0].source, "sub-agent");
-    assert.equal(msgs[0].agent, "crew-coder");
+    assert.equal(msgs[0].agent, "iris-coder");
     assert.equal(msgs[0].role, "assistant");
     assert.equal(msgs[0].metadata.taskId, "task-42");
   });
@@ -83,14 +83,14 @@ describe("message write-back from dispatch completions", () => {
       source: "agent",
       role: "assistant",
       content: "First response",
-      agent: "crew-qa",
+      agent: "iris-qa",
     });
 
     const id2 = saveProjectMessage(channel, {
       source: "agent",
       role: "assistant",
       content: "Second response",
-      agent: "crew-qa",
+      agent: "iris-qa",
     });
 
     assert.ok(id1 && id2, "Both IDs must be truthy");
@@ -171,9 +171,9 @@ describe("mention routing in shared channels", () => {
       "../../lib/chat/mention-routing-intent.mjs"
     );
 
-    const result = classifySharedChatMention("@crew-pm what's the sprint goal?");
+    const result = classifySharedChatMention("@iris-pm what's the sprint goal?");
     assert.equal(result.mode, "direct");
-    assert.equal(result.targetAgent, "crew-pm");
+    assert.equal(result.targetAgent, "iris-pm");
   });
 
   it("classifies a specific work-order mention as dispatch", async () => {
@@ -182,24 +182,24 @@ describe("mention routing in shared channels", () => {
     );
 
     const result = classifySharedChatMention(
-      "@crew-coder implement the login endpoint in /src/auth.js and write tests"
+      "@iris-coder implement the login endpoint in /src/auth.js and write tests"
     );
     assert.equal(result.mode, "dispatch");
-    assert.equal(result.targetAgent, "crew-coder");
+    assert.equal(result.targetAgent, "iris-coder");
   });
 
-  it("classifies @crew-all as a direct multi broadcast (not dispatch)", async () => {
+  it("classifies @iris-all as a direct multi broadcast (not dispatch)", async () => {
     const { classifySharedChatMention } = await import(
       "../../lib/chat/mention-routing-intent.mjs"
     );
 
-    const result = classifySharedChatMention("@crew-all daily standup reminder");
+    const result = classifySharedChatMention("@iris-all daily standup reminder");
     assert.equal(result.mode, "direct_multi");
     assert.ok(result.targetParticipants.length >= 2, "should expand to multiple agents");
-    // @crew-lead is excluded from @crew-all fanout
+    // @iris-lead is excluded from @iris-all fanout
     assert.ok(
-      !result.targetParticipants.find((p) => p.id === "crew-lead"),
-      "crew-lead must be excluded from @crew-all"
+      !result.targetParticipants.find((p) => p.id === "iris-lead"),
+      "iris-lead must be excluded from @iris-all"
     );
   });
 
@@ -209,11 +209,11 @@ describe("mention routing in shared channels", () => {
     );
 
     const result = classifySharedChatMention(
-      "@crew-main and @crew-qa can you both review this PR?"
+      "@iris-main and @iris-qa can you both review this PR?"
     );
     assert.equal(result.mode, "direct_multi");
-    assert.ok(result.targetAgents.includes("crew-main"));
-    assert.ok(result.targetAgents.includes("crew-qa"));
+    assert.ok(result.targetAgents.includes("iris-main"));
+    assert.ok(result.targetAgents.includes("iris-qa"));
   });
 
   it("classifies a handoff phrasing (ask … to) as direct, not dispatch", async () => {
@@ -222,10 +222,10 @@ describe("mention routing in shared channels", () => {
     );
 
     const result = classifySharedChatMention(
-      "@crew-researcher ask crew-pm to review your findings"
+      "@iris-researcher ask iris-pm to review your findings"
     );
     assert.equal(result.mode, "direct");
-    assert.equal(result.targetAgent, "crew-researcher");
+    assert.equal(result.targetAgent, "iris-researcher");
   });
 
   it("classifies a CLI participant mention as direct chat", async () => {
@@ -258,13 +258,13 @@ describe("mention routing in shared channels", () => {
     saveProjectMessage(channel, {
       source: "dashboard",
       role: "user",
-      content: "@crew-qa please audit the auth module",
-      metadata: { mentions: ["crew-qa"] },
+      content: "@iris-qa please audit the auth module",
+      metadata: { mentions: ["iris-qa"] },
     });
 
-    const msgs = loadProjectMessages(channel, { mentionedAgent: "crew-qa" });
+    const msgs = loadProjectMessages(channel, { mentionedAgent: "iris-qa" });
     assert.equal(msgs.length, 1);
-    assert.ok(msgs[0].metadata.mentions.includes("crew-qa"));
+    assert.ok(msgs[0].metadata.mentions.includes("iris-qa"));
   });
 });
 
@@ -429,12 +429,12 @@ describe("direct agent chat vs room chat separation", () => {
       source: "sub-agent",
       role: "assistant",
       content: "Agent result",
-      agent: "crew-coder",
+      agent: "iris-coder",
     });
 
     const agentMsgs = loadProjectMessages(channel, { source: "sub-agent" });
     assert.equal(agentMsgs.length, 1);
-    assert.equal(agentMsgs[0].agent, "crew-coder");
+    assert.equal(agentMsgs[0].agent, "iris-coder");
   });
 
   it("filters by agent name to retrieve a specific agent's completions", async () => {
@@ -448,18 +448,18 @@ describe("direct agent chat vs room chat separation", () => {
       source: "sub-agent",
       role: "assistant",
       content: "QA result",
-      agent: "crew-qa",
+      agent: "iris-qa",
     });
     saveProjectMessage(channel, {
       source: "sub-agent",
       role: "assistant",
       content: "Coder result",
-      agent: "crew-coder",
+      agent: "iris-coder",
     });
 
-    const qaMsgs = loadProjectMessages(channel, { agent: "crew-qa" });
+    const qaMsgs = loadProjectMessages(channel, { agent: "iris-qa" });
     assert.equal(qaMsgs.length, 1);
-    assert.equal(qaMsgs[0].agent, "crew-qa");
+    assert.equal(qaMsgs[0].agent, "iris-qa");
     assert.equal(qaMsgs[0].content, "QA result");
   });
 });
@@ -485,19 +485,19 @@ describe("thread binding (threadId preserves conversation threads)", () => {
     clearThreadBinding(project, thread);
 
     const stored = setThreadBinding(project, thread, {
-      participantId: "crew-main",
+      participantId: "iris-main",
       kind: "agent",
       runtime: "openai/gpt-4o",
-      displayName: "crew-main",
+      displayName: "iris-main",
     });
 
     assert.ok(stored, "setThreadBinding should return the stored binding");
-    assert.equal(stored.participantId, "crew-main");
+    assert.equal(stored.participantId, "iris-main");
     assert.equal(stored.kind, "agent");
     assert.ok(typeof stored.boundAt === "number", "boundAt should be a number");
 
     const retrieved = getThreadBinding(project, thread);
-    assert.equal(retrieved?.participantId, "crew-main");
+    assert.equal(retrieved?.participantId, "iris-main");
     assert.equal(retrieved?.runtime, "openai/gpt-4o");
   });
 
@@ -509,7 +509,7 @@ describe("thread binding (threadId preserves conversation threads)", () => {
     const thread = "thread-to-clear";
 
     setThreadBinding(project, thread, {
-      participantId: "crew-qa",
+      participantId: "iris-qa",
       kind: "agent",
     });
 
@@ -527,19 +527,19 @@ describe("thread binding (threadId preserves conversation threads)", () => {
     clearThreadBinding("proj-beta", thread);
 
     setThreadBinding("proj-alpha", thread, {
-      participantId: "crew-main",
+      participantId: "iris-main",
       kind: "agent",
     });
     setThreadBinding("proj-beta", thread, {
-      participantId: "crew-qa",
+      participantId: "iris-qa",
       kind: "agent",
     });
 
     const alpha = getThreadBinding("proj-alpha", thread);
     const beta = getThreadBinding("proj-beta", thread);
 
-    assert.equal(alpha?.participantId, "crew-main");
-    assert.equal(beta?.participantId, "crew-qa");
+    assert.equal(alpha?.participantId, "iris-main");
+    assert.equal(beta?.participantId, "iris-qa");
   });
 
   it("setThreadBinding rejects a binding with no participantId", async () => {
@@ -573,7 +573,7 @@ describe("thread binding (threadId preserves conversation threads)", () => {
       source: "sub-agent",
       role: "assistant",
       content: "Thread reply 1",
-      agent: "crew-coder",
+      agent: "iris-coder",
       threadId,
     });
     // A message on a different thread — must not appear in filtered results
@@ -605,7 +605,7 @@ describe("thread binding (threadId preserves conversation threads)", () => {
       source: "sub-agent",
       role: "assistant",
       content: "Child reply",
-      agent: "crew-main",
+      agent: "iris-main",
       parentId: rootId,
     });
 
@@ -628,11 +628,11 @@ describe("applySharedChatPromptOverlay cleans stale instructions", () => {
     );
 
     const staleLegacyPrompt =
-      "You are crew-lead.\n" +
+      "You are iris-lead.\n" +
       "- In shared chat surfaces plain `@mentions` are a live routing mechanism.  \n" +
       "- `@agent` is communication, not an implicit dispatch\n";
 
-    const result = applySharedChatPromptOverlay(staleLegacyPrompt, "crew-lead");
+    const result = applySharedChatPromptOverlay(staleLegacyPrompt, "iris-lead");
 
     // Stale lines must be gone
     assert.doesNotMatch(result, /plain `@mentions` are a live routing mechanism/i);
@@ -647,8 +647,8 @@ describe("applySharedChatPromptOverlay cleans stale instructions", () => {
     const { applySharedChatPromptOverlay, getSharedChatPromptOverlay } =
       await import("../../lib/chat/shared-chat-prompt-overlay.mjs");
 
-    const result = applySharedChatPromptOverlay("", "crew-qa");
-    const expected = getSharedChatPromptOverlay("crew-qa");
+    const result = applySharedChatPromptOverlay("", "iris-qa");
+    const expected = getSharedChatPromptOverlay("iris-qa");
 
     assert.equal(result, expected);
   });
@@ -658,10 +658,10 @@ describe("applySharedChatPromptOverlay cleans stale instructions", () => {
       "../../lib/chat/shared-chat-prompt-overlay.mjs"
     );
 
-    const base = "You are crew-coder. Write clean, tested code.";
-    const result = applySharedChatPromptOverlay(base, "crew-coder");
+    const base = "You are iris-coder. Write clean, tested code.";
+    const result = applySharedChatPromptOverlay(base, "iris-coder");
 
-    assert.match(result, /You are crew-coder/);
+    assert.match(result, /You are iris-coder/);
     assert.match(result, /Shared Chat \+ @Mention System/i);
   });
 });

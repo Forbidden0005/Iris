@@ -1,12 +1,12 @@
 /**
- * Unit tests for crew-judge PM loop decision logic.
+ * Unit tests for iris-judge PM loop decision logic.
  * Tests CONTINUE/SHIP/RESET verdict detection and routing.
  */
 
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 
-// Mock crew-judge response patterns
+// Mock iris-judge response patterns
 const JUDGE_RESPONSES = {
   CONTINUE: `Based on the current progress, I recommend we **CONTINUE** with the next roadmap items. 
   
@@ -45,7 +45,7 @@ const JUDGE_RESPONSES = {
 };
 
 /**
- * Detect verdict from crew-judge response.
+ * Detect verdict from iris-judge response.
  * Returns: "CONTINUE" | "SHIP" | "RESET" | "UNCLEAR"
  */
 function detectVerdict(judgeReply) {
@@ -149,7 +149,7 @@ function extractNextSteps(judgeReply) {
   return steps;
 }
 
-describe("crew-judge: verdict detection", () => {
+describe("iris-judge: verdict detection", () => {
   it("detects CONTINUE verdict", () => {
     const verdict = detectVerdict(JUDGE_RESPONSES.CONTINUE);
     assert.equal(verdict, "CONTINUE");
@@ -187,7 +187,7 @@ describe("crew-judge: verdict detection", () => {
   });
 });
 
-describe("crew-judge: blocker extraction", () => {
+describe("iris-judge: blocker extraction", () => {
   it("extracts blockers from RESET verdict", () => {
     const blockers = extractBlockers(JUDGE_RESPONSES.RESET);
     assert.ok(blockers.length > 0, "Should extract at least one blocker");
@@ -201,7 +201,7 @@ describe("crew-judge: blocker extraction", () => {
   });
 });
 
-describe("crew-judge: next steps extraction", () => {
+describe("iris-judge: next steps extraction", () => {
   it("extracts next steps from SHIP verdict", () => {
     const steps = extractNextSteps(JUDGE_RESPONSES.SHIP);
     assert.ok(steps.length > 0, "Should extract at least one step");
@@ -215,7 +215,7 @@ describe("crew-judge: next steps extraction", () => {
   });
 });
 
-describe("crew-judge: PM_USE_JUDGE behavior", () => {
+describe("iris-judge: PM_USE_JUDGE behavior", () => {
   it("should skip judge when PM_USE_JUDGE=off", () => {
     const useJudge = process.env.PM_USE_JUDGE === "on" || process.env.PM_USE_JUDGE === "1";
     
@@ -242,10 +242,10 @@ describe("crew-judge: PM_USE_JUDGE behavior", () => {
   });
 });
 
-describe("crew-judge: model selection", () => {
+describe("iris-judge: model selection", () => {
   it("should use fast/cheap model for judge decisions", () => {
     // Default: groq/llama-3.3-70b-versatile (fast + cheap)
-    const judgeModel = process.env.CREW_JUDGE_MODEL || "groq/llama-3.3-70b-versatile";
+    const judgeModel = process.env.IRIS_JUDGE_MODEL || "groq/llama-3.3-70b-versatile";
     
     assert.ok(judgeModel, "Judge model should be configured");
     assert.ok(
@@ -255,7 +255,7 @@ describe("crew-judge: model selection", () => {
   });
 });
 
-describe("crew-judge: PM loop integration", () => {
+describe("iris-judge: PM loop integration", () => {
   it("CONTINUE verdict → process next roadmap item", () => {
     const verdict = detectVerdict(JUDGE_RESPONSES.CONTINUE);
     
@@ -273,7 +273,7 @@ describe("crew-judge: PM loop integration", () => {
     
     if (verdict === "SHIP") {
       // PM loop should:
-      // 1. Call crew-main for final synthesis
+      // 1. Call iris-main for final synthesis
       // 2. Generate FINAL_REPORT.md
       // 3. Exit with success
       assert.ok(true, "Should run final synthesis and ship");
@@ -307,7 +307,7 @@ describe("crew-judge: PM loop integration", () => {
   });
 });
 
-describe("crew-judge: decision timing", () => {
+describe("iris-judge: decision timing", () => {
   it("should NOT call judge before PM_JUDGE_EVERY items", () => {
     const judgeEvery = 5;
     const itemsCompleted = 3;

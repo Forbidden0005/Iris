@@ -943,7 +943,7 @@ document.addEventListener("click", async (e) => {
         irisTaskId: taskId,
       });
       // /api/dispatch can resolve with HTTP 200 and { ok: false, error }
-      // (e.g. when crew-lead itself is unreachable) — postJSON only
+      // (e.g. when iris-lead itself is unreachable) — postJSON only
       // rejects on a non-2xx status, so this must be checked explicitly
       // or a failed dispatch would be reported as a success.
       if (!result?.ok) {

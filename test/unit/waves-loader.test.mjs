@@ -1,5 +1,5 @@
 /**
- * Unit tests for lib/crew-lead/waves-loader.mjs
+ * Unit tests for lib/iris-lead/waves-loader.mjs
  *
  * Covers: loadWavesConfig, buildPlanningPipeline, formatWavesForPrompt,
  *         generatePipelineJson
@@ -13,7 +13,7 @@ import {
   buildPlanningPipeline,
   formatWavesForPrompt,
   generatePipelineJson,
-} from "../../lib/crew-lead/waves-loader.mjs";
+} from "../../lib/iris-lead/waves-loader.mjs";
 
 describe("waves-loader – loadWavesConfig", () => {
   it("returns an object or null", () => {

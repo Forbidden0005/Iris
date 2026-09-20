@@ -1,7 +1,7 @@
 /**
  * Comprehensive unit tests for lib/agents/registry.mjs
  *
- * Covers: buildAgentMapsFromConfig, CREWSWARM_RT_SWARM_AGENTS,
+ * Covers: buildAgentMapsFromConfig, IRIS_RT_SWARM_AGENTS,
  *         RT_TO_GATEWAY_AGENT_MAP, and re-exported config helpers.
  *
  * Note: this module also re-exports resolveConfig, resolveTelegramBridgeConfig,
@@ -15,7 +15,7 @@ import assert from "node:assert/strict";
 
 import {
   buildAgentMapsFromConfig,
-  CREWSWARM_RT_SWARM_AGENTS,
+  IRIS_RT_SWARM_AGENTS,
   RT_TO_GATEWAY_AGENT_MAP,
   resolveConfig,
   resolveTelegramBridgeConfig,
@@ -58,37 +58,37 @@ describe("registry – re-exported config helpers", () => {
   });
 });
 
-// ── CREWSWARM_RT_SWARM_AGENTS ────────────────────────────────────────────────
+// ── IRIS_RT_SWARM_AGENTS ────────────────────────────────────────────────
 
-describe("CREWSWARM_RT_SWARM_AGENTS – type and content", () => {
+describe("IRIS_RT_SWARM_AGENTS – type and content", () => {
   it("is a non-empty array", () => {
-    assert.ok(Array.isArray(CREWSWARM_RT_SWARM_AGENTS));
-    assert.ok(CREWSWARM_RT_SWARM_AGENTS.length > 0);
+    assert.ok(Array.isArray(IRIS_RT_SWARM_AGENTS));
+    assert.ok(IRIS_RT_SWARM_AGENTS.length > 0);
   });
 
   it("all entries are non-empty strings", () => {
-    for (const agent of CREWSWARM_RT_SWARM_AGENTS) {
+    for (const agent of IRIS_RT_SWARM_AGENTS) {
       assert.equal(typeof agent, "string", `expected string, got ${typeof agent}`);
       assert.ok(agent.length > 0, "found empty string entry");
     }
   });
 
   it("contains core coordinator agents", () => {
-    const core = ["crew-main", "crew-pm", "crew-lead"];
+    const core = ["iris-main", "iris-pm", "iris-lead"];
     for (const agent of core) {
       assert.ok(
-        CREWSWARM_RT_SWARM_AGENTS.includes(agent),
+        IRIS_RT_SWARM_AGENTS.includes(agent),
         `missing core agent: ${agent}`,
       );
     }
   });
 
   it("contains no duplicates", () => {
-    const unique = [...new Set(CREWSWARM_RT_SWARM_AGENTS)];
+    const unique = [...new Set(IRIS_RT_SWARM_AGENTS)];
     assert.equal(
-      CREWSWARM_RT_SWARM_AGENTS.length,
+      IRIS_RT_SWARM_AGENTS.length,
       unique.length,
-      "CREWSWARM_RT_SWARM_AGENTS has duplicates",
+      "IRIS_RT_SWARM_AGENTS has duplicates",
     );
   });
 });
@@ -120,11 +120,11 @@ describe("RT_TO_GATEWAY_AGENT_MAP – type and structure", () => {
     }
   });
 
-  it("crew- prefixed keys map to bare IDs without the crew- prefix", () => {
+  it("iris- prefixed keys map to bare IDs without the iris- prefix", () => {
     for (const [rt, gw] of Object.entries(RT_TO_GATEWAY_AGENT_MAP)) {
-      if (rt.startsWith("crew-")) {
+      if (rt.startsWith("iris-")) {
         assert.ok(
-          !gw.startsWith("crew-"),
+          !gw.startsWith("iris-"),
           `${rt} should map to bare id, got: ${gw}`,
         );
       }
@@ -132,7 +132,7 @@ describe("RT_TO_GATEWAY_AGENT_MAP – type and structure", () => {
   });
 
   it("core coordinator agents are present in the map", () => {
-    for (const agent of ["crew-main", "crew-pm", "crew-lead"]) {
+    for (const agent of ["iris-main", "iris-pm", "iris-lead"]) {
       assert.ok(agent in RT_TO_GATEWAY_AGENT_MAP, `missing: ${agent}`);
     }
   });
@@ -181,31 +181,31 @@ describe("buildAgentMapsFromConfig – return shape", () => {
   });
 });
 
-describe("buildAgentMapsFromConfig – CREWSWARM_RT_SWARM_AGENTS env override", () => {
+describe("buildAgentMapsFromConfig – IRIS_RT_SWARM_AGENTS env override", () => {
   let savedEnv;
 
   before(() => {
-    savedEnv = process.env.CREWSWARM_RT_SWARM_AGENTS;
+    savedEnv = process.env.IRIS_RT_SWARM_AGENTS;
   });
 
   after(() => {
     if (savedEnv === undefined) {
-      delete process.env.CREWSWARM_RT_SWARM_AGENTS;
+      delete process.env.IRIS_RT_SWARM_AGENTS;
     } else {
-      process.env.CREWSWARM_RT_SWARM_AGENTS = savedEnv;
+      process.env.IRIS_RT_SWARM_AGENTS = savedEnv;
     }
   });
 
-  it("uses env list when CREWSWARM_RT_SWARM_AGENTS is set", () => {
-    process.env.CREWSWARM_RT_SWARM_AGENTS = "crew-coder,crew-qa,crew-pm";
+  it("uses env list when IRIS_RT_SWARM_AGENTS is set", () => {
+    process.env.IRIS_RT_SWARM_AGENTS = "iris-coder,iris-qa,iris-pm";
     const { list } = buildAgentMapsFromConfig();
-    assert.ok(list.includes("crew-coder"));
-    assert.ok(list.includes("crew-qa"));
-    assert.ok(list.includes("crew-pm"));
+    assert.ok(list.includes("iris-coder"));
+    assert.ok(list.includes("iris-qa"));
+    assert.ok(list.includes("iris-pm"));
   });
 
   it("filters empty tokens from env list", () => {
-    process.env.CREWSWARM_RT_SWARM_AGENTS = "crew-coder,,  ,crew-pm";
+    process.env.IRIS_RT_SWARM_AGENTS = "iris-coder,,  ,iris-pm";
     const { list } = buildAgentMapsFromConfig();
     // Empty/whitespace entries should be filtered out
     for (const item of list) {
@@ -214,7 +214,7 @@ describe("buildAgentMapsFromConfig – CREWSWARM_RT_SWARM_AGENTS env override", 
   });
 
   it("produces a map from env list where each key equals its entry", () => {
-    process.env.CREWSWARM_RT_SWARM_AGENTS = "crew-coder,crew-qa";
+    process.env.IRIS_RT_SWARM_AGENTS = "iris-coder,iris-qa";
     const { list, map } = buildAgentMapsFromConfig();
     for (const agent of list) {
       assert.ok(agent in map, `${agent} missing from map`);
@@ -222,54 +222,54 @@ describe("buildAgentMapsFromConfig – CREWSWARM_RT_SWARM_AGENTS env override", 
   });
 
   it("without env override returns at least the built-in core agents", () => {
-    delete process.env.CREWSWARM_RT_SWARM_AGENTS;
+    delete process.env.IRIS_RT_SWARM_AGENTS;
     const { list } = buildAgentMapsFromConfig();
-    const core = ["crew-main", "crew-pm", "crew-lead"];
+    const core = ["iris-main", "iris-pm", "iris-lead"];
     for (const agent of core) {
       assert.ok(list.includes(agent), `missing core agent: ${agent}`);
     }
   });
 });
 
-describe("buildAgentMapsFromConfig – crew- prefix normalization in map", () => {
+describe("buildAgentMapsFromConfig – iris- prefix normalization in map", () => {
   let savedEnv;
 
   before(() => {
-    savedEnv = process.env.CREWSWARM_RT_SWARM_AGENTS;
-    delete process.env.CREWSWARM_RT_SWARM_AGENTS;
+    savedEnv = process.env.IRIS_RT_SWARM_AGENTS;
+    delete process.env.IRIS_RT_SWARM_AGENTS;
   });
 
   after(() => {
     if (savedEnv === undefined) {
-      delete process.env.CREWSWARM_RT_SWARM_AGENTS;
+      delete process.env.IRIS_RT_SWARM_AGENTS;
     } else {
-      process.env.CREWSWARM_RT_SWARM_AGENTS = savedEnv;
+      process.env.IRIS_RT_SWARM_AGENTS = savedEnv;
     }
   });
 
-  it("crew- prefixed keys map to bare id without crew- prefix", () => {
+  it("iris- prefixed keys map to bare id without iris- prefix", () => {
     const { map } = buildAgentMapsFromConfig();
     for (const [rt, gw] of Object.entries(map)) {
-      if (rt.startsWith("crew-")) {
+      if (rt.startsWith("iris-")) {
         assert.ok(
-          !gw.startsWith("crew-"),
-          `${rt} should not map to another crew- id, got: ${gw}`,
+          !gw.startsWith("iris-"),
+          `${rt} should not map to another iris- id, got: ${gw}`,
         );
       }
     }
   });
 
-  it("crew-main maps to 'main'", () => {
+  it("iris-main maps to 'main'", () => {
     const { map } = buildAgentMapsFromConfig();
-    if ("crew-main" in map) {
-      assert.equal(map["crew-main"], "main");
+    if ("iris-main" in map) {
+      assert.equal(map["iris-main"], "main");
     }
   });
 
-  it("crew-pm maps to 'pm'", () => {
+  it("iris-pm maps to 'pm'", () => {
     const { map } = buildAgentMapsFromConfig();
-    if ("crew-pm" in map) {
-      assert.equal(map["crew-pm"], "pm");
+    if ("iris-pm" in map) {
+      assert.equal(map["iris-pm"], "pm");
     }
   });
 });

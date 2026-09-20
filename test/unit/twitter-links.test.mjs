@@ -10,8 +10,8 @@ import {
 } from "../../lib/integrations/twitter-links.mjs";
 
 const envKeys = [
-  "CREWSWARM_TWITTER_CLI_BIN",
-  "CREWSWARM_TWITTER_CLI_ARGS",
+  "IRIS_TWITTER_CLI_BIN",
+  "IRIS_TWITTER_CLI_ARGS",
 ];
 
 test.afterEach(() => {
@@ -35,7 +35,7 @@ test("parseTweetLinks finds unique x.com status URLs", () => {
 });
 
 test("enrichTwitterLinks appends tweet context from twitter-cli JSON", async () => {
-  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "crewswarm-twitter-test-"));
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "iris-twitter-test-"));
   const cliScript = path.join(tmpDir, "fake-twitter-cli.mjs");
   fs.writeFileSync(
     cliScript,
@@ -66,8 +66,8 @@ process.stdout.write(JSON.stringify({
     "utf8",
   );
 
-  process.env.CREWSWARM_TWITTER_CLI_BIN = process.execPath;
-  process.env.CREWSWARM_TWITTER_CLI_ARGS = cliScript;
+  process.env.IRIS_TWITTER_CLI_BIN = process.execPath;
+  process.env.IRIS_TWITTER_CLI_ARGS = cliScript;
 
   const result = await enrichTwitterLinks(
     "Summarize this thread https://x.com/jedisct1/status/2030962676382249415?s=42",

@@ -43,7 +43,7 @@ function uid(prefix = "proc") {
 function makeProcess(overrides = {}) {
   return {
     pid: 99999 + counter,
-    agent: "crew-test",
+    agent: "iris-test",
     cli: "opencode",
     task: "unit test task",
     chatId: "chat-unit",
@@ -94,9 +94,9 @@ describe("cli-process-tracker — registerCLIProcess", () => {
 
   it("registered process has correct agent", () => {
     const id = uid();
-    registerCLIProcess(id, makeProcess({ agent: "crew-coder" }));
+    registerCLIProcess(id, makeProcess({ agent: "iris-coder" }));
     const found = getActiveProcesses().find(p => p.processId === id);
-    assert.equal(found.agent, "crew-coder");
+    assert.equal(found.agent, "iris-coder");
   });
 
   it("startTime is a recent timestamp", () => {
@@ -268,7 +268,7 @@ describe("cli-process-tracker — getActiveProcesses", () => {
 
   it("each entry has required fields", () => {
     const id = uid();
-    registerCLIProcess(id, makeProcess({ agent: "crew-qa", cli: "claude", sessionId: "sess-qa" }));
+    registerCLIProcess(id, makeProcess({ agent: "iris-qa", cli: "claude", sessionId: "sess-qa" }));
     const entries = getActiveProcesses();
     const found = entries.find(p => p.processId === id);
     assert.ok(found);
@@ -290,11 +290,11 @@ describe("cli-process-tracker — getActiveProcesses", () => {
 
 describe("cli-process-tracker — getAgentProcesses", () => {
   it("returns only processes for the specified agent", () => {
-    const agentId = `crew-filter-agent-${Date.now()}`;
+    const agentId = `iris-filter-agent-${Date.now()}`;
     const id1 = uid();
     const id2 = uid();
     registerCLIProcess(id1, makeProcess({ agent: agentId }));
-    registerCLIProcess(id2, makeProcess({ agent: "crew-other" }));
+    registerCLIProcess(id2, makeProcess({ agent: "iris-other" }));
 
     const procs = getAgentProcesses(agentId);
     assert.ok(procs.every(p => p.agent === agentId));
@@ -303,7 +303,7 @@ describe("cli-process-tracker — getAgentProcesses", () => {
   });
 
   it("returns empty array for unknown agent", () => {
-    const procs = getAgentProcesses("crew-nonexistent-xyz-9999");
+    const procs = getAgentProcesses("iris-nonexistent-xyz-9999");
     assert.ok(Array.isArray(procs));
     assert.equal(procs.length, 0);
   });
@@ -315,7 +315,7 @@ describe("cli-process-tracker — getSessionCLIStatus", () => {
   it("returns status object for active session", () => {
     const sessionId = `sess-test-${Date.now()}`;
     const id = uid();
-    registerCLIProcess(id, makeProcess({ sessionId, agent: "crew-qa", cli: "opencode" }));
+    registerCLIProcess(id, makeProcess({ sessionId, agent: "iris-qa", cli: "opencode" }));
 
     const status = getSessionCLIStatus(sessionId);
     assert.ok(status !== null);
@@ -344,10 +344,10 @@ describe("cli-process-tracker — getSessionCLIStatus", () => {
   it("status.agent matches registered agent", () => {
     const sessionId = `sess-agent-${Date.now()}`;
     const id = uid();
-    registerCLIProcess(id, makeProcess({ sessionId, agent: "crew-monitor" }));
+    registerCLIProcess(id, makeProcess({ sessionId, agent: "iris-monitor" }));
     const status = getSessionCLIStatus(sessionId);
     assert.ok(status);
-    assert.equal(status.agent, "crew-monitor");
+    assert.equal(status.agent, "iris-monitor");
   });
 
   it("task is truncated to 80 chars", () => {

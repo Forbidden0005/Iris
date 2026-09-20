@@ -4,7 +4,7 @@
  * Tests exported functions: initOpenCode, runOpenCodeTask
  *
  * Strategy: inject all runtime deps via initOpenCode. For tests that
- * exercise the spawn path, point CREWSWARM_OPENCODE_BIN at a real system
+ * exercise the spawn path, point IRIS_OPENCODE_BIN at a real system
  * binary (/usr/bin/true exits 0 silently; /usr/bin/false exits 1) so no
  * real opencode binary is required.
  *
@@ -57,11 +57,11 @@ after(() => {
 
 function makeDeps(overrides = {}) {
   return {
-    CREWSWARM_OPENCODE_BIN: "/usr/bin/true",
-    CREWSWARM_RT_AGENT: "crew-coder",
-    CREWSWARM_OPENCODE_MODEL: "anthropic/claude-sonnet-4-5",
-    CREWSWARM_OPENCODE_TIMEOUT_MS: 30000,
-    CREWSWARM_OPENCODE_AGENT: "admin",
+    IRIS_OPENCODE_BIN: "/usr/bin/true",
+    IRIS_RT_AGENT: "iris-coder",
+    IRIS_OPENCODE_MODEL: "anthropic/claude-sonnet-4-5",
+    IRIS_OPENCODE_TIMEOUT_MS: 30000,
+    IRIS_OPENCODE_AGENT: "admin",
     getAgentOpenCodeConfig: () => ({ model: null }),
     getOpencodeProjectDir: () => process.cwd(),
     extractProjectDirFromTask: () => null,
@@ -100,7 +100,7 @@ describe("opencode — basic happy path", () => {
   });
 
   it("uses the spy binary and captures its stdout", async () => {
-    initOpenCode(makeDeps({ CREWSWARM_OPENCODE_BIN: `node ${SPY_BIN}` }));
+    initOpenCode(makeDeps({ IRIS_OPENCODE_BIN: `node ${SPY_BIN}` }));
     // We can't easily split bin+args — skip this variant;
     // arg capture is tested separately below.
     assert.ok(true); // placeholder — covered by arg capture tests
@@ -114,12 +114,12 @@ describe("opencode — basic happy path", () => {
 describe("opencode — OC_AGENT_MAP agent name resolution", () => {
   /**
    * Run a task with the argdump binary and parse the agent name from stdout.
-   * stdout = "run [crew-qa] prompt --model M --agent qa\n"
+   * stdout = "run [iris-qa] prompt --model M --agent qa\n"
    */
   async function resolveAgentName(agentId) {
     initOpenCode(makeDeps({
-      CREWSWARM_OPENCODE_BIN: ARG_DUMP_BIN,
-      CREWSWARM_RT_AGENT: agentId,
+      IRIS_OPENCODE_BIN: ARG_DUMP_BIN,
+      IRIS_RT_AGENT: agentId,
       getOpencodeProjectDir: () => process.cwd(),
     }));
     const out = await runOpenCodeTask("task", { agentId });
@@ -128,32 +128,32 @@ describe("opencode — OC_AGENT_MAP agent name resolution", () => {
     return m ? m[1] : null;
   }
 
-  it("maps crew-coder → coder", async () => {
-    assert.equal(await resolveAgentName("crew-coder"), "coder");
+  it("maps iris-coder → coder", async () => {
+    assert.equal(await resolveAgentName("iris-coder"), "coder");
   });
 
-  it("maps crew-qa → qa", async () => {
-    assert.equal(await resolveAgentName("crew-qa"), "qa");
+  it("maps iris-qa → qa", async () => {
+    assert.equal(await resolveAgentName("iris-qa"), "qa");
   });
 
-  it("maps crew-security → security", async () => {
-    assert.equal(await resolveAgentName("crew-security"), "security");
+  it("maps iris-security → security", async () => {
+    assert.equal(await resolveAgentName("iris-security"), "security");
   });
 
-  it("maps crew-pm → pm", async () => {
-    assert.equal(await resolveAgentName("crew-pm"), "pm");
+  it("maps iris-pm → pm", async () => {
+    assert.equal(await resolveAgentName("iris-pm"), "pm");
   });
 
-  it("maps crew-orchestrator → orchestrator", async () => {
-    assert.equal(await resolveAgentName("crew-orchestrator"), "orchestrator");
+  it("maps iris-orchestrator → orchestrator", async () => {
+    assert.equal(await resolveAgentName("iris-orchestrator"), "orchestrator");
   });
 
   it("maps orchestrator → orchestrator (bare alias)", async () => {
     assert.equal(await resolveAgentName("orchestrator"), "orchestrator");
   });
 
-  it("strips crew- prefix for unmapped agent IDs", async () => {
-    assert.equal(await resolveAgentName("crew-custom-agent"), "custom-agent");
+  it("strips iris- prefix for unmapped agent IDs", async () => {
+    assert.equal(await resolveAgentName("iris-custom-agent"), "custom-agent");
   });
 });
 
@@ -164,8 +164,8 @@ describe("opencode — OC_AGENT_MAP agent name resolution", () => {
 describe("opencode — model priority", () => {
   async function captureModel(payloadModel, agentOcModel, globalModel) {
     initOpenCode(makeDeps({
-      CREWSWARM_OPENCODE_BIN: ARG_DUMP_BIN,
-      CREWSWARM_OPENCODE_MODEL: globalModel || "global-model",
+      IRIS_OPENCODE_BIN: ARG_DUMP_BIN,
+      IRIS_OPENCODE_MODEL: globalModel || "global-model",
       getAgentOpenCodeConfig: () => ({ model: agentOcModel || null }),
     }));
     const out = await runOpenCodeTask("task", { model: payloadModel });
@@ -193,32 +193,32 @@ describe("opencode — model priority", () => {
 describe("opencode — session continuity", () => {
   it("includes --session in args when existing session ID is available", async () => {
     initOpenCode(makeDeps({
-      CREWSWARM_OPENCODE_BIN: ARG_DUMP_BIN,
+      IRIS_OPENCODE_BIN: ARG_DUMP_BIN,
       readAgentSessionId: () => "sess-abc-123",
     }));
-    const out = await runOpenCodeTask("task", { agentId: "crew-coder" });
+    const out = await runOpenCodeTask("task", { agentId: "iris-coder" });
     assert.ok(out.includes("--session"), "should include --session");
     assert.ok(out.includes("sess-abc-123"), "should include session ID");
   });
 
   it("omits --session when no prior session exists", async () => {
     initOpenCode(makeDeps({
-      CREWSWARM_OPENCODE_BIN: ARG_DUMP_BIN,
+      IRIS_OPENCODE_BIN: ARG_DUMP_BIN,
       readAgentSessionId: () => null,
     }));
-    const out = await runOpenCodeTask("task", { agentId: "crew-coder" });
+    const out = await runOpenCodeTask("task", { agentId: "iris-coder" });
     assert.ok(!out.includes("--session"), "should not include --session when no session");
   });
 
   it("omits --session when payload.projectDir differs from default workspace", async () => {
     initOpenCode(makeDeps({
-      CREWSWARM_OPENCODE_BIN: ARG_DUMP_BIN,
+      IRIS_OPENCODE_BIN: ARG_DUMP_BIN,
       getOpencodeProjectDir: () => process.cwd(),
       readAgentSessionId: () => "sess-abc-123",
     }));
     // Use a different dir — but it must exist so spawn doesn't fall back to cwd
     const parentDir = path.dirname(process.cwd());
-    const out = await runOpenCodeTask("task", { agentId: "crew-coder", projectDir: parentDir });
+    const out = await runOpenCodeTask("task", { agentId: "iris-coder", projectDir: parentDir });
     // projectDir differs → skip session resume
     assert.ok(!out.includes("--session"), "should not resume session when dirs differ");
   });
@@ -226,25 +226,25 @@ describe("opencode — session continuity", () => {
   it("saves session ID on successful close when parseMostRecentSessionId returns a value", async () => {
     const savedSessions = [];
     initOpenCode(makeDeps({
-      CREWSWARM_OPENCODE_BIN: ARG_DUMP_BIN,
+      IRIS_OPENCODE_BIN: ARG_DUMP_BIN,
       readAgentSessionId: () => null,
       parseMostRecentSessionId: () => "new-session-id",
       writeAgentSessionId: (agentId, sessionId) => savedSessions.push({ agentId, sessionId }),
     }));
-    await runOpenCodeTask("task", { agentId: "crew-coder" });
+    await runOpenCodeTask("task", { agentId: "iris-coder" });
     assert.equal(savedSessions.length, 1);
     assert.equal(savedSessions[0].sessionId, "new-session-id");
-    assert.equal(savedSessions[0].agentId, "crew-coder");
+    assert.equal(savedSessions[0].agentId, "iris-coder");
   });
 
   it("does not crash when the session list command throws", async () => {
     initOpenCode(makeDeps({
       // ARG_DUMP_BIN for the main task, then execFileSync will be called with
       // the same bin for 'session list' — that fails (wrong args) but should not throw.
-      CREWSWARM_OPENCODE_BIN: ARG_DUMP_BIN,
+      IRIS_OPENCODE_BIN: ARG_DUMP_BIN,
       parseMostRecentSessionId: () => { throw new Error("simulated error"); },
     }));
-    const result = await runOpenCodeTask("task", { agentId: "crew-coder" });
+    const result = await runOpenCodeTask("task", { agentId: "iris-coder" });
     assert.ok(typeof result === "string", "should still resolve even when session save fails");
   });
 });
@@ -256,7 +256,7 @@ describe("opencode — session continuity", () => {
 describe("opencode — error handling", () => {
   it("rejects when process exits with code 1 (/usr/bin/false)", async () => {
     initOpenCode(makeDeps({
-      CREWSWARM_OPENCODE_BIN: "/usr/bin/false",
+      IRIS_OPENCODE_BIN: "/usr/bin/false",
       isOpencodeRateLimitBanner: () => false,
     }));
     await assert.rejects(
@@ -270,7 +270,7 @@ describe("opencode — error handling", () => {
 
   it("rejects with rate limit message when banner-only output detected", async () => {
     initOpenCode(makeDeps({
-      CREWSWARM_OPENCODE_BIN: "/usr/bin/false",
+      IRIS_OPENCODE_BIN: "/usr/bin/false",
       isOpencodeRateLimitBanner: () => true,
     }));
     await assert.rejects(
@@ -291,17 +291,17 @@ describe("opencode — error handling", () => {
 // ---------------------------------------------------------------------------
 
 describe("opencode — prompt construction", () => {
-  it("prepends agent prefix [crew-coder] to prompt", async () => {
-    initOpenCode(makeDeps({ CREWSWARM_OPENCODE_BIN: ARG_DUMP_BIN }));
-    const out = await runOpenCodeTask("do the thing", { agentId: "crew-coder" });
-    assert.ok(out.includes("[crew-coder]"), `expected [crew-coder] prefix in output, got: ${out}`);
+  it("prepends agent prefix [iris-coder] to prompt", async () => {
+    initOpenCode(makeDeps({ IRIS_OPENCODE_BIN: ARG_DUMP_BIN }));
+    const out = await runOpenCodeTask("do the thing", { agentId: "iris-coder" });
+    assert.ok(out.includes("[iris-coder]"), `expected [iris-coder] prefix in output, got: ${out}`);
     assert.ok(out.includes("do the thing"));
   });
 
   it("omits agent prefix when agentId is empty string", async () => {
     initOpenCode(makeDeps({
-      CREWSWARM_OPENCODE_BIN: ARG_DUMP_BIN,
-      CREWSWARM_RT_AGENT: "",
+      IRIS_OPENCODE_BIN: ARG_DUMP_BIN,
+      IRIS_RT_AGENT: "",
     }));
     const out = await runOpenCodeTask("bare task", { agentId: "" });
     // No brackets in output before the task text
@@ -323,7 +323,7 @@ describe("opencode — env var cleanup", () => {
     process.env.OPENCODE_CLIENT = "test-client";
     process.env.OPENCODE = "1";
 
-    initOpenCode(makeDeps({ CREWSWARM_OPENCODE_BIN: "/usr/bin/true" }));
+    initOpenCode(makeDeps({ IRIS_OPENCODE_BIN: "/usr/bin/true" }));
     const result = await runOpenCodeTask("task", {});
     // If env cleanup throws, this would reject. Successful completion proves it ran.
     assert.equal(result, "(opencode completed with no output)");
@@ -343,7 +343,7 @@ describe("opencode — projectDir resolution", () => {
   it("falls back to process.cwd() when configured projectDir does not exist on disk", async () => {
     // Use a path that definitely does not exist; opencode falls back to cwd
     initOpenCode(makeDeps({
-      CREWSWARM_OPENCODE_BIN: "/usr/bin/true",
+      IRIS_OPENCODE_BIN: "/usr/bin/true",
       getOpencodeProjectDir: () => "/this/path/does/not/exist/anywhere",
     }));
     // Should not reject — /usr/bin/true succeeds from cwd
@@ -354,7 +354,7 @@ describe("opencode — projectDir resolution", () => {
   it("strips trailing period from configured projectDir", async () => {
     // A dir path ending in "." that doesn't exist → falls back to cwd, no crash
     initOpenCode(makeDeps({
-      CREWSWARM_OPENCODE_BIN: "/usr/bin/true",
+      IRIS_OPENCODE_BIN: "/usr/bin/true",
       getOpencodeProjectDir: () => "/some/path/that/does/not/exist.",
     }));
     const result = await runOpenCodeTask("task", {});
@@ -370,10 +370,10 @@ describe("opencode — RT client events", () => {
   it("publishes agent_working event on task start", async () => {
     const published = [];
     initOpenCode(makeDeps({
-      CREWSWARM_OPENCODE_BIN: "/usr/bin/true",
+      IRIS_OPENCODE_BIN: "/usr/bin/true",
       _rtClientForApprovals: { publish: (msg) => published.push(msg) },
     }));
-    await runOpenCodeTask("task", { agentId: "crew-coder" });
+    await runOpenCodeTask("task", { agentId: "iris-coder" });
     const working = published.find(p => p.type === "agent_working");
     assert.ok(working, "agent_working event should be published");
   });
@@ -381,16 +381,16 @@ describe("opencode — RT client events", () => {
   it("publishes agent_idle event on successful close", async () => {
     const published = [];
     initOpenCode(makeDeps({
-      CREWSWARM_OPENCODE_BIN: "/usr/bin/true",
+      IRIS_OPENCODE_BIN: "/usr/bin/true",
       _rtClientForApprovals: { publish: (msg) => published.push(msg) },
     }));
-    await runOpenCodeTask("task", { agentId: "crew-coder" });
+    await runOpenCodeTask("task", { agentId: "iris-coder" });
     const idle = published.find(p => p.type === "agent_idle");
     assert.ok(idle, "agent_idle event should be published on successful close");
   });
 
   it("does not throw when _rtClientForApprovals is undefined", async () => {
-    initOpenCode(makeDeps({ CREWSWARM_OPENCODE_BIN: "/usr/bin/true" }));
+    initOpenCode(makeDeps({ IRIS_OPENCODE_BIN: "/usr/bin/true" }));
     const result = await runOpenCodeTask("task", {});
     assert.equal(result, "(opencode completed with no output)");
   });
@@ -425,7 +425,7 @@ describe("opencode — stderr noise filtering", () => {
     const script = makeNoiseScript(
       ["realtime daemon error: connection refused", "actual output line"]
     );
-    initOpenCode(makeDeps({ CREWSWARM_OPENCODE_BIN: script }));
+    initOpenCode(makeDeps({ IRIS_OPENCODE_BIN: script }));
     const result = await runOpenCodeTask("task", {});
     assert.ok(!result.includes("realtime daemon error"), "noise should be filtered");
     assert.ok(result.includes("actual output line"), "real content should be retained");
@@ -435,7 +435,7 @@ describe("opencode — stderr noise filtering", () => {
     const script = makeNoiseScript(
       ["invalid realtime token: xyz", "useful diagnostic"]
     );
-    initOpenCode(makeDeps({ CREWSWARM_OPENCODE_BIN: script }));
+    initOpenCode(makeDeps({ IRIS_OPENCODE_BIN: script }));
     const result = await runOpenCodeTask("task", {});
     assert.ok(!result.includes("invalid realtime token"), "token noise should be filtered");
     assert.ok(result.includes("useful diagnostic"));
@@ -445,7 +445,7 @@ describe("opencode — stderr noise filtering", () => {
     const script = makeNoiseScript(
       ["ExperimentalWarning: some node feature is experimental", "real content"]
     );
-    initOpenCode(makeDeps({ CREWSWARM_OPENCODE_BIN: script }));
+    initOpenCode(makeDeps({ IRIS_OPENCODE_BIN: script }));
     const result = await runOpenCodeTask("task", {});
     assert.ok(!result.includes("ExperimentalWarning"), "experimental warning should be filtered");
     assert.ok(result.includes("real content"));
@@ -455,7 +455,7 @@ describe("opencode — stderr noise filtering", () => {
     const script = makeNoiseScript(
       ["Use --experimental-vm-modules to enable ESM support", "useful line"]
     );
-    initOpenCode(makeDeps({ CREWSWARM_OPENCODE_BIN: script }));
+    initOpenCode(makeDeps({ IRIS_OPENCODE_BIN: script }));
     const result = await runOpenCodeTask("task", {});
     assert.ok(!result.includes("--experimental"), "--experimental lines should be filtered");
   });
@@ -465,7 +465,7 @@ describe("opencode — stderr noise filtering", () => {
       ["stderr line"],
       "stdout wins"
     );
-    initOpenCode(makeDeps({ CREWSWARM_OPENCODE_BIN: script }));
+    initOpenCode(makeDeps({ IRIS_OPENCODE_BIN: script }));
     const result = await runOpenCodeTask("task", {});
     assert.equal(result, "stdout wins");
   });

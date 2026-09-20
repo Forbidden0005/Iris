@@ -10,10 +10,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { existsSync } from "node:fs";
 
-const MOCK_PIPELINES_DIR = join(tmpdir(), "crewswarm-test-pipelines");
-const MOCK_LOGS_DIR = join(tmpdir(), "crewswarm-test-logs");
+const MOCK_PIPELINES_DIR = join(tmpdir(), "iris-test-pipelines");
+const MOCK_LOGS_DIR = join(tmpdir(), "iris-test-logs");
 
-// Mock crew-lead API server
+// Mock iris-lead API server
 let mockServer;
 let taskIdCounter = 1;
 let receivedDispatches = [];
@@ -27,7 +27,7 @@ async function createMockCrewLeadServer() {
     // Health check
     if (url.pathname === "/health") {
       res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ ok: true, agent: "crew-lead" }));
+      res.end(JSON.stringify({ ok: true, agent: "iris-lead" }));
       return;
     }
 
@@ -58,7 +58,7 @@ async function createMockCrewLeadServer() {
         ok: true,
         status: "done",
         result: `Mock result for ${taskId}`,
-        agent: "crew-test"
+        agent: "iris-test"
       }));
       return;
     }
@@ -80,7 +80,7 @@ before(async () => {
   await mkdir(MOCK_PIPELINES_DIR, { recursive: true });
   await mkdir(MOCK_LOGS_DIR, { recursive: true });
 
-  // Start mock crew-lead server
+  // Start mock iris-lead server
   mockServer = await createMockCrewLeadServer();
 });
 
@@ -105,12 +105,12 @@ describe("scheduled-workflows", () => {
       const workflowConfig = {
         stages: [
           {
-            agent: "crew-seo",
+            agent: "iris-seo",
             task: "Write a draft tweet",
             tool: "write_file"
           },
           {
-            agent: "crew-main",
+            agent: "iris-main",
             task: "Review the tweet",
             tool: "read_file"
           }
@@ -119,9 +119,9 @@ describe("scheduled-workflows", () => {
 
       // Verify workflow config is valid and stages are well-formed
       assert.equal(workflowConfig.stages.length, 2, "Should have 2 stages");
-      assert.equal(workflowConfig.stages[0].agent, "crew-seo");
+      assert.equal(workflowConfig.stages[0].agent, "iris-seo");
       assert.equal(workflowConfig.stages[0].task, "Write a draft tweet");
-      assert.equal(workflowConfig.stages[1].agent, "crew-main");
+      assert.equal(workflowConfig.stages[1].agent, "iris-main");
       assert.equal(workflowConfig.stages[1].task, "Review the tweet");
 
       // Verify serialization round-trip
@@ -129,15 +129,15 @@ describe("scheduled-workflows", () => {
       await writeFile(configPath, JSON.stringify(workflowConfig, null, 2));
       const loaded = JSON.parse(await readFile(configPath, "utf8"));
       assert.equal(loaded.stages.length, 2, "Serialized config should have 2 stages");
-      assert.equal(loaded.stages[0].agent, "crew-seo");
-      assert.equal(loaded.stages[1].agent, "crew-main");
+      assert.equal(loaded.stages[0].agent, "iris-seo");
+      assert.equal(loaded.stages[1].agent, "iris-main");
     });
 
     it("passes previous stage output to next stage", async () => {
       const workflowConfig = {
         stages: [
-          { agent: "crew-coder", task: "Write hello.js" },
-          { agent: "crew-qa", task: "Test the code" }
+          { agent: "iris-coder", task: "Write hello.js" },
+          { agent: "iris-qa", task: "Test the code" }
         ]
       };
 
@@ -163,7 +163,7 @@ describe("scheduled-workflows", () => {
       await writeFile(configPath, JSON.stringify(skillPipeline, null, 2));
 
       // Skill-only pipelines don't dispatch to agents
-      // They call skills directly via crew-lead API
+      // They call skills directly via iris-lead API
       assert.ok(true, "Skill pipeline structure validated");
     });
   });
@@ -172,7 +172,7 @@ describe("scheduled-workflows", () => {
     it("handles stage timeout gracefully", async () => {
       const workflowConfig = {
         stages: [
-          { agent: "crew-coder", task: "Long running task" }
+          { agent: "iris-coder", task: "Long running task" }
         ]
       };
 
@@ -184,12 +184,12 @@ describe("scheduled-workflows", () => {
       assert.ok(true, "Timeout handling verified in unit tests");
     });
 
-    it("logs errors when crew-lead is unreachable", async () => {
+    it("logs errors when iris-lead is unreachable", async () => {
       // Close server temporarily
       mockServer.close();
 
       const workflowConfig = {
-        stages: [{ agent: "crew-test", task: "Test task" }]
+        stages: [{ agent: "iris-test", task: "Test task" }]
       };
 
       const configPath = join(MOCK_PIPELINES_DIR, "unreachable-workflow.json");
@@ -205,20 +205,20 @@ describe("scheduled-workflows", () => {
   describe("inline skill execution", () => {
     it("executes inline --skill flag with params", async () => {
       // Test: node scripts/run-scheduled-pipeline.mjs --skill twitter.post --params '{"text":"..."}'
-      // This would dispatch directly to crew-lead with skill execution
+      // This would dispatch directly to iris-lead with skill execution
       assert.ok(true, "Inline skill execution path verified");
     });
   });
 
   describe("auth token handling", () => {
-    it("reads token from ~/.crewswarm/crewswarm.json", async () => {
+    it("reads token from ~/.iris/iris.json", async () => {
       // The script should read RT auth token from config
       // Mock verification - actual test would validate token presence in request headers
       assert.ok(true, "Auth token reading verified");
     });
 
     it("includes Bearer token in dispatch requests", async () => {
-      // Verify Authorization header sent to crew-lead
+      // Verify Authorization header sent to iris-lead
       assert.ok(true, "Bearer token inclusion verified");
     });
   });
@@ -226,7 +226,7 @@ describe("scheduled-workflows", () => {
   describe("polling behavior", () => {
     it("polls task status until completion", async () => {
       const workflowConfig = {
-        stages: [{ agent: "crew-coder", task: "Quick task" }]
+        stages: [{ agent: "iris-coder", task: "Quick task" }]
       };
 
       const configPath = join(MOCK_PIPELINES_DIR, "poll-workflow.json");
@@ -249,7 +249,7 @@ describe("cron integration", () => {
   it("creates logs directory if missing", async () => {
     const logsDir = join(MOCK_LOGS_DIR, "cron-logs");
 
-    // Script should create ~/.crewswarm/logs if it doesn't exist
+    // Script should create ~/.iris/logs if it doesn't exist
     // Verify no crash when log directory is missing
     assert.ok(true, "Log directory creation verified");
   });

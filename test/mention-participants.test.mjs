@@ -10,23 +10,23 @@ import { detectMentions } from "../lib/chat/autonomous-mentions.mjs";
 test("resolves CLI participants and agent aliases", () => {
   assert.equal(resolveChatParticipant("codex")?.kind, "cli");
   assert.equal(resolveChatParticipant("claude-code")?.runtime, "claude");
-  assert.equal(resolveChatParticipant("pm")?.id, "crew-pm");
+  assert.equal(resolveChatParticipant("pm")?.id, "iris-pm");
 });
 
 test("detects unique mixed mentions", () => {
   const participants = detectMentionParticipants(
-    "@codex inspect this and @crew-pm plan it with @pm too",
+    "@codex inspect this and @iris-pm plan it with @pm too",
   );
   assert.deepEqual(
     participants.map((participant) => participant.id),
-    ["codex", "crew-pm"],
+    ["codex", "iris-pm"],
   );
 });
 
 test("detectMentions returns canonical participant ids", () => {
   assert.deepEqual(
-    detectMentions("@cursor and @crew-coder please coordinate"),
-    ["cursor", "crew-coder"],
+    detectMentions("@cursor and @iris-coder please coordinate"),
+    ["cursor", "iris-coder"],
   );
 });
 
@@ -36,7 +36,7 @@ test("detectMentions ignores mentions inside appended original task blocks", () 
     "",
     "---",
     "**[ORIGINAL TASK]:**",
-    "@crew-pm Hey, the user wants to test the @mention system.",
+    "@iris-pm Hey, the user wants to test the @mention system.",
     "",
     "Does this work?",
   ].join("\n");

@@ -66,8 +66,8 @@ test.describe("Vibe routing and chat surfaces", () => {
         status: 200,
         contentType: "application/json",
         body: JSON.stringify([
-          { id: "crew-coder", name: "crew-coder", emoji: "🤖" },
-          { id: "crew-pm", name: "crew-pm", emoji: "📋" },
+          { id: "iris-coder", name: "iris-coder", emoji: "🤖" },
+          { id: "iris-pm", name: "iris-pm", emoji: "📋" },
         ]),
       });
     });
@@ -125,9 +125,9 @@ test.describe("Vibe routing and chat surfaces", () => {
     await page.route("**/api/chat/unified", async (route) => {
       const payload = route.request().postDataJSON();
       const reply =
-        payload?.agentId === "crew-coder"
-          ? "crew-coder accepted the task"
-          : "crew-lead acknowledged the message";
+        payload?.agentId === "iris-coder"
+          ? "iris-coder accepted the task"
+          : "iris-lead acknowledged the message";
       await route.fulfill({
         status: 200,
         contentType: "text/event-stream",
@@ -171,19 +171,19 @@ test.describe("Vibe routing and chat surfaces", () => {
 
     const modeSelector = page.locator("#chat-mode-selector");
     await expect(modeSelector).toBeVisible();
-    await expect(modeSelector.locator("option")).toContainText(["crew-coder"]);
+    await expect(modeSelector.locator("option")).toContainText(["iris-coder"]);
 
-    await modeSelector.selectOption("crew-coder");
+    await modeSelector.selectOption("iris-coder");
     await page.fill("#chat-input", "Implement auth middleware");
     await page.press("#chat-input", "Enter");
 
     await expect(page.locator("#chat-messages")).toContainText("Implement auth middleware");
-    await expect(page.locator("#chat-messages")).toContainText("crew-coder accepted the task");
+    await expect(page.locator("#chat-messages")).toContainText("iris-coder accepted the task");
 
-    await modeSelector.selectOption("crew-lead");
+    await modeSelector.selectOption("iris-lead");
     await page.fill("#chat-input", "Summarize current progress");
     await page.press("#chat-input", "Enter");
 
-    await expect(page.locator("#chat-messages")).toContainText("crew-lead acknowledged the message");
+    await expect(page.locator("#chat-messages")).toContainText("iris-lead acknowledged the message");
   });
 });

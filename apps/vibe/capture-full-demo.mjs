@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * CrewSwarm Full Demo — Screenshot Capture + Slideshow Video
+ * Iris Full Demo — Screenshot Capture + Slideshow Video
  *
  * Takes screenshots of all key features across Vibe + Dashboard,
  * then stitches them into a crossfade slideshow video.

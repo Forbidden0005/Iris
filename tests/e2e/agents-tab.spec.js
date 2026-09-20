@@ -56,10 +56,10 @@ const fixtureAgents = {
   },
   agents: [
     {
-      id: "crew-coder",
+      id: "iris-coder",
       model: "openai/gpt-5.4",
       fallbackModel: "",
-      name: "crew-coder",
+      name: "iris-coder",
       emoji: "🤖",
       alsoAllow: ["write_file"],
       useOpenCode: false,
@@ -79,7 +79,7 @@ const fixtureEngines = {
   engines: [
     { id: "codex", label: "Codex CLI", ready: true, color: "#a855f7" },
     { id: "cursor", label: "Cursor CLI", ready: true, color: "#38bdf8" },
-    { id: "crew-cli", label: "crew-cli", ready: true, color: "#10b981" },
+    { id: "iris-cli", label: "iris-cli", ready: true, color: "#10b981" },
   ],
 };
 
@@ -128,12 +128,12 @@ test.describe("Agents tab engine settings", () => {
     });
 
     await openTab(page, "navAgents", "agentsView");
-    await page.locator('#agent-card-crew-coder button[data-action="toggleAgentBody"]').click();
-    await page.locator("#route-codex-crew-coder").click();
+    await page.locator('#agent-card-iris-coder button[data-action="toggleAgentBody"]').click();
+    await page.locator("#route-codex-iris-coder").click();
 
     await expect.poll(() => payload).not.toBeNull();
     expect(payload).toMatchObject({
-      agentId: "crew-coder",
+      agentId: "iris-coder",
       useCodex: true,
       useOpenCode: false,
       useCursorCli: false,
@@ -141,7 +141,7 @@ test.describe("Agents tab engine settings", () => {
       useGeminiCli: false,
       useCrewCLI: false,
     });
-    await expect(page.locator("#codex-model-row-crew-coder")).toBeVisible();
+    await expect(page.locator("#codex-model-row-iris-coder")).toBeVisible();
   });
 
   test("saving codex model posts the exact per-agent model field", async ({ page }) => {
@@ -156,14 +156,14 @@ test.describe("Agents tab engine settings", () => {
     });
 
     await openTab(page, "navAgents", "agentsView");
-    await page.locator('#agent-card-crew-coder button[data-action="toggleAgentBody"]').click();
-    await page.locator("#route-codex-crew-coder").click();
-    await page.fill("#codex-model-txt-crew-coder", "gpt-5.4");
-    await page.locator('button[data-action="saveCodexConfig"][data-arg="crew-coder"]').click();
+    await page.locator('#agent-card-iris-coder button[data-action="toggleAgentBody"]').click();
+    await page.locator("#route-codex-iris-coder").click();
+    await page.fill("#codex-model-txt-iris-coder", "gpt-5.4");
+    await page.locator('button[data-action="saveCodexConfig"][data-arg="iris-coder"]').click();
 
     await expect.poll(() => requests.length).toBeGreaterThan(1);
     expect(requests.at(-1)).toEqual({
-      agentId: "crew-coder",
+      agentId: "iris-coder",
       codexModel: "gpt-5.4",
     });
   });

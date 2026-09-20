@@ -10,13 +10,13 @@ import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const CFG_DIR = process.env.CREWSWARM_CONFIG_DIR
-  || process.env.CREWSWARM_CONFIG_DIR   // legacy env alias
-  || path.join(os.homedir(), ".crewswarm");
-const SHARED_MEMORY_BASE = process.env.SHARED_MEMORY_DIR || path.join(os.homedir(), ".crewswarm", "workspace", "shared-memory");
+const CFG_DIR = process.env.IRIS_CONFIG_DIR
+  || process.env.IRIS_CONFIG_DIR   // legacy env alias
+  || path.join(os.homedir(), ".iris");
+const SHARED_MEMORY_BASE = process.env.SHARED_MEMORY_DIR || path.join(os.homedir(), ".iris", "workspace", "shared-memory");
 const SHARED_MEMORY_NAMESPACE = process.env.SHARED_MEMORY_NAMESPACE || "claw-swarm";
-const DLQ_DIR = path.join(SHARED_MEMORY_BASE, SHARED_MEMORY_NAMESPACE, "opencrew-rt", "dlq");
-const CREWSWARM_DIR = process.env.CREWSWARM_DIR || process.env.OPENCLAW_DIR || path.resolve(__dirname, "..");
+const DLQ_DIR = path.join(SHARED_MEMORY_BASE, SHARED_MEMORY_NAMESPACE, "openiris-rt", "dlq");
+const IRIS_DIR = process.env.IRIS_DIR || process.env.OPENCLAW_DIR || path.resolve(__dirname, "..");
 
 const key = process.argv[2];
 if (!key) {
@@ -46,12 +46,12 @@ if (!agent) {
   process.exit(4);
 }
 
-const bridge = path.join(CREWSWARM_DIR, "gateway-bridge.mjs");
+const bridge = path.join(IRIS_DIR, "gateway-bridge.mjs");
 const result = spawnSync("node", [bridge, "--send", agent, prompt], {
-  cwd: CREWSWARM_DIR,
+  cwd: IRIS_DIR,
   encoding: "utf8",
   timeout: 120000,
-  env: { ...process.env, CREWSWARM_DIR },
+  env: { ...process.env, IRIS_DIR },
 });
 
 if (result.status !== 0) {

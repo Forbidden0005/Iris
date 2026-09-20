@@ -50,7 +50,7 @@ const ENGINE_ICONS = {
   codex: "🟣",
   gemini: "🔵",
   "gemini-cli": "🔵",
-  "crew-cli": "🔧",
+  "iris-cli": "🔧",
   "docker-sandbox": "🐳",
   direct: "💬",
 };
@@ -63,7 +63,7 @@ const ENGINE_COLORS = {
   codex: "#a855f7",
   gemini: "#4285f4",
   "gemini-cli": "#4285f4",
-  "crew-cli": "#10b981",
+  "iris-cli": "#10b981",
   "docker-sandbox": "#0ea5e9",
   direct: "#6366f1",
 };
@@ -111,8 +111,8 @@ function buildVoiceOptions(selectedVoiceId = "") {
   `;
 }
 
-// crewswarm gateway-bridge tool definitions
-const CREWSWARM_TOOLS = [
+// iris gateway-bridge tool definitions
+const IRIS_TOOLS = [
   { id: "write_file", desc: "Write files to disk (@@WRITE_FILE)" },
   { id: "read_file", desc: "Read files from disk (@@READ_FILE)" },
   { id: "mkdir", desc: "Create directories (@@MKDIR)" },
@@ -126,26 +126,26 @@ const CREWSWARM_TOOLS = [
 
 // Role-based tool defaults — applied when "Apply role defaults" is clicked
 const AGENT_TOOL_DEFAULTS = {
-  "crew-qa": ["read_file"],
-  "crew-coder": ["write_file", "read_file", "mkdir", "run_cmd"],
-  "crew-coder-front": ["write_file", "read_file", "mkdir", "run_cmd"],
-  "crew-coder-back": ["write_file", "read_file", "mkdir", "run_cmd"],
-  "crew-frontend": ["write_file", "read_file", "mkdir", "run_cmd"],
-  "crew-fixer": ["write_file", "read_file", "mkdir", "run_cmd"],
-  "crew-github": ["read_file", "run_cmd", "git"],
-  "crew-pm": ["read_file", "dispatch"],
-  "crew-main": ["read_file", "write_file", "run_cmd", "dispatch"],
-  "crew-security": ["read_file", "run_cmd"],
-  "crew-copywriter": ["write_file", "read_file"],
-  "crew-telegram": ["telegram", "read_file"],
-  "crew-lead": ["dispatch"],
+  "iris-qa": ["read_file"],
+  "iris-coder": ["write_file", "read_file", "mkdir", "run_cmd"],
+  "iris-coder-front": ["write_file", "read_file", "mkdir", "run_cmd"],
+  "iris-coder-back": ["write_file", "read_file", "mkdir", "run_cmd"],
+  "iris-frontend": ["write_file", "read_file", "mkdir", "run_cmd"],
+  "iris-fixer": ["write_file", "read_file", "mkdir", "run_cmd"],
+  "iris-github": ["read_file", "run_cmd", "git"],
+  "iris-pm": ["read_file", "dispatch"],
+  "iris-main": ["read_file", "write_file", "run_cmd", "dispatch"],
+  "iris-security": ["read_file", "run_cmd"],
+  "iris-copywriter": ["write_file", "read_file"],
+  "iris-telegram": ["telegram", "read_file"],
+  "iris-lead": ["dispatch"],
 };
 
 function getToolDefaults(agentId) {
   if (AGENT_TOOL_DEFAULTS[agentId]) return AGENT_TOOL_DEFAULTS[agentId];
-  // Fuzzy match — e.g. crew-coder-3 → coder defaults
+  // Fuzzy match — e.g. iris-coder-3 → coder defaults
   for (const [key, val] of Object.entries(AGENT_TOOL_DEFAULTS)) {
-    if (agentId.startsWith(key) || agentId.includes(key.replace("crew-", "")))
+    if (agentId.startsWith(key) || agentId.includes(key.replace("iris-", "")))
       return val;
   }
   return ["read_file", "write_file", "mkdir", "run_cmd"]; // sensible default for unknown roles
@@ -173,7 +173,7 @@ async function loadAgents_cfg() {
     const agents = sortAgents(data.agents || []);
     if (!agents.length) {
       list.innerHTML =
-        '<div class="meta" style="padding:20px;">No agents found in config. Check ~/.crewswarm/crewswarm.json</div>';
+        '<div class="meta" style="padding:20px;">No agents found in config. Check ~/.iris/iris.json</div>';
       return;
     }
     list.innerHTML = "";
@@ -219,7 +219,7 @@ async function loadAgents_cfg() {
               ${a.useClaudeCode ? '<span style="font-size:11px;font-family:monospace;color:var(--green-hi);" title="Claude Code CLI — routing tasks through claude -p">🤖 claude</span>' : ""}
               ${a.useCodex ? '<span style="font-size:11px;font-family:monospace;color:var(--purple);" title="Codex CLI — routing tasks through codex exec">🟣 ' + (a.codexModel || "codex") + "</span>" : ""}
               ${a.useGeminiCli ? '<span style="font-size:11px;font-family:monospace;color:#4285f4;" title="Gemini CLI — routing tasks through gemini -p">🔵 gemini</span>' : ""}
-              ${a.useCrewCLI ? '<span style="font-size:11px;font-family:monospace;color:#10b981;" title="Crew CLI — routing tasks through crew-cli native agents">🔧 ' + (a.crewCliModel || "crew-cli") + "</span>" : ""}
+              ${a.useCrewCLI ? '<span style="font-size:11px;font-family:monospace;color:#10b981;" title="Iris CLI — routing tasks through iris-cli native agents">🔧 ' + (a.crewCliModel || "iris-cli") + "</span>" : ""}
               ${a.opencodeModel && !a.useCursorCli && !a.useClaudeCode && !a.useCodex && !a.useGeminiCli && !a.useCrewCLI ? '<span style="font-size:11px;font-family:monospace;color:' + (BROKEN_MODELS.has(a.opencodeModel) ? "var(--red-hi)" : "var(--green-hi)") + ';" title="OpenCode model — used when routing tasks through OpenCode CLI">⚡ ' + a.opencodeModel + "</span>" : ""}
               ${BROKEN_MODELS.has(a.model) ? '<span style="font-size:10px;font-weight:600;color:var(--red-hi);background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);padding:1px 6px;border-radius:4px;">BROKEN — REASSIGN</span>' : ""}
             </div>
@@ -319,12 +319,12 @@ async function loadAgents_cfg() {
           </div>
           <div style="border-top:1px solid var(--border); padding-top:10px;">
             <div class="field-label" style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
-              <span>crewswarm — Agent Tools</span>
+              <span>iris — Agent Tools</span>
               <span style="font-size:10px; font-weight:600; color:var(--accent); padding:2px 6px; border-radius:4px; background:rgba(56,189,248,0.08); border:1px solid rgba(56,189,248,0.25);">gateway-bridge</span>
             </div>
             <div class="meta" style="margin-bottom:10px; font-size:11px;">Controls which tools this agent can execute on disk and network. Enforced by gateway-bridge on every task — only checked tools are active.</div>
             <div id="tools-${a.id}" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:6px; margin-bottom:12px;">
-              ${CREWSWARM_TOOLS.map(
+              ${IRIS_TOOLS.map(
                 (t) => `
                 <label style="display:flex; align-items:flex-start; gap:7px; font-size:12px; color:var(--text-2); cursor:pointer; padding:6px 8px; border-radius:5px; border:1px solid var(--border); background:var(--bg-card2);">
                   <input type="checkbox" data-tool="${t.id}" ${(a.alsoAllow || []).includes(t.id) ? "checked" : ""} style="accent-color:var(--accent); margin-top:2px; flex-shrink:0;" />
@@ -409,10 +409,10 @@ async function loadAgents_cfg() {
               <input id="gemini-model-txt-${a.id}" type="text" placeholder="gemini-2.5-flash or leave blank for auto" value="${a.geminiCliModel || ""}" style="flex:1; min-width:160px; font-size:12px;" />
               <button data-action="saveGeminiCliConfig" data-arg="${a.id}" class="btn-ghost" style="white-space:nowrap; font-size:12px; color:#4285f4; border-color:rgba(66,133,244,0.3);">Save</button>
             </div>
-            <div id="crew-cli-config-row-${a.id}" style="display:${a.useCrewCLI ? "flex" : "none"}; gap:8px; align-items:center; flex-wrap:wrap; padding:10px; background:var(--surface-2); border-radius:8px; border:1px solid var(--border); margin-bottom:10px;">
-              <span style="font-size:12px; font-weight:600; color:var(--text-1);">🔧 Crew CLI Mode Active</span>
-              <select id="crew-cli-model-sel-${a.id}" style="flex:1; min-width:200px; font-size:12px;" onchange="syncCrewCliModelText('${a.id}')"></select>
-              <input id="crew-cli-model-txt-${a.id}" type="text" placeholder="provider/model or leave blank for default" value="${a.crewCliModel || ""}" style="flex:1; min-width:180px; font-size:12px;" />
+            <div id="iris-cli-config-row-${a.id}" style="display:${a.useCrewCLI ? "flex" : "none"}; gap:8px; align-items:center; flex-wrap:wrap; padding:10px; background:var(--surface-2); border-radius:8px; border:1px solid var(--border); margin-bottom:10px;">
+              <span style="font-size:12px; font-weight:600; color:var(--text-1);">🔧 Iris CLI Mode Active</span>
+              <select id="iris-cli-model-sel-${a.id}" style="flex:1; min-width:200px; font-size:12px;" onchange="syncCrewCliModelText('${a.id}')"></select>
+              <input id="iris-cli-model-txt-${a.id}" type="text" placeholder="provider/model or leave blank for default" value="${a.crewCliModel || ""}" style="flex:1; min-width:180px; font-size:12px;" />
               <button data-action="saveCrewCLIConfig" data-arg="${a.id}" class="btn-ghost" style="white-space:nowrap; font-size:12px; color:#10b981; border-color:rgba(16,185,129,0.3);">Save</button>
             </div>
           </div>
@@ -447,7 +447,7 @@ async function loadAgents_cfg() {
           a.cursorCliModel || "",
         );
         populateGenericModelDropdown(
-          "crew-cli-model-sel-" + a.id,
+          "iris-cli-model-sel-" + a.id,
           a.crewCliModel || "",
         );
       });
@@ -484,7 +484,7 @@ async function loadEnginesAndPopulateButtons(agents) {
               : a.useGeminiCli
                 ? "gemini-cli"
                 : a.useCrewCLI
-                  ? "crew-cli"
+                  ? "iris-cli"
                   : "direct";
 
       // Direct API button (always available)
@@ -930,7 +930,7 @@ async function setRoute(agentId, route) {
     codex: { useCodex: true },
     "gemini-cli": { useGeminiCli: true },
     gemini: { useGeminiCli: true },
-    "crew-cli": { useCrewCLI: true },
+    "iris-cli": { useCrewCLI: true },
   };
 
   // Get the config update for this engine
@@ -972,7 +972,7 @@ async function setRoute(agentId, route) {
   const ccRow = document.getElementById("claudecode-model-row-" + agentId);
   const codexRow = document.getElementById("codex-model-row-" + agentId);
   const geminiRow = document.getElementById("gemini-model-row-" + agentId);
-  const crewCliRow = document.getElementById("crew-cli-config-row-" + agentId);
+  const crewCliRow = document.getElementById("iris-cli-config-row-" + agentId);
   const loopRow = document.getElementById("loop-row-" + agentId);
 
   if (ocRow) ocRow.style.display = route === "opencode" ? "flex" : "none";
@@ -986,7 +986,7 @@ async function setRoute(agentId, route) {
     geminiRow.style.display =
       route === "gemini-cli" || route === "gemini" ? "flex" : "none";
   if (crewCliRow)
-    crewCliRow.style.display = route === "crew-cli" ? "flex" : "none";
+    crewCliRow.style.display = route === "iris-cli" ? "flex" : "none";
   if (loopRow) loopRow.style.display = anyEngine ? "flex" : "none";
 
   // Save to backend
@@ -1065,7 +1065,7 @@ async function saveGeminiCliConfig(agentId) {
 
 async function saveCrewCLIConfig(agentId) {
   const crewCliModel = (
-    document.getElementById("crew-cli-model-txt-" + agentId)?.value || ""
+    document.getElementById("iris-cli-model-txt-" + agentId)?.value || ""
   ).trim();
   try {
     await postJSON("/api/agents-config/update", {
@@ -1074,7 +1074,7 @@ async function saveCrewCLIConfig(agentId) {
       crewCliModel,
     });
     showNotification(
-      agentId + " Crew CLI model → " + (crewCliModel || "default"),
+      agentId + " Iris CLI model → " + (crewCliModel || "default"),
     );
   } catch (e) {
     showNotification("Failed: " + e.message, true);
@@ -1082,8 +1082,8 @@ async function saveCrewCLIConfig(agentId) {
 }
 
 function syncCrewCliModelText(agentId) {
-  const sel = document.getElementById("crew-cli-model-sel-" + agentId);
-  const txt = document.getElementById("crew-cli-model-txt-" + agentId);
+  const sel = document.getElementById("iris-cli-model-sel-" + agentId);
+  const txt = document.getElementById("iris-cli-model-txt-" + agentId);
   if (sel && txt) txt.value = sel.value;
 }
 window.syncCrewCliModelText = syncCrewCliModelText;
@@ -1187,18 +1187,18 @@ async function saveCursorCliToggle(agentId) {
 async function bulkSetRoute(route, model) {
   // All agents that write code or docs (have write_file/mkdir access)
   const CODING_AGENTS = [
-    "crew-coder",
-    "crew-coder-front",
-    "crew-coder-back",
-    "crew-frontend",
-    "crew-fixer",
-    "crew-architect",
-    "crew-ml",
-    "crew-copywriter",
-    "crew-main",
-    "crew-pm",
-    "crew-mega",
-    "crew-lead",
+    "iris-coder",
+    "iris-coder-front",
+    "iris-coder-back",
+    "iris-frontend",
+    "iris-fixer",
+    "iris-architect",
+    "iris-ml",
+    "iris-copywriter",
+    "iris-main",
+    "iris-pm",
+    "iris-mega",
+    "iris-lead",
   ];
 
   // Get engine info from API
@@ -1234,7 +1234,7 @@ async function bulkSetRoute(route, model) {
       else if (route === "codex") payload.useCodex = true;
       else if (route === "gemini" || route === "gemini-cli")
         payload.useGeminiCli = true;
-      else if (route === "crew-cli") payload.useCrewCLI = true;
+      else if (route === "iris-cli") payload.useCrewCLI = true;
       else if (route === "docker-sandbox") payload.useDockerSandbox = true;
 
       if (model && route === "cursor") payload.cursorCliModel = model;
@@ -1242,7 +1242,7 @@ async function bulkSetRoute(route, model) {
       if (model && route === "claudecode") payload.claudeCodeModel = model;
       if (model && route === "codex") payload.codexModel = model;
       if (model && route === "gemini") payload.geminiCliModel = model;
-      if (model && route === "crew-cli") payload.crewCliModel = model;
+      if (model && route === "iris-cli") payload.crewCliModel = model;
       await postJSON("/api/agents-config/update", payload);
       // Small delay to prevent rapid-fire saves that create backup storms
       await new Promise(r => setTimeout(r, 50));
@@ -1392,11 +1392,11 @@ async function saveAgentPrompt(agentId) {
 
 async function startCrew() {
   try {
-    showNotification("Starting crew bridge daemons…");
-    const r = await postJSON("/api/crew/start", {});
-    showNotification(r.message || "Crew started");
+    showNotification("Starting iris bridge daemons…");
+    const r = await postJSON("/api/iris/start", {});
+    showNotification(r.message || "Iris started");
   } catch (e) {
-    showNotification("Crew start failed: " + e.message, true);
+    showNotification("Iris start failed: " + e.message, true);
   }
 }
 
@@ -1810,7 +1810,7 @@ const PROMPT_PRESETS = {
 ## Rules
 - Assign tasks to the right agent based on their specialty.
 - Track what's in progress and what's blocked.
-- Escalate failures to crew-fixer and report status.
+- Escalate failures to iris-fixer and report status.
 - Do NOT implement tasks yourself — delegate everything.
 - Communicate clearly: who is doing what, and what's blocked.`,
 
@@ -1825,33 +1825,33 @@ const PROMPT_PRESETS = {
 };
 
 const PRESET_META = {
-  frontend: { id: "crew-coder-front", name: "Frontend Coder", emoji: "🎨" },
-  backend: { id: "crew-coder-back", name: "Backend Coder", emoji: "⚙️" },
-  fullstack: { id: "crew-coder", name: "Full-stack Coder", emoji: "🧱" },
-  ios: { id: "crew-coder-ios", name: "iOS Coder", emoji: "📱" },
-  android: { id: "crew-coder-android", name: "Android Coder", emoji: "🤖" },
-  devops: { id: "crew-devops", name: "DevOps Engineer", emoji: "🔧" },
-  data: { id: "crew-data", name: "Data Engineer", emoji: "📊" },
-  security: { id: "crew-security", name: "Security Auditor", emoji: "🛡️" },
-  qa: { id: "crew-qa", name: "QA Tester", emoji: "🧪" },
-  github: { id: "crew-github", name: "Git Ops", emoji: "🐙" },
-  writer: { id: "crew-copywriter", name: "Copywriter", emoji: "✍️" },
-  design: { id: "crew-design", name: "UI/UX Designer", emoji: "🖌️" },
-  pm: { id: "crew-pm-agent", name: "Product Manager", emoji: "📋" },
-  aiml: { id: "crew-aiml", name: "AI/ML Engineer", emoji: "🤖" },
-  api: { id: "crew-api", name: "API Designer", emoji: "🔌" },
-  database: { id: "crew-database", name: "Database Specialist", emoji: "🗄️" },
-  reactnative: { id: "crew-rn", name: "React Native Dev", emoji: "📱" },
-  web3: { id: "crew-web3", name: "Web3 Engineer", emoji: "🌐" },
-  automation: { id: "crew-automation", name: "Automation Bot", emoji: "🕷️" },
-  docs: { id: "crew-docs", name: "Docs Writer", emoji: "📖" },
+  frontend: { id: "iris-coder-front", name: "Frontend Coder", emoji: "🎨" },
+  backend: { id: "iris-coder-back", name: "Backend Coder", emoji: "⚙️" },
+  fullstack: { id: "iris-coder", name: "Full-stack Coder", emoji: "🧱" },
+  ios: { id: "iris-coder-ios", name: "iOS Coder", emoji: "📱" },
+  android: { id: "iris-coder-android", name: "Android Coder", emoji: "🤖" },
+  devops: { id: "iris-devops", name: "DevOps Engineer", emoji: "🔧" },
+  data: { id: "iris-data", name: "Data Engineer", emoji: "📊" },
+  security: { id: "iris-security", name: "Security Auditor", emoji: "🛡️" },
+  qa: { id: "iris-qa", name: "QA Tester", emoji: "🧪" },
+  github: { id: "iris-github", name: "Git Ops", emoji: "🐙" },
+  writer: { id: "iris-copywriter", name: "Copywriter", emoji: "✍️" },
+  design: { id: "iris-design", name: "UI/UX Designer", emoji: "🖌️" },
+  pm: { id: "iris-pm-agent", name: "Product Manager", emoji: "📋" },
+  aiml: { id: "iris-aiml", name: "AI/ML Engineer", emoji: "🤖" },
+  api: { id: "iris-api", name: "API Designer", emoji: "🔌" },
+  database: { id: "iris-database", name: "Database Specialist", emoji: "🗄️" },
+  reactnative: { id: "iris-rn", name: "React Native Dev", emoji: "📱" },
+  web3: { id: "iris-web3", name: "Web3 Engineer", emoji: "🌐" },
+  automation: { id: "iris-automation", name: "Automation Bot", emoji: "🕷️" },
+  docs: { id: "iris-docs", name: "Docs Writer", emoji: "📖" },
   orchestrator: {
-    id: "crew-orchestrator",
+    id: "iris-orchestrator",
     name: "Orchestrator",
     emoji: "🧠",
   },
-  lead: { id: "crew-lead", name: "Crew Lead", emoji: "🦊" },
-  main: { id: "crew-main", name: "Main Agent", emoji: "⚡" },
+  lead: { id: "iris-lead", name: "Iris Lead", emoji: "🦊" },
+  main: { id: "iris-main", name: "Main Agent", emoji: "⚡" },
 };
 
 export function applyPromptPreset() {
@@ -1890,31 +1890,31 @@ const BROKEN_MODELS = new Set([
 // Role classification for badge display (matches MODEL-ROLE-OPTIMIZATION.md)
 const MODEL_ROLE = {
   // PLANNER — task decomposition, routing
-  "crew-pm": "PLANNER",
-  "crew-orchestrator": "PLANNER",
+  "iris-pm": "PLANNER",
+  "iris-orchestrator": "PLANNER",
   orchestrator: "PLANNER",
   // WORKER — code generation, implementation
-  "crew-coder": "WORKER",
-  "crew-coder-back": "WORKER",
-  "crew-coder-front": "WORKER",
-  "crew-frontend": "WORKER",
-  "crew-fixer": "WORKER",
+  "iris-coder": "WORKER",
+  "iris-coder-back": "WORKER",
+  "iris-coder-front": "WORKER",
+  "iris-frontend": "WORKER",
+  "iris-fixer": "WORKER",
   // JUDGE — cycle decisions
-  "crew-judge": "JUDGE",
+  "iris-judge": "JUDGE",
   // ANALYST — QA, security, review
-  "crew-qa": "ANALYST",
-  "crew-security": "ANALYST",
+  "iris-qa": "ANALYST",
+  "iris-security": "ANALYST",
   // COORDINATOR — triage, delegation
-  "crew-lead": "COORDINATOR",
-  "crew-main": "COORDINATOR",
+  "iris-lead": "COORDINATOR",
+  "iris-main": "COORDINATOR",
   // OTHER
-  "crew-architect": "COORDINATOR",
-  "crew-ml": "ANALYST",
-  "crew-mega": "COORDINATOR",
-  "crew-researcher": "COORDINATOR",
-  "crew-copywriter": "WORKER",
-  "crew-github": "WORKER",
-  "crew-seo": "COORDINATOR",
+  "iris-architect": "COORDINATOR",
+  "iris-ml": "ANALYST",
+  "iris-mega": "COORDINATOR",
+  "iris-researcher": "COORDINATOR",
+  "iris-copywriter": "WORKER",
+  "iris-github": "WORKER",
+  "iris-seo": "COORDINATOR",
 };
 const ROLE_STYLE = {
   PLANNER:
@@ -2097,10 +2097,10 @@ document.getElementById("newAgentBtn").onclick = () => {
       sel.appendChild(opt);
     });
   }
-  // Populate tool checkboxes dynamically (CREWSWARM_TOOLS is not available at HTML parse time)
+  // Populate tool checkboxes dynamically (IRIS_TOOLS is not available at HTML parse time)
   const grid = document.getElementById("naToolsGrid");
   if (grid && grid.querySelectorAll(".naToolCheck").length === 0) {
-    grid.innerHTML = CREWSWARM_TOOLS.map(
+    grid.innerHTML = IRIS_TOOLS.map(
       (t) => `
       <label style="display:flex; align-items:flex-start; gap:7px; font-size:12px; color:var(--text-2); cursor:pointer; padding:6px 8px; border-radius:5px; border:1px solid var(--border); background:var(--bg-card2);">
         <input type="checkbox" class="naToolCheck" data-tool="${t.id}" style="accent-color:var(--accent); margin-top:2px; flex-shrink:0;" />
@@ -2119,8 +2119,8 @@ document.getElementById("naCancelBtn").onclick = () => {
 document.getElementById("naCreateBtn").onclick = async () => {
   const rawId = document.getElementById("naId").value.trim();
   const id =
-    rawId && !rawId.startsWith("crew-") && rawId !== "orchestrator"
-      ? `crew-${rawId}`
+    rawId && !rawId.startsWith("iris-") && rawId !== "orchestrator"
+      ? `iris-${rawId}`
       : rawId;
   const model = document.getElementById("naModel").value.trim();
   const name = document.getElementById("naName").value.trim();
@@ -2174,24 +2174,24 @@ document.getElementById("bulkOptimizeBtn").onclick = async () => {
 
   const mode = "value"; // Could add UI to pick free/quality/value
   const preset = {
-    "crew-pm": "groq/llama-3.3-70b-versatile",
-    "crew-orchestrator": "groq/llama-3.3-70b-versatile",
-    "crew-judge": "groq/llama-3.3-70b-versatile",
-    "crew-coder": "google/models/gemini-2.5-flash-lite",
-    "crew-coder-front": "google/models/gemini-2.5-flash-lite",
-    "crew-coder-back": "google/models/gemini-2.5-flash-lite",
-    "crew-fixer": "deepseek/deepseek-reasoner",
-    "crew-qa": "deepseek/deepseek-reasoner",
-    "crew-security": "deepseek/deepseek-reasoner",
-    "crew-main": "google/models/gemini-2.5-flash-lite",
-    "crew-lead": "google/models/gemini-2.5-flash-lite",
-    "crew-frontend": "google/models/gemini-2.5-flash-lite",
-    "crew-copywriter": "groq/llama-3.3-70b-versatile",
-    "crew-researcher": "perplexity/sonar-pro",
-    "crew-architect": "deepseek/deepseek-reasoner",
-    "crew-seo": "groq/llama-3.3-70b-versatile",
-    "crew-ml": "deepseek/deepseek-reasoner",
-    "crew-github": "groq/llama-3.3-70b-versatile",
+    "iris-pm": "groq/llama-3.3-70b-versatile",
+    "iris-orchestrator": "groq/llama-3.3-70b-versatile",
+    "iris-judge": "groq/llama-3.3-70b-versatile",
+    "iris-coder": "google/models/gemini-2.5-flash-lite",
+    "iris-coder-front": "google/models/gemini-2.5-flash-lite",
+    "iris-coder-back": "google/models/gemini-2.5-flash-lite",
+    "iris-fixer": "deepseek/deepseek-reasoner",
+    "iris-qa": "deepseek/deepseek-reasoner",
+    "iris-security": "deepseek/deepseek-reasoner",
+    "iris-main": "google/models/gemini-2.5-flash-lite",
+    "iris-lead": "google/models/gemini-2.5-flash-lite",
+    "iris-frontend": "google/models/gemini-2.5-flash-lite",
+    "iris-copywriter": "groq/llama-3.3-70b-versatile",
+    "iris-researcher": "perplexity/sonar-pro",
+    "iris-architect": "deepseek/deepseek-reasoner",
+    "iris-seo": "groq/llama-3.3-70b-versatile",
+    "iris-ml": "deepseek/deepseek-reasoner",
+    "iris-github": "groq/llama-3.3-70b-versatile",
   };
 
   showNotification("Applying role-optimized models…");

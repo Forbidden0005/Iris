@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# crewswarm smoke tests — fast pre-push checks, no running services required.
+# iris smoke tests — fast pre-push checks, no running services required.
 #
 # Usage:
 #   bash scripts/smoke.sh              # full local run
@@ -32,7 +32,7 @@ fail() { echo "  ${R}✗${X} $1"; ((FAIL++)) || true; }
 info() { echo ""; echo "${B}── $1 ──${X}"; }
 
 echo ""
-echo "${B}━━━ crewswarm Smoke Tests ━━━${X}"
+echo "${B}━━━ iris Smoke Tests ━━━${X}"
 echo "  repo: $REPO_DIR"
 echo "  $(date)"
 
@@ -64,7 +64,7 @@ fi
 
 # ── 3. Syntax checks ─────────────────────────────────────────────────────────
 info "Syntax"
-for f in crew-lead.mjs gateway-bridge.mjs scripts/dashboard.mjs; do
+for f in iris-lead.mjs gateway-bridge.mjs scripts/dashboard.mjs; do
   if node --check "$f" 2>/dev/null; then
     ok "$f"
   else
@@ -118,16 +118,16 @@ fi
 
 # ── 6. Config bootstrap ──────────────────────────────────────────────────────
 info "Config"
-if [[ -f "$HOME/.crewswarm/crewswarm.json" ]]; then
-  ok "~/.crewswarm/crewswarm.json"
+if [[ -f "$HOME/.iris/iris.json" ]]; then
+  ok "~/.iris/iris.json"
 else
-  fail "~/.crewswarm/crewswarm.json missing — run: bash install.sh"
+  fail "~/.iris/iris.json missing — run: bash install.sh"
 fi
 
-if [[ -f "$HOME/.crewswarm/crewswarm.json" ]]; then
-  ok "~/.crewswarm/crewswarm.json"
+if [[ -f "$HOME/.iris/iris.json" ]]; then
+  ok "~/.iris/iris.json"
 else
-  fail "~/.crewswarm/crewswarm.json missing — run: bash install.sh"
+  fail "~/.iris/iris.json missing — run: bash install.sh"
 fi
 
 # ── 7. Static health check (no services) ────────────────────────────────────
@@ -140,7 +140,7 @@ fi
 
 # ── 8. Unit test suite ─────────────────────────────────────────────────────
 info "Test suite"
-TEST_OUTPUT="$(CREWSWARM_TEST_MODE=true node --test --test-force-exit test/unit/*.test.mjs 2>&1)" || true
+TEST_OUTPUT="$(IRIS_TEST_MODE=true node --test --test-force-exit test/unit/*.test.mjs 2>&1)" || true
 TEST_TOTAL="$(printf '%s\n' "$TEST_OUTPUT" | sed -n 's/^ℹ tests \([0-9][0-9]*\)$/\1/p' | tail -1)"
 if printf '%s\n' "$TEST_OUTPUT" | grep -q "fail 0"; then
   ok "unit tests (${TEST_TOTAL:-unknown} tests)"

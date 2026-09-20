@@ -16,26 +16,26 @@ describe("normalizeRtAgentId", () => {
     assert.equal(normalizeRtAgentId(null), "");
   });
 
-  test("passes through already-prefixed crew- IDs", () => {
-    assert.equal(normalizeRtAgentId("crew-coder"), "crew-coder");
-    assert.equal(normalizeRtAgentId("crew-qa"), "crew-qa");
-    assert.equal(normalizeRtAgentId("crew-main"), "crew-main");
+  test("passes through already-prefixed iris- IDs", () => {
+    assert.equal(normalizeRtAgentId("iris-coder"), "iris-coder");
+    assert.equal(normalizeRtAgentId("iris-qa"), "iris-qa");
+    assert.equal(normalizeRtAgentId("iris-main"), "iris-main");
   });
 
-  test("adds crew- prefix to bare agent names", () => {
-    assert.equal(normalizeRtAgentId("coder"), "crew-coder");
-    assert.equal(normalizeRtAgentId("pm"), "crew-pm");
-    assert.equal(normalizeRtAgentId("fixer"), "crew-fixer");
+  test("adds iris- prefix to bare agent names", () => {
+    assert.equal(normalizeRtAgentId("coder"), "iris-coder");
+    assert.equal(normalizeRtAgentId("pm"), "iris-pm");
+    assert.equal(normalizeRtAgentId("fixer"), "iris-fixer");
   });
 
-  test("passes through NO_PREFIX_AGENT_IDS without adding crew-", () => {
+  test("passes through NO_PREFIX_AGENT_IDS without adding iris-", () => {
     for (const id of NO_PREFIX_AGENT_IDS) {
       assert.equal(normalizeRtAgentId(id), id);
     }
   });
 
   test("trims whitespace before normalizing", () => {
-    assert.equal(normalizeRtAgentId("  coder  "), "crew-coder");
+    assert.equal(normalizeRtAgentId("  coder  "), "iris-coder");
   });
 });
 
@@ -48,18 +48,18 @@ describe("BUILT_IN_RT_AGENTS", () => {
     }
   });
 
-  test("all built-in agents start with crew- or are orchestrator", () => {
+  test("all built-in agents start with iris- or are orchestrator", () => {
     for (const id of BUILT_IN_RT_AGENTS) {
-      assert.ok(id.startsWith("crew-") || id === "orchestrator", `unexpected id: ${id}`);
+      assert.ok(id.startsWith("iris-") || id === "orchestrator", `unexpected id: ${id}`);
     }
   });
 });
 
 describe("RT_TO_GATEWAY_AGENT_MAP", () => {
-  test("all crew- keys map to bare agent IDs without crew-", () => {
+  test("all iris- keys map to bare agent IDs without iris-", () => {
     for (const [rt, gw] of Object.entries(RT_TO_GATEWAY_AGENT_MAP)) {
-      if (rt.startsWith("crew-")) {
-        assert.ok(!gw.startsWith("crew-") || gw === "orchestrator",
+      if (rt.startsWith("iris-")) {
+        assert.ok(!gw.startsWith("iris-") || gw === "orchestrator",
           `Expected bare id for ${rt}, got ${gw}`);
       }
     }
@@ -74,9 +74,9 @@ describe("RT_TO_GATEWAY_AGENT_MAP", () => {
 
 describe("COORDINATOR_AGENT_IDS", () => {
   test("contains expected coordinator IDs", () => {
-    assert.ok(COORDINATOR_AGENT_IDS.includes("crew-pm"));
-    assert.ok(COORDINATOR_AGENT_IDS.includes("crew-main"));
-    assert.ok(COORDINATOR_AGENT_IDS.includes("crew-orchestrator"));
+    assert.ok(COORDINATOR_AGENT_IDS.includes("iris-pm"));
+    assert.ok(COORDINATOR_AGENT_IDS.includes("iris-main"));
+    assert.ok(COORDINATOR_AGENT_IDS.includes("iris-orchestrator"));
   });
 
   test("exports the backward-compatible typo alias", () => {

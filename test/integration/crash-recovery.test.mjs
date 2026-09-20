@@ -1,7 +1,7 @@
 /**
  * Integration tests for pipeline crash recovery.
  *
- * Simulates crew-lead crash mid-pipeline by:
+ * Simulates iris-lead crash mid-pipeline by:
  *   1. Creating a pipeline with savePipelineState()
  *   2. Clearing in-memory state (simulating process death)
  *   3. Calling resumePipelines() (as startup would)
@@ -28,7 +28,7 @@ import {
   dispatchPipelineWave,
   pendingDispatches,
   pendingPipelines,
-} from "../../lib/crew-lead/wave-dispatcher.mjs";
+} from "../../lib/iris-lead/wave-dispatcher.mjs";
 
 function getPipelineStateDir() {
   return getStatePath("pipelines");
@@ -64,7 +64,7 @@ function createMockDeps(overrides = {}) {
 
 describe("crash recovery — pipeline state persistence", () => {
   beforeEach(() => {
-    process.env.CREWSWARM_TEST_MODE = "true";
+    process.env.IRIS_TEST_MODE = "true";
     resetPaths();
     pendingDispatches.clear();
     pendingPipelines.clear();
@@ -73,8 +73,8 @@ describe("crash recovery — pipeline state persistence", () => {
   afterEach(() => {
     pendingDispatches.clear();
     pendingPipelines.clear();
-    try { fs.rmSync(path.join(os.tmpdir(), `crewswarm-test-${process.pid}`), { recursive: true, force: true }); } catch {}
-    delete process.env.CREWSWARM_TEST_MODE;
+    try { fs.rmSync(path.join(os.tmpdir(), `iris-test-${process.pid}`), { recursive: true, force: true }); } catch {}
+    delete process.env.IRIS_TEST_MODE;
     resetPaths();
   });
 
@@ -86,14 +86,14 @@ describe("crash recovery — pipeline state persistence", () => {
     const pipeline = {
       sessionId: "owner",
       steps: [
-        { agent: "crew-pm", task: "plan" },
-        { agent: "crew-coder", task: "build" },
-        { agent: "crew-qa", task: "test" },
+        { agent: "iris-pm", task: "plan" },
+        { agent: "iris-coder", task: "build" },
+        { agent: "iris-qa", task: "test" },
       ],
       waves: [
-        [{ agent: "crew-pm", task: "plan" }],
-        [{ agent: "crew-coder", task: "build" }],
-        [{ agent: "crew-qa", task: "test" }],
+        [{ agent: "iris-pm", task: "plan" }],
+        [{ agent: "iris-coder", task: "build" }],
+        [{ agent: "iris-qa", task: "test" }],
       ],
       currentWave: 1, // Mid-pipeline — wave 1 was in progress
       waveResults: [],
@@ -136,8 +136,8 @@ describe("crash recovery — pipeline state persistence", () => {
     const pipelineId = `retry-crash-${Date.now()}`;
     const pipeline = {
       sessionId: "owner",
-      steps: [{ agent: "crew-coder", task: "build" }],
-      waves: [[{ agent: "crew-coder", task: "build" }]],
+      steps: [{ agent: "iris-coder", task: "build" }],
+      waves: [[{ agent: "iris-coder", task: "build" }]],
       currentWave: 0,
       waveResults: [],
       completedWaveResults: [],
@@ -166,8 +166,8 @@ describe("crash recovery — pipeline state persistence", () => {
     const pipelineId = `stale-${Date.now()}`;
     const pipeline = {
       sessionId: "owner",
-      steps: [{ agent: "crew-coder", task: "build" }],
-      waves: [[{ agent: "crew-coder", task: "build" }]],
+      steps: [{ agent: "iris-coder", task: "build" }],
+      waves: [[{ agent: "iris-coder", task: "build" }]],
       currentWave: 0,
       waveResults: [],
       completedWaveResults: [],
@@ -228,8 +228,8 @@ describe("crash recovery — pipeline state persistence", () => {
       const pid = `multi-${i}-${Date.now()}`;
       pendingPipelines.set(pid, {
         sessionId: "owner",
-        steps: [{ agent: "crew-coder", task: `task-${i}` }],
-        waves: [[{ agent: "crew-coder", task: `task-${i}` }]],
+        steps: [{ agent: "iris-coder", task: `task-${i}` }],
+        waves: [[{ agent: "iris-coder", task: `task-${i}` }]],
         currentWave: 0,
         waveResults: [],
         completedWaveResults: [],
@@ -251,8 +251,8 @@ describe("crash recovery — pipeline state persistence", () => {
     const validPid = `valid-${Date.now()}`;
     pendingPipelines.set(validPid, {
       sessionId: "owner",
-      steps: [{ agent: "crew-coder", task: "x" }],
-      waves: [[{ agent: "crew-coder", task: "x" }]],
+      steps: [{ agent: "iris-coder", task: "x" }],
+      waves: [[{ agent: "iris-coder", task: "x" }]],
       currentWave: 0,
       waveResults: [],
       completedWaveResults: [],

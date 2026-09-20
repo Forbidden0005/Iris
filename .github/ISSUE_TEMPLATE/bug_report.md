@@ -1,6 +1,6 @@
 ---
 name: Bug Report
-about: Report a bug in crewswarm
+about: Report a bug in iris
 title: '[Bug] '
 labels: bug
 assignees: ''
@@ -20,7 +20,7 @@ What you expected to happen.
 **Environment**
 - OS: [e.g., macOS 15, Ubuntu 24.04]
 - Node.js version: [e.g., 22.x]
-- crewswarm version: [e.g., 0.5.0]
+- iris version: [e.g., 0.5.0]
 - Shell: [e.g., zsh, bash]
 
 **Logs**

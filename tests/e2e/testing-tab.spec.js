@@ -284,7 +284,7 @@ test.describe("Testing tab", () => {
             { category: "integration", group: "dashboard", files: 3, tests: 50, pass: 50, fail: 0, skip: 0, duration_ms: 3000 },
             { category: "e2e", group: "playwright", files: 5, tests: 40, pass: 40, fail: 0, skip: 0, duration_ms: 2500 },
             { category: "e2e", group: "playwright", files: 2, tests: 20, pass: 20, fail: 0, skip: 0, duration_ms: 1000 },
-            { category: "unit", group: "crew-cli", files: 4, tests: 10, pass: 10, fail: 0, skip: 0, duration_ms: 500 },
+            { category: "unit", group: "iris-cli", files: 4, tests: 10, pass: 10, fail: 0, skip: 0, duration_ms: 500 },
           ],
           failures: [],
         }),
@@ -439,12 +439,12 @@ test.describe("Testing tab", () => {
         contentType: "application/json",
         body: JSON.stringify({
           covered: [
-            "lib/agents/crew-lead.mjs",
-            "lib/agents/crew-coder.mjs",
+            "lib/agents/iris-lead.mjs",
+            "lib/agents/iris-coder.mjs",
             "lib/chat/router.mjs",
           ],
           uncovered: [
-            "lib/agents/crew-scribe.mjs",
+            "lib/agents/iris-scribe.mjs",
             "lib/bridges/telegram.mjs",
           ],
           pct: 60,

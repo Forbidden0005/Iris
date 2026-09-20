@@ -1,12 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { shouldForceMentionReply } from "../../lib/crew-lead/chat-handler.mjs";
+import { shouldForceMentionReply } from "../../lib/iris-lead/chat-handler.mjs";
 
 test("forces retry when user asks to use mention system but reply has no literal mention", () => {
   const result = shouldForceMentionReply({
     message:
-      "you dispatched - didnt use the @mention system - the at mention you only use @ and then the crew-name and you can chat with them - try it",
+      "you dispatched - didnt use the @mention system - the at mention you only use @ and then the iris-name and you can chat with them - try it",
     reply:
       "You're right, I messed that one up. What do you want me to ask or say to an agent using the @mention system?",
     channelMode: true,
@@ -18,7 +18,7 @@ test("forces retry when user asks to use mention system but reply has no literal
 test("does not force retry when reply already contains a literal @mention", () => {
   const result = shouldForceMentionReply({
     message: "try again and use the @mention system",
-    reply: "@crew-main acknowledge this with a short reply",
+    reply: "@iris-main acknowledge this with a short reply",
     channelMode: true,
   });
 

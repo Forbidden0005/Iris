@@ -19,18 +19,18 @@ import {
 } from "../../lib/runtime/paths.mjs";
 
 describe("paths", () => {
-  const origConfigDir = process.env.CREWSWARM_CONFIG_DIR;
-  const origStateDir = process.env.CREWSWARM_STATE_DIR;
-  const origTestMode = process.env.CREWSWARM_TEST_MODE;
+  const origConfigDir = process.env.IRIS_CONFIG_DIR;
+  const origStateDir = process.env.IRIS_STATE_DIR;
+  const origTestMode = process.env.IRIS_TEST_MODE;
 
   afterEach(() => {
     // Restore env
-    if (origConfigDir !== undefined) process.env.CREWSWARM_CONFIG_DIR = origConfigDir;
-    else delete process.env.CREWSWARM_CONFIG_DIR;
-    if (origStateDir !== undefined) process.env.CREWSWARM_STATE_DIR = origStateDir;
-    else delete process.env.CREWSWARM_STATE_DIR;
-    if (origTestMode !== undefined) process.env.CREWSWARM_TEST_MODE = origTestMode;
-    else delete process.env.CREWSWARM_TEST_MODE;
+    if (origConfigDir !== undefined) process.env.IRIS_CONFIG_DIR = origConfigDir;
+    else delete process.env.IRIS_CONFIG_DIR;
+    if (origStateDir !== undefined) process.env.IRIS_STATE_DIR = origStateDir;
+    else delete process.env.IRIS_STATE_DIR;
+    if (origTestMode !== undefined) process.env.IRIS_TEST_MODE = origTestMode;
+    else delete process.env.IRIS_TEST_MODE;
     resetPaths();
   });
 
@@ -38,17 +38,17 @@ describe("paths", () => {
     resetPaths();
   });
 
-  it("getConfigDir returns a string ending in .crewswarm by default", () => {
-    delete process.env.CREWSWARM_CONFIG_DIR;
-    delete process.env.CREWSWARM_TEST_MODE;
+  it("getConfigDir returns a string ending in .iris by default", () => {
+    delete process.env.IRIS_CONFIG_DIR;
+    delete process.env.IRIS_TEST_MODE;
     const dir = getConfigDir();
     assert.ok(typeof dir === "string");
-    assert.ok(dir.includes(".crewswarm") || dir.includes("crewswarm"));
+    assert.ok(dir.includes(".iris") || dir.includes("iris"));
   });
 
-  it("getConfigDir respects CREWSWARM_CONFIG_DIR env var", () => {
+  it("getConfigDir respects IRIS_CONFIG_DIR env var", () => {
     const tmpDir = path.join(os.tmpdir(), `paths-test-cfg-${process.pid}`);
-    process.env.CREWSWARM_CONFIG_DIR = tmpDir;
+    process.env.IRIS_CONFIG_DIR = tmpDir;
     resetPaths();
     const dir = getConfigDir();
     assert.equal(dir, tmpDir);
@@ -81,10 +81,10 @@ describe("paths", () => {
   });
 
   it("test mode uses tmpdir-based paths", () => {
-    process.env.CREWSWARM_TEST_MODE = "true";
-    delete process.env.CREWSWARM_CONFIG_DIR;
+    process.env.IRIS_TEST_MODE = "true";
+    delete process.env.IRIS_CONFIG_DIR;
     resetPaths();
     const dir = getConfigDir();
-    assert.ok(dir.includes(os.tmpdir()) || dir.includes("crewswarm-test"));
+    assert.ok(dir.includes(os.tmpdir()) || dir.includes("iris-test"));
   });
 });

@@ -2,7 +2,7 @@
 
 Updated: March 14, 2026
 
-crewswarm has three main user-facing surfaces plus service controls.
+iris has three main user-facing surfaces plus service controls.
 
 ## Dashboard
 
@@ -11,7 +11,7 @@ URL: `http://127.0.0.1:4319`
 Use it for:
 - service control
 - providers and engine configuration
-- shared chat with `crew-lead`
+- shared chat with `iris-lead`
 - project management
 - agent configuration
 
@@ -33,29 +33,29 @@ Status:
 - beta UX surface
 - core flows work, but polish and consistency are still improving
 
-## crewchat
+## irischat
 
-App bundle: `/Applications/crewchat.app`
+App bundle: `/Applications/irischat.app`
 
 Use it for:
 - fast native macOS chat
 - **Multimodal input**: Native image picker (camera/photos) and AVFoundation voice recording/transcription
-- project-aware `crew-lead` chat and direct agent `@mentions`
+- project-aware `iris-lead` chat and direct agent `@mentions`
 - direct CLI passthrough
 - **Two operating modes**:
-  - **Quick Mode**: Chat conversationally with `crew-lead` for AI-routed support.
-  - **Advanced Mode**: Bypasses the lead to allow direct conversational access to specialists like `crew-coder`, `crew-qa`, `crew-pm`.
+  - **Quick Mode**: Chat conversationally with `iris-lead` for AI-routed support.
+  - **Advanced Mode**: Bypasses the lead to allow direct conversational access to specialists like `iris-coder`, `iris-qa`, `iris-pm`.
 
 Status & Build:
 - beta native surface
-- Run `./build-crewchat.sh` to compile the `crewchat.app` bundle in under 2 minutes.
+- Run `./build-irischat.sh` to compile the `irischat.app` bundle in under 2 minutes.
 
 ## SwiftBar
 
 Use it for:
 - stack health at a glance in the macOS Menu Bar
 - start/stop/restart service shortcuts (without interacting with the Dashboard)
-- opening dashboard, Vibe, and `crewchat`
+- opening dashboard, Vibe, and `irischat`
 
 Status & Mechanism:
 - operational helper, not a primary product surface
@@ -65,5 +65,5 @@ Status & Mechanism:
 
 - use Dashboard for setup and service management
 - use Vibe for coding and project work
-- use `crewchat` for lightweight native chat
+- use `irischat` for lightweight native chat
 - use SwiftBar for quick operational control

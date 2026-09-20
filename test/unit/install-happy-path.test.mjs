@@ -8,7 +8,7 @@
  *   3. Run the script in a throw-away temp $HOME with --non-interactive and
  *      every feature flag off, so only the safe, side-effect-free steps run:
  *      config-directory creation, config-file bootstrapping, and shell-alias
- *      writing.  We never touch the real ~/.crewswarm or any shell rc file.
+ *      writing.  We never touch the real ~/.iris or any shell rc file.
  *
  * Run: node --test test/unit/install-happy-path.test.mjs
  */
@@ -48,7 +48,7 @@ function bashSyntaxCheck(filePath) {
  * Returns the path and a cleanup function.
  */
 function makeTempHome() {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "crewswarm-install-test-"));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "iris-install-test-"));
   return {
     dir,
     cleanup() {
@@ -63,7 +63,7 @@ function makeTempHome() {
  * (dirs + config files + alias) without touching real system state.
  *
  * We override:
- *   HOME          → temp dir (so ~/.crewswarm stays clean)
+ *   HOME          → temp dir (so ~/.iris stays clean)
  *   SHELL         → /bin/bash (so the alias lands in a predictable rc file)
  *   PATH          → keep real PATH so node/npm are found
  *   NODE          → (inherited)
@@ -89,12 +89,12 @@ function runInstallDryRun(fakeHome) {
         HOME: fakeHome,
         SHELL: "/bin/bash",
         // Disable every optional extra.
-        CREWSWARM_BUILD_CREWCHAT: "N",
-        CREWSWARM_SETUP_TELEGRAM: "N",
-        CREWSWARM_SETUP_WHATSAPP: "N",
-        CREWSWARM_ENABLE_AUTONOMOUS: "N",
-        CREWSWARM_SETUP_MCP: "N",
-        CREWSWARM_START_NOW: "N",
+        IRIS_BUILD_CREWCHAT: "N",
+        IRIS_SETUP_TELEGRAM: "N",
+        IRIS_SETUP_WHATSAPP: "N",
+        IRIS_ENABLE_AUTONOMOUS: "N",
+        IRIS_SETUP_MCP: "N",
+        IRIS_START_NOW: "N",
         // Suppress CI auto-detection so the script runs its normal flow.
         CI: "",
         GITHUB_ACTIONS: "",
@@ -177,7 +177,7 @@ describe("install.sh — structural completeness", () => {
     );
   });
 
-  it("creates all required ~/.crewswarm subdirectories", () => {
+  it("creates all required ~/.iris subdirectories", () => {
     const requiredDirs = [
       "chat-history",
       "logs",
@@ -186,8 +186,8 @@ describe("install.sh — structural completeness", () => {
       "pids",
       "orchestrator-logs",
       "workspace",
-      "shared-memory/.crew/agent-memory",
-      "shared-memory/.crew/collections",
+      "shared-memory/.iris/agent-memory",
+      "shared-memory/.iris/collections",
     ];
     for (const dir of requiredDirs) {
       assert.ok(
@@ -199,7 +199,7 @@ describe("install.sh — structural completeness", () => {
 
   it("creates config.json with an RT auth token", () => {
     assert.ok(
-      SCRIPT_SRC.includes("crewswarm.json"),
+      SCRIPT_SRC.includes("iris.json"),
       "Expected config.json bootstrap"
     );
     assert.ok(
@@ -207,23 +207,23 @@ describe("install.sh — structural completeness", () => {
       "Expected authToken field in config.json"
     );
     assert.ok(
-      SCRIPT_SRC.includes("crewswarm-"),
-      "Expected 'crewswarm-' token prefix in RT token generation"
+      SCRIPT_SRC.includes("iris-"),
+      "Expected 'iris-' token prefix in RT token generation"
     );
   });
 
-  it("creates crewswarm.json with agent and provider configs", () => {
+  it("creates iris.json with agent and provider configs", () => {
     assert.ok(
-      SCRIPT_SRC.includes("crewswarm.json"),
-      "Expected crewswarm.json bootstrap"
+      SCRIPT_SRC.includes("iris.json"),
+      "Expected iris.json bootstrap"
     );
     assert.ok(
       SCRIPT_SRC.includes('"agents"'),
-      "Expected agents array in crewswarm.json"
+      "Expected agents array in iris.json"
     );
     assert.ok(
       SCRIPT_SRC.includes('"providers"'),
-      "Expected providers map in crewswarm.json"
+      "Expected providers map in iris.json"
     );
   });
 
@@ -249,14 +249,14 @@ describe("install.sh — structural completeness", () => {
     );
   });
 
-  it("writes a crew-cli shell alias", () => {
+  it("writes a iris-cli shell alias", () => {
     assert.ok(
-      SCRIPT_SRC.includes("crew-cli"),
-      "Expected crew-cli alias to be written"
+      SCRIPT_SRC.includes("iris-cli"),
+      "Expected iris-cli alias to be written"
     );
     assert.ok(
-      SCRIPT_SRC.includes("crew-cli/dist/crew.mjs"),
-      "Expected crew-cli alias to point at crew-cli/dist/crew.mjs"
+      SCRIPT_SRC.includes("iris-cli/dist/iris.mjs"),
+      "Expected iris-cli alias to point at iris-cli/dist/iris.mjs"
     );
   });
 
@@ -298,29 +298,29 @@ describe("install.sh — structural completeness", () => {
 
 describe("install.sh — idempotency (already-installed case)", () => {
   it("guards config.json creation with [[ ! -f ]] check", () => {
-    // The script assigns CONFIG_FILE="$CREWSWARM_DIR/config.json" then guards
+    // The script assigns CONFIG_FILE="$IRIS_DIR/config.json" then guards
     // with: if [[ ! -f "$CONFIG_FILE" ]]; then
     // We verify both the variable assignment and the guard are present.
     assert.ok(
-      SCRIPT_SRC.includes('CONFIG_FILE="$CREWSWARM_DIR/config.json"'),
+      SCRIPT_SRC.includes('CONFIG_FILE="$IRIS_DIR/config.json"'),
       "Expected CONFIG_FILE variable assignment"
     );
     const hasGuard = /if\s+\[\[\s*!\s*-f\s+"\$CONFIG_FILE"\s*\]\]/.test(SCRIPT_SRC);
     assert.ok(hasGuard, "config.json creation should be guarded by [[ ! -f \"$CONFIG_FILE\" ]] check");
   });
 
-  it("guards crewswarm.json creation with [[ ! -f ]] check", () => {
+  it("guards iris.json creation with [[ ! -f ]] check", () => {
     assert.ok(
-      SCRIPT_SRC.includes('CREWSWARM_JSON="$CREWSWARM_DIR/crewswarm.json"'),
-      "Expected CREWSWARM_JSON variable assignment"
+      SCRIPT_SRC.includes('IRIS_JSON="$IRIS_DIR/iris.json"'),
+      "Expected IRIS_JSON variable assignment"
     );
-    const hasGuard = /if\s+\[\[\s*!\s*-f\s+"\$CREWSWARM_JSON"\s*\]\]/.test(SCRIPT_SRC);
-    assert.ok(hasGuard, "crewswarm.json creation should be guarded by [[ ! -f \"$CREWSWARM_JSON\" ]] check");
+    const hasGuard = /if\s+\[\[\s*!\s*-f\s+"\$IRIS_JSON"\s*\]\]/.test(SCRIPT_SRC);
+    assert.ok(hasGuard, "iris.json creation should be guarded by [[ ! -f \"$IRIS_JSON\" ]] check");
   });
 
   it("guards cmd-allowlist.json creation with [[ ! -f ]] check", () => {
     assert.ok(
-      SCRIPT_SRC.includes('ALLOWLIST="$CREWSWARM_DIR/cmd-allowlist.json"'),
+      SCRIPT_SRC.includes('ALLOWLIST="$IRIS_DIR/cmd-allowlist.json"'),
       "Expected ALLOWLIST variable assignment"
     );
     const hasGuard = /if\s+\[\[\s*!\s*-f\s+"\$ALLOWLIST"\s*\]\]/.test(SCRIPT_SRC);
@@ -329,7 +329,7 @@ describe("install.sh — idempotency (already-installed case)", () => {
 
   it("guards agent-prompts.json creation with [[ ! -f ]] check", () => {
     assert.ok(
-      SCRIPT_SRC.includes('PROMPTS_FILE="$CREWSWARM_DIR/agent-prompts.json"'),
+      SCRIPT_SRC.includes('PROMPTS_FILE="$IRIS_DIR/agent-prompts.json"'),
       "Expected PROMPTS_FILE variable assignment"
     );
     const hasGuard = /if\s+\[\[\s*!\s*-f\s+"\$PROMPTS_FILE"\s*\]\]/.test(SCRIPT_SRC);
@@ -338,8 +338,8 @@ describe("install.sh — idempotency (already-installed case)", () => {
 
   it("guards shell alias with grep check to avoid duplicate entries", () => {
     assert.ok(
-      SCRIPT_SRC.includes('grep -q "crew-cli"'),
-      "Expected grep check to avoid adding duplicate crew-cli alias"
+      SCRIPT_SRC.includes('grep -q "iris-cli"'),
+      "Expected grep check to avoid adding duplicate iris-cli alias"
     );
   });
 
@@ -355,16 +355,16 @@ describe("install.sh — idempotency (already-installed case)", () => {
 
 describe("install.sh — non-interactive env-var flags", () => {
   const ENV_FLAGS = [
-    "CREWSWARM_BUILD_CREWCHAT",
-    "CREWSWARM_SETUP_TELEGRAM",
+    "IRIS_BUILD_CREWCHAT",
+    "IRIS_SETUP_TELEGRAM",
     "TELEGRAM_BOT_TOKEN",
-    "CREWSWARM_SETUP_WHATSAPP",
-    "CREWSWARM_WHATSAPP_NUMBER",
-    "CREWSWARM_WHATSAPP_NAME",
-    "CREWSWARM_ENABLE_AUTONOMOUS",
-    "CREWSWARM_AUTONOMOUS_MINUTES",
-    "CREWSWARM_SETUP_MCP",
-    "CREWSWARM_START_NOW",
+    "IRIS_SETUP_WHATSAPP",
+    "IRIS_WHATSAPP_NUMBER",
+    "IRIS_WHATSAPP_NAME",
+    "IRIS_ENABLE_AUTONOMOUS",
+    "IRIS_AUTONOMOUS_MINUTES",
+    "IRIS_SETUP_MCP",
+    "IRIS_START_NOW",
   ];
 
   for (const flag of ENV_FLAGS) {
@@ -412,8 +412,8 @@ describe("install.sh — live dry-run (isolated temp HOME)", () => {
     );
   });
 
-  it("creates the ~/.crewswarm base directory", () => {
-    const dir = path.join(tempHome.dir, ".crewswarm");
+  it("creates the ~/.iris base directory", () => {
+    const dir = path.join(tempHome.dir, ".iris");
     assert.ok(
       fs.existsSync(dir),
       `Expected ${dir} to exist after install`
@@ -428,35 +428,35 @@ describe("install.sh — live dry-run (isolated temp HOME)", () => {
     "pids",
     "orchestrator-logs",
     "workspace",
-    path.join("shared-memory", ".crew", "agent-memory"),
-    path.join("shared-memory", ".crew", "collections"),
+    path.join("shared-memory", ".iris", "agent-memory"),
+    path.join("shared-memory", ".iris", "collections"),
     "skills",
     "engines",
   ];
 
   for (const sub of SUBDIRS) {
-    it(`creates ~/.crewswarm/${sub}`, () => {
-      const dir = path.join(tempHome.dir, ".crewswarm", sub);
+    it(`creates ~/.iris/${sub}`, () => {
+      const dir = path.join(tempHome.dir, ".iris", sub);
       assert.ok(
         fs.existsSync(dir),
-        `Expected ~/.crewswarm/${sub} to exist`
+        `Expected ~/.iris/${sub} to exist`
       );
     });
   }
 
-  it("creates ~/.crewswarm/config.json", () => {
-    const file = path.join(tempHome.dir, ".crewswarm", "config.json");
+  it("creates ~/.iris/config.json", () => {
+    const file = path.join(tempHome.dir, ".iris", "config.json");
     assert.ok(fs.existsSync(file), "config.json not found");
   });
 
   it("config.json is valid JSON", () => {
-    const file = path.join(tempHome.dir, ".crewswarm", "config.json");
+    const file = path.join(tempHome.dir, ".iris", "config.json");
     const raw = fs.readFileSync(file, "utf8");
     assert.doesNotThrow(() => JSON.parse(raw), "config.json is not valid JSON");
   });
 
   it("config.json contains a non-empty rt.authToken", () => {
-    const file = path.join(tempHome.dir, ".crewswarm", "config.json");
+    const file = path.join(tempHome.dir, ".iris", "config.json");
     const cfg = JSON.parse(fs.readFileSync(file, "utf8"));
     assert.ok(
       typeof cfg?.rt?.authToken === "string" && cfg.rt.authToken.length > 0,
@@ -465,33 +465,33 @@ describe("install.sh — live dry-run (isolated temp HOME)", () => {
   });
 
   it("config.json rt.authToken starts with expected prefix", () => {
-    const file = path.join(tempHome.dir, ".crewswarm", "config.json");
+    const file = path.join(tempHome.dir, ".iris", "config.json");
     const cfg = JSON.parse(fs.readFileSync(file, "utf8"));
     assert.ok(
-      cfg.rt.authToken.startsWith("crewswarm-"),
-      `Expected token to start with 'crewswarm-', got: ${cfg.rt.authToken}`
+      cfg.rt.authToken.startsWith("iris-"),
+      `Expected token to start with 'iris-', got: ${cfg.rt.authToken}`
     );
   });
 
-  it("creates ~/.crewswarm/crewswarm.json", () => {
-    const file = path.join(tempHome.dir, ".crewswarm", "crewswarm.json");
-    assert.ok(fs.existsSync(file), "crewswarm.json not found");
+  it("creates ~/.iris/iris.json", () => {
+    const file = path.join(tempHome.dir, ".iris", "iris.json");
+    assert.ok(fs.existsSync(file), "iris.json not found");
   });
 
-  it("crewswarm.json is valid JSON", () => {
-    const file = path.join(tempHome.dir, ".crewswarm", "crewswarm.json");
+  it("iris.json is valid JSON", () => {
+    const file = path.join(tempHome.dir, ".iris", "iris.json");
     const raw = fs.readFileSync(file, "utf8");
-    assert.doesNotThrow(() => JSON.parse(raw), "crewswarm.json is not valid JSON");
+    assert.doesNotThrow(() => JSON.parse(raw), "iris.json is not valid JSON");
   });
 
-  it("crewswarm.json contains a non-empty agents array", () => {
-    const file = path.join(tempHome.dir, ".crewswarm", "crewswarm.json");
+  it("iris.json contains a non-empty agents array", () => {
+    const file = path.join(tempHome.dir, ".iris", "iris.json");
     const cfg = JSON.parse(fs.readFileSync(file, "utf8"));
     assert.ok(Array.isArray(cfg.agents) && cfg.agents.length > 0, "Expected agents array");
   });
 
-  it("crewswarm.json agents all have id and model fields", () => {
-    const file = path.join(tempHome.dir, ".crewswarm", "crewswarm.json");
+  it("iris.json agents all have id and model fields", () => {
+    const file = path.join(tempHome.dir, ".iris", "iris.json");
     const cfg = JSON.parse(fs.readFileSync(file, "utf8"));
     for (const agent of cfg.agents) {
       assert.ok(
@@ -505,8 +505,8 @@ describe("install.sh — live dry-run (isolated temp HOME)", () => {
     }
   });
 
-  it("crewswarm.json contains a providers map with groq entry", () => {
-    const file = path.join(tempHome.dir, ".crewswarm", "crewswarm.json");
+  it("iris.json contains a providers map with groq entry", () => {
+    const file = path.join(tempHome.dir, ".iris", "iris.json");
     const cfg = JSON.parse(fs.readFileSync(file, "utf8"));
     assert.ok(
       cfg.providers && typeof cfg.providers === "object",
@@ -515,13 +515,13 @@ describe("install.sh — live dry-run (isolated temp HOME)", () => {
     assert.ok("groq" in cfg.providers, "Expected groq provider entry");
   });
 
-  it("creates ~/.crewswarm/cmd-allowlist.json", () => {
-    const file = path.join(tempHome.dir, ".crewswarm", "cmd-allowlist.json");
+  it("creates ~/.iris/cmd-allowlist.json", () => {
+    const file = path.join(tempHome.dir, ".iris", "cmd-allowlist.json");
     assert.ok(fs.existsSync(file), "cmd-allowlist.json not found");
   });
 
   it("cmd-allowlist.json is valid JSON with patterns array", () => {
-    const file = path.join(tempHome.dir, ".crewswarm", "cmd-allowlist.json");
+    const file = path.join(tempHome.dir, ".iris", "cmd-allowlist.json");
     const cfg = JSON.parse(fs.readFileSync(file, "utf8"));
     assert.ok(
       Array.isArray(cfg.patterns),
@@ -531,7 +531,7 @@ describe("install.sh — live dry-run (isolated temp HOME)", () => {
   });
 
   it("cmd-allowlist.json pre-approves npm, node, and npx", () => {
-    const file = path.join(tempHome.dir, ".crewswarm", "cmd-allowlist.json");
+    const file = path.join(tempHome.dir, ".iris", "cmd-allowlist.json");
     const cfg = JSON.parse(fs.readFileSync(file, "utf8"));
     const patterns = cfg.patterns.join(" ");
     assert.ok(patterns.includes("npm"), "Expected npm in allowlist");
@@ -539,13 +539,13 @@ describe("install.sh — live dry-run (isolated temp HOME)", () => {
     assert.ok(patterns.includes("npx"), "Expected npx in allowlist");
   });
 
-  it("creates ~/.crewswarm/token-usage.json", () => {
-    const file = path.join(tempHome.dir, ".crewswarm", "token-usage.json");
+  it("creates ~/.iris/token-usage.json", () => {
+    const file = path.join(tempHome.dir, ".iris", "token-usage.json");
     assert.ok(fs.existsSync(file), "token-usage.json not found");
   });
 
   it("token-usage.json is valid JSON with zero-initialised counters", () => {
-    const file = path.join(tempHome.dir, ".crewswarm", "token-usage.json");
+    const file = path.join(tempHome.dir, ".iris", "token-usage.json");
     const cfg = JSON.parse(fs.readFileSync(file, "utf8"));
     assert.equal(cfg.calls, 0, "Expected calls to be 0");
     assert.equal(cfg.promptTokens, 0, "Expected promptTokens to be 0");
@@ -554,27 +554,27 @@ describe("install.sh — live dry-run (isolated temp HOME)", () => {
     assert.equal(cfg.estimatedCostUSD, 0, "Expected estimatedCostUSD to be 0");
   });
 
-  it("creates ~/.crewswarm/agent-prompts.json", () => {
-    const file = path.join(tempHome.dir, ".crewswarm", "agent-prompts.json");
+  it("creates ~/.iris/agent-prompts.json", () => {
+    const file = path.join(tempHome.dir, ".iris", "agent-prompts.json");
     assert.ok(fs.existsSync(file), "agent-prompts.json not found");
   });
 
   it("agent-prompts.json is valid JSON", () => {
-    const file = path.join(tempHome.dir, ".crewswarm", "agent-prompts.json");
+    const file = path.join(tempHome.dir, ".iris", "agent-prompts.json");
     const raw = fs.readFileSync(file, "utf8");
     assert.doesNotThrow(() => JSON.parse(raw), "agent-prompts.json is not valid JSON");
   });
 
-  it("writes crew-cli alias to .bash_profile", () => {
+  it("writes iris-cli alias to .bash_profile", () => {
     const profile = path.join(tempHome.dir, ".bash_profile");
     const content = fs.readFileSync(profile, "utf8");
     assert.ok(
-      content.includes("crew-cli"),
-      "Expected crew-cli alias in .bash_profile"
+      content.includes("iris-cli"),
+      "Expected iris-cli alias in .bash_profile"
     );
     assert.ok(
-      content.includes("crew-cli/dist/crew.mjs"),
-      "Expected crew-cli alias to reference crew-cli/dist/crew.mjs"
+      content.includes("iris-cli/dist/iris.mjs"),
+      "Expected iris-cli alias to reference iris-cli/dist/iris.mjs"
     );
   });
 });
@@ -596,7 +596,7 @@ describe("install.sh — idempotency (re-run does not overwrite)", () => {
     );
 
     // Record the generated auth token so we can verify it survives the second run
-    const cfgFile = path.join(tempHome.dir, ".crewswarm", "config.json");
+    const cfgFile = path.join(tempHome.dir, ".iris", "config.json");
     const cfg = JSON.parse(fs.readFileSync(cfgFile, "utf8"));
     firstToken = cfg?.rt?.authToken;
 
@@ -614,7 +614,7 @@ describe("install.sh — idempotency (re-run does not overwrite)", () => {
   });
 
   it("preserves the existing rt.authToken on re-run", () => {
-    const cfgFile = path.join(tempHome.dir, ".crewswarm", "config.json");
+    const cfgFile = path.join(tempHome.dir, ".iris", "config.json");
     const cfg = JSON.parse(fs.readFileSync(cfgFile, "utf8"));
     assert.equal(
       cfg.rt.authToken,
@@ -623,14 +623,14 @@ describe("install.sh — idempotency (re-run does not overwrite)", () => {
     );
   });
 
-  it("does not duplicate the crew-cli alias on re-run", () => {
+  it("does not duplicate the iris-cli alias on re-run", () => {
     const profile = path.join(tempHome.dir, ".bash_profile");
     const content = fs.readFileSync(profile, "utf8");
-    const matchCount = (content.match(/alias crew-cli=/g) || []).length;
+    const matchCount = (content.match(/alias iris-cli=/g) || []).length;
     assert.equal(
       matchCount,
       1,
-      `Expected exactly 1 crew-cli alias, found ${matchCount} after re-run`
+      `Expected exactly 1 iris-cli alias, found ${matchCount} after re-run`
     );
   });
 });

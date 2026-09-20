@@ -14,7 +14,7 @@ on:
 env:
   REGISTRY_DOCKERHUB: docker.io
   REGISTRY_GHCR: ghcr.io
-  IMAGE_NAME: crewswarm/crewswarm
+  IMAGE_NAME: iris/iris
 
 jobs:
   build-and-push:
@@ -111,22 +111,22 @@ jobs:
           docker pull ghcr.io/${{ github.repository }}:${{ github.sha }}
 
           # Tag it for local testing
-          docker tag ghcr.io/${{ github.repository }}:${{ github.sha }} crewswarm:test
+          docker tag ghcr.io/${{ github.repository }}:${{ github.sha }} iris:test
 
           # Start services
           docker compose -f - up -d <<EOF
           services:
-            crewswarm:
-              image: crewswarm:test
+            iris:
+              image: iris:test
               ports:
                 - "4319:4319"
                 - "5010:5010"
               volumes:
-                - crewswarm-test:/root/.crewswarm
+                - iris-test:/root/.iris
               environment:
                 - NODE_ENV=production
           volumes:
-            crewswarm-test:
+            iris-test:
           EOF
 
           # Wait for health check
@@ -139,16 +139,16 @@ jobs:
             sleep 2
           done
 
-          # Test crew CLI
-          echo "Testing crew CLI..."
-          docker compose exec -T crewswarm crew --version
+          # Test iris CLI
+          echo "Testing iris CLI..."
+          docker compose exec -T iris iris --version
 
           # Test dashboard API
           echo "Testing dashboard API..."
           curl -sf http://localhost:4319/api/health | jq '.ok'
 
-          # Test crew-lead API
-          echo "Testing crew-lead API..."
+          # Test iris-lead API
+          echo "Testing iris-lead API..."
           curl -sf http://localhost:5010/health | jq '.ok'
 
           echo "✓ All tests passed"

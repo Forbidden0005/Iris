@@ -2,21 +2,21 @@
 
 This document defines the target repo layout, the exact directory moves to get there, what is likely to break at each step, and the lowest-risk first phase.
 
-The goal is to make `crewswarm` easier to navigate and release without changing product behavior during the early cleanup phases.
+The goal is to make `iris` easier to navigate and release without changing product behavior during the early cleanup phases.
 
 ## Target layout
 
 ```text
-crewswarm/
+iris/
   apps/
     dashboard/      # current frontend/
     vibe/           # current studio/
-    crewchat/       # native macOS app source + build assets
+    irischat/       # native macOS app source + build assets
   packages/
     core/           # current lib/ and shared runtime code
-    crew-cli/       # current crew-cli/
+    iris-cli/       # current iris-cli/
   services/
-    crew-lead/      # current crew-lead.mjs and related entrypoint glue
+    iris-lead/      # current iris-lead.mjs and related entrypoint glue
     gateway/        # current gateway-bridge.mjs and related bridge startup
     bridges/        # telegram, whatsapp, mcp, optional external bridges
   scripts/
@@ -40,12 +40,12 @@ crewswarm/
 
 This is the clean target product model:
 
-- `crewswarm` = umbrella repo and runtime platform
+- `iris` = umbrella repo and runtime platform
 - `dashboard` = control plane app
 - `vibe` = IDE app
-- `crewchat` = native chat client
-- `crew-cli` = standalone CLI package
-- `crew-lead` = orchestration/chat service
+- `irischat` = native chat client
+- `iris-cli` = standalone CLI package
+- `iris-lead` = orchestration/chat service
 - `gateway` = agent execution bridge
 
 ## Standalone reality
@@ -58,10 +58,10 @@ Current practical boundaries:
   - local CLI passthrough
 - `vibe` still depends on the swarm for:
   - direct agent chat
-  - `crew-lead` chat
+  - `iris-lead` chat
   - dashboard-backed agent/project state
-- `crew-cli` should remain a standalone installable package
-- `crewchat` is currently a client for dashboard + `crew-lead`, not a true standalone product
+- `iris-cli` should remain a standalone installable package
+- `irischat` is currently a client for dashboard + `iris-lead`, not a true standalone product
 - `dashboard` is the swarm control plane, not a standalone end-user app
 
 ## Exact directory moves
@@ -77,24 +77,24 @@ These moves do not change the runtime architecture. They mainly reduce root clut
   - `qa-output/`
   - `docs/images/release-screenshots/`
 - move backup files into archive/internal buckets:
-  - `CrewChat-v2-backup.swift`
+  - `IrisChat-v2-backup.swift`
   - `telegram-bridge.mjs.backup`
 
 ### Move set B: app directory normalization
 
 - `frontend/` -> `apps/dashboard/`
 - `studio/` -> `apps/vibe/`
-- create `apps/crewchat/`
-  - move `CrewChat.swift`
-  - move `build-crewchat.sh`
-  - move crewchat-specific build helpers from `scripts/`
+- create `apps/irischat/`
+  - move `IrisChat.swift`
+  - move `build-irischat.sh`
+  - move irischat-specific build helpers from `scripts/`
 
 ### Move set C: package/service normalization
 
-- `crew-cli/` -> `packages/crew-cli/`
+- `iris-cli/` -> `packages/iris-cli/`
 - `lib/` -> `packages/core/`
-- create `services/crew-lead/`
-  - move `crew-lead.mjs`
+- create `services/iris-lead/`
+  - move `iris-lead.mjs`
 - create `services/gateway/`
   - move `gateway-bridge.mjs`
 - create `services/bridges/`
@@ -108,7 +108,7 @@ These moves do not change the runtime architecture. They mainly reduce root clut
 - `scripts/restart-dashboard.sh` -> `scripts/ops/restart-dashboard.sh`
 - `scripts/smoke.sh` -> `scripts/smoke/smoke.sh`
 - `scripts/smoke-surfaces.sh` -> `scripts/smoke/smoke-surfaces.sh`
-- `scripts/start-crew.mjs` -> `scripts/ops/start-crew.mjs`
+- `scripts/start-iris.mjs` -> `scripts/ops/start-iris.mjs`
 - `scripts/dashboard.mjs` stays where it is initially, then later either:
   - `services/dashboard/server.mjs`, or
   - `apps/dashboard/server.mjs`
@@ -151,12 +151,12 @@ Files likely to break:
 - `tests/e2e/studio-test-utils.js`
 - docs that mention `studio/`
 
-### If `crew-cli/` moves to `packages/crew-cli/`
+### If `iris-cli/` moves to `packages/iris-cli/`
 
 Likely breakpoints:
 
 - dashboard CLI spawn fallbacks
-- docs and scripts that `cd crew-cli`
+- docs and scripts that `cd iris-cli`
 - build and QA scripts inside root
 - MCP / engine wrapper assumptions
 
@@ -165,7 +165,7 @@ Files likely to break:
 - `scripts/dashboard.mjs`
 - `package.json`
 - `AGENTS.md`
-- crew-cli docs and internal scripts
+- iris-cli docs and internal scripts
 
 ### If `lib/` moves to `packages/core/`
 
@@ -181,13 +181,13 @@ Likely breakpoints:
 Files likely to break:
 
 - `scripts/dashboard.mjs`
-- `crew-lead.mjs`
+- `iris-lead.mjs`
 - `gateway-bridge.mjs`
 - `test/**/*.mjs`
 - `tests/**/*.js`
-- `crew-cli/**`
+- `iris-cli/**`
 
-### If `crew-lead.mjs` or `gateway-bridge.mjs` moves
+### If `iris-lead.mjs` or `gateway-bridge.mjs` moves
 
 Likely breakpoints:
 
@@ -201,7 +201,7 @@ Files likely to break:
 
 - `scripts/dashboard.mjs`
 - `scripts/restart-dashboard.sh`
-- `scripts/start-crew.mjs`
+- `scripts/start-iris.mjs`
 - `contrib/swiftbar/openswitch.10s.sh`
 - canonical docs and AGENTS docs
 
@@ -229,9 +229,9 @@ Phase 1 is complete. Root clutter reduced, tests reorganized, backup files archi
 
 - `frontend/`
 - `studio/`
-- `crew-cli/`
+- `iris-cli/`
 - `lib/`
-- `crew-lead.mjs`
+- `iris-lead.mjs`
 - `gateway-bridge.mjs`
 
 ### Phase 1 files to patch
@@ -243,13 +243,13 @@ Phase 1 is complete. Root clutter reduced, tests reorganized, backup files archi
 
 ## Phase 2 — COMPLETE (2026-04-03)
 
-Phase 2 is complete. `studio/` → `apps/vibe/`, `frontend/` → `apps/dashboard/`, `apps/crewchat/` created. All service paths stable and runtime verified.
+Phase 2 is complete. `studio/` → `apps/vibe/`, `frontend/` → `apps/dashboard/`, `apps/irischat/` created. All service paths stable and runtime verified.
 
 Recommended order (completed):
 
 1. `studio/` -> `apps/vibe/` ✓
 2. `frontend/` -> `apps/dashboard/` ✓
-3. create `apps/crewchat/` ✓
+3. create `apps/irischat/` ✓
 
 This is enough to make the repo look far more conventional without immediately triggering a full core import migration.
 
@@ -257,7 +257,7 @@ This is enough to make the repo look far more conventional without immediately t
 
 Move package/service internals:
 
-1. `crew-cli/` -> `packages/crew-cli/`
+1. `iris-cli/` -> `packages/iris-cli/`
 2. `lib/` -> `packages/core/`
 3. service entrypoints into `services/`
 
@@ -276,9 +276,9 @@ npx playwright test tests/e2e
 For any phase that moves runtime code, also verify:
 
 - dashboard starts
-- `crew-lead` starts
+- `iris-lead` starts
 - vibe starts
-- crewchat connects
+- irischat connects
 - SwiftBar actions still work
 
 ## Recommendation

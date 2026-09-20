@@ -49,7 +49,7 @@ PROFILE_NAMES = ["throughput", "latency", "reliability"]
 
 
 def main():
-    parser = argparse.ArgumentParser(description="CrewSwarm performance benchmark")
+    parser = argparse.ArgumentParser(description="Iris performance benchmark")
     parser.add_argument("--url", required=True, help="Target URL to benchmark")
     parser.add_argument("--profile", default="all", help="Profile to run (or 'all')")
     parser.add_argument(

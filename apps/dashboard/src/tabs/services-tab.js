@@ -146,7 +146,7 @@ export async function restartService(id) {
     } else {
       showNotification('Restarting ' + id + '... Refresh in a few seconds if the status looks stale.');
       // Reload after delay to show new status
-      setTimeout(loadServices, id === 'crew-lead' ? 4000 : 3000);
+      setTimeout(loadServices, id === 'iris-lead' ? 4000 : 3000);
     }
   } catch (e) {
     showNotification('❌ Restart failed: ' + e.message + ' — try `npm run doctor` or a full `npm run restart-all`.', true);

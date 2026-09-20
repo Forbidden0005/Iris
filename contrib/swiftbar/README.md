@@ -1,4 +1,4 @@
-# SwiftBar Plugin for crewswarm
+# SwiftBar Plugin for iris
 
 macOS menu bar plugin. Shows live agent count and status, lets you start/stop/restart the stack and individual services from the menu bar.
 
@@ -17,19 +17,19 @@ chmod +x ~/Library/Application\ Support/SwiftBar/Plugins/openswitch.10s.sh
 Then edit the top of the installed file to set your repo path:
 
 ```bash
-CREWSWARM_DIR="$HOME/CrewSwarm"   # path to your crewswarm repo
+IRIS_DIR="$HOME/Iris"   # path to your iris repo
 ```
 
 ## Requires
 
 - [SwiftBar](https://swiftbar.app) — free macOS menu bar app
 - Node.js 20+
-- crewswarm running (`npm run restart-all`)
+- iris running (`npm run restart-all`)
 
 ## What it shows
 
 - Agent count and online/offline status (green/red dot)
-- Per-service start/stop/restart controls (RT bus, crew-lead, dashboard, Telegram)
+- Per-service start/stop/restart controls (RT bus, iris-lead, dashboard, Telegram)
 - Quick link to open the dashboard
 
 ## Notes

@@ -1,10 +1,10 @@
 # REST API Overview
 
-crew-lead exposes a REST API for external tools. Auth: Bearer token from `~/.crewswarm/config.json` or `~/.crewswarm/crewswarm.json` → `rt.authToken`.
+iris-lead exposes a REST API for external tools. Auth: Bearer token from `~/.iris/config.json` or `~/.iris/iris.json` → `rt.authToken`.
 
 ## Base URL
 
-`http://127.0.0.1:5010` (or `CREW_LEAD_PORT`)
+`http://127.0.0.1:5010` (or `IRIS_LEAD_PORT`)
 
 ## Auth
 
@@ -17,7 +17,7 @@ Authorization: Bearer <rt.authToken>
 Get token:
 
 ```bash
-TOKEN=$(cat ~/.crewswarm/crewswarm.json | python3 -c "import json,sys; print(json.load(sys.stdin)['rt']['authToken'])")
+TOKEN=$(cat ~/.iris/iris.json | python3 -c "import json,sys; print(json.load(sys.stdin)['rt']['authToken'])")
 ```
 
 ## Endpoints
@@ -28,7 +28,7 @@ TOKEN=$(cat ~/.crewswarm/crewswarm.json | python3 -c "import json,sys; print(jso
 GET /health
 ```
 
-Returns 200 when crew-lead is running.
+Returns 200 when iris-lead is running.
 
 ### List agents
 
@@ -44,7 +44,7 @@ Returns all agents with models, live status (inOpenCode, openCodeSince, openCode
 POST /api/dispatch
 Content-Type: application/json
 
-{"agent":"crew-coder","task":"write hello.js"}
+{"agent":"iris-coder","task":"write hello.js"}
 ```
 
 Returns `taskId` for polling.
@@ -76,13 +76,13 @@ Today's token usage and cost per agent.
 ### Project messages (dashboard API)
 
 ```
-GET /api/crew-lead/project-messages?projectId=my-project
-GET /api/crew-lead/search-messages-semantic?projectId=my-project&q=authentication
-GET /api/crew-lead/export-project-messages?projectId=my-project&format=markdown
+GET /api/iris-lead/project-messages?projectId=my-project
+GET /api/iris-lead/search-messages-semantic?projectId=my-project&q=authentication
+GET /api/iris-lead/export-project-messages?projectId=my-project&format=markdown
 ```
 
 Chat history and RAG search. Dashboard serves these via `scripts/dashboard.mjs` on port 4319.
 
 ## MCP server (optional)
 
-Port 5020 exposes MCP tools: `dispatch_agent`, `list_agents`, `run_pipeline`, `chat_stinki`, `crewswarm_status`, `smart_dispatch`, `skill_*`. See AGENTS.md for MCP setup.
+Port 5020 exposes MCP tools: `dispatch_agent`, `list_agents`, `run_pipeline`, `chat_stinki`, `iris_status`, `smart_dispatch`, `skill_*`. See AGENTS.md for MCP setup.

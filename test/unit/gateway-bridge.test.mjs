@@ -89,11 +89,11 @@ function isOpencodeRateLimitBanner(output) {
 }
 
 function shouldConnectGateway(args) {
-  if (process.env.CREWSWARM_FORCE_GATEWAY === "1") return true;
+  if (process.env.IRIS_FORCE_GATEWAY === "1") return true;
   if (args.includes("--broadcast")) return false;
   if (args[0] === "--send") return false;
   if (args.includes("--rt-daemon")) {
-    if (process.env.CREWSWARM_GATEWAY_ENABLED === "1") return true;
+    if (process.env.IRIS_GATEWAY_ENABLED === "1") return true;
     return false;
   }
   return true;
@@ -198,7 +198,7 @@ describe("b64url", () => {
   });
 
   it("produces consistent output for the same input", () => {
-    const buf = Buffer.from("crewswarm");
+    const buf = Buffer.from("iris");
     assert.equal(b64url(buf), b64url(buf));
   });
 
@@ -426,9 +426,9 @@ describe("currentUtcLabel", () => {
 
 describe("parseMostRecentSessionId", () => {
   const listOutput = [
-    "ses_abc123  [crew-coder] build auth module",
-    "ses_def456  [crew-pm] plan sprint",
-    "ses_ghi789  [crew-coder] fix login bug",
+    "ses_abc123  [iris-coder] build auth module",
+    "ses_def456  [iris-pm] plan sprint",
+    "ses_ghi789  [iris-coder] fix login bug",
   ].join("\n");
 
   it("returns the first matching session ID without prefix", () => {
@@ -437,12 +437,12 @@ describe("parseMostRecentSessionId", () => {
   });
 
   it("returns session matching agent prefix", () => {
-    const id = parseMostRecentSessionId(listOutput, "[crew-pm]");
+    const id = parseMostRecentSessionId(listOutput, "[iris-pm]");
     assert.equal(id, "ses_def456");
   });
 
   it("returns first matching session when multiple match prefix", () => {
-    const id = parseMostRecentSessionId(listOutput, "[crew-coder]");
+    const id = parseMostRecentSessionId(listOutput, "[iris-coder]");
     assert.equal(id, "ses_abc123");
   });
 
@@ -452,7 +452,7 @@ describe("parseMostRecentSessionId", () => {
   });
 
   it("returns null when prefix does not match any session", () => {
-    const id = parseMostRecentSessionId(listOutput, "[crew-ghost]");
+    const id = parseMostRecentSessionId(listOutput, "[iris-ghost]");
     assert.equal(id, null);
   });
 
@@ -472,16 +472,16 @@ describe("parseMostRecentSessionId", () => {
 
 describe("isOpencodeRateLimitBanner", () => {
   it("returns true for a bare banner line (no ANSI)", () => {
-    assert.equal(isOpencodeRateLimitBanner("> crew-coder · opencode/gpt-5.1"), true);
+    assert.equal(isOpencodeRateLimitBanner("> iris-coder · opencode/gpt-5.1"), true);
   });
 
   it("returns true for a banner with ANSI escape codes", () => {
-    const ansiWrapped = "\x1b[32m> crew-main · groq/llama-3.3-70b-versatile\x1b[0m";
+    const ansiWrapped = "\x1b[32m> iris-main · groq/llama-3.3-70b-versatile\x1b[0m";
     assert.equal(isOpencodeRateLimitBanner(ansiWrapped), true);
   });
 
   it("returns false when output contains actual tool results", () => {
-    const real = "> crew-coder · opencode/gpt-5.1\nFile written: src/index.js\n";
+    const real = "> iris-coder · opencode/gpt-5.1\nFile written: src/index.js\n";
     assert.equal(isOpencodeRateLimitBanner(real), false);
   });
 
@@ -497,19 +497,19 @@ describe("isOpencodeRateLimitBanner", () => {
 // ─── shouldConnectGateway ─────────────────────────────────────────────────────
 
 describe("shouldConnectGateway", () => {
-  const origForceGw = process.env.CREWSWARM_FORCE_GATEWAY;
-  const origGwEnabled = process.env.CREWSWARM_GATEWAY_ENABLED;
+  const origForceGw = process.env.IRIS_FORCE_GATEWAY;
+  const origGwEnabled = process.env.IRIS_GATEWAY_ENABLED;
 
   beforeEach(() => {
-    delete process.env.CREWSWARM_FORCE_GATEWAY;
-    delete process.env.CREWSWARM_GATEWAY_ENABLED;
+    delete process.env.IRIS_FORCE_GATEWAY;
+    delete process.env.IRIS_GATEWAY_ENABLED;
   });
 
   after(() => {
-    if (origForceGw !== undefined) process.env.CREWSWARM_FORCE_GATEWAY = origForceGw;
-    else delete process.env.CREWSWARM_FORCE_GATEWAY;
-    if (origGwEnabled !== undefined) process.env.CREWSWARM_GATEWAY_ENABLED = origGwEnabled;
-    else delete process.env.CREWSWARM_GATEWAY_ENABLED;
+    if (origForceGw !== undefined) process.env.IRIS_FORCE_GATEWAY = origForceGw;
+    else delete process.env.IRIS_FORCE_GATEWAY;
+    if (origGwEnabled !== undefined) process.env.IRIS_GATEWAY_ENABLED = origGwEnabled;
+    else delete process.env.IRIS_GATEWAY_ENABLED;
   });
 
   it("returns true for normal chat args", () => {
@@ -521,20 +521,20 @@ describe("shouldConnectGateway", () => {
   });
 
   it("returns false when first arg is --send", () => {
-    assert.equal(shouldConnectGateway(["--send", "crew-coder", "task"]), false);
+    assert.equal(shouldConnectGateway(["--send", "iris-coder", "task"]), false);
   });
 
-  it("returns false for --rt-daemon without CREWSWARM_GATEWAY_ENABLED", () => {
+  it("returns false for --rt-daemon without IRIS_GATEWAY_ENABLED", () => {
     assert.equal(shouldConnectGateway(["--rt-daemon"]), false);
   });
 
-  it("returns true for --rt-daemon when CREWSWARM_GATEWAY_ENABLED=1", () => {
-    process.env.CREWSWARM_GATEWAY_ENABLED = "1";
+  it("returns true for --rt-daemon when IRIS_GATEWAY_ENABLED=1", () => {
+    process.env.IRIS_GATEWAY_ENABLED = "1";
     assert.equal(shouldConnectGateway(["--rt-daemon"]), true);
   });
 
-  it("returns true when CREWSWARM_FORCE_GATEWAY=1 overrides --broadcast", () => {
-    process.env.CREWSWARM_FORCE_GATEWAY = "1";
+  it("returns true when IRIS_FORCE_GATEWAY=1 overrides --broadcast", () => {
+    process.env.IRIS_FORCE_GATEWAY = "1";
     assert.equal(shouldConnectGateway(["--broadcast", "hello"]), true);
   });
 

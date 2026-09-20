@@ -318,7 +318,7 @@
           <div>
             <div class="page-title">Files</div>
             <div class="page-sub">
-              Files written by the crew — click to open in Cursor or OpenCode
+              Files written by the iris — click to open in Cursor or OpenCode
             </div>
           </div>
           <div style="display: flex; gap: 8px; align-items: center">
@@ -479,11 +479,11 @@
 
               <div class="chat-routing-row">
                 <select id="chatModeSelector" title="Choose who handles your messages">
-                  <option value="crew-lead">🧠 Iris (default) — Planning & coordination</option>
+                  <option value="iris-lead">🧠 Iris (default) — Planning & coordination</option>
                   <optgroup label="───── Direct CLIs ─────">
                     <option value="cli:opencode">⚡ OpenCode — Full workspace context</option>
                     <option value="cli:cursor">🖱 Cursor CLI — Complex reasoning</option>
-                    <option value="cli:crew-cli">🔧 Crew CLI — TypeScript specialist</option>
+                    <option value="cli:iris-cli">🔧 Iris CLI — TypeScript specialist</option>
                     <option value="cli:codex">🟣 Codex CLI — OpenAI Codex</option>
                     <option value="cli:gemini">✨ Gemini CLI — Google Gemini</option>
                     <option value="cli:claude">🤖 Claude Code — Anthropic Claude</option>
@@ -610,7 +610,7 @@
             >
               <textarea
                 id="swarmChatInput"
-                placeholder="Talk in-channel. Use @crew-... for lightweight handoffs."
+                placeholder="Talk in-channel. Use @iris-... for lightweight handoffs."
                 style="
                   width: 100%;
                   resize: none;
@@ -736,7 +736,7 @@
                 font-size: 11px;
               "
             >
-              ┌─[ CREWSWARM :: ORCHESTRATION LAYER ]────────────────────────┐
+              ┌─[ IRIS :: ORCHESTRATION LAYER ]────────────────────────┐
             </div>
 
             <div
@@ -862,7 +862,7 @@
                 margin-top: 12px;
               "
             >
-              "One idea. One Build. One Crew."
+              "One idea. One Build. One Iris."
             </div>
 
             <div
@@ -933,7 +933,7 @@
                   font-weight: 500;
                 "
               >
-                CREW_CHAT_MODEL
+                IRIS_CHAT_MODEL
                 <span style="color: var(--text-3)">(L1 Chat / lightweight fast path)</span>
               </label>
               <select
@@ -976,7 +976,7 @@
                   font-weight: 500;
                 "
               >
-                CREW_ROUTER_MODEL
+                IRIS_ROUTER_MODEL
                 <span style="color: var(--text-3)"
                   >(L2 Router - direct-answer vs execute-single vs plan)</span
                 >
@@ -1020,7 +1020,7 @@
                   font-weight: 500;
                 "
               >
-                CREW_REASONING_MODEL
+                IRIS_REASONING_MODEL
                 <span style="color: var(--text-3)"
                   >(L2 Planner Baseline - deep analysis when planning runs)</span
                 >
@@ -1067,7 +1067,7 @@
                   font-weight: 500;
                 "
               >
-                CREW_L2A_MODEL
+                IRIS_L2A_MODEL
                 <span style="color: var(--text-3)"
                   >(L2A Decomposer - work graph & task units)</span
                 >
@@ -1111,7 +1111,7 @@
                   font-weight: 500;
                 "
               >
-                CREW_L2B_MODEL
+                IRIS_L2B_MODEL
                 <span style="color: var(--text-3)"
                   >(L2B Validator - cost, risk, and gate checks)</span
                 >
@@ -1153,7 +1153,7 @@
                   font-weight: 500;
                 "
               >
-                CREW_EXECUTION_MODEL
+                IRIS_EXECUTION_MODEL
                 <span style="color: var(--text-3)"
                   >(L3 Workers - single/parallel tool execution)</span
                 >
@@ -1199,7 +1199,7 @@
                   font-weight: 500;
                 "
               >
-                CREW_QA_MODEL
+                IRIS_QA_MODEL
                 <span style="color: var(--text-3)"
                   >(QA Gate - evidence summarizer / validator)</span
                 >
@@ -1243,7 +1243,7 @@
                   font-weight: 500;
                 "
               >
-                CREW_MAX_PARALLEL_WORKERS
+                IRIS_MAX_PARALLEL_WORKERS
                 <span style="color: var(--text-3)"
                   >(L3 worker concurrency cap: 1-32)</span
                 >
@@ -1277,7 +1277,7 @@
                   font-weight: 500;
                 "
               >
-                CREW_L2_EXTRA_VALIDATORS
+                IRIS_L2_EXTRA_VALIDATORS
                 <span style="color: var(--text-3)"
                   >(CSV: model1,model2,...)</span
                 >
@@ -1355,7 +1355,7 @@
           <div>
             <div class="page-title">Services</div>
             <div class="page-sub">
-              Live status of all crewswarm processes — restart any service
+              Live status of all iris processes — restart any service
               without leaving the dashboard
             </div>
           </div>
@@ -1423,7 +1423,7 @@
             <label for="npName" class="field-label">Project name</label>
             <input
               id="npName"
-              placeholder="Project name (e.g. crewswarm Docs)"
+              placeholder="Project name (e.g. iris Docs)"
             />
             <input id="npDesc" placeholder="Description (optional)" />
             <div>
@@ -2084,7 +2084,7 @@
             <div class="page-sub">
               Keys saved to
               <code style="font-size: 11px; color: var(--text-2)"
-                >~/.crewswarm/crewswarm.json</code
+                >~/.iris/iris.json</code
               >
             </div>
           </div>
@@ -2136,7 +2136,7 @@
               </div>
               <div style="font-size: 12px; color: var(--text-2)">
                 Auto-generated during install and saved to
-                <code style="font-size: 11px">~/.crewswarm/crewswarm.json</code>.
+                <code style="font-size: 11px">~/.iris/iris.json</code>.
                 All services read it from there — you never need to copy it
                 manually. Only change this if you want to rotate the secret or
                 run the RT bus on a shared machine.
@@ -2262,7 +2262,7 @@
             <div class="page-title">Sub-Agents (Worker Bridges)</div>
             <div class="page-sub">
               Assign models, edit system prompts, configure per-agent tool
-              permissions. crew-lead is managed separately in Services tab.
+              permissions. iris-lead is managed separately in Services tab.
             </div>
           </div>
           <div style="display: flex; gap: 8px">
@@ -2307,7 +2307,7 @@
                   >(used as RT bus name)</span
                 ></label
               >
-              <input id="naId" placeholder="e.g. crew-coder-3" />
+              <input id="naId" placeholder="e.g. iris-coder-3" />
             </div>
             <div>
               <label for="naModel" class="field-label">Model</label>
@@ -2574,7 +2574,7 @@
           </button>
           <button
             data-action="bulkSetRoute"
-            data-arg="crew-cli"
+            data-arg="iris-cli"
             class="btn-ghost"
             style="
               font-size: 11px;
@@ -2583,7 +2583,7 @@
               border-color: rgba(16, 185, 129, 0.3);
             "
           >
-            🔧 Crew CLI
+            🔧 Iris CLI
           </button>
         </div>
         <div id="agentsList" style="display: grid; gap: 12px"></div>
@@ -2840,7 +2840,7 @@
                 </div>
                 <div style="text-align: center">
                   <div style="font-size: 11px; color: var(--text-3)">
-                    crew-cli
+                    iris-cli
                   </div>
                   <div
                     style="
@@ -3062,7 +3062,7 @@
             </div>
           </div>
 
-          <!-- crew-cli Usage -->
+          <!-- iris-cli Usage -->
           <div class="card">
             <div
               style="
@@ -3074,7 +3074,7 @@
             >
               <div>
                 <span class="card-title" style="margin: 0"
-                  >&#x1F6E0;&#xFE0F; crew-cli Usage</span
+                  >&#x1F6E0;&#xFE0F; iris-cli Usage</span
                 >
                 <span
                   style="
@@ -3082,7 +3082,7 @@
                     font-weight: 400;
                     color: var(--text-3);
                   "
-                  >(Direct LLM calls from crew-cli sessions)</span
+                  >(Direct LLM calls from iris-cli sessions)</span
                 >
               </div>
               <div style="display: flex; gap: 6px; align-items: center">
@@ -3235,7 +3235,7 @@
                   padding: 1px 4px;
                   border-radius: 3px;
                 "
-                >~/.crewswarm/crewswarm.json</code
+                >~/.iris/iris.json</code
               >
               and applied immediately. Restart services for changes to take
               effect in spawned processes.
@@ -3456,8 +3456,8 @@
                   "
                 >
                   Each Telegram chat gets its own isolated session in
-                  crew-lead.<br />
-                  Add contact names below so the crew can message by name (e.g.
+                  iris-lead.<br />
+                  Add contact names below so the iris can message by name (e.g.
                   TELEGRAM at-Jeff hello).<br />
                   Get a token from
                   <a
@@ -3531,7 +3531,7 @@
                       Conversations
                     </div>
                     <div style="font-size: 11px; color: var(--text-3)">
-                      Each chat ID gets an isolated session with crew-lead
+                      Each chat ID gets an isolated session with iris-lead
                     </div>
                   </div>
                   <button
@@ -3668,7 +3668,7 @@
                 >
                 <input
                   id="waTargetAgent"
-                  placeholder="crew-lead"
+                  placeholder="iris-lead"
                   style="width: 100%; margin-bottom: 8px"
                 />
                 <div
@@ -3695,7 +3695,7 @@
                     margin-top: 4px;
                   "
                 >
-                  Auth persists in <code>~/.crewswarm/whatsapp-auth/</code> — QR
+                  Auth persists in <code>~/.iris/whatsapp-auth/</code> — QR
                   scan is only needed once.<br />
                   Start the bridge from the terminal to scan the QR code the
                   first time:<br />
@@ -3774,7 +3774,7 @@
             >
               All coding engines (OpenCode, Cursor, Claude Code, Codex) will use
               this as the working directory. Set it to your project folder to
-              avoid permission errors. Leave blank to use the crewswarm repo
+              avoid permission errors. Leave blank to use the iris repo
               directory (default).
             </div>
             <div style="display: flex; gap: 6px; align-items: center">
@@ -3799,7 +3799,7 @@
 
           <div class="card" style="margin-top: 16px">
             <div class="card-title" style="margin-bottom: 6px">
-              🧠 Crew Lead Default Model
+              🧠 Iris Lead Default Model
             </div>
             <div
               style="
@@ -3809,7 +3809,7 @@
                 line-height: 1.5;
               "
             >
-              Default model for crew-lead LLM router. Used when no
+              Default model for iris-lead LLM router. Used when no
               agent-specific model is set.
             </div>
             <div style="display: flex; gap: 6px; align-items: center">
@@ -3857,7 +3857,7 @@
                   🔒 Config Protection
                 </div>
                 <div style="font-size: 12px; color: var(--text-2)">
-                  Lock crewswarm.json to prevent accidental overwrites (recommended after bulk updates)
+                  Lock iris.json to prevent accidental overwrites (recommended after bulk updates)
                 </div>
               </div>
               <span
@@ -4044,7 +4044,7 @@
                     line-height: 1.5;
                   "
                 >
-                  When idle, crew-lead reflects on system state, surfaces
+                  When idle, iris-lead reflects on system state, surfaces
                   blockers, and dispatches follow-ups automatically. Runs every
                   15 min when no pipelines are active.
                 </div>
@@ -4298,7 +4298,7 @@
                       padding: 1px 4px;
                       border-radius: 3px;
                     "
-                    >crew-orchestrator</code
+                    >iris-orchestrator</code
                   >
                   subagent — no queuing, no collisions. Requires Cursor CLI
                   installed (<code
@@ -4434,7 +4434,7 @@
                       padding: 1px 4px;
                       border-radius: 3px;
                     "
-                    >@crew-*</code
+                    >@iris-*</code
                   >
                   and
                   <code
@@ -4486,7 +4486,7 @@
                       padding: 1px 4px;
                       border-radius: 3px;
                     "
-                    >@crew-cli</code
+                    >@iris-cli</code
                   >
                   can auto-run. Turn it off to keep mentions informational only.
                 </div>
@@ -4563,7 +4563,7 @@
                     "
                     >useClaudeCode: true</code
                   >
-                  in crewswarm.json.
+                  in iris.json.
                 </div>
               </div>
               <button
@@ -4629,7 +4629,7 @@
                     "
                     >useCodex: true</code
                   >
-                  in crewswarm.json. Requires Codex CLI installed:
+                  in iris.json. Requires Codex CLI installed:
                   <code
                     style="
                       background: var(--bg-1);
@@ -4704,7 +4704,7 @@
                     "
                     >useGeminiCli: true</code
                   >
-                  in crewswarm.json. Install:
+                  in iris.json. Install:
                   <code
                     style="
                       background: var(--bg-1);
@@ -4761,7 +4761,7 @@
             >
               <div>
                 <div class="card-title" style="margin-bottom: 2px">
-                  🔧 Crew CLI Executor
+                  🔧 Iris CLI Executor
                 </div>
                 <div
                   style="
@@ -4770,7 +4770,7 @@
                     line-height: 1.5;
                   "
                 >
-                  Route tasks through crewswarm's native CLI instead of direct
+                  Route tasks through iris's native CLI instead of direct
                   LLM. Intelligent routing to 20+ specialist agents, sandbox
                   workflow, cross-repo context, and persistent memory via
                   AgentKeeper. Per-agent override:
@@ -4782,7 +4782,7 @@
                     "
                     >useCrewCLI: true</code
                   >
-                  in crewswarm.json. Built-in — no installation needed.
+                  in iris.json. Built-in — no installation needed.
                 </div>
               </div>
               <button
@@ -4842,7 +4842,7 @@
                     "
                     >opencodeLoop: true</code
                   >
-                  in crewswarm.json. Requires OpenCode CLI installed.
+                  in iris.json. Requires OpenCode CLI installed.
                 </div>
               </div>
               <button
@@ -5035,7 +5035,7 @@
                   padding: 1px 5px;
                   border-radius: 3px;
                 "
-                >~/.crewswarm/skills/</code
+                >~/.iris/skills/</code
               >.
             </div>
 
@@ -5370,8 +5370,8 @@
             <div class="page-title">Planning Pipeline Waves</div>
             <div class="page-sub">
               Configure the 3-wave planning pipeline that runs when you say
-              "build me X". Swap agents (e.g., crew-copywriter →
-              crew-researcher), edit tasks, add/remove agents per wave.
+              "build me X". Swap agents (e.g., iris-copywriter →
+              iris-researcher), edit tasks, add/remove agents per wave.
             </div>
           </div>
           <button
@@ -5873,7 +5873,7 @@
             <div>
               <div class="page-title">Build</div>
               <div class="page-sub">
-                Select a project, describe what to build, and kick off the crew
+                Select a project, describe what to build, and kick off the iris
               </div>
             </div>
           </div>
@@ -5940,7 +5940,7 @@
             <textarea
               id="buildRequirement"
               rows="4"
-              placeholder="One sentence or full spec. e.g. Build a REST API with auth, CRUD endpoints, and tests. The PM will plan it and dispatch to the crew."
+              placeholder="One sentence or full spec. e.g. Build a REST API with auth, CRUD endpoints, and tests. The PM will plan it and dispatch to the iris."
             ></textarea>
             <div
               style="
@@ -5984,7 +5984,7 @@
               <button
                 id="enhancePromptBtn"
                 class="btn-purple"
-                title="Plan the requirement with the configured crew-pm CLI engine"
+                title="Plan the requirement with the configured iris-pm CLI engine"
               >
                 🧭 Plan
               </button>
@@ -6277,8 +6277,8 @@
                   <input
                     type="text"
                     id="pmOptCoder"
-                    value="crew-coder"
-                    placeholder="crew-coder"
+                    value="iris-coder"
+                    placeholder="iris-coder"
                     style="
                       width: 100%;
                       margin-top: 3px;

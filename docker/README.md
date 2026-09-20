@@ -1,6 +1,6 @@
-# crewswarm Docker Deployment
+# iris Docker Deployment
 
-> **Production-ready containers** — Run crewswarm on any Linux server
+> **Production-ready containers** — Run iris on any Linux server
 
 ## Quick Start
 
@@ -14,7 +14,7 @@ curl -fsSL https://raw.githubusercontent.com/crewswarm/crewswarm/main/docker/ins
 
 ```bash
 git clone https://github.com/crewswarm/crewswarm.git
-cd crewswarm/docker
+cd iris/docker
 docker compose up -d
 ```
 
@@ -22,7 +22,7 @@ docker compose up -d
 
 ```bash
 # Docker Hub
-docker pull crewswarm/crewswarm:latest
+docker pull iris/iris:latest
 
 # GitHub Container Registry (ghcr.io)
 docker pull ghcr.io/crewswarm/crewswarm:latest
@@ -34,9 +34,9 @@ docker pull ghcr.io/crewswarm/crewswarm:latest
 
 | Service | Port | What it does |
 |---------|------|--------------|
-| `crewswarm-core` | 4319 | Dashboard + crew-lead + agents |
-| `crewswarm-rt-bus` | 18889 | Real-time message bus |
-| `crewswarm-mcp` | 5020 | MCP server (optional) |
+| `iris-core` | 4319 | Dashboard + iris-lead + agents |
+| `iris-rt-bus` | 18889 | Real-time message bus |
+| `iris-mcp` | 5020 | MCP server (optional) |
 
 ## Configuration
 
@@ -52,14 +52,14 @@ OPENAI_API_KEY=sk-...
 
 | Host Path | Container Path | What it stores |
 |-----------|----------------|----------------|
-| `~/.crewswarm` | `/root/.crewswarm` | Config, logs, memory |
+| `~/.iris` | `/root/.iris` | Config, logs, memory |
 | `./projects` | `/workspace` | Project files (persistent) |
 
 ## Use Cases
 
 ### 1. Dedicated Team Server
 
-Run on a VPS for your team to share one crewswarm instance.
+Run on a VPS for your team to share one iris instance.
 
 ```bash
 # DigitalOcean, AWS, GCP, Azure
@@ -93,17 +93,17 @@ jobs:
   build:
     runs-on: ubuntu-latest
     services:
-      crewswarm:
-        image: crewswarm/crewswarm:latest
+      iris:
+        image: iris/iris:latest
         ports:
           - 5010:5010
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
     steps:
-      - name: Run tests with crew-qa
+      - name: Run tests with iris-qa
         run: |
           curl -X POST http://localhost:5010/api/dispatch \
-            -d '{"agent":"crew-qa","task":"Test the PR"}'
+            -d '{"agent":"iris-qa","task":"Test the PR"}'
 ```
 
 ## Environment Variables
@@ -114,12 +114,12 @@ See [`../docs/ENVIRONMENT.md`](../docs/ENVIRONMENT.md) for full reference.
 
 ```bash
 # Core
-CREW_LEAD_PORT=5010
-SWARM_DASH_PORT=4319
+IRIS_LEAD_PORT=5010
+IRIS_DASH_PORT=4319
 
 # Engines
-CREWSWARM_OPENCODE_ENABLED=on
-CREWSWARM_OPENCODE_MODEL=anthropic/claude-sonnet-4
+IRIS_OPENCODE_ENABLED=on
+IRIS_OPENCODE_MODEL=anthropic/claude-sonnet-4
 
 # PM Loop
 PM_MAX_CONCURRENT=2
@@ -135,7 +135,7 @@ PM_USE_SECURITY=on
 
 **External (host-to-container):**
 - Dashboard: `http://localhost:4319`
-- crew-lead API: `http://localhost:5010`
+- iris-lead API: `http://localhost:5010`
 - MCP server: `http://localhost:5020`
 
 **Firewall:**
@@ -150,22 +150,22 @@ ufw allow 5020/tcp
 ## Persistence
 
 **Config persists across restarts:**
-- `~/.crewswarm/crewswarm.json` — Agent models
-- `~/.crewswarm/crewswarm.json` — RT auth token
-- `~/.crewswarm/agent-prompts.json` — System prompts
+- `~/.iris/iris.json` — Agent models
+- `~/.iris/iris.json` — RT auth token
+- `~/.iris/agent-prompts.json` — System prompts
 
 **Memory persists:**
-- `~/.crewswarm/shared-memory/.crew/agent-memory/` — Cognitive facts
-- `~/.crewswarm/shared-memory/.crew/agentkeeper.jsonl` — Task history
+- `~/.iris/shared-memory/.iris/agent-memory/` — Cognitive facts
+- `~/.iris/shared-memory/.iris/agentkeeper.jsonl` — Task history
 
 **Logs persist:**
-- `~/.crewswarm/logs/` — All bridge logs
-- `/tmp/crew-lead.log` — crew-lead log (ephemeral)
+- `~/.iris/logs/` — All bridge logs
+- `/tmp/iris-lead.log` — iris-lead log (ephemeral)
 
 ## Updating
 
 ```bash
-cd crewswarm/docker
+cd iris/docker
 docker compose pull
 docker compose up -d
 ```
@@ -178,8 +178,8 @@ docker compose up -d
 docker compose ps
 
 # Check logs
-docker compose logs -f crewswarm-core
-docker compose logs -f crewswarm-rt-bus
+docker compose logs -f iris-core
+docker compose logs -f iris-rt-bus
 ```
 
 **Dashboard health:**
@@ -191,7 +191,7 @@ curl http://localhost:4319/health
 
 1. **Change default RT token:**
    ```bash
-   # Edit ~/.crewswarm/crewswarm.json
+   # Edit ~/.iris/iris.json
    # Change rt.authToken to a random UUID
    ```
 
@@ -203,7 +203,7 @@ curl http://localhost:4319/health
 
 3. **Allowlist commands:**
    ```bash
-   # Edit ~/.crewswarm/cmd-allowlist.json
+   # Edit ~/.iris/cmd-allowlist.json
    # Only allow safe commands
    ```
 
@@ -211,7 +211,7 @@ curl http://localhost:4319/health
    ```yaml
    # docker-compose.yml
    networks:
-     crewswarm:
+     iris:
        internal: true  # No external access
    ```
 
@@ -219,7 +219,7 @@ curl http://localhost:4319/health
 
 **Container won't start:**
 ```bash
-docker compose logs crewswarm-core
+docker compose logs iris-core
 # Check for missing API keys or port conflicts
 ```
 
@@ -235,7 +235,7 @@ ufw status
 **Out of memory:**
 ```bash
 # Increase container memory limit
-docker compose up -d --scale crewswarm-core=1 --memory=4g
+docker compose up -d --scale iris-core=1 --memory=4g
 ```
 
 **Logs filling disk:**
@@ -250,7 +250,7 @@ docker system prune -a --volumes
 - [ ] Configure firewall (only 4319 exposed)
 - [ ] Set up HTTPS reverse proxy (nginx/Caddy)
 - [ ] Configure log rotation
-- [ ] Set up backup for `~/.crewswarm/`
+- [ ] Set up backup for `~/.iris/`
 - [ ] Monitor disk usage
 - [ ] Test disaster recovery
 
@@ -259,12 +259,12 @@ docker system prune -a --volumes
 For high availability, run agents on separate nodes:
 
 ```bash
-# Node 1: crew-lead + dashboard
-docker run -d crewswarm/crewswarm:latest crew-lead
+# Node 1: iris-lead + dashboard
+docker run -d iris/iris:latest iris-lead
 
 # Node 2-5: agent bridges
-docker run -d crewswarm/crewswarm:latest gateway crew-coder
-docker run -d crewswarm/crewswarm:latest gateway crew-qa
+docker run -d iris/iris:latest gateway iris-coder
+docker run -d iris/iris:latest gateway iris-qa
 ```
 
 Configure RT bus to bind to `0.0.0.0` instead of `127.0.0.1`.

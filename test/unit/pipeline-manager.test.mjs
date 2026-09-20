@@ -21,7 +21,7 @@ import os from "node:os";
 
 // ── Temporary directory ───────────────────────────────────────────────────────
 
-const TMP_DIR = path.join(os.tmpdir(), `crew-pm-test-${process.pid}`);
+const TMP_DIR = path.join(os.tmpdir(), `iris-pm-test-${process.pid}`);
 
 function makeTmp(subdir = "") {
   const dir = subdir ? path.join(TMP_DIR, subdir) : TMP_DIR;

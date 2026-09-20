@@ -257,10 +257,10 @@ test.describe("Vibe editor", () => {
     await gotoVibe(page);
     await switchToWorkspaceProject(page);
 
-    // Use crew-lead mode (most reliable for a quick echo-style check).
+    // Use iris-lead mode (most reliable for a quick echo-style check).
     const modeSelector = page.locator("#chat-mode-selector");
     await expect(modeSelector).toBeVisible();
-    await modeSelector.selectOption("crew-lead");
+    await modeSelector.selectOption("iris-lead");
 
     const chatInput = page.locator("#chat-input");
     await expect(chatInput, "Chat input must be visible").toBeVisible();
@@ -319,7 +319,7 @@ test.describe("Vibe editor", () => {
     const firstProjectToken = `project-a-${Date.now()}`;
     const chatInput = page.locator("#chat-input");
     const modeSelector = page.locator("#chat-mode-selector");
-    await modeSelector.selectOption("crew-lead");
+    await modeSelector.selectOption("iris-lead");
     await chatInput.fill(firstProjectToken);
     await chatInput.press("Enter");
     await expect(page.locator("#chat-messages")).toContainText(firstProjectToken, {
@@ -353,35 +353,35 @@ test.describe("Vibe editor", () => {
     const options = await modeSelector.locator("option").evaluateAll(
       (opts) => opts.map((o) => o.value),
     );
-    expect(options, "Must have crew-lead option").toContain("crew-lead");
+    expect(options, "Must have iris-lead option").toContain("iris-lead");
     expect(options, "Must have at least one cli: option").toContain(
       options.find((v) => v.startsWith("cli:")),
     );
 
-    // Switch to crew-lead and verify the DOM reflects it.
-    await modeSelector.selectOption("crew-lead");
-    await expect(modeSelector).toHaveValue("crew-lead");
+    // Switch to iris-lead and verify the DOM reflects it.
+    await modeSelector.selectOption("iris-lead");
+    await expect(modeSelector).toHaveValue("iris-lead");
 
-    // The chat input placeholder should acknowledge crew-lead mode.
+    // The chat input placeholder should acknowledge iris-lead mode.
     const chatInput = page.locator("#chat-input");
     await expect(chatInput).toBeVisible();
     // After mode switch the input should still be interactive (not disabled).
     await expect(chatInput).toBeEnabled();
 
-    // Switch to a CLI mode (use crew-cli which is always bundled).
-    await modeSelector.selectOption("cli:crew-cli");
+    // Switch to a CLI mode (use iris-cli which is always bundled).
+    await modeSelector.selectOption("cli:iris-cli");
     await expect(
       modeSelector,
-      "Selector value must update to cli:crew-cli",
-    ).toHaveValue("cli:crew-cli");
+      "Selector value must update to cli:iris-cli",
+    ).toHaveValue("cli:iris-cli");
 
     // Verify the mode persisted by reading the selector value directly (not localStorage,
     // since Playwright runs in-process with the page).
     const persistedMode = await modeSelector.inputValue();
-    expect(persistedMode, "Selected CLI mode must persist in the selector").toBe("cli:crew-cli");
+    expect(persistedMode, "Selected CLI mode must persist in the selector").toBe("cli:iris-cli");
 
-    // Switch back to crew-lead to leave the app in its default state.
-    await modeSelector.selectOption("crew-lead");
-    await expect(modeSelector).toHaveValue("crew-lead");
+    // Switch back to iris-lead to leave the app in its default state.
+    await modeSelector.selectOption("iris-lead");
+    await expect(modeSelector).toHaveValue("iris-lead");
   });
 });

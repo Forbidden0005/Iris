@@ -7,7 +7,7 @@ import { execSync } from "node:child_process";
 
 const rootDir = process.cwd();
 const homeDir = os.homedir();
-const configPath = path.join(homeDir, ".crewswarm", "crewswarm.json");
+const configPath = path.join(homeDir, ".iris", "iris.json");
 const dashboardDistPath = path.join(rootDir, "apps", "dashboard", "dist", "index.html");
 const vibeDistPath = path.join(rootDir, "apps", "vibe", "dist", "index.html");
 const CI_MODE = process.env.CI === "true";
@@ -64,7 +64,7 @@ function getPortOccupant(port) {
   }
 }
 
-console.log(`\n${B}${C}crewswarm doctor${N}`);
+console.log(`\n${B}${C}iris doctor${N}`);
 console.log(`Repo: ${rootDir}`);
 
 try {
@@ -116,9 +116,9 @@ if (fs.existsSync(configPath)) {
   }
 } else {
   if (CI_MODE) {
-    warn("Config file", "missing ~/.crewswarm/crewswarm.json (CI mode)");
+    warn("Config file", "missing ~/.iris/iris.json (CI mode)");
   } else {
-    fail("Config file", "missing ~/.crewswarm/crewswarm.json", "Run `bash install.sh` first.");
+    fail("Config file", "missing ~/.iris/iris.json", "Run `bash install.sh` first.");
   }
 }
 
@@ -140,7 +140,7 @@ if (fs.existsSync(vibeDistPath)) {
 }
 
 [
-  { port: 5010, label: "crew-lead port 5010" },
+  { port: 5010, label: "iris-lead port 5010" },
   { port: 3333, label: "Vibe port 3333" },
   { port: 4096, label: "OpenCode port 4096" },
 ].forEach(({ port, label }) => {
@@ -177,7 +177,7 @@ if (CI_MODE) {
 
 console.log(`\n${B}Summary${N}`);
 if (issues.length === 0) {
-  console.log(`${G}Ready enough to start using crewswarm.${N}`);
+  console.log(`${G}Ready enough to start using iris.${N}`);
 } else {
   console.log(`${R}${issues.length} blocking issue(s) detected.${N}`);
 }

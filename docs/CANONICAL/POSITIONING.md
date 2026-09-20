@@ -2,15 +2,15 @@
 
 Updated: March 14, 2026
 
-Use this when explaining crewswarm to employers, investors, sponsors, or technical users.
+Use this when explaining iris to employers, investors, sponsors, or technical users.
 
 ## One-line Positioning
 
-crewswarm is the local-first multi-agent dev stack: orchestration, coding surfaces, memory, and service control in one system.
+iris is the local-first multi-agent dev stack: orchestration, coding surfaces, memory, and service control in one system.
 
 ## Short Pitch
 
-crewswarm turns AI-assisted coding from a single chat box into an actual operating stack.
+iris turns AI-assisted coding from a single chat box into an actual operating stack.
 
 Instead of one editor plugin or one agent loop, it gives you:
 - a real orchestration runtime
@@ -23,7 +23,7 @@ Instead of one editor plugin or one agent loop, it gives you:
 
 - not just prompts: real services, routes, state, and control surfaces
 - not just one model: per-agent runtime and model routing
-- not just one UI: Dashboard, Vibe, `crewchat`, SwiftBar, MCP
+- not just one UI: Dashboard, Vibe, `irischat`, SwiftBar, MCP
 - not cloud-dependent: local-first and self-hostable
 - not fake file edits: actual disk IO and project-aware flows
 
@@ -37,7 +37,7 @@ Instead of one editor plugin or one agent loop, it gives you:
 
 ## Job Framing
 
-What crewswarm proves:
+What iris proves:
 - systems design
 - orchestration/runtime engineering
 - product thinking across multiple surfaces

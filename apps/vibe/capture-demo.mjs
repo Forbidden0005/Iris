@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * CrewSwarm Demo Video — Real UI Recording
+ * Iris Demo Video — Real UI Recording
  *
  * Records a ~45s demo: Vibe IDE chat + Dashboard tour
  * Outputs mp4 + webm via ffmpeg.

@@ -14,7 +14,7 @@
  * Strategy: better-sqlite3 may or may not be installed. We always import
  * the module and exercise the null-path (Database = null) gracefully. When
  * the DB is available we use an in-memory database path via a temp directory
- * so we never pollute ~/.crewswarm/contacts.db.
+ * so we never pollute ~/.iris/contacts.db.
  *
  * Because the module uses a module-level singleton `_db` and a lazy `getDb()`
  * we call `closeDb()` between test groups to force re-initialisation.
@@ -26,7 +26,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-process.env.CREWSWARM_TEST_MODE = "true";
+process.env.IRIS_TEST_MODE = "true";
 
 const {
   linkIdentities,

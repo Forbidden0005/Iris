@@ -8,12 +8,12 @@ import { pathToFileURL } from "node:url";
 const moduleUrl = pathToFileURL(path.resolve("lib/runtime/startup-guard.mjs")).href;
 
 async function loadStartupGuard(pidDir) {
-  process.env.CREWSWARM_PID_DIR = pidDir;
+  process.env.IRIS_PID_DIR = pidDir;
   return import(`${moduleUrl}?t=${Date.now()}-${Math.random()}`);
 }
 
 test("startup guard acquires and releases a lock in a writable pid directory", async () => {
-  const pidDir = fs.mkdtempSync(path.join(os.tmpdir(), "crewswarm-pids-"));
+  const pidDir = fs.mkdtempSync(path.join(os.tmpdir(), "iris-pids-"));
   const { acquireStartupLock, releaseStartupLock } = await loadStartupGuard(pidDir);
 
   const result = acquireStartupLock("unit-startup-guard");
@@ -27,7 +27,7 @@ test("startup guard acquires and releases a lock in a writable pid directory", a
 });
 
 test("startup guard removes invalid pid files and reacquires the lock", async () => {
-  const pidDir = fs.mkdtempSync(path.join(os.tmpdir(), "crewswarm-pids-"));
+  const pidDir = fs.mkdtempSync(path.join(os.tmpdir(), "iris-pids-"));
   const pidFile = path.join(pidDir, "unit-invalid.pid");
   fs.writeFileSync(pidFile, "not-a-pid");
 
@@ -39,7 +39,7 @@ test("startup guard removes invalid pid files and reacquires the lock", async ()
 });
 
 test("startup guard removes stale dead-process pid files", async () => {
-  const pidDir = fs.mkdtempSync(path.join(os.tmpdir(), "crewswarm-pids-"));
+  const pidDir = fs.mkdtempSync(path.join(os.tmpdir(), "iris-pids-"));
   const pidFile = path.join(pidDir, "unit-stale.pid");
   fs.writeFileSync(pidFile, "999999");
 
@@ -51,7 +51,7 @@ test("startup guard removes stale dead-process pid files", async () => {
 });
 
 test("startup guard rejects an already-running live pid", async () => {
-  const pidDir = fs.mkdtempSync(path.join(os.tmpdir(), "crewswarm-pids-"));
+  const pidDir = fs.mkdtempSync(path.join(os.tmpdir(), "iris-pids-"));
   const pidFile = path.join(pidDir, "unit-live.pid");
   fs.writeFileSync(pidFile, String(process.pid));
 

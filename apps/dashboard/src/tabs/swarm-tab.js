@@ -19,7 +19,7 @@ export function initSwarmTab({ hideAllViews, setNavActive } = {}) {
 // ── Swarm (Sessions) ───────────────────────────────────────────────────────────
 
 let _selected = state.selected || null;
-let _selectedEngine = state.selectedEngine || 'opencode'; // opencode, claude, codex, gemini, crew-cli
+let _selectedEngine = state.selectedEngine || 'opencode'; // opencode, claude, codex, gemini, iris-cli
 
 export async function loadSessions() {
   const box = document.getElementById('sessions');
@@ -38,7 +38,7 @@ export async function loadSessions() {
       + '<option value="claude">Claude Code</option>'
       + '<option value="codex">Codex CLI</option>'
       + '<option value="gemini">Gemini CLI</option>'
-      + '<option value="crew-cli">crew-cli</option>'
+      + '<option value="iris-cli">iris-cli</option>'
       + '</select>'
       + '<span style="font-size:12px;color:var(--text-3);margin-left:8px;" id="session-count"></span>';
     container.insertBefore(engineSelector, box);
@@ -75,7 +75,7 @@ export async function loadSessions() {
         'claude': 'Claude Code',
         'codex': 'Codex CLI',
         'gemini': 'Gemini CLI',
-        'crew-cli': 'crew-cli'
+        'iris-cli': 'iris-cli'
       };
       const engineName = engineNames[_selectedEngine] || _selectedEngine;
       
@@ -94,21 +94,21 @@ export async function loadSessions() {
 
     function crewAgentFromTitle(title) {
       if (!title || typeof title !== 'string') return null;
-      const m = title.match(/\[?(crew-\w+)\]?/);
+      const m = title.match(/\[?(iris-\w+)\]?/);
       return m ? m[1] : null;
     }
     function inferAgentFromTitle(title) {
       if (!title || typeof title !== 'string') return null;
       if (/\bFixer\b|fixer\s+task|fix\s+.*\.py|syntax\s+error/i.test(title)) return 'fixer';
       if (/\bQA\b|qa\s+audit|audit:/i.test(title)) return 'qa';
-      if (/\bPM\b|crew-pm|roadmap\b/i.test(title)) return 'pm';
+      if (/\bPM\b|iris-pm|roadmap\b/i.test(title)) return 'pm';
       if (/\bCoder\b|coder\s+task|frontend\b|backend\b/i.test(title)) return 'coder';
       if (/\bSecurity\b|security\s+review/i.test(title)) return 'security';
       if (/\bCopywriter\b|copy\s+task/i.test(title)) return 'copywriter';
       return null;
     }
     function isOpencodeCodename(slug) {
-      return slug && /^[a-z]+-[a-z]+$/.test(slug) && !slug.startsWith('crew-');
+      return slug && /^[a-z]+-[a-z]+$/.test(slug) && !slug.startsWith('iris-');
     }
 
     data.forEach(s => {
@@ -135,7 +135,7 @@ export async function loadSessions() {
         meta = s.file || '';
       } else if (_selectedEngine === 'gemini') {
         meta = 'Project: ' + sessionId;
-      } else if (_selectedEngine === 'crew-cli') {
+      } else if (_selectedEngine === 'iris-cli') {
         badge = s.engine + ' / ' + s.project;
         meta = s.file || '';
       }
@@ -177,7 +177,7 @@ export async function loadMessages() {
         'claude': '/api/claude-sessions',
         'codex': '/api/codex-sessions',
         'gemini': '/api/gemini-sessions',
-        'crew-cli': '/api/crew-cli-sessions'
+        'iris-cli': '/api/iris-cli-sessions'
       };
       const endpoint = apiMap[_selectedEngine];
       if (!endpoint) {
@@ -282,7 +282,7 @@ function _rtBuildElement(m) {
   agentsEl.style.cssText = 'display:flex;align-items:center;gap:5px;white-space:nowrap;min-width:0;';
   const fromPill = document.createElement('span');
   fromPill.style.cssText = 'font-size:11px;font-weight:600;color:var(--text-1);max-width:110px;overflow:hidden;text-overflow:ellipsis;';
-  fromPill.textContent = (m.from || '?').replace('crew-', '');
+  fromPill.textContent = (m.from || '?').replace('iris-', '');
   fromPill.title = m.from || '';
   agentsEl.appendChild(fromPill);
   if (m.to && m.to !== m.from) {
@@ -291,7 +291,7 @@ function _rtBuildElement(m) {
     arrow.textContent = '→';
     const toPill = document.createElement('span');
     toPill.style.cssText = 'font-size:11px;color:var(--text-2);max-width:110px;overflow:hidden;text-overflow:ellipsis;';
-    toPill.textContent = (m.to || '').replace('crew-', '');
+    toPill.textContent = (m.to || '').replace('iris-', '');
     toPill.title = m.to || '';
     agentsEl.appendChild(arrow);
     agentsEl.appendChild(toPill);

@@ -22,11 +22,11 @@ const SCRIPT = path.resolve(__dirname, "../../scripts/sync-agents.mjs");
 // validate the logic independently.
 
 function normalizeId(id) {
-  return (id || "").replace(/^crew-/, "");
+  return (id || "").replace(/^iris-/, "");
 }
 
 function getAgentName(id) {
-  return (id || "").startsWith("crew-") ? id : `crew-${id}`;
+  return (id || "").startsWith("iris-") ? id : `iris-${id}`;
 }
 
 function buildAgentTable(agents) {
@@ -54,8 +54,8 @@ describe("scripts/sync-agents.mjs", () => {
 
 describe("sync-agents helpers (replicated)", () => {
   describe("normalizeId", () => {
-    it("strips crew- prefix", () => {
-      assert.equal(normalizeId("crew-coder"), "coder");
+    it("strips iris- prefix", () => {
+      assert.equal(normalizeId("iris-coder"), "coder");
     });
 
     it("leaves bare IDs unchanged", () => {
@@ -72,44 +72,44 @@ describe("sync-agents helpers (replicated)", () => {
   });
 
   describe("getAgentName", () => {
-    it("preserves existing crew- prefix", () => {
-      assert.equal(getAgentName("crew-coder"), "crew-coder");
+    it("preserves existing iris- prefix", () => {
+      assert.equal(getAgentName("iris-coder"), "iris-coder");
     });
 
-    it("adds crew- prefix to bare IDs", () => {
-      assert.equal(getAgentName("pm"), "crew-pm");
+    it("adds iris- prefix to bare IDs", () => {
+      assert.equal(getAgentName("pm"), "iris-pm");
     });
 
     it("handles empty string", () => {
-      assert.equal(getAgentName(""), "crew-");
+      assert.equal(getAgentName(""), "iris-");
     });
   });
 
   describe("buildAgentTable", () => {
     it("produces a markdown table", () => {
       const agents = [
-        { name: "crew-pm", meta: { emoji: "📋", label: "Planning", best: "Tasks" } },
+        { name: "iris-pm", meta: { emoji: "📋", label: "Planning", best: "Tasks" } },
       ];
       const table = buildAgentTable(agents);
       assert.ok(table.includes("| Agent |"));
-      assert.ok(table.includes("`crew-pm`"));
+      assert.ok(table.includes("`iris-pm`"));
       assert.ok(table.includes("📋 Planning"));
     });
 
     it("returns header only for empty agent list", () => {
       const table = buildAgentTable([]);
       assert.ok(table.includes("| Agent |"));
-      assert.ok(!table.includes("`crew-"));
+      assert.ok(!table.includes("`iris-"));
     });
   });
 
   describe("buildAgentList", () => {
     it("produces a markdown list", () => {
       const agents = [
-        { name: "crew-coder", meta: { label: "Implementation", best: "Code" } },
+        { name: "iris-coder", meta: { label: "Implementation", best: "Code" } },
       ];
       const list = buildAgentList(agents);
-      assert.ok(list.includes("- `crew-coder`"));
+      assert.ok(list.includes("- `iris-coder`"));
       assert.ok(list.includes("Implementation: Code"));
     });
 

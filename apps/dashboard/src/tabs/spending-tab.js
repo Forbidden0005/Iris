@@ -138,7 +138,7 @@ export async function loadSpending(){
   } catch(e) { showError(el, 'Error: ' + e.message); }
 }
 
-// ── crew-cli stats ───────────────────────────────────────────────────────────
+// ── iris-cli stats ───────────────────────────────────────────────────────────
 export async function loadCrewCliStats() {
   const box = document.getElementById('crewCliStatsWidget');
   if (!box) return;
@@ -146,9 +146,9 @@ export async function loadCrewCliStats() {
   syncAllDropdowns(days);
   box.innerHTML = '<div style="color:var(--text-3);font-size:12px;">Loading\u2026</div>';
   try {
-    const d = await getJSON('/api/crew-cli-stats?days=' + days);
+    const d = await getJSON('/api/iris-cli-stats?days=' + days);
     if (!d.ok || !Object.keys(d.byDay || {}).length) {
-      box.innerHTML = '<div style="color:var(--text-3);font-size:12px;">' + (d.error || 'No crew-cli data found for this period.') + '</div>';
+      box.innerHTML = '<div style="color:var(--text-3);font-size:12px;">' + (d.error || 'No iris-cli data found for this period.') + '</div>';
       _crewCliTotalCost = 0;
       updateGrandTotal();
       return;
@@ -229,5 +229,5 @@ export async function resetSpending(){
 export async function saveGlobalCaps(){
   const tokens = parseInt(document.getElementById('gcapTokens').value) || null;
   const cost   = parseFloat(document.getElementById('gcapCost').value) || null;
-  showNotification('Add to ~/.crewswarm/crewswarm.json: "globalSpendingCaps": {"dailyTokenLimit":' + (tokens||'null') + ',"dailyCostLimitUSD":' + (cost||'null') + '}', 'warning');
+  showNotification('Add to ~/.iris/iris.json: "globalSpendingCaps": {"dailyTokenLimit":' + (tokens||'null') + ',"dailyCostLimitUSD":' + (cost||'null') + '}', 'warning');
 }

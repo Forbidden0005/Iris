@@ -1,6 +1,6 @@
 /**
  * Orchestration Status Panel
- * Live dashboard for crewswarm swarm coordination
+ * Live dashboard for iris swarm coordination
  */
 
 let orchestrationInterval = null;

@@ -17,8 +17,8 @@ async function main() {
   
   let content = [];
   
-  content.push('# crewswarm Complete Documentation File (For AI Crawlers)');
-  content.push('This file contains the complete repository state, architecture, and documentation for crewswarm to be fully ingested by LLMs.\n');
+  content.push('# iris Complete Documentation File (For AI Crawlers)');
+  content.push('This file contains the complete repository state, architecture, and documentation for iris to be fully ingested by LLMs.\n');
   
   content.push('\n## 1. README / Mission\n');
   content.push(readFileContent(path.join(rootDir, 'README.md')));

@@ -26,8 +26,8 @@ function makeMockClient() {
 
 function makeDeps(overrides = {}) {
   return {
-    CREWSWARM_RT_AGENT: "crew-coder",
-    CREWSWARM_RT_COMMAND_TYPES: new Set([
+    IRIS_RT_AGENT: "iris-coder",
+    IRIS_RT_COMMAND_TYPES: new Set([
       "task", "command.spawn_agent", "command.collect_status",
       "cmd.approved", "cmd.rejected", "command.run_task",
     ]),
@@ -68,18 +68,18 @@ function makeDeps(overrides = {}) {
     validateCodingArtifacts: async () => ({ valid: true }),
     isCodingTask: () => false,
     shouldRetryTaskFailure: () => false,
-    CREWSWARM_RT_DISPATCH_LEASE_MS: 60000,
-    CREWSWARM_RT_DISPATCH_HEARTBEAT_MS: 10000,
-    CREWSWARM_RT_DISPATCH_MAX_RETRIES: 3,
-    CREWSWARM_RT_DISPATCH_MAX_RETRIES_CODING: 5,
-    CREWSWARM_RT_DISPATCH_RETRY_BACKOFF_MS: 1000,
-    CREWSWARM_OPENCODE_AGENT: "crew-coder",
-    CREWSWARM_OPENCODE_MODEL: "gpt-4",
+    IRIS_RT_DISPATCH_LEASE_MS: 60000,
+    IRIS_RT_DISPATCH_HEARTBEAT_MS: 10000,
+    IRIS_RT_DISPATCH_MAX_RETRIES: 3,
+    IRIS_RT_DISPATCH_MAX_RETRIES_CODING: 5,
+    IRIS_RT_DISPATCH_RETRY_BACKOFF_MS: 1000,
+    IRIS_OPENCODE_AGENT: "iris-coder",
+    IRIS_OPENCODE_MODEL: "gpt-4",
     OPENCODE_FREE_MODEL_CHAIN: [],
     RT_TO_GATEWAY_AGENT_MAP: {},
     SHARED_MEMORY_DIR: "/tmp/shared-memory",
     SWARM_DLQ_DIR: "/tmp/dlq",
-    COORDINATOR_AGENT_IDS: new Set(["crew-lead"]),
+    COORDINATOR_AGENT_IDS: new Set(["iris-lead"]),
     ...overrides,
   };
 }
@@ -103,7 +103,7 @@ describe("rt-envelope", () => {
     it("skips envelopes addressed to a different agent", async () => {
       const client = makeMockClient();
       await handleRealtimeEnvelope(
-        { id: "msg-1", type: "task", to: "crew-qa", payload: {} },
+        { id: "msg-1", type: "task", to: "iris-qa", payload: {} },
         client,
         null,
       );
@@ -114,7 +114,7 @@ describe("rt-envelope", () => {
 
     it("processes envelopes addressed to broadcast", async () => {
       const client = makeMockClient();
-      // "task" is in CREWSWARM_RT_COMMAND_TYPES, addressed to broadcast
+      // "task" is in IRIS_RT_COMMAND_TYPES, addressed to broadcast
       // This will proceed past the routing guard (may fail later, but not skip)
       await handleRealtimeEnvelope(
         { id: "msg-2", type: "task", to: "broadcast", payload: { prompt: "hello" } },
@@ -131,7 +131,7 @@ describe("rt-envelope", () => {
     it("processes envelopes addressed to our agent", async () => {
       const client = makeMockClient();
       await handleRealtimeEnvelope(
-        { id: "msg-3", type: "task", to: "crew-coder", payload: { prompt: "hello" } },
+        { id: "msg-3", type: "task", to: "iris-coder", payload: { prompt: "hello" } },
         client,
         null,
       );
@@ -212,7 +212,7 @@ describe("rt-envelope", () => {
       const spawned = [];
       initRtEnvelope(
         makeDeps({
-          resolveSpawnTargets: () => ["crew-qa", "crew-fixer"],
+          resolveSpawnTargets: () => ["iris-qa", "iris-fixer"],
           spawnAgentDaemon: (agent) => { spawned.push(agent); return { agent, ok: true }; },
         }),
       );
@@ -222,7 +222,7 @@ describe("rt-envelope", () => {
         {
           id: "msg-7",
           type: "command.spawn_agent",
-          from: "crew-lead",
+          from: "iris-lead",
           to: "broadcast",
           payload: {},
         },
@@ -230,7 +230,7 @@ describe("rt-envelope", () => {
         null,
       );
 
-      assert.deepEqual(spawned, ["crew-qa", "crew-fixer"]);
+      assert.deepEqual(spawned, ["iris-qa", "iris-fixer"]);
       assert.equal(client.calls.publish.length, 1);
       assert.equal(client.calls.publish[0].type, "task.done");
       assert.equal(client.calls.publish[0].payload.action, "spawn_agent");
@@ -242,9 +242,9 @@ describe("rt-envelope", () => {
     it("collects status for requested agents", async () => {
       initRtEnvelope(
         makeDeps({
-          resolveSpawnTargets: () => ["crew-qa"],
-          isAgentDaemonRunning: (a) => a === "crew-qa",
-          readPid: (a) => (a === "crew-qa" ? 12345 : null),
+          resolveSpawnTargets: () => ["iris-qa"],
+          isAgentDaemonRunning: (a) => a === "iris-qa",
+          readPid: (a) => (a === "iris-qa" ? 12345 : null),
         }),
       );
 
@@ -253,7 +253,7 @@ describe("rt-envelope", () => {
         {
           id: "msg-8",
           type: "command.collect_status",
-          from: "crew-lead",
+          from: "iris-lead",
           to: "broadcast",
           payload: {},
         },
@@ -264,7 +264,7 @@ describe("rt-envelope", () => {
       assert.equal(client.calls.publish.length, 1);
       const status = client.calls.publish[0].payload.status;
       assert.equal(status.length, 1);
-      assert.equal(status[0].agent, "crew-qa");
+      assert.equal(status[0].agent, "iris-qa");
       assert.equal(status[0].running, true);
       assert.equal(status[0].pid, 12345);
     });
@@ -284,7 +284,7 @@ describe("rt-envelope", () => {
         null,
       );
 
-      // "command.custom_stuff" is not in CREWSWARM_RT_COMMAND_TYPES → skip as unsupported type
+      // "command.custom_stuff" is not in IRIS_RT_COMMAND_TYPES → skip as unsupported type
       assert.equal(client.calls.ack.length, 1);
       assert.equal(client.calls.ack[0].status, "skipped");
     });

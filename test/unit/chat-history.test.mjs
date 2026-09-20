@@ -1,8 +1,8 @@
 /**
  * Unit tests for lib/chat/history.mjs
  *
- * Uses CREWSWARM_STATE_DIR pointing to a per-process temp directory for full
- * isolation from ~/.crewswarm.
+ * Uses IRIS_STATE_DIR pointing to a per-process temp directory for full
+ * isolation from ~/.iris.
  *
  * Exports under test:
  *   sessionFile, loadHistory, appendHistory, clearHistory, listUserSessions
@@ -16,7 +16,7 @@ import os from "node:os";
 
 // Must be set BEFORE paths.mjs is first imported
 const TEST_DIR = path.join(os.tmpdir(), `chat-history-test-${process.pid}`);
-process.env.CREWSWARM_STATE_DIR = TEST_DIR;
+process.env.IRIS_STATE_DIR = TEST_DIR;
 
 import { resetPaths } from "../../lib/runtime/paths.mjs";
 
@@ -134,9 +134,9 @@ describe("appendHistory + loadHistory", () => {
   });
 
   it("includes agent field on assistant messages when provided", () => {
-    appendHistory("u4", "s4", "assistant", "response", "crew-coder");
+    appendHistory("u4", "s4", "assistant", "response", "iris-coder");
     const history = loadHistory("u4", "s4");
-    assert.equal(history[0].agent, "crew-coder");
+    assert.equal(history[0].agent, "iris-coder");
   });
 
   it("does not set agent on user messages even when supplied", () => {

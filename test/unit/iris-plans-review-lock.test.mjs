@@ -11,7 +11,7 @@ const TASK_WORKER = path.join(__dirname, "helpers", "iris-plan-lock-worker.mjs")
 const REVIEW_WORKER = path.join(__dirname, "helpers", "iris-plan-review-worker.mjs");
 
 const TEST_DIR = path.join(os.tmpdir(), `iris-plans-review-lock-test-${process.pid}`);
-process.env.CREWSWARM_STATE_DIR = TEST_DIR;
+process.env.IRIS_STATE_DIR = TEST_DIR;
 
 import { resetPaths } from "../../lib/runtime/paths.mjs";
 import { createIrisPlan, loadIrisPlan, clearIrisPlans } from "../../lib/iris/plans.mjs";

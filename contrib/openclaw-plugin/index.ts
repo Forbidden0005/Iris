@@ -1,23 +1,23 @@
 /**
- * CrewSwarm plugin for OpenClaw
+ * Iris plugin for OpenClaw
  *
- * Gives every OpenClaw agent access to a local CrewSwarm crew via:
- *   • crewswarm_dispatch  — agent tool (call crew-coder, crew-qa, etc.)
- *   • crewswarm_status    — agent tool (poll a previously dispatched task)
- *   • crewswarm_agents    — agent tool (list available agents)
- *   • /crewswarm          — slash command (dispatch from any channel)
- *   • crewswarm.dispatch  — Gateway RPC
- *   • crewswarm.status    — Gateway RPC
- *   • crewswarm.agents    — Gateway RPC
+ * Gives every OpenClaw agent access to a local Iris iris via:
+ *   • iris_dispatch  — agent tool (call iris-coder, iris-qa, etc.)
+ *   • iris_status    — agent tool (poll a previously dispatched task)
+ *   • iris_agents    — agent tool (list available agents)
+ *   • /iris          — slash command (dispatch from any channel)
+ *   • iris.dispatch  — Gateway RPC
+ *   • iris.status    — Gateway RPC
+ *   • iris.agents    — Gateway RPC
  *
- * Config (plugins.entries.crewswarm.config):
- *   url            — crew-lead base URL  (default: http://127.0.0.1:5010)
- *   token          — RT auth token from ~/.crewswarm/config.json → rt.authToken
+ * Config (plugins.entries.iris.config):
+ *   url            — iris-lead base URL  (default: http://127.0.0.1:5010)
+ *   token          — RT auth token from ~/.iris/config.json → rt.authToken
  *   pollIntervalMs — status poll cadence (default: 4000)
  *   pollTimeoutMs  — max wait for a result (default: 300000 = 5 min)
  */
 
-interface CrewSwarmConfig {
+interface IrisConfig {
   url?: string;
   token: string;
   pollIntervalMs?: number;
@@ -42,7 +42,7 @@ interface StatusResult {
 }
 
 interface OpenClawApi {
-  config?: { plugins?: { entries?: { crewswarm?: { config?: CrewSwarmConfig } } } };
+  config?: { plugins?: { entries?: { iris?: { config?: IrisConfig } } } };
   registerTool(def: Record<string, unknown>): void;
   registerCommand(def: Record<string, unknown>): void;
   registerGatewayMethod(name: string, handler: (ctx: Record<string, unknown>) => Promise<void>): void;
@@ -50,15 +50,15 @@ interface OpenClawApi {
   logger?: { info(msg: string): void; warn(msg: string): void };
 }
 
-function getConfig(api: OpenClawApi): CrewSwarmConfig {
-  return api.config?.plugins?.entries?.crewswarm?.config ?? {};
+function getConfig(api: OpenClawApi): IrisConfig {
+  return api.config?.plugins?.entries?.iris?.config ?? {};
 }
 
-function baseUrl(cfg: CrewSwarmConfig): string {
+function baseUrl(cfg: IrisConfig): string {
   return (cfg.url ?? "http://127.0.0.1:5010").replace(/\/$/, "");
 }
 
-function authHeaders(cfg: CrewSwarmConfig): Record<string, string> {
+function authHeaders(cfg: IrisConfig): Record<string, string> {
   return {
     "content-type": "application/json",
     authorization: `Bearer ${cfg.token}`,
@@ -123,7 +123,7 @@ async function dispatchAndWait(
   done?: string,
 ): Promise<string> {
   const cfg = getConfig(api);
-  if (!cfg.token) return "Error: no CrewSwarm token configured (plugins.entries.crewswarm.config.token)";
+  if (!cfg.token) return "Error: no Iris token configured (plugins.entries.iris.config.token)";
 
   const base = baseUrl(cfg);
   const headers = authHeaders(cfg);
@@ -152,20 +152,20 @@ export default function register(api: OpenClawApi) {
   // ── Agent tools ───────────────────────────────────────────────────────────
 
   api.registerTool({
-    name: "crewswarm_dispatch",
+    name: "iris_dispatch",
     description:
-      "Dispatch a task to a CrewSwarm specialist agent and wait for the result. " +
+      "Dispatch a task to a Iris specialist agent and wait for the result. " +
       "Use this to delegate coding, QA, writing, security review, or any other task " +
-      "to the appropriate crew member. The call blocks until the agent replies.",
+      "to the appropriate iris member. The call blocks until the agent replies.",
     parameters: {
       type: "object",
       properties: {
         agent: {
           type: "string",
           description:
-            "Target agent id. Common values: crew-coder, crew-qa, crew-fixer, " +
-            "crew-pm, crew-security, crew-copywriter, crew-frontend, crew-coder-back. " +
-            "Call crewswarm_agents first if unsure.",
+            "Target agent id. Common values: iris-coder, iris-qa, iris-fixer, " +
+            "iris-pm, iris-security, iris-copywriter, iris-frontend, iris-coder-back. " +
+            "Call iris_agents first if unsure.",
         },
         task: {
           type: "string",
@@ -193,21 +193,21 @@ export default function register(api: OpenClawApi) {
   });
 
   api.registerTool({
-    name: "crewswarm_status",
+    name: "iris_status",
     description:
-      "Poll the status of a previously dispatched CrewSwarm task by taskId. " +
+      "Poll the status of a previously dispatched Iris task by taskId. " +
       "Returns pending, done (with result), or unknown.",
     parameters: {
       type: "object",
       properties: {
-        taskId: { type: "string", description: "taskId returned by crewswarm_dispatch" },
+        taskId: { type: "string", description: "taskId returned by iris_dispatch" },
       },
       required: ["taskId"],
       additionalProperties: false,
     },
     handler: async ({ taskId }: { taskId: string }) => {
       const cfg = getConfig(api);
-      if (!cfg.token) return "Error: no CrewSwarm token configured";
+      if (!cfg.token) return "Error: no Iris token configured";
       const s = await apiStatus(baseUrl(cfg), authHeaders(cfg), taskId);
       if (s.status === "done") return `Done: ${s.result}`;
       if (s.status === "pending") return `Pending (${s.elapsedMs ?? 0}ms elapsed)`;
@@ -216,8 +216,8 @@ export default function register(api: OpenClawApi) {
   });
 
   api.registerTool({
-    name: "crewswarm_agents",
-    description: "List all available CrewSwarm agents by id.",
+    name: "iris_agents",
+    description: "List all available Iris agents by id.",
     parameters: {
       type: "object",
       properties: {},
@@ -225,19 +225,19 @@ export default function register(api: OpenClawApi) {
     },
     handler: async () => {
       const cfg = getConfig(api);
-      if (!cfg.token) return "Error: no CrewSwarm token configured";
+      if (!cfg.token) return "Error: no Iris token configured";
       const agents = await apiAgents(baseUrl(cfg), authHeaders(cfg));
       return agents.length
         ? `Available agents:\n${agents.map((a) => `  • ${a}`).join("\n")}`
-        : "No agents found — is crew-lead running?";
+        : "No agents found — is iris-lead running?";
     },
   });
 
-  // ── Slash command: /crewswarm <agent> <task> ──────────────────────────────
+  // ── Slash command: /iris <agent> <task> ──────────────────────────────
 
   api.registerCommand({
-    name: "crewswarm",
-    description: "Dispatch a task to CrewSwarm. Usage: /crewswarm <agent> <task>",
+    name: "iris",
+    description: "Dispatch a task to Iris. Usage: /iris <agent> <task>",
     acceptsArgs: true,
     requireAuth: true,
     handler: async (ctx: { args?: string }) => {
@@ -247,14 +247,14 @@ export default function register(api: OpenClawApi) {
         const agents = await apiAgents(baseUrl(cfg), authHeaders(cfg));
         return {
           text: agents.length
-            ? `CrewSwarm agents: ${agents.join(", ")}\n\nUsage: /crewswarm <agent> <task>`
-            : "crew-lead not reachable. Is CrewSwarm running?",
+            ? `Iris agents: ${agents.join(", ")}\n\nUsage: /iris <agent> <task>`
+            : "iris-lead not reachable. Is Iris running?",
         };
       }
 
       const [agent, ...rest] = args.split(" ");
       const task = rest.join(" ").trim();
-      if (!task) return { text: `Usage: /crewswarm <agent> <task>\nExample: /crewswarm crew-coder write hello.js` };
+      if (!task) return { text: `Usage: /iris <agent> <task>\nExample: /iris iris-coder write hello.js` };
 
       const result = await dispatchAndWait(api, agent, task);
       return { text: `[${agent}]: ${result}` };
@@ -263,7 +263,7 @@ export default function register(api: OpenClawApi) {
 
   // ── Gateway RPC ───────────────────────────────────────────────────────────
 
-  api.registerGatewayMethod("crewswarm.dispatch", async ({ params, respond }: { params?: Record<string, string>; respond(ok: boolean, data: Record<string, unknown>): void }) => {
+  api.registerGatewayMethod("iris.dispatch", async ({ params, respond }: { params?: Record<string, string>; respond(ok: boolean, data: Record<string, unknown>): void }) => {
     const { agent, task, verify, done } = params ?? {};
     if (!agent || !task) {
       respond(false, { error: "agent and task are required" });
@@ -274,7 +274,7 @@ export default function register(api: OpenClawApi) {
     respond(dispatch.ok, dispatch);
   });
 
-  api.registerGatewayMethod("crewswarm.status", async ({ params, respond }: { params?: Record<string, string>; respond(ok: boolean, data: Record<string, unknown>): void }) => {
+  api.registerGatewayMethod("iris.status", async ({ params, respond }: { params?: Record<string, string>; respond(ok: boolean, data: Record<string, unknown>): void }) => {
     const { taskId } = params ?? {};
     if (!taskId) { respond(false, { error: "taskId required" }); return; }
     const cfg = getConfig(api);
@@ -282,7 +282,7 @@ export default function register(api: OpenClawApi) {
     respond(s.ok, s);
   });
 
-  api.registerGatewayMethod("crewswarm.agents", async ({ respond }: { respond(ok: boolean, data: Record<string, unknown>): void }) => {
+  api.registerGatewayMethod("iris.agents", async ({ respond }: { respond(ok: boolean, data: Record<string, unknown>): void }) => {
     const cfg = getConfig(api);
     const agents = await apiAgents(baseUrl(cfg), authHeaders(cfg));
     respond(true, { agents });
@@ -291,23 +291,23 @@ export default function register(api: OpenClawApi) {
   // ── Background health check (logs warning on startup if unreachable) ──────
 
   api.registerService({
-    id: "crewswarm-health",
+    id: "iris-health",
     start: async () => {
       const cfg = getConfig(api);
       if (!cfg.token) {
-        api.logger?.warn("[crewswarm] No token configured — set plugins.entries.crewswarm.config.token");
+        api.logger?.warn("[iris] No token configured — set plugins.entries.iris.config.token");
         return;
       }
       try {
         const res = await fetch(`${baseUrl(cfg)}/health`);
         const data = await res.json() as { ok: boolean };
         if (data.ok) {
-          api.logger?.info(`[crewswarm] Connected to crew-lead at ${baseUrl(cfg)}`);
+          api.logger?.info(`[iris] Connected to iris-lead at ${baseUrl(cfg)}`);
         } else {
-          api.logger?.warn(`[crewswarm] crew-lead health check returned not-ok`);
+          api.logger?.warn(`[iris] iris-lead health check returned not-ok`);
         }
       } catch {
-        api.logger?.warn(`[crewswarm] crew-lead unreachable at ${baseUrl(cfg)} — start CrewSwarm first`);
+        api.logger?.warn(`[iris] iris-lead unreachable at ${baseUrl(cfg)} — start Iris first`);
       }
     },
     stop: () => {},

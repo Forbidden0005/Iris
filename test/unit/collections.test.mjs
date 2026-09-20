@@ -32,7 +32,7 @@ try {
   }
 }
 
-const TEST_DIR = path.join(os.tmpdir(), `crewswarm-collections-test-${process.pid}-${Date.now()}`);
+const TEST_DIR = path.join(os.tmpdir(), `iris-collections-test-${process.pid}-${Date.now()}`);
 const TEST_DB = path.join(TEST_DIR, "test-collections.db");
 
 before(() => {
